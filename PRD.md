@@ -9,91 +9,136 @@
 
 ## Executive Summary
 
-Natural Language Source (NLS) inverts the programming paradigm: instead of humans writing code that machines execute, humans write atomic natural language specifications that compile to code. The natural language IS the source code. Traditional programming languages become compilation targets.
+Natural Language Source (NLS) creates an auditable intermediate layer between human intent and executable code. Humans converse naturally with AI (exactly as they already do). The AI generates `.nl` specification files as a canonical audit trail—readable by anyone who understands English. These specs then compile to executable code.
 
-**The Thesis:** We've spent 60 years teaching humans to speak machine. It's time to make machines speak human—and make that the canonical representation.
+**The Thesis:** The conversation IS the programming. The `.nl` file is the receipt. The code is the artifact.
+
+**Key Insight:** Humans don't learn new syntax. They keep talking. The AI handles the translation to auditable specs. Non-programmers can now review, approve, and understand codebases.
 
 ---
 
 ## Problem Statement
 
 ### Current State
-1. **Cognitive overhead**: Developers context-switch between thinking in intent and expressing in syntax
-2. **Language lock-in**: Business logic is imprisoned in implementation details
-3. **AI assistance is additive**: Copilot/Claude generate code, but humans still read/maintain code
-4. **Knowledge silos**: Non-programmers can't participate in codebases despite understanding the domain
+1. **No audit trail**: AI-assisted coding leaves no canonical record of intent
+2. **Code is opaque**: Non-programmers can't review what systems actually do
+3. **Compliance gap**: Regulators can't audit AI-generated code decisions
+4. **Knowledge loss**: Intent lives in Slack threads, chat logs, and disappears
+5. **Handoff friction**: New developers reverse-engineer intent from implementation
 
 ### The Gap
 AI can now:
-- Generate code from natural language (proven)
+- Generate code from conversation (proven—we do this daily)
 - Explain code in natural language (proven)
-- Maintain semantic consistency across regeneration (emerging)
+- Maintain semantic consistency (emerging)
 
-But we still treat code as the source of truth. **What if we didn't?**
+But there's no **canonical intermediate artifact**. The conversation disappears. The code is opaque. Intent is lost.
+
+**What if every AI coding session produced a human-readable specification as a side effect?**
 
 ---
 
 ## Vision
 
-### The Inversion
+### The Flow
 
 ```
 TODAY:
-Human Intent → Code (source) → Execution
-                 ↑
-           [AI assists here]
+Human ←→ AI Chat → Code → Execution
+              ↓
+         [Conversation vanishes]
 
 NLS:
-Human Intent → .nl file (source) → Code (artifact) → Execution
-                 ↑                        ↑
-           [Human works here]      [AI compiles here]
+Human ←→ AI Chat → .nl spec (audit trail) → Code → Execution
+              ↓              ↓
+         [Same UX]    [Permanent record]
 ```
 
-### What Developers Experience
+### What Each Stakeholder Experiences
 
-**Opening a project:**
+**Developer (same as today):**
+```
+You: "Add rate limiting to the API. 100 requests per minute per user,
+     with a 429 response when exceeded."
+
+AI: "I'll add rate limiting middleware. Here's what I'm implementing..."
+    [Generates code AND writes to api.nl]
+```
+
+**Manager/Auditor (new capability):**
+```
+Opens: src/api.nl
+
+Sees:
+┌─────────────────────────────────────────────────────────────┐
+│ [rate-limit-middleware]                                      │
+│                                                              │
+│ PURPOSE: Prevent API abuse by limiting request frequency     │
+│                                                              │
+│ POLICY:                                                      │
+│   • Maximum 100 requests per minute per authenticated user   │
+│   • Identified by user ID from JWT token                     │
+│   • Sliding window algorithm                                 │
+│                                                              │
+│ BEHAVIOR:                                                    │
+│   • Under limit → pass request through                       │
+│   • At limit → return 429 Too Many Requests                  │
+│   • Include Retry-After header with seconds until reset      │
+│                                                              │
+│ CREATED: 2026-01-15 via conversation                        │
+│ APPROVED: [pending]                                          │
+└─────────────────────────────────────────────────────────────┘
+
+Thinks: "I understand exactly what this does. Approved."
+```
+
+**New Developer (onboarding):**
+```
+$ ls src/*.nl
+api.nl          # API endpoints and middleware
+auth.nl         # Authentication logic  
+billing.nl      # Payment processing
+notifications.nl # Email/SMS sending
+
+$ cat src/auth.nl
+# Reads plain English, understands system in 10 minutes
+```
+
+### The Project Structure
+
 ```
 project/
 ├── src/
-│   ├── auth.nl          ← Human reads/writes this
-│   ├── auth.py          ← Generated, gitignored
+│   ├── auth.nl          ← AI-generated audit trail (human-readable)
+│   ├── auth.py          ← AI-generated code (machine-executable)
 │   └── auth.nl.lock     ← Determinism guarantee
+├── conversations/
+│   └── 2026-01-15.json  ← Optional: raw chat logs
 ├── tests/
-│   └── auth.test.nl     ← Tests in NL too
+│   └── auth.test.nl     ← Test specs in NL
 └── nl.config.yaml       ← Compiler settings
 ```
 
-**The editor view:**
-```
-┌─────────────────────────────────────────────────────────────┐
-│ auth.nl                                              [NL View] │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  @module authentication                                     │
-│  @target python >= 3.11                                     │
-│  @imports jwt, datetime                                     │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │ [validate-token]                                     │   │
-│  │                                                       │   │
-│  │ PURPOSE: Verify JWT and extract user identity        │   │
-│  │                                                       │   │
-│  │ INPUTS:                                               │   │
-│  │   • token: string, required                          │   │
-│  │   • secret: string, from environment JWT_SECRET      │   │
-│  │                                                       │   │
-│  │ GUARDS:                                               │   │
-│  │   • token must not be empty → AuthError("Missing")   │   │
-│  │   • signature must be valid → AuthError("Invalid")   │   │
-│  │   • expiry must be future → AuthError("Expired")     │   │
-│  │                                                       │   │
-│  │ RETURNS: User object with id, email, roles           │   │
-│  │                                                       │   │
-│  │ [▾ Show generated Python]                            │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
+---
+
+## Key Distinction: Conversation vs Specification
+
+**This is critical:** Humans never write `.nl` files directly.
+
+| What Users Do | What They DON'T Do |
+|---------------|---------------------|
+| Chat naturally: "Add auth middleware" | Learn ANLU syntax |
+| Review generated specs | Write formal specifications |
+| Approve changes in plain English | Edit structured formats |
+| Ask questions: "Why does this work?" | Debug compilation errors |
+
+**The `.nl` file serves three audiences:**
+
+1. **Auditors/Compliance**: Can read and verify what code does
+2. **Managers**: Can review and approve without programming knowledge  
+3. **Future Developers**: Can understand intent without reverse-engineering
+
+**The conversation is the interface. The `.nl` is the receipt.**
 
 ---
 
@@ -101,11 +146,14 @@ project/
 
 ### 1. Atomic Natural Language Units (ANLUs)
 
-The fundamental building block. Each ANLU is:
+The fundamental building block—**generated by AI from conversation**, not written by humans.
+
+Each ANLU is:
 - **Self-contained**: Describes one logical operation
 - **Composable**: Can reference other ANLUs
 - **Deterministic**: Same ANLU + same compiler = same output
-- **Bidirectional**: Can be derived from code OR written directly
+- **Auditable**: Any English speaker can understand what it does
+- **Bidirectional**: Can be derived from existing code OR conversation
 
 ```
 [calculate-tax]                          ← Identifier
@@ -264,43 +312,48 @@ nlsc test                    # Run NL test specifications
 
 ### Component 3: VS Code Extension
 
-**Deliverable:** Full IDE experience for NLS development
+**Deliverable:** Conversational IDE + audit viewer for NLS development
 
-**Features:**
+**Primary Interface: Chat Panel**
+
+The conversation IS the IDE. The extension provides:
 
 | Feature | Description |
 |---------|-------------|
-| Syntax highlighting | Full grammar support for .nl files |
-| Inline compilation | See generated code without leaving NL view |
-| Error diagnostics | Schema violations, unresolved references |
-| Autocomplete | ANLU templates, type suggestions, imports |
-| Go to definition | Navigate ANLU dependencies |
-| Hover documentation | Show ANLU details, generated signature |
-| Code lens | "Compile" / "Test" / "Show Python" actions |
-| Side-by-side view | NL left, generated code right |
-| Diff view | Changes to NL → changes to generated code |
-| Refactoring | Rename ANLU, extract ANLU, inline ANLU |
+| Integrated chat | Converse with AI directly in VS Code |
+| Context awareness | AI sees open files, project structure |
+| Live .nl generation | Watch specs appear as you talk |
+| Approval workflow | "Accept" / "Reject" / "Modify" generated specs |
+| History panel | Scroll through conversation → spec evolution |
+
+**Secondary Interface: Spec Viewer**
+
+| Feature | Description |
+|---------|-------------|
+| Syntax highlighting | Read .nl files with clear formatting |
+| Split view | Spec left, generated code right |
+| Diff view | See what changed between versions |
+| Dependency graph | Visualize ANLU relationships |
+| Code lens | "Show Python" / "Run Tests" quick actions |
 
 **Views:**
 
-1. **NL View (default):** Shows .nl file with collapsible ANLUs
-2. **Code View:** Shows generated code (read-only unless escaped)
-3. **Split View:** NL on left, synced code on right
-4. **Graph View:** Visualize ANLU dependency graph
+1. **Chat View (primary):** Conversation interface—where work happens
+2. **Spec View:** Read-only .nl viewer for audit/review
+3. **Code View:** Generated code (read-only)
+4. **History View:** Timeline of conversation → spec → code
 
 **Workflow:**
 ```
-Edit .nl → Auto-compile → Hot reload → See results
-              ↓
-        Error? Show diagnostic in NL view
-              ↓
-        Success? Update lock file
+Converse → AI generates .nl → Review spec → Approve → Code updates
+              ↓                    ↓
+         [Live preview]      [Reject? Continue talking]
 ```
 
 **Success Criteria:**
-- < 500ms from edit to compiled output
-- Zero context-switching required
-- Non-programmers can read and modify ANLUs
+- Conversation feels native, not bolted on
+- Non-programmers can read and approve specs
+- Zero .nl editing required (chat only)
 
 ---
 
@@ -540,19 +593,24 @@ validation:
 ## Success Metrics
 
 ### Adoption
-- 1,000 .nl files created in first 6 months
-- 100 GitHub repos using NLS
-- 10 community-contributed target backends
+- 1,000 conversational sessions generating .nl files in first 6 months
+- 100 GitHub repos with .nl audit trails
+- 10 organizations using .nl for compliance/audit
 
 ### Developer Experience
-- 80% of users prefer NL view to code view
-- < 2 second average compile time
-- < 5% round-trip semantic drift
+- Zero syntax learning required (conversation only)
+- < 2 second spec generation from conversation
+- 95% of generated specs accepted without modification
+
+### Audit Value
+- Non-programmers can accurately describe system behavior from .nl files
+- Compliance reviews 5x faster with .nl vs code review
+- New developer onboarding time reduced 50%
 
 ### Quality
 - 95% of compiled code passes original tests
 - < 1% of ANLUs require `@literal` escape
-- 90% of atomized code produces readable ANLUs
+- Round-trip (code → .nl → code) preserves behavior
 
 ---
 
