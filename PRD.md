@@ -312,48 +312,28 @@ nlsc test                    # Run NL test specifications
 
 ### Component 3: VS Code Extension
 
-**Deliverable:** Conversational IDE + audit viewer for NLS development
+**Deliverable:** Syntax support and rendering for .nl files
 
-**Primary Interface: Chat Panel**
-
-The conversation IS the IDE. The extension provides:
+**Scope:** Make .nl files readable in VS Code. That's it.
 
 | Feature | Description |
 |---------|-------------|
-| Integrated chat | Converse with AI directly in VS Code |
-| Context awareness | AI sees open files, project structure |
-| Live .nl generation | Watch specs appear as you talk |
-| Approval workflow | "Accept" / "Reject" / "Modify" generated specs |
-| History panel | Scroll through conversation → spec evolution |
+| Syntax highlighting | Colors for ANLU blocks, keywords, types |
+| Folding | Collapse individual ANLUs |
+| Outline view | Navigate ANLUs in sidebar |
+| Hover info | Show ANLU details on hover |
+| Go to definition | Jump to referenced ANLUs |
+| Code lens | "Show generated code" link per ANLU |
 
-**Secondary Interface: Spec Viewer**
-
-| Feature | Description |
-|---------|-------------|
-| Syntax highlighting | Read .nl files with clear formatting |
-| Split view | Spec left, generated code right |
-| Diff view | See what changed between versions |
-| Dependency graph | Visualize ANLU relationships |
-| Code lens | "Show Python" / "Run Tests" quick actions |
-
-**Views:**
-
-1. **Chat View (primary):** Conversation interface—where work happens
-2. **Spec View:** Read-only .nl viewer for audit/review
-3. **Code View:** Generated code (read-only)
-4. **History View:** Timeline of conversation → spec → code
-
-**Workflow:**
-```
-Converse → AI generates .nl → Review spec → Approve → Code updates
-              ↓                    ↓
-         [Live preview]      [Reject? Continue talking]
-```
+**What it's NOT:**
+- Not a chat interface (conversation happens elsewhere)
+- Not an editor for authoring .nl (AI generates these)
+- Not a compiler UI (CLI handles that)
 
 **Success Criteria:**
-- Conversation feels native, not bolted on
-- Non-programmers can read and approve specs
-- Zero .nl editing required (chat only)
+- .nl files are pleasant to read
+- Can navigate large specs quickly
+- Non-programmers can browse without confusion
 
 ---
 
