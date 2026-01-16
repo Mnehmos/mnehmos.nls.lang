@@ -67,14 +67,14 @@ class EdgeCase:
 class ANLU:
     """
     Atomic Natural Language Unit
-    
+
     The fundamental building block of NLS - describes one logical operation
     in human-readable terms that can be compiled to executable code.
     """
     identifier: str
     purpose: str
     returns: str
-    
+
     # Optional fields
     inputs: list[Input] = field(default_factory=list)
     guards: list[Guard] = field(default_factory=list)
@@ -82,9 +82,23 @@ class ANLU:
     edge_cases: list[EdgeCase] = field(default_factory=list)
     depends: list[str] = field(default_factory=list)
     literal: Optional[str] = None
-    
+
     # Metadata
     line_number: int = 0
+
+    @property
+    def bound_type(self) -> Optional[str]:
+        """If identifier is Type.method, returns 'Type', else None"""
+        if "." in self.identifier:
+            return self.identifier.split(".")[0]
+        return None
+
+    @property
+    def method_name(self) -> Optional[str]:
+        """If identifier is Type.method, returns 'method', else None"""
+        if "." in self.identifier:
+            return self.identifier.split(".", 1)[1]
+        return None
     
     def to_python_return_type(self) -> str:
         """Convert RETURNS to Python type hint"""
@@ -109,11 +123,39 @@ class ANLU:
 
 
 @dataclass
-class TypeDefinition:
-    """A custom type definition from @types block"""
+class TypeField:
+    """A single field in a type definition"""
     name: str
-    fields: dict[str, str] = field(default_factory=dict)
+    type: str
+    constraints: list[str] = field(default_factory=list)
+    description: Optional[str] = None
+
+    def to_python_type(self) -> str:
+        """Convert NLS type to Python type hint"""
+        type_map = {
+            "number": "float",
+            "string": "str",
+            "boolean": "bool",
+            "void": "None",
+            "any": "Any",
+        }
+
+        # Handle "list of X"
+        if self.type.startswith("list of "):
+            inner = self.type[8:]  # Remove "list of "
+            inner_py = type_map.get(inner, inner)
+            return f"list[{inner_py}]"
+
+        return type_map.get(self.type, self.type)
+
+
+@dataclass
+class TypeDefinition:
+    """A custom type definition from @type block"""
+    name: str
+    fields: list[TypeField] = field(default_factory=list)
     base: Optional[str] = None
+    line_number: int = 0
 
 
 @dataclass 
