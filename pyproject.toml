@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nlsc"
+version = "0.1.0"
+description = "Natural Language Source Compiler - Compile .nl specs to executable code"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+authors = [
+    {name = "Vario (Mnehmos)"}
+]
+keywords = ["natural-language", "compiler", "ai", "code-generation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Compilers",
+]
+
+dependencies = [
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+llm = [
+    "anthropic>=0.18.0",
+    "openai>=1.0",
+]
+
+[project.scripts]
+nlsc = "nlsc.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/mnehmos/natural-lang-source"
+Documentation = "https://github.com/mnehmos/natural-lang-source#readme"
+Repository = "https://github.com/mnehmos/natural-lang-source"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["nlsc*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

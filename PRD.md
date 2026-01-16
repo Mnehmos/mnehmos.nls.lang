@@ -1,4 +1,5 @@
 # Natural Language Source (NLS)
+
 ## Product Requirements Document v0.1
 
 **Author:** Vario (Mnehmos)  
@@ -20,6 +21,7 @@ Natural Language Source (NLS) creates an auditable intermediate layer between hu
 ## Problem Statement
 
 ### Current State
+
 1. **No audit trail**: AI-assisted coding leaves no canonical record of intent
 2. **Code is opaque**: Non-programmers can't review what systems actually do
 3. **Compliance gap**: Regulators can't audit AI-generated code decisions
@@ -27,7 +29,9 @@ Natural Language Source (NLS) creates an auditable intermediate layer between hu
 5. **Handoff friction**: New developers reverse-engineer intent from implementation
 
 ### The Gap
+
 AI can now:
+
 - Generate code from conversation (proven—we do this daily)
 - Explain code in natural language (proven)
 - Maintain semantic consistency (emerging)
@@ -57,6 +61,7 @@ Human ←→ AI Chat → .nl spec (audit trail) → Code → Execution
 ### What Each Stakeholder Experiences
 
 **Developer (same as today):**
+
 ```
 You: "Add rate limiting to the API. 100 requests per minute per user,
      with a 429 response when exceeded."
@@ -66,6 +71,7 @@ AI: "I'll add rate limiting middleware. Here's what I'm implementing..."
 ```
 
 **Manager/Auditor (new capability):**
+
 ```
 Opens: src/api.nl
 
@@ -93,10 +99,11 @@ Thinks: "I understand exactly what this does. Approved."
 ```
 
 **New Developer (onboarding):**
+
 ```
 $ ls src/*.nl
 api.nl          # API endpoints and middleware
-auth.nl         # Authentication logic  
+auth.nl         # Authentication logic
 billing.nl      # Payment processing
 notifications.nl # Email/SMS sending
 
@@ -123,22 +130,116 @@ project/
 
 ## Key Distinction: Conversation vs Specification
 
-**This is critical:** Humans never write `.nl` files directly.
+**This is critical:** Humans never write `.nl` files directly—but they _can_ edit them.
 
-| What Users Do | What They DON'T Do |
-|---------------|---------------------|
-| Chat naturally: "Add auth middleware" | Learn ANLU syntax |
-| Review generated specs | Write formal specifications |
-| Approve changes in plain English | Edit structured formats |
-| Ask questions: "Why does this work?" | Debug compilation errors |
+> [!NOTE] > **Nuance:** "Humans never write .nl" is philosophically correct but practically fragile.
+>
+> - Humans _will_ want to tweak specs
+> - AI will occasionally misrepresent intent
+> - Reviews will require edits
+>
+> **The policy:** Humans _can_ edit `.nl`, but they are _not expected to_.
+> This distinction matters for adoption and trust.
+
+| What Users Do                         | What They DON'T Do          |
+| ------------------------------------- | --------------------------- |
+| Chat naturally: "Add auth middleware" | Learn ANLU syntax           |
+| Review generated specs                | Write formal specifications |
+| Approve changes in plain English      | Edit structured formats     |
+| Ask questions: "Why does this work?"  | Debug compilation errors    |
 
 **The `.nl` file serves three audiences:**
 
 1. **Auditors/Compliance**: Can read and verify what code does
-2. **Managers**: Can review and approve without programming knowledge  
+2. **Managers**: Can review and approve without programming knowledge
 3. **Future Developers**: Can understand intent without reverse-engineering
 
 **The conversation is the interface. The `.nl` is the receipt.**
+
+---
+
+## Strategic Considerations
+
+> [!CAUTION] > **Scope Reality Check:** This PRD describes 5 startups worth of scope:
+>
+> 1. A language
+> 2. A compiler
+> 3. An editor experience
+> 4. A compliance standard
+> 5. A new source-of-truth model
+>
+> **MVP Focus:** Components 1 and 2 only (Language + Compiler).
+
+### On Legacy Code Atomization
+
+The vision of `nlsc atomize src/legacy.py` is optimistic:
+
+```bash
+$ nlsc atomize src/legacy.py
+✓ Extracted 12 ANLUs
+✓ Verified round-trip equivalence
+```
+
+**Reality:**
+
+- Side effects
+- Hidden state
+- Temporal coupling
+- Performance hacks
+- Implicit invariants
+
+These will explode ANLU complexity _fast_. The `@literal` escape hatch is necessary, but the more it appears, the more NLS becomes: _"Great for greenfield, awkward for reality."_
+
+**Mitigation:** Accept that legacy atomization is a Phase 4+ concern. Focus on greenfield generation first.
+
+### NLS as Infrastructure Layer
+
+> [!IMPORTANT] > **NLS is not the next product. NLS is the next infrastructure layer.**
+
+The worksheet product already proves the NLS philosophy:
+
+- AI proposes intent
+- A rigid engine enforces reality
+- Outputs are auditable
+- Hallucinations are impossible
+
+The worksheet is:
+
+- Constrained
+- Bounded
+- Physical (math, units, graphs)
+
+NLS is:
+
+- Abstract
+- General-purpose
+- Socio-technical
+
+**If you try to ship NLS first, you'll spend years explaining it.**
+**If you ship the worksheet first, NLS becomes _obvious_.**
+
+### The Emergence Strategy
+
+**Step 1:** Treat worksheet equations as the first ANLUs
+
+- Equations are already atomic
+- Inputs, outputs, units, guards exist
+- Dependency graph already exists
+
+**Step 2:** Add "Intent Blocks" to worksheets
+
+- PURPOSE, ASSUMPTIONS, EDGE CASES sections
+- That's `.nl` for math
+
+**Step 3:** Export worksheets to `.nl`
+
+- Not for users—for auditors, teachers, reviewers
+- Now NLS is proven, scoped, trusted, _boring_ (the best kind)
+
+**Step 4:** Only then generalize
+
+- Move to physics, then simulations, then pipelines, then code
+- At that point, NLS isn't a pitch—it's an inevitability
 
 ---
 
@@ -149,6 +250,7 @@ project/
 The fundamental building block—**generated by AI from conversation**, not written by humans.
 
 Each ANLU is:
+
 - **Self-contained**: Describes one logical operation
 - **Composable**: Can reference other ANLUs
 - **Deterministic**: Same ANLU + same compiler = same output
@@ -174,6 +276,7 @@ EDGE CASES:                              ← Robustness
 ### 2. The NL Schema
 
 Formal grammar for ANLUs. Enables:
+
 - Syntax highlighting and validation
 - Schema-aware autocomplete
 - Cross-reference checking
@@ -217,6 +320,7 @@ anlu:
 ```
 
 **Determinism guarantee:**
+
 - Lock file stores: ANLU hash + compiler version + output hash
 - Same inputs = same outputs, always
 - Lock file enables reproducible builds without LLM calls
@@ -224,6 +328,7 @@ anlu:
 ### 4. Bidirectional Sync
 
 **Atomize (code → NL):**
+
 ```bash
 $ nls atomize src/legacy.py
 ✓ Extracted 12 ANLUs
@@ -232,6 +337,7 @@ $ nls atomize src/legacy.py
 ```
 
 **Compile (NL → code):**
+
 ```bash
 $ nls compile src/auth.nl --target python
 ✓ Parsed 5 ANLUs
@@ -249,6 +355,7 @@ $ nls compile src/auth.nl --target python
 **Deliverable:** Formal grammar + reference documentation
 
 **Features:**
+
 - Module declarations (`@module`, `@target`, `@imports`)
 - ANLU syntax (identifier, purpose, inputs, guards, logic, returns)
 - Type system (primitives, composites, generics, constraints)
@@ -257,6 +364,7 @@ $ nls compile src/auth.nl --target python
 - Test specifications (`@test`, `@property`, `@invariant`)
 
 **Success Criteria:**
+
 - Grammar is parseable by tree-sitter
 - Any valid ANLU compiles to working code
 - Any working code atomizes to valid ANLUs
@@ -268,6 +376,7 @@ $ nls compile src/auth.nl --target python
 **Deliverable:** CLI tool for compilation and atomization
 
 **Commands:**
+
 ```bash
 nlsc init                    # Initialize NLS project
 nlsc compile <file.nl>       # NL → code
@@ -279,6 +388,7 @@ nlsc test                    # Run NL test specifications
 ```
 
 **Architecture:**
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                      nlsc                                │
@@ -299,11 +409,13 @@ nlsc test                    # Run NL test specifications
 ```
 
 **LLM Backend Options:**
+
 - Local: Ollama, llama.cpp
 - Cloud: Claude API, OpenAI API
 - Hybrid: Local for simple ANLUs, cloud for complex
 
 **Success Criteria:**
+
 - Compile 1000 ANLUs in < 60 seconds (cached)
 - Round-trip stability: atomize(compile(x)) ≈ x
 - Lock file enables zero-LLM rebuilds
@@ -316,21 +428,23 @@ nlsc test                    # Run NL test specifications
 
 **Scope:** Make .nl files readable in VS Code. That's it.
 
-| Feature | Description |
-|---------|-------------|
+| Feature             | Description                             |
+| ------------------- | --------------------------------------- |
 | Syntax highlighting | Colors for ANLU blocks, keywords, types |
-| Folding | Collapse individual ANLUs |
-| Outline view | Navigate ANLUs in sidebar |
-| Hover info | Show ANLU details on hover |
-| Go to definition | Jump to referenced ANLUs |
-| Code lens | "Show generated code" link per ANLU |
+| Folding             | Collapse individual ANLUs               |
+| Outline view        | Navigate ANLUs in sidebar               |
+| Hover info          | Show ANLU details on hover              |
+| Go to definition    | Jump to referenced ANLUs                |
+| Code lens           | "Show generated code" link per ANLU     |
 
 **What it's NOT:**
+
 - Not a chat interface (conversation happens elsewhere)
 - Not an editor for authoring .nl (AI generates these)
 - Not a compiler UI (CLI handles that)
 
 **Success Criteria:**
+
 - .nl files are pleasant to read
 - Can navigate large specs quickly
 - Non-programmers can browse without confusion
@@ -342,6 +456,7 @@ nlsc test                    # Run NL test specifications
 **Deliverable:** Schema validation between NL specs and runtime
 
 **Concept:**
+
 ```
 .nl file (producer schema)
         ↓
@@ -355,12 +470,14 @@ consumer code (runtime usage)
 ```
 
 **Features:**
+
 - Validate that consumers use generated code correctly
 - Detect schema drift between .nl spec and actual usage
 - Generate consumer stubs from .nl specs
 - Bi-directional contract comments
 
 **Integration:**
+
 ```bash
 # Validate entire pipeline
 nlsc trace --producer src/api.nl --consumer client/
@@ -387,10 +504,10 @@ nlsc trace --producer src/api.nl --consumer client/
 @types {
   User: {
     id: string
-    email: string  
+    email: string
     roles: list of string
   }
-  
+
   AuthError: Error {
     code: "MISSING" | "INVALID" | "EXPIRED"
     message: string
@@ -404,7 +521,7 @@ INPUTS:
   • secret: string, from env JWT_SECRET
 GUARDS:
   • token must not be empty → AuthError(MISSING, "Token required")
-  • signature must match secret → AuthError(INVALID, "Bad signature")  
+  • signature must match secret → AuthError(INVALID, "Bad signature")
   • exp claim must be in future → AuthError(EXPIRED, "Token expired")
 RETURNS: User
 LOGIC:
@@ -473,9 +590,9 @@ project:
 
 compiler:
   default_target: python
-  llm_backend: claude  # or openai, ollama, local
-  cache_strategy: aggressive  # none, normal, aggressive
-  
+  llm_backend: claude # or openai, ollama, local
+  cache_strategy: aggressive # none, normal, aggressive
+
 targets:
   python:
     version: ">=3.11"
@@ -484,16 +601,16 @@ targets:
   typescript:
     version: ">=5.0"
     strict: true
-    
+
 atomizer:
-  granularity: function  # function, class, module
+  granularity: function # function, class, module
   preserve_comments: true
   infer_types: true
 
 validation:
   require_purpose: true
   require_guards: false
-  max_anlu_complexity: 10  # lines of logic
+  max_anlu_complexity: 10 # lines of logic
 ```
 
 ---
@@ -504,15 +621,16 @@ validation:
 
 **Goal:** Prove the concept works
 
-| Task | Deliverable |
-|------|-------------|
-| Define NL schema v0.1 | `nl-schema.yaml` |
-| Build parser | Tree-sitter grammar |
-| Build basic compiler | Python target only |
-| Build basic atomizer | Python source only |
-| Prove round-trip | 10 test cases pass |
+| Task                  | Deliverable         |
+| --------------------- | ------------------- |
+| Define NL schema v0.1 | `nl-schema.yaml`    |
+| Build parser          | Tree-sitter grammar |
+| Build basic compiler  | Python target only  |
+| Build basic atomizer  | Python source only  |
+| Prove round-trip      | 10 test cases pass  |
 
 **Exit Criteria:**
+
 - Can write a .nl file, compile to Python, run it
 - Can atomize Python file, get equivalent .nl
 - Round-trip produces equivalent behavior
@@ -521,15 +639,16 @@ validation:
 
 **Goal:** Usable developer experience
 
-| Task | Deliverable |
-|------|-------------|
-| Syntax highlighting | TextMate grammar |
-| Basic diagnostics | Schema validation |
-| Compile on save | Background nlsc |
-| Inline code view | Code lens actions |
-| Error navigation | Click-to-source |
+| Task                | Deliverable       |
+| ------------------- | ----------------- |
+| Syntax highlighting | TextMate grammar  |
+| Basic diagnostics   | Schema validation |
+| Compile on save     | Background nlsc   |
+| Inline code view    | Code lens actions |
+| Error navigation    | Click-to-source   |
 
 **Exit Criteria:**
+
 - Developer can write NL, see Python, run tests
 - Errors in NL view, not in generated code
 - < 1s compile latency
@@ -538,15 +657,16 @@ validation:
 
 **Goal:** Reliable for real projects
 
-| Task | Deliverable |
-|------|-------------|
+| Task                     | Deliverable          |
+| ------------------------ | -------------------- |
 | Lock file implementation | Deterministic builds |
-| TypeScript target | Second language |
-| Test specifications | `@test` ANLUs |
-| trace-mcp integration | Contract validation |
-| CI/CD integration | GitHub Action |
+| TypeScript target        | Second language      |
+| Test specifications      | `@test` ANLUs        |
+| trace-mcp integration    | Contract validation  |
+| CI/CD integration        | GitHub Action        |
 
 **Exit Criteria:**
+
 - Zero-LLM builds from lock file
 - Multi-language project works
 - Tests written in NL, executed in target
@@ -555,15 +675,16 @@ validation:
 
 **Goal:** Community adoption
 
-| Task | Deliverable |
-|------|-------------|
-| Rust target | Third language |
-| LSP server | Editor-agnostic |
-| Package registry | Share ANLUs |
-| Documentation site | Tutorials, reference |
-| Atomize popular libs | Bootstrap content |
+| Task                 | Deliverable          |
+| -------------------- | -------------------- |
+| Rust target          | Third language       |
+| LSP server           | Editor-agnostic      |
+| Package registry     | Share ANLUs          |
+| Documentation site   | Tutorials, reference |
+| Atomize popular libs | Bootstrap content    |
 
 **Exit Criteria:**
+
 - Community contributions
 - 3+ target languages
 - 100+ public ANLUs in registry
@@ -573,21 +694,25 @@ validation:
 ## Success Metrics
 
 ### Adoption
+
 - 1,000 conversational sessions generating .nl files in first 6 months
 - 100 GitHub repos with .nl audit trails
 - 10 organizations using .nl for compliance/audit
 
 ### Developer Experience
+
 - Zero syntax learning required (conversation only)
 - < 2 second spec generation from conversation
 - 95% of generated specs accepted without modification
 
 ### Audit Value
+
 - Non-programmers can accurately describe system behavior from .nl files
 - Compliance reviews 5x faster with .nl vs code review
 - New developer onboarding time reduced 50%
 
 ### Quality
+
 - 95% of compiled code passes original tests
 - < 1% of ANLUs require `@literal` escape
 - Round-trip (code → .nl → code) preserves behavior
@@ -596,13 +721,13 @@ validation:
 
 ## Risks and Mitigations
 
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
-| LLM inconsistency | Breaks determinism | Medium | Lock files, test suites, version pinning |
-| Complex code can't atomize | Adoption blocked | Medium | `@literal` escape, granularity options |
-| Performance overhead | DX suffers | Low | Aggressive caching, local LLMs |
-| Schema too restrictive | Expressiveness limited | Medium | Iterative schema evolution, escape hatches |
-| Existing tooling incompatible | Integration pain | Medium | Generate standard code, source maps |
+| Risk                          | Impact                 | Likelihood | Mitigation                                 |
+| ----------------------------- | ---------------------- | ---------- | ------------------------------------------ |
+| LLM inconsistency             | Breaks determinism     | Medium     | Lock files, test suites, version pinning   |
+| Complex code can't atomize    | Adoption blocked       | Medium     | `@literal` escape, granularity options     |
+| Performance overhead          | DX suffers             | Low        | Aggressive caching, local LLMs             |
+| Schema too restrictive        | Expressiveness limited | Medium     | Iterative schema evolution, escape hatches |
+| Existing tooling incompatible | Integration pain       | Medium     | Generate standard code, source maps        |
 
 ---
 
@@ -620,13 +745,13 @@ validation:
 
 ## Appendix A: Comparison to Existing Tools
 
-| Tool | Approach | NLS Difference |
-|------|----------|----------------|
-| GitHub Copilot | AI suggests code inline | NLS: NL is the source, code is artifact |
-| Cursor | AI-assisted code editing | NLS: Never edit code directly |
-| GPT Engineer | NL → full project generation | NLS: Granular ANLUs, bidirectional |
-| Devin | Autonomous coding agent | NLS: Human controls spec, AI compiles |
-| Langchain/DSPy | Prompt programming | NLS: General purpose, not just LLM chains |
+| Tool           | Approach                     | NLS Difference                            |
+| -------------- | ---------------------------- | ----------------------------------------- |
+| GitHub Copilot | AI suggests code inline      | NLS: NL is the source, code is artifact   |
+| Cursor         | AI-assisted code editing     | NLS: Never edit code directly             |
+| GPT Engineer   | NL → full project generation | NLS: Granular ANLUs, bidirectional        |
+| Devin          | Autonomous coding agent      | NLS: Human controls spec, AI compiles     |
+| Langchain/DSPy | Prompt programming           | NLS: General purpose, not just LLM chains |
 
 ---
 
@@ -650,7 +775,7 @@ INPUTS:
   • b: number
 RETURNS: a + b
 
-[multiply]  
+[multiply]
 PURPOSE: Multiply two numbers
 INPUTS:
   • a: number
@@ -686,18 +811,20 @@ $ pytest tests/
 NLS extends this: **The specification is the intelligence. The code is just hands.**
 
 We've accepted that:
+
 - SQL is better than hand-rolling B-trees
-- React is better than hand-rolling DOM manipulation  
+- React is better than hand-rolling DOM manipulation
 - Kubernetes is better than hand-rolling container orchestration
 
 NLS proposes:
+
 - Natural language is better than hand-rolling implementations
 
 The abstraction ladder keeps climbing. We're just taking the next step.
 
 ---
 
-*"I don't write code anymore. I write wishes. The computer grants them."*
+_"I don't write code anymore. I write wishes. The computer grants them."_
 
 ---
 

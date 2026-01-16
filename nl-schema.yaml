@@ -1,0 +1,162 @@
+# NLS Schema Definition v0.1
+# Formal structure for Atomic Natural Language Units (ANLUs)
+# Reference: PRD.md lines 285-299
+
+schema_version: "0.1.0"
+
+# Module-level directives
+module:
+  directives:
+    module:
+      description: "Module name identifier"
+      required: true
+      pattern: "^[a-z][a-z0-9_]*$"
+
+    version:
+      description: "Semantic version of the module"
+      required: false
+      pattern: "^\\d+\\.\\d+\\.\\d+$"
+
+    target:
+      description: "Target language and version constraint"
+      required: true
+      examples:
+        - "python"
+        - "python >= 3.11"
+        - "typescript >= 5.0"
+
+    imports:
+      description: "Comma-separated list of dependencies"
+      required: false
+      examples:
+        - "jwt, datetime, typing"
+        - "numpy, pandas"
+
+  sections:
+    types:
+      description: "Custom type definitions"
+      syntax: "@types { TypeName: { field: type } }"
+
+    test:
+      description: "Test specifications for ANLUs"
+      syntax: "@test [anlu-id] { assertions }"
+
+    literal:
+      description: "Escape hatch for exact code"
+      syntax: "@literal <language> { code }"
+
+# ANLU (Atomic Natural Language Unit) structure
+anlu:
+  # Required fields - every ANLU must have these
+  required:
+    identifier:
+      description: "Unique name for the ANLU within its module"
+      format: "kebab-case"
+      pattern: "^[a-z][a-z0-9-]*$"
+      examples:
+        - "add"
+        - "calculate-tax"
+        - "validate-token"
+
+    purpose:
+      description: "Single sentence describing what the ANLU does"
+      format: "Imperative mood, present tense"
+      max_length: 200
+      examples:
+        - "Add two numbers"
+        - "Compute tax liability from income and brackets"
+        - "Verify JWT and extract user identity"
+
+    returns:
+      description: "Output type or expression"
+      formats:
+        - type: "Type specification (e.g., 'number', 'User', 'list of string')"
+        - expression: "Inline expression (e.g., 'a + b', 'a × b')"
+      examples:
+        - "number"
+        - "a + b"
+        - "TaxResult with amount, effective_rate"
+
+  # Optional fields
+  optional:
+    inputs:
+      description: "List of typed input parameters"
+      format: '• name: type [, constraints] [, "description"]'
+      examples:
+        - "• a: number"
+        - "• income: number, non-negative"
+        - '• token: string, required, "The JWT to validate"'
+
+    guards:
+      description: "Preconditions with error mappings"
+      format: "• condition → ErrorType(code, message)"
+      examples:
+        - '• token must not be empty → AuthError(MISSING, "Token required")'
+        - '• income must be non-negative → ValidationError("Invalid income")'
+
+    logic:
+      description: "Ordered steps describing the algorithm"
+      format: "Numbered list of imperative statements"
+      examples:
+        - "1. Decode token without verification"
+        - "2. Verify signature using secret"
+        - "3. Extract payload claims"
+
+    edge_cases:
+      description: "Explicit handling for boundary conditions"
+      format: "• condition → behavior"
+      examples:
+        - "• Zero income → zero tax"
+        - "• Empty list → return None"
+
+    depends:
+      description: "List of ANLU identifiers this unit depends on"
+      format: "[anlu-id] or [module:anlu-id]"
+      examples:
+        - "[validate-token]"
+        - "[auth:require-role]"
+
+    literal:
+      description: "Escape hatch for embedding exact code"
+      usage: "When algorithmic precision or performance requires specific implementation"
+
+# Type system
+types:
+  primitives:
+    - number # Numeric values (int or float)
+    - string # Text
+    - boolean # true/false
+    - void # No return value
+    - any # Escape hatch for dynamic typing
+
+  composites:
+    list:
+      syntax: "list of <type>"
+      examples: ["list of number", "list of User"]
+
+    optional:
+      syntax: "<type> or None"
+      examples: ["string or None", "User or None"]
+
+    union:
+      syntax: "<type> | <type>"
+      examples: ["string | number", "Success | Error"]
+
+    record:
+      syntax: "{ field: type, ... }"
+      examples: ["{ id: string, name: string }"]
+
+# Parsing grammar hints
+parsing:
+  anlu_start: "^\\[([a-z][a-z0-9-]*)\\]\\s*$"
+  directive_start: "^@(module|version|target|imports|types|test|literal)"
+  field_patterns:
+    purpose: "^PURPOSE:\\s*(.+)$"
+    inputs: "^INPUTS:\\s*$"
+    guards: "^GUARDS:\\s*$"
+    logic: "^LOGIC:\\s*$"
+    returns: "^RETURNS:\\s*(.+)$"
+    edge_cases: "^EDGE CASES:\\s*$"
+    depends: "^DEPENDS:\\s*(.+)$"
+  bullet: "^\\s*[•\\-\\*]\\s*(.+)$"
+  numbered: "^\\s*(\\d+)\\.\\s*(.+)$"
