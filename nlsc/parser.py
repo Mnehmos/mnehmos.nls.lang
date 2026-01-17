@@ -77,6 +77,7 @@ def parse_guard(text: str) -> Guard:
     """
     Parse a guard line like:
     • token must not be empty → AuthError(MISSING, "Token required")
+    • amount > 0 → ValueError(Amount must be positive)
     """
     # Split on arrow
     if "→" in text:
@@ -85,10 +86,10 @@ def parse_guard(text: str) -> Guard:
         condition, error_part = text.split("->", 1)
     else:
         return Guard(condition=text.strip())
-    
+
     condition = condition.strip()
     error_part = error_part.strip()
-    
+
     # Parse error specification like AuthError(MISSING, "Token required")
     error_match = re.match(r"(\w+)\(([^,]+),\s*\"([^\"]+)\"\)", error_part)
     if error_match:
@@ -98,7 +99,16 @@ def parse_guard(text: str) -> Guard:
             error_code=error_match.group(2),
             error_message=error_match.group(3)
         )
-    
+
+    # Parse error specification like ValueError(Amount must be positive)
+    simple_error_match = re.match(r"(\w+)\(([^)]+)\)", error_part)
+    if simple_error_match:
+        return Guard(
+            condition=condition,
+            error_type=simple_error_match.group(1),
+            error_message=simple_error_match.group(2).strip()
+        )
+
     return Guard(condition=condition, error_message=error_part)
 
 

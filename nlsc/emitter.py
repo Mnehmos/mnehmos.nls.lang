@@ -125,6 +125,32 @@ def emit_docstring(anlu: ANLU) -> str:
     return "\n".join(lines)
 
 
+def emit_guards(anlu: ANLU) -> list[str]:
+    """
+    Generate guard validation code.
+
+    Returns list of indented lines that implement guard checks.
+    Guards are emitted as if-not-raise blocks.
+    """
+    lines = []
+
+    for guard in anlu.guards:
+        condition = guard.condition.strip()
+        error_type = guard.error_type or "ValueError"
+        error_message = guard.error_message or "Guard condition failed"
+
+        # Generate the if-not check
+        lines.append(f"    if not ({condition}):")
+
+        # Generate the raise statement
+        if guard.error_code:
+            lines.append(f"        raise {error_type}('{guard.error_code}', '{error_message}')")
+        else:
+            lines.append(f"        raise {error_type}('{error_message}')")
+
+    return lines
+
+
 def emit_body_from_logic(anlu: ANLU) -> str:
     """
     Generate function body deterministically from LOGIC steps.
@@ -136,6 +162,10 @@ def emit_body_from_logic(anlu: ANLU) -> str:
     - RETURNS becomes the return statement
     """
     lines = []
+
+    # Emit guards first
+    guard_lines = emit_guards(anlu)
+    lines.extend(guard_lines)
 
     # Process each logic step
     for step in anlu.logic_steps:
@@ -273,13 +303,9 @@ def emit_body_mock(anlu: ANLU) -> str:
         lines.append(f"    return {expr}")
         return "\n".join(lines)
 
-    # If guards are provided, generate guard checks
+    # If guards are provided, generate guard validation code
     if anlu.guards:
-        lines = []
-        for guard in anlu.guards:
-            lines.append(f"    # Guard: {guard.condition}")
-            if guard.error_message:
-                lines.append(f'    # → {guard.error_type or "Error"}({guard.error_message})')
+        lines = emit_guards(anlu)
         lines.append(f"    return {expr}")
         return "\n".join(lines)
 
