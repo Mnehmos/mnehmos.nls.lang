@@ -5,6 +5,7 @@ Commands:
     nlsc init              Initialize a new NLS project
     nlsc compile <file>    Compile .nl file to target language
     nlsc verify <file>     Verify .nl file without generating
+    nlsc graph <file>      Visualize dependencies and dataflow
 """
 
 import argparse
@@ -16,6 +17,14 @@ from .parser import parse_nl_path, ParseError
 from .resolver import resolve_dependencies
 from .emitter import emit_python, emit_tests
 from .lockfile import generate_lockfile, write_lockfile
+from .graph import (
+    emit_mermaid,
+    emit_dot,
+    emit_ascii,
+    emit_dataflow_mermaid,
+    emit_dataflow_ascii,
+    emit_fsm_mermaid,
+)
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -194,6 +203,69 @@ def cmd_verify(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_graph(args: argparse.Namespace) -> int:
+    """Generate dependency graph visualization"""
+    source_path = Path(args.file)
+
+    if not source_path.exists():
+        print(f"Error: File not found: {source_path}", file=sys.stderr)
+        return 1
+
+    # Parse
+    try:
+        nl_file = parse_nl_path(source_path)
+    except ParseError as e:
+        print(f"Parse error: {e}", file=sys.stderr)
+        return 1
+
+    output_format = args.format or "mermaid"
+    anlu_id = args.anlu
+    dataflow = args.dataflow
+
+    # If specific ANLU requested
+    if anlu_id:
+        anlu = nl_file.get_anlu(anlu_id)
+        if not anlu:
+            print(f"Error: ANLU '{anlu_id}' not found", file=sys.stderr)
+            print(f"Available: {', '.join(a.identifier for a in nl_file.anlus)}")
+            return 1
+
+        # Check if ANLU has FSM states
+        has_fsm = bool(anlu.fsm_states())
+
+        if output_format == "mermaid":
+            if has_fsm and not dataflow:
+                output = emit_fsm_mermaid(anlu)
+            else:
+                output = emit_dataflow_mermaid(anlu)
+        elif output_format == "ascii":
+            output = emit_dataflow_ascii(anlu)
+        else:
+            print(f"Error: Format '{output_format}' not supported for dataflow", file=sys.stderr)
+            return 1
+    else:
+        # Full file dependency graph
+        if output_format == "mermaid":
+            output = emit_mermaid(nl_file)
+        elif output_format == "dot":
+            output = emit_dot(nl_file)
+        elif output_format == "ascii":
+            output = emit_ascii(nl_file)
+        else:
+            print(f"Error: Unknown format '{output_format}'", file=sys.stderr)
+            return 1
+
+    # Output
+    if args.output:
+        output_path = Path(args.output)
+        output_path.write_text(output, encoding="utf-8")
+        print(f"Graph written to {output_path}")
+    else:
+        print(output)
+
+    return 0
+
+
 def main() -> int:
     """Main entry point for nlsc CLI"""
     parser = argparse.ArgumentParser(
@@ -205,6 +277,8 @@ Examples:
   nlsc init                     Initialize new NLS project
   nlsc compile src/math.nl      Compile to Python
   nlsc verify src/auth.nl       Validate without generating
+  nlsc graph src/order.nl       Generate Mermaid dependency diagram
+  nlsc graph src/order.nl -a process-order  Visualize ANLU dataflow
 
 The conversation is the programming. The .nl file is the receipt.
 """
@@ -248,7 +322,36 @@ The conversation is the programming. The .nl file is the receipt.
         "file",
         help="Path to .nl file"
     )
-    
+
+    # graph command
+    graph_parser = subparsers.add_parser(
+        "graph",
+        help="Visualize dependencies and dataflow"
+    )
+    graph_parser.add_argument(
+        "file",
+        help="Path to .nl file"
+    )
+    graph_parser.add_argument(
+        "-f", "--format",
+        choices=["mermaid", "dot", "ascii"],
+        default="mermaid",
+        help="Output format (default: mermaid)"
+    )
+    graph_parser.add_argument(
+        "-a", "--anlu",
+        help="Specific ANLU for dataflow visualization"
+    )
+    graph_parser.add_argument(
+        "--dataflow",
+        action="store_true",
+        help="Show dataflow instead of FSM states"
+    )
+    graph_parser.add_argument(
+        "-o", "--output",
+        help="Output file path (default: stdout)"
+    )
+
     args = parser.parse_args()
     
     if args.command is None:
@@ -261,7 +364,9 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_compile(args)
     elif args.command == "verify":
         return cmd_verify(args)
-    
+    elif args.command == "graph":
+        return cmd_graph(args)
+
     return 0
 
 
