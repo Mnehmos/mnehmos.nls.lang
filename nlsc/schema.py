@@ -36,15 +36,33 @@ class Input:
             "boolean": "bool",
             "void": "None",
             "any": "Any",
+            "dictionary": "dict",
+            "dict": "dict",
+            "integer": "int",
         }
-        
+
+        type_str = self.type.strip()
+
+        # Handle "X or null" / "X or none" → Optional[X]
+        if " or null" in type_str.lower() or " or none" in type_str.lower():
+            # Extract the non-null type
+            base_type = type_str.split(" or ")[0].strip()
+            base_py = type_map.get(base_type.lower(), base_type)
+            return f"Optional[{base_py}]"
+
+        # Handle nested "list of list of X"
+        if type_str.startswith("list of list of "):
+            inner = type_str[16:]  # Remove "list of list of "
+            inner_py = type_map.get(inner.lower(), inner)
+            return f"list[list[{inner_py}]]"
+
         # Handle "list of X"
-        if self.type.startswith("list of "):
-            inner = self.type[8:]  # Remove "list of "
-            inner_py = type_map.get(inner, inner)
+        if type_str.startswith("list of "):
+            inner = type_str[8:]  # Remove "list of "
+            inner_py = type_map.get(inner.lower(), inner)
             return f"list[{inner_py}]"
-        
-        return type_map.get(self.type, self.type)
+
+        return type_map.get(type_str.lower(), type_str)
 
 
 @dataclass
