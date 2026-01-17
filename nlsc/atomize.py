@@ -59,6 +59,84 @@ def python_type_to_nl(type_node: ast.expr | None) -> str:
     return ast.unparse(type_node) if hasattr(ast, "unparse") else "any"
 
 
+def extract_guards(func: ast.FunctionDef) -> list[dict[str, str]]:
+    """
+    Extract GUARDS from if/raise patterns at the start of function body.
+
+    Patterns detected:
+    - if not condition: raise Error("message")
+    - if condition: raise Error("message")
+
+    Returns list of dicts with 'condition', 'error_type', 'error_message'.
+    """
+    guards = []
+
+    for node in func.body:
+        # Skip docstring
+        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant):
+            continue
+
+        # Look for if statements that raise exceptions
+        if isinstance(node, ast.If):
+            # Check if body is just a raise statement
+            if len(node.body) == 1 and isinstance(node.body[0], ast.Raise):
+                raise_node = node.body[0]
+
+                # Extract condition (invert if it's a guard pattern)
+                try:
+                    condition = ast.unparse(node.test)
+                except Exception:
+                    continue
+
+                # Convert "if not X" to guard "X"
+                if isinstance(node.test, ast.UnaryOp) and isinstance(node.test.op, ast.Not):
+                    # Guard is the positive condition
+                    condition = ast.unparse(node.test.operand)
+                else:
+                    # Guard is the negation of the condition
+                    # e.g., "if x < 0" -> guard is "x >= 0"
+                    # For simplicity, we'll express it as "NOT (original)"
+                    condition = f"NOT ({condition})"
+
+                # Extract error type and message
+                error_type = "ValueError"
+                error_message = "Guard condition failed"
+
+                if raise_node.exc:
+                    if isinstance(raise_node.exc, ast.Call):
+                        # Get error type name
+                        if isinstance(raise_node.exc.func, ast.Name):
+                            error_type = raise_node.exc.func.id
+
+                        # Get error message from first argument
+                        if raise_node.exc.args:
+                            try:
+                                msg_node = raise_node.exc.args[0]
+                                if isinstance(msg_node, ast.Constant):
+                                    error_message = str(msg_node.value)
+                                else:
+                                    error_message = ast.unparse(msg_node)
+                            except Exception:
+                                pass
+
+                guards.append({
+                    "condition": condition,
+                    "error_type": error_type,
+                    "error_message": error_message,
+                })
+            else:
+                # Not a simple guard pattern, stop looking
+                break
+        elif isinstance(node, ast.Assign):
+            # Assignments can come after guards, keep looking
+            continue
+        else:
+            # Any other statement type means guards section is over
+            break
+
+    return guards
+
+
 def extract_logic_steps(func: ast.FunctionDef) -> list[str]:
     """
     Extract LOGIC steps from function body (assignments before return).
@@ -67,11 +145,24 @@ def extract_logic_steps(func: ast.FunctionDef) -> list[str]:
     """
     logic_steps = []
 
+    # Skip guards at the start (if/raise patterns)
+    in_guards = True
+
     # Only look at direct children of the function body (not nested)
     for node in func.body:
         # Skip docstring
         if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant):
             continue
+
+        # Skip guard patterns
+        if in_guards and isinstance(node, ast.If):
+            if len(node.body) == 1 and isinstance(node.body[0], ast.Raise):
+                continue
+            else:
+                in_guards = False
+
+        if isinstance(node, ast.Assign):
+            in_guards = False  # Past guards now
 
         # Capture assignments
         if isinstance(node, ast.Assign):
@@ -155,6 +246,9 @@ def extract_anlu_from_function(func: ast.FunctionDef) -> dict[str, Any]:
         }
         inputs.append(input_def)
 
+    # Extract GUARDS (if/raise patterns)
+    guards = extract_guards(func)
+
     # Extract LOGIC steps (intermediate assignments)
     logic_steps = extract_logic_steps(func)
 
@@ -165,6 +259,7 @@ def extract_anlu_from_function(func: ast.FunctionDef) -> dict[str, Any]:
         "identifier": snake_to_kebab(func.name),
         "purpose": purpose,
         "inputs": inputs,
+        "guards": guards,
         "logic": logic_steps,
         "returns": returns,
     }
@@ -222,6 +317,11 @@ def atomize_to_nl(code: str, module_name: str = "extracted") -> str:
             lines.append("INPUTS:")
             for inp in anlu["inputs"]:
                 lines.append(f"  - {inp['name']}: {inp['type']}")
+
+        if anlu.get("guards"):
+            lines.append("GUARDS:")
+            for guard in anlu["guards"]:
+                lines.append(f"  - {guard['condition']} | {guard['error_type']}: \"{guard['error_message']}\"")
 
         if anlu.get("logic"):
             lines.append("LOGIC:")
