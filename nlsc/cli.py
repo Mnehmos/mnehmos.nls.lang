@@ -20,6 +20,7 @@ from pathlib import Path
 
 from . import __version__
 from .parser import parse_nl_path, ParseError
+from .schema import NLFile
 from .resolver import resolve_dependencies
 from .emitter import emit_python, emit_tests
 from .lockfile import generate_lockfile, write_lockfile
@@ -35,6 +36,36 @@ from .atomize import atomize_file
 from .diff import get_anlu_changes, format_changes_output, format_stat_output, generate_full_diff
 from .lockfile import read_lockfile
 from .watch import NLWatcher, format_timestamp
+
+# Parser selection
+_use_treesitter = False
+
+
+def set_parser_backend(backend: str) -> None:
+    """Set the parser backend to use: 'regex' or 'treesitter'."""
+    global _use_treesitter
+    if backend == "treesitter":
+        # Check if tree-sitter is available
+        try:
+            from . import parser_treesitter
+            if not parser_treesitter.is_available():
+                raise ImportError("tree-sitter is not installed")
+        except ImportError as e:
+            print(f"Error: Tree-sitter parser not available: {e}", file=sys.stderr)
+            print("Install with: pip install nlsc[treesitter]", file=sys.stderr)
+            sys.exit(1)
+        _use_treesitter = True
+    else:
+        _use_treesitter = False
+
+
+def parse_nl_file_auto(source_path: Path) -> NLFile:
+    """Parse a .nl file using the selected parser backend."""
+    if _use_treesitter:
+        from .parser_treesitter import parse_nl_path_treesitter
+        return parse_nl_path_treesitter(source_path)
+    else:
+        return parse_nl_path(source_path)
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -104,16 +135,17 @@ validation:
 def cmd_compile(args: argparse.Namespace) -> int:
     """Compile a .nl file to target language"""
     source_path = Path(args.file)
-    
+
     if not source_path.exists():
         print(f"Error: File not found: {source_path}", file=sys.stderr)
         return 1
-    
-    print(f"Compiling {source_path}...")
-    
+
+    parser_name = "tree-sitter" if _use_treesitter else "regex"
+    print(f"Compiling {source_path} (parser: {parser_name})...")
+
     # Parse
     try:
-        nl_file = parse_nl_path(source_path)
+        nl_file = parse_nl_file_auto(source_path)
         print(f"  ✓ Parsed {len(nl_file.anlus)} ANLUs")
     except ParseError as e:
         print(f"  ✗ Parse error: {e}", file=sys.stderr)
@@ -170,16 +202,17 @@ def cmd_compile(args: argparse.Namespace) -> int:
 def cmd_verify(args: argparse.Namespace) -> int:
     """Verify a .nl file without generating code"""
     source_path = Path(args.file)
-    
+
     if not source_path.exists():
         print(f"Error: File not found: {source_path}", file=sys.stderr)
         return 1
-    
-    print(f"Verifying {source_path}...")
-    
+
+    parser_name = "tree-sitter" if _use_treesitter else "regex"
+    print(f"Verifying {source_path} (parser: {parser_name})...")
+
     # Parse
     try:
-        nl_file = parse_nl_path(source_path)
+        nl_file = parse_nl_file_auto(source_path)
         print(f"  ✓ Syntax valid: {len(nl_file.anlus)} ANLUs")
     except ParseError as e:
         print(f"  ✗ Parse error: {e}", file=sys.stderr)
@@ -223,7 +256,7 @@ def cmd_graph(args: argparse.Namespace) -> int:
 
     # Parse
     try:
-        nl_file = parse_nl_path(source_path)
+        nl_file = parse_nl_file_auto(source_path)
     except ParseError as e:
         print(f"Parse error: {e}", file=sys.stderr)
         return 1
@@ -286,7 +319,7 @@ def cmd_test(args: argparse.Namespace) -> int:
 
     # Parse
     try:
-        nl_file = parse_nl_path(source_path)
+        nl_file = parse_nl_file_auto(source_path)
     except ParseError as e:
         print(f"Parse error: {e}", file=sys.stderr)
         return 1
@@ -395,7 +428,7 @@ def cmd_diff(args: argparse.Namespace) -> int:
 
     # Parse current NL file
     try:
-        nl_file = parse_nl_path(source_path)
+        nl_file = parse_nl_file_auto(source_path)
     except ParseError as e:
         print(f"Parse error: {e}", file=sys.stderr)
         return 1
@@ -505,7 +538,13 @@ The conversation is the programming. The .nl file is the receipt.
         action="version",
         version=f"nlsc {__version__}"
     )
-    
+    parser.add_argument(
+        "--parser",
+        choices=["regex", "treesitter"],
+        default="regex",
+        help="Parser backend: 'regex' (default) or 'treesitter'"
+    )
+
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     
     # init command
@@ -651,11 +690,15 @@ The conversation is the programming. The .nl file is the receipt.
     )
 
     args = parser.parse_args()
-    
+
     if args.command is None:
         parser.print_help()
         return 0
-    
+
+    # Set parser backend before any parsing commands
+    if hasattr(args, "parser") and args.parser:
+        set_parser_backend(args.parser)
+
     if args.command == "init":
         return cmd_init(args)
     elif args.command == "compile":
