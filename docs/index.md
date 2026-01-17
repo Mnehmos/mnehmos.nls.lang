@@ -38,22 +38,32 @@ def divide(numerator: float, divisor: float) -> float:
     return numerator / divisor
 ```
 
+## Installation
+
+```bash
+pip install nlsc
+```
+
 ## Project Status
 
-| Component            | Status      |
-| -------------------- | ----------- |
-| Parser (regex)       | ✅ Complete |
-| Parser (tree-sitter) | ✅ Complete |
-| Python emitter       | ✅ Complete |
-| Type generation      | ✅ Complete |
-| Guard validation     | ✅ Complete |
-| Dataflow analysis    | ✅ Complete |
-| Test runner          | ✅ Complete |
-| Watch mode           | ✅ Complete |
-| VS Code extension    | 🔜 Planned  |
-| TypeScript target    | 🔜 Planned  |
+| Component              | Status      |
+| ---------------------- | ----------- |
+| Parser (regex)         | ✅ Complete |
+| Parser (tree-sitter)   | ✅ Complete |
+| Python emitter         | ✅ Complete |
+| Type generation        | ✅ Complete |
+| Guard validation       | ✅ Complete |
+| Dataflow analysis      | ✅ Complete |
+| Test runner            | ✅ Complete |
+| Property-based testing | ✅ Complete |
+| Type invariants        | ✅ Complete |
+| Watch mode             | ✅ Complete |
+| GitHub Action          | ✅ Complete |
+| PyPI distribution      | ✅ Complete |
+| VS Code extension      | 🔜 Planned  |
+| TypeScript target      | 🔜 Planned  |
 
-**160 tests passing** — Production-ready for Python target.
+**239 tests passing** — Production-ready for Python target.
 
 ## Get Started
 

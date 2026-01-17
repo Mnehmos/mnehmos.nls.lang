@@ -1,6 +1,7 @@
 # Natural Language Source (NLS)
 
-[![Tests](https://img.shields.io/badge/tests-228%20passing-brightgreen)](https://github.com/Mnehmos/mnehmos.nls.lang)
+[![PyPI](https://img.shields.io/pypi/v/nlsc)](https://pypi.org/project/nlsc/)
+[![Tests](https://img.shields.io/badge/tests-239%20passing-brightgreen)](https://github.com/Mnehmos/mnehmos.nls.lang)
 [![CI](https://github.com/Mnehmos/mnehmos.nls.lang/actions/workflows/ci.yml/badge.svg)](https://github.com/Mnehmos/mnehmos.nls.lang/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](https://www.python.org)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -13,14 +14,16 @@ NLS is a programming language where specifications are written in plain English 
 ## Installation
 
 ```bash
-# Basic install
-pip install -e .
+# Install from PyPI
+pip install nlsc
 
 # With tree-sitter parser (faster, better error recovery)
-pip install -e ".[treesitter]"
+pip install "nlsc[treesitter]"
 
-# With development tools
-pip install -e ".[dev]"
+# For development (from source)
+git clone https://github.com/Mnehmos/mnehmos.nls.lang.git
+cd mnehmos.nls.lang
+pip install -e ".[dev,treesitter]"
 ```
 
 ## Quick Start
@@ -249,6 +252,30 @@ DEPENDS: [other-function], [another]
 }
 ```
 
+### Property-Based Testing
+
+```nl
+@property [add] {
+  add(a, b) == add(b, a)           # commutativity
+  add(a, 0) == a                   # identity
+  forall x: number -> add(x, -x) == 0
+}
+```
+
+### Type Invariants
+
+```nl
+@type Account {
+  balance: number
+  owner: string
+}
+
+@invariant Account {
+  balance >= 0
+  len(owner) > 0
+}
+```
+
 ### Directives
 
 ```nl
@@ -276,22 +303,25 @@ DEPENDS: [other-function], [another]
 
 ## Project Status
 
-| Component            | Status      |
-| -------------------- | ----------- |
-| Parser (regex)       | ✅ Complete |
-| Parser (tree-sitter) | ✅ Complete |
-| Python emitter       | ✅ Complete |
-| Type generation      | ✅ Complete |
-| Guard validation     | ✅ Complete |
-| Dataflow analysis    | ✅ Complete |
-| Test runner          | ✅ Complete |
-| Watch mode           | ✅ Complete |
-| GitHub Action        | ✅ Complete |
-| VS Code extension    | 🔜 Planned  |
-| TypeScript target    | 🔜 Planned  |
-| LSP server           | 🔜 Planned  |
+| Component              | Status      |
+| ---------------------- | ----------- |
+| Parser (regex)         | ✅ Complete |
+| Parser (tree-sitter)   | ✅ Complete |
+| Python emitter         | ✅ Complete |
+| Type generation        | ✅ Complete |
+| Guard validation       | ✅ Complete |
+| Dataflow analysis      | ✅ Complete |
+| Test runner            | ✅ Complete |
+| Property-based testing | ✅ Complete |
+| Type invariants        | ✅ Complete |
+| Watch mode             | ✅ Complete |
+| GitHub Action          | ✅ Complete |
+| PyPI distribution      | ✅ Complete |
+| VS Code extension      | 🔜 Planned  |
+| TypeScript target      | 🔜 Planned  |
+| LSP server             | 🔜 Planned  |
 
-**228 tests passing** — Production-ready for Python target. See [GitHub Issues](https://github.com/Mnehmos/mnehmos.nls.lang/issues) for roadmap.
+**239 tests passing** — Production-ready for Python target. See [GitHub Issues](https://github.com/Mnehmos/mnehmos.nls.lang/issues) for roadmap.
 
 ## Documentation
 

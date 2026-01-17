@@ -4,16 +4,16 @@ This guide will walk you through installing NLS and creating your first compiled
 
 ## Installation
 
-=== "Basic Install"
+=== "From PyPI"
 
     ```bash
-    pip install -e .
+    pip install nlsc
     ```
 
 === "With Tree-sitter Parser"
 
     ```bash
-    pip install -e ".[treesitter]"
+    pip install "nlsc[treesitter]"
     ```
 
     The tree-sitter parser provides faster parsing and better error recovery.
