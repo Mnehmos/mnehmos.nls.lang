@@ -39,15 +39,15 @@ class ResolverResult:
 def resolve_dependencies(nl_file: NLFile) -> ResolverResult:
     """
     Resolve ANLU dependencies and return compilation order.
-    
+
     Uses topological sort to order ANLUs so dependencies come first.
     Detects:
     - Missing dependencies
     - Circular dependencies
-    
+
     Args:
         nl_file: Parsed NLFile with ANLUs
-    
+
     Returns:
         ResolverResult with ordered ANLUs or errors
     """
@@ -73,7 +73,7 @@ def resolve_dependencies(nl_file: NLFile) -> ResolverResult:
 
     # Topological sort using Kahn's algorithm
     # Count incoming edges (dependencies pointing to each node)
-    in_degree = {anlu.identifier: 0 for anlu in nl_file.anlus}
+    {anlu.identifier: 0 for anlu in nl_file.anlus}
 
     for anlu in nl_file.anlus:
         for dep in anlu.depends:

@@ -110,19 +110,14 @@ def format_changes_output(changes: list[ANLUChange]) -> str:
 
     for change in sorted(changes, key=lambda c: c.identifier):
         if change.status == "unchanged":
-            status_str = "  "  # No marker for unchanged
             line = f"[{change.identifier}] - unchanged"
         elif change.status == "modified":
-            status_str = "M "
             line = f"[{change.identifier}] - modified"
         elif change.status == "new":
-            status_str = "+ "
             line = f"[{change.identifier}] - new"
         elif change.status == "removed":
-            status_str = "- "
             line = f"[{change.identifier}] - removed"
         else:
-            status_str = "? "
             line = f"[{change.identifier}] - {change.status}"
 
         lines.append(line)

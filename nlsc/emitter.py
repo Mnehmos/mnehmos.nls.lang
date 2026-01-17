@@ -315,7 +315,7 @@ def _desc_to_expr(desc: str) -> str:
 def _convert_main_line(line: str) -> Optional[str]:
     """
     Convert an NLS main block line to Python.
-    
+
     Handles:
     - WHILE condition { -> while condition:
     - } -> (closing brace, returns None)
@@ -422,11 +422,11 @@ def emit_body_mock(anlu: ANLU) -> str:
 def emit_anlu(anlu: ANLU, mode: str = "mock") -> str:
     """
     Emit Python code for a single ANLU.
-    
+
     Args:
         anlu: The ANLU to emit
         mode: "mock" for template-based, "llm" for LLM-based (future)
-    
+
     Returns:
         Python function as a string
     """
@@ -567,7 +567,7 @@ def _order_types(types: list[TypeDefinition]) -> list[TypeDefinition]:
 def emit_tests(nl_file: NLFile) -> Optional[str]:
     """
     Emit pytest tests from @test blocks.
-    
+
     Returns:
         Python test file content, or None if no tests
     """

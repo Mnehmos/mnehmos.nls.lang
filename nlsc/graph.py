@@ -133,7 +133,7 @@ def emit_dataflow_mermaid(anlu: ANLU) -> str:
     for step in anlu.logic_steps:
         node_id = f"step{step.number}"
         assigns_str = ", ".join(step.assigns) if step.assigns else "..."
-        desc_short = step.description[:25] if len(step.description) > 25 else step.description
+        step.description[:25] if len(step.description) > 25 else step.description
         label = f"Step {step.number}: {assigns_str}"
         lines.append(f'    {node_id}["{label}"]')
 

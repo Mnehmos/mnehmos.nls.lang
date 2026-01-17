@@ -287,11 +287,11 @@ def parse_edge_case(text: str) -> EdgeCase:
 def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
     """
     Parse a .nl file source string into an NLFile AST.
-    
+
     Args:
         source: The .nl file contents as a string
         source_path: Optional path to the source file (for error messages)
-    
+
     Returns:
         NLFile with parsed module info and ANLUs
     """
@@ -302,7 +302,6 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
     anlus: list[ANLU] = []
     tests: list[TestSuite] = []
     literals: list[str] = []
-    main_block: list[str] = []
 
     # Current parsing state
     current_anlu: Optional[ANLU] = None
@@ -310,7 +309,6 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
     current_test: Optional[TestSuite] = None
     current_type: Optional[TypeDefinition] = None
     in_literal_block = False
-    literal_lang = ""
     literal_buffer: list[str] = []
     brace_depth = 0
     in_main_block = False
@@ -377,7 +375,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                 # Start literal block
                 in_literal_block = True
                 brace_depth = 1 if "{" in line else 0
-                literal_lang = directive_value.split("{")[0].strip()
+                directive_value.split("{")[0].strip()
             elif directive_type == "test":
                 # Parse test header like: @test [add] {
                 test_match = re.match(r"\[([a-z][a-z0-9-]*)\]\s*\{?", directive_value)
