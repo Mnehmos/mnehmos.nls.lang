@@ -35,6 +35,9 @@ llm = [
     "anthropic>=0.18.0",
     "openai>=1.0",
 ]
+treesitter = [
+    "tree-sitter>=0.23.0",
+]
 
 [project.scripts]
 nlsc = "nlsc.cli:main"
