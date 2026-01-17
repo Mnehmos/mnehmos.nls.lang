@@ -213,6 +213,17 @@ class ANLU:
         if returns.lower() == "dictionary":
             return "dict"
 
+        # Handle function calls with arguments (e.g., json.loads(text), max(a, b))
+        # These are expressions, not types
+        if "(" in returns and ")" in returns:
+            # Method calls like "json.loads(text)" or "obj.method()"
+            if "." in returns:
+                return "Any"
+            # Built-in function calls like "max(a, b)", "len(x)"
+            # Check if it starts with lowercase (not a constructor)
+            if returns and returns[0].islower():
+                return "Any"
+
         # Simple expressions like "a + b" -> infer from operation
         if "+" in returns or "-" in returns:
             return "float"
