@@ -328,6 +328,14 @@ def emit_body_mock(anlu: ANLU) -> str:
 
     returns = anlu.returns.strip()
 
+    # Handle void return - no return statement or just pass
+    if returns.lower() == "void" or returns.lower() == "none":
+        if anlu.guards:
+            lines = emit_guards(anlu)
+            lines.append("    return None")
+            return "\n".join(lines)
+        return "    return None"
+
     # Direct expression returns (a + b, a × b, etc.)
     # Replace math symbols
     expr = returns.replace("×", "*").replace("÷", "/")
