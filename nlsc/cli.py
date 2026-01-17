@@ -23,7 +23,7 @@ from .parser import parse_nl_path, ParseError
 from .schema import NLFile
 from .resolver import resolve_dependencies
 from .emitter import emit_python, emit_tests
-from .lockfile import generate_lockfile, write_lockfile
+from .lockfile import generate_lockfile, write_lockfile, verify_lockfile
 from .graph import (
     emit_mermaid,
     emit_dot,
@@ -533,6 +533,82 @@ def cmd_watch(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_lock_check(args: argparse.Namespace) -> int:
+    """Verify that lockfile is current with source"""
+    source_path = Path(args.file)
+
+    if not source_path.exists():
+        print(f"Error: File not found: {source_path}", file=sys.stderr)
+        return 1
+
+    lock_path = source_path.with_suffix(".nl.lock")
+    if not lock_path.exists():
+        print(f"Error: Lockfile not found: {lock_path}", file=sys.stderr)
+        return 1
+
+    # Parse current NL file
+    try:
+        nl_file = parse_nl_file_auto(source_path)
+    except ParseError as e:
+        print(f"Parse error: {e}", file=sys.stderr)
+        return 1
+
+    # Read lockfile
+    lockfile = read_lockfile(lock_path)
+    if not lockfile:
+        print(f"Error: Could not read lockfile: {lock_path}", file=sys.stderr)
+        return 1
+
+    # Verify
+    errors = verify_lockfile(lockfile, nl_file)
+
+    if errors:
+        print(f"Lockfile out of date:")
+        for err in errors:
+            print(f"  • {err}")
+        return 1
+
+    print(f"{_check()} Lockfile is current")
+    return 0
+
+
+def cmd_lock_update(args: argparse.Namespace) -> int:
+    """Regenerate lockfile from current source and compiled output"""
+    source_path = Path(args.file)
+
+    if not source_path.exists():
+        print(f"Error: File not found: {source_path}", file=sys.stderr)
+        return 1
+
+    # Parse current NL file
+    try:
+        nl_file = parse_nl_file_auto(source_path)
+    except ParseError as e:
+        print(f"Parse error: {e}", file=sys.stderr)
+        return 1
+
+    # Find compiled Python file
+    py_path = source_path.with_suffix(".py")
+    if not py_path.exists():
+        print(f"Warning: Compiled file not found, generating fresh: {py_path}")
+        python_code = emit_python(nl_file, mode="mock")
+    else:
+        python_code = py_path.read_text(encoding="utf-8")
+
+    # Generate lockfile
+    lock_path = source_path.with_suffix(".nl.lock")
+    lockfile = generate_lockfile(
+        nl_file,
+        python_code,
+        str(py_path),
+        llm_backend="mock"
+    )
+    write_lockfile(lockfile, lock_path)
+
+    print(f"{_check()} Updated {lock_path.name}")
+    return 0
+
+
 def main() -> int:
     """Main entry point for nlsc CLI"""
     parser = argparse.ArgumentParser(
@@ -706,6 +782,26 @@ The conversation is the programming. The .nl file is the receipt.
         help="Debounce interval in ms (default: 100)"
     )
 
+    # lock:check command
+    lock_check_parser = subparsers.add_parser(
+        "lock:check",
+        help="Verify lockfile is current"
+    )
+    lock_check_parser.add_argument(
+        "file",
+        help="Path to .nl file"
+    )
+
+    # lock:update command
+    lock_update_parser = subparsers.add_parser(
+        "lock:update",
+        help="Regenerate lockfile"
+    )
+    lock_update_parser.add_argument(
+        "file",
+        help="Path to .nl file"
+    )
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -732,6 +828,10 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_diff(args)
     elif args.command == "watch":
         return cmd_watch(args)
+    elif args.command == "lock:check":
+        return cmd_lock_check(args)
+    elif args.command == "lock:update":
+        return cmd_lock_update(args)
 
     return 0
 
