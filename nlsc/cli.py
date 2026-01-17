@@ -8,6 +8,7 @@ Commands:
     nlsc graph <file>      Visualize dependencies and dataflow
     nlsc test <file>       Run @test specifications
     nlsc atomize <file>    Extract ANLUs from Python code
+    nlsc diff <file>       Show changes since last compile
 """
 
 import argparse
@@ -30,6 +31,8 @@ from .graph import (
     emit_fsm_mermaid,
 )
 from .atomize import atomize_file
+from .diff import get_anlu_changes, format_changes_output, format_stat_output, generate_full_diff
+from .lockfile import read_lockfile
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -380,6 +383,59 @@ def cmd_atomize(args: argparse.Namespace) -> int:
         return 1
 
 
+def cmd_diff(args: argparse.Namespace) -> int:
+    """Show changes since last compile"""
+    source_path = Path(args.file)
+
+    if not source_path.exists():
+        print(f"Error: File not found: {source_path}", file=sys.stderr)
+        return 1
+
+    # Parse current NL file
+    try:
+        nl_file = parse_nl_path(source_path)
+    except ParseError as e:
+        print(f"Parse error: {e}", file=sys.stderr)
+        return 1
+
+    # Load lockfile if exists
+    lock_path = source_path.with_suffix(".nl.lock")
+    lockfile = None
+    if lock_path.exists():
+        try:
+            lockfile = read_lockfile(lock_path)
+        except Exception as e:
+            print(f"Warning: Could not read lockfile: {e}", file=sys.stderr)
+
+    # Get changes
+    changes = get_anlu_changes(nl_file, lockfile)
+
+    if lockfile is None:
+        print(f"No lockfile found. All ANLUs shown as new.\n")
+
+    # Output based on flags
+    if args.stat:
+        print(format_stat_output(changes))
+    elif args.full:
+        # Generate Python code for diff
+        from .emitter import emit_python
+
+        py_code_new = emit_python(nl_file)
+
+        # Get original Python code from lockfile target
+        py_path = source_path.with_suffix(".py")
+        if py_path.exists():
+            py_code_orig = py_path.read_text(encoding="utf-8")
+            print(generate_full_diff(py_code_orig, py_code_new, py_path.name))
+        else:
+            print("No existing Python file to diff against.")
+            print(format_changes_output(changes))
+    else:
+        print(format_changes_output(changes))
+
+    return 0
+
+
 def main() -> int:
     """Main entry point for nlsc CLI"""
     parser = argparse.ArgumentParser(
@@ -499,6 +555,26 @@ The conversation is the programming. The .nl file is the receipt.
         help="Module name for generated .nl"
     )
 
+    # diff command
+    diff_parser = subparsers.add_parser(
+        "diff",
+        help="Show changes since last compile"
+    )
+    diff_parser.add_argument(
+        "file",
+        help="Path to .nl file"
+    )
+    diff_parser.add_argument(
+        "--stat",
+        action="store_true",
+        help="Show summary only"
+    )
+    diff_parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Show full unified diff"
+    )
+
     args = parser.parse_args()
     
     if args.command is None:
@@ -517,6 +593,8 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_test(args)
     elif args.command == "atomize":
         return cmd_atomize(args)
+    elif args.command == "diff":
+        return cmd_diff(args)
 
     return 0
 

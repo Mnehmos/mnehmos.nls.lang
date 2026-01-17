@@ -154,12 +154,63 @@ def write_lockfile(lockfile: Lockfile, path: Path) -> None:
 
 
 def read_lockfile(path: Path) -> Optional[Lockfile]:
-    """Read an existing lockfile (simple parser for V0)"""
+    """Read an existing lockfile (simple YAML-like parser)"""
     if not path.exists():
         return None
-    
-    # For V0, just return None if exists - full parsing later
-    return None
+
+    content = path.read_text(encoding="utf-8")
+    lockfile = Lockfile()
+    lockfile.anlus = {}  # Simple dict for ANLU hashes
+
+    current_module = None
+    current_anlu = None
+
+    for line in content.split("\n"):
+        line = line.rstrip()
+
+        # Skip comments and empty lines
+        if line.startswith("#") or not line.strip():
+            continue
+
+        # Parse key-value pairs
+        if ":" in line:
+            # Count indentation
+            indent = len(line) - len(line.lstrip())
+            key, _, value = line.strip().partition(":")
+            value = value.strip()
+
+            if indent == 0:
+                # Top-level
+                if key == "schema_version":
+                    lockfile.schema_version = int(value) if value else 1
+                elif key == "generated_at":
+                    lockfile.generated_at = value
+                elif key == "compiler_version":
+                    lockfile.compiler_version = value
+                elif key == "llm_backend":
+                    lockfile.llm_backend = value
+
+            elif indent == 2 and key == "modules":
+                pass  # Section header
+
+            elif indent == 4 and current_module is None:
+                # Module name
+                current_module = key
+
+            elif indent == 6 and key == "anlus":
+                pass  # ANLUs section header
+
+            elif indent == 8 and current_module:
+                # ANLU ID
+                current_anlu = key
+                if current_anlu not in lockfile.anlus:
+                    lockfile.anlus[current_anlu] = {}
+
+            elif indent == 10 and current_anlu:
+                # ANLU property
+                lockfile.anlus[current_anlu][key] = value
+
+    return lockfile
 
 
 def verify_lockfile(lockfile: Lockfile, nl_file: NLFile) -> list[str]:
