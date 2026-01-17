@@ -1,6 +1,7 @@
 # Natural Language Source (NLS)
 
-[![Tests](https://img.shields.io/badge/tests-160%20passing-brightgreen)](https://github.com/Mnehmos/mnehmos.nls.lang)
+[![Tests](https://img.shields.io/badge/tests-228%20passing-brightgreen)](https://github.com/Mnehmos/mnehmos.nls.lang)
+[![CI](https://github.com/Mnehmos/mnehmos.nls.lang/actions/workflows/ci.yml/badge.svg)](https://github.com/Mnehmos/mnehmos.nls.lang/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](https://www.python.org)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://mnehmos.github.io/mnehmos.nls.lang/)
@@ -155,6 +156,52 @@ nlsc watch src/ --test
 nlsc diff src/api.nl --full
 ```
 
+## GitHub Action
+
+Use the NLS Compiler Action in your CI/CD pipelines for zero-config validation:
+
+```yaml
+# .github/workflows/nls.yml
+name: NLS Validation
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: Mnehmos/mnehmos.nls.lang/action@master
+        with:
+          verify: 'true'       # Verify all .nl files parse correctly
+          compile: 'false'     # Compile .nl files to Python
+          test: 'false'        # Run @test blocks
+          lock-check: 'false'  # Verify lockfiles are current
+          path: '.'            # Path to search for .nl files
+```
+
+### Action Inputs
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| `verify` | `true` | Verify all .nl files parse correctly |
+| `compile` | `false` | Compile .nl files to target language |
+| `test` | `false` | Run @test blocks from .nl files |
+| `lock-check` | `false` | Check that lockfiles are up to date |
+| `path` | `.` | Path to search for .nl files |
+| `python-version` | `3.12` | Python version to use |
+| `fail-on-warning` | `false` | Fail the action if there are warnings |
+
+### Action Outputs
+
+| Output | Description |
+|--------|-------------|
+| `verified-files` | Number of verified .nl files |
+| `compiled-files` | List of compiled output files |
+| `test-results` | Test pass/fail summary |
+| `warnings` | Number of warnings |
+
 ## Language Features
 
 ### ANLU Blocks (Functions)
@@ -239,11 +286,12 @@ DEPENDS: [other-function], [another]
 | Dataflow analysis    | ✅ Complete |
 | Test runner          | ✅ Complete |
 | Watch mode           | ✅ Complete |
+| GitHub Action        | ✅ Complete |
 | VS Code extension    | 🔜 Planned  |
 | TypeScript target    | 🔜 Planned  |
 | LSP server           | 🔜 Planned  |
 
-**160 tests passing** — Production-ready for Python target. See [GitHub Issues](https://github.com/Mnehmos/mnehmos.nls.lang/issues) for roadmap.
+**228 tests passing** — Production-ready for Python target. See [GitHub Issues](https://github.com/Mnehmos/mnehmos.nls.lang/issues) for roadmap.
 
 ## Documentation
 

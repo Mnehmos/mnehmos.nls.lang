@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
+
+      - name: Verify examples compile
+        run: |
+          for nl_file in examples/*.nl; do
+            if [ -f "$nl_file" ]; then
+              echo "Verifying $nl_file..."
+              nlsc verify "$nl_file"
+            fi
+          done
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+
+      - name: Check formatting
+        run: ruff check nlsc/ --select=E,F,W
+
+  nls-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install nlsc
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Verify all .nl files
+        run: |
+          find . -name "*.nl" -type f | while read nl_file; do
+            echo "Verifying $nl_file..."
+            nlsc verify "$nl_file" || exit 1
+          done
+
+      - name: Check lockfiles are current
+        run: |
+          find . -name "*.nl" -type f | while read nl_file; do
+            lock_file="${nl_file}.lock"
+            if [ -f "$lock_file" ]; then
+              echo "Checking lockfile for $nl_file..."
+              nlsc lock:check "$nl_file" || echo "Warning: Lockfile out of date for $nl_file"
+            fi
+          done

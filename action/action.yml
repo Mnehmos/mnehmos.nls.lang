@@ -1,0 +1,177 @@
+name: 'NLS Compiler Action'
+description: 'Compile and validate Natural Language Source (.nl) files'
+author: 'Mnehmos'
+
+branding:
+  icon: 'code'
+  color: 'purple'
+
+inputs:
+  verify:
+    description: 'Verify all .nl files parse correctly'
+    required: false
+    default: 'true'
+  compile:
+    description: 'Compile .nl files to target language'
+    required: false
+    default: 'false'
+  test:
+    description: 'Run @test blocks from .nl files'
+    required: false
+    default: 'false'
+  lock-check:
+    description: 'Check that lockfiles are up to date'
+    required: false
+    default: 'false'
+  path:
+    description: 'Path to search for .nl files (default: current directory)'
+    required: false
+    default: '.'
+  python-version:
+    description: 'Python version to use'
+    required: false
+    default: '3.12'
+  fail-on-warning:
+    description: 'Fail the action if there are warnings'
+    required: false
+    default: 'false'
+
+outputs:
+  verified-files:
+    description: 'Number of verified .nl files'
+    value: ${{ steps.nlsc.outputs.verified_files }}
+  compiled-files:
+    description: 'List of compiled output files'
+    value: ${{ steps.nlsc.outputs.compiled_files }}
+  test-results:
+    description: 'Test pass/fail summary'
+    value: ${{ steps.nlsc.outputs.test_results }}
+  warnings:
+    description: 'Number of warnings'
+    value: ${{ steps.nlsc.outputs.warnings }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install nlsc
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install nlsc
+
+    - name: Run NLS validation
+      id: nlsc
+      shell: bash
+      env:
+        INPUT_VERIFY: ${{ inputs.verify }}
+        INPUT_COMPILE: ${{ inputs.compile }}
+        INPUT_TEST: ${{ inputs.test }}
+        INPUT_LOCK_CHECK: ${{ inputs.lock-check }}
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_FAIL_ON_WARNING: ${{ inputs.fail-on-warning }}
+      run: |
+        set -e
+
+        VERIFIED=0
+        COMPILED=""
+        TEST_PASS=0
+        TEST_FAIL=0
+        WARNINGS=0
+
+        # Find all .nl files
+        NL_FILES=$(find "$INPUT_PATH" -name "*.nl" -type f 2>/dev/null || true)
+
+        if [ -z "$NL_FILES" ]; then
+          echo "No .nl files found in $INPUT_PATH"
+          echo "verified_files=0" >> $GITHUB_OUTPUT
+          echo "compiled_files=" >> $GITHUB_OUTPUT
+          echo "test_results=0 passed, 0 failed" >> $GITHUB_OUTPUT
+          echo "warnings=0" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+
+        # Process each file
+        while IFS= read -r nl_file; do
+          echo "::group::Processing $nl_file"
+
+          # Verify
+          if [ "$INPUT_VERIFY" = "true" ]; then
+            echo "Verifying $nl_file..."
+            if nlsc verify "$nl_file"; then
+              VERIFIED=$((VERIFIED + 1))
+              echo "✓ Verification passed"
+            else
+              echo "::error file=$nl_file::Verification failed"
+              exit 1
+            fi
+          fi
+
+          # Compile
+          if [ "$INPUT_COMPILE" = "true" ]; then
+            echo "Compiling $nl_file..."
+            if nlsc compile "$nl_file"; then
+              OUTPUT_FILE="${nl_file%.nl}.py"
+              COMPILED="$COMPILED$OUTPUT_FILE,"
+              echo "✓ Compiled to $OUTPUT_FILE"
+            else
+              echo "::error file=$nl_file::Compilation failed"
+              exit 1
+            fi
+          fi
+
+          # Test
+          if [ "$INPUT_TEST" = "true" ]; then
+            echo "Running tests for $nl_file..."
+            if nlsc test "$nl_file"; then
+              TEST_PASS=$((TEST_PASS + 1))
+              echo "✓ Tests passed"
+            else
+              TEST_FAIL=$((TEST_FAIL + 1))
+              echo "::warning file=$nl_file::Tests failed"
+              WARNINGS=$((WARNINGS + 1))
+            fi
+          fi
+
+          # Lock check
+          if [ "$INPUT_LOCK_CHECK" = "true" ]; then
+            LOCK_FILE="${nl_file}.lock"
+            if [ -f "$LOCK_FILE" ]; then
+              echo "Checking lockfile for $nl_file..."
+              if ! nlsc lock:check "$nl_file"; then
+                echo "::warning file=$nl_file::Lockfile is out of date"
+                WARNINGS=$((WARNINGS + 1))
+              fi
+            fi
+          fi
+
+          echo "::endgroup::"
+        done <<< "$NL_FILES"
+
+        # Output results
+        echo "verified_files=$VERIFIED" >> $GITHUB_OUTPUT
+        echo "compiled_files=${COMPILED%,}" >> $GITHUB_OUTPUT
+        echo "test_results=$TEST_PASS passed, $TEST_FAIL failed" >> $GITHUB_OUTPUT
+        echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
+
+        # Summary
+        echo "## NLS Validation Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Verified | $VERIFIED |" >> $GITHUB_STEP_SUMMARY
+        echo "| Tests Passed | $TEST_PASS |" >> $GITHUB_STEP_SUMMARY
+        echo "| Tests Failed | $TEST_FAIL |" >> $GITHUB_STEP_SUMMARY
+        echo "| Warnings | $WARNINGS |" >> $GITHUB_STEP_SUMMARY
+
+        # Fail on warnings if configured
+        if [ "$INPUT_FAIL_ON_WARNING" = "true" ] && [ "$WARNINGS" -gt 0 ]; then
+          echo "::error::Found $WARNINGS warning(s) with fail-on-warning enabled"
+          exit 1
+        fi
+
+        echo "✓ NLS validation complete"
