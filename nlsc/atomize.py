@@ -267,12 +267,44 @@ def extract_return_expression(func: ast.FunctionDef) -> str:
     - Simple return statements
     - Conditional returns (if/else with returns in both branches)
     - Early returns with default follow-up
+    - Try/except with returns (expresses as "X, or Y on ErrorType")
 
     For simple functions, returns the expression as a string.
     For conditional returns, expresses as "X if condition else Y".
+    For try/except, expresses as "X, or Y on ErrorType".
     For complex functions, returns a placeholder.
     """
-    # First, check for conditional return pattern in the function body
+    # First, check for try/except pattern
+    for node in func.body:
+        # Skip docstring
+        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant):
+            continue
+
+        if isinstance(node, ast.Try):
+            try_return = _get_branch_return(node.body)
+            if try_return and node.handlers:
+                # Get the except handler return
+                handler = node.handlers[0]
+                except_return = _get_branch_return(handler.body)
+                if except_return:
+                    # Get error type name
+                    error_type = "error"
+                    if handler.type:
+                        if isinstance(handler.type, ast.Name):
+                            error_type = handler.type.id
+                        elif isinstance(handler.type, ast.Attribute):
+                            error_type = handler.type.attr
+                        else:
+                            try:
+                                error_type = ast.unparse(handler.type)
+                            except Exception:
+                                pass
+
+                    if len(try_return) < 40 and len(except_return) < 20:
+                        return f"{try_return}, or {except_return} on {error_type}"
+            break
+
+    # Check for conditional return pattern in the function body
     for node in func.body:
         # Skip docstring
         if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant):
