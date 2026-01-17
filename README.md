@@ -1,5 +1,10 @@
 # Natural Language Source (NLS)
 
+[![Tests](https://img.shields.io/badge/tests-160%20passing-brightgreen)](https://github.com/Mnehmos/mnehmos.nls.lang)
+[![Python](https://img.shields.io/badge/python-3.11+-blue)](https://www.python.org)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://mnehmos.github.io/mnehmos.nls.lang/)
+
 > **The source code is English. The compiled artifact is Python.**
 
 NLS is a programming language where specifications are written in plain English that anyone can read—managers, auditors, domain experts—not just programmers. The `nlsc` compiler translates `.nl` files into executable Python with full type hints, validation, and documentation.
@@ -112,16 +117,16 @@ def distance(p1: Point, p2: Point) -> float:
 
 ## CLI Reference
 
-| Command | Description |
-|---------|-------------|
-| `nlsc init <path>` | Initialize new NLS project |
-| `nlsc compile <file>` | Compile .nl to Python |
-| `nlsc verify <file>` | Validate syntax and dependencies |
-| `nlsc test <file>` | Run `@test` specifications |
-| `nlsc graph <file>` | Generate dependency diagrams |
-| `nlsc diff <file>` | Show changes since last compile |
-| `nlsc watch <dir>` | Continuous compilation on file changes |
-| `nlsc atomize <file.py>` | Extract ANLUs from existing Python |
+| Command                  | Description                            |
+| ------------------------ | -------------------------------------- |
+| `nlsc init <path>`       | Initialize new NLS project             |
+| `nlsc compile <file>`    | Compile .nl to Python                  |
+| `nlsc verify <file>`     | Validate syntax and dependencies       |
+| `nlsc test <file>`       | Run `@test` specifications             |
+| `nlsc graph <file>`      | Generate dependency diagrams           |
+| `nlsc diff <file>`       | Show changes since last compile        |
+| `nlsc watch <dir>`       | Continuous compilation on file changes |
+| `nlsc atomize <file.py>` | Extract ANLUs from existing Python     |
 
 ### Global Options
 
@@ -208,7 +213,7 @@ DEPENDS: [other-function], [another]
 
 ## The Philosophy
 
-> *"The conversation is the programming. The `.nl` file is the receipt. The code is the artifact."*
+> _"The conversation is the programming. The `.nl` file is the receipt. The code is the artifact."_
 
 - **`.nl` files** — Human-readable specifications anyone can review
 - **`.py` files** — Compiled artifacts (like assembly from C)
@@ -224,23 +229,25 @@ DEPENDS: [other-function], [another]
 
 ## Project Status
 
-| Component | Status |
-|-----------|--------|
-| Parser (regex) | Complete |
-| Parser (tree-sitter) | Complete |
-| Python emitter | Complete |
-| Type generation | Complete |
-| Guard validation | Complete |
-| Dataflow analysis | Complete |
-| Test runner | Complete |
-| Watch mode | Complete |
-| VS Code extension | Planned |
-| TypeScript target | Planned |
-| LSP server | Planned |
+| Component            | Status      |
+| -------------------- | ----------- |
+| Parser (regex)       | ✅ Complete |
+| Parser (tree-sitter) | ✅ Complete |
+| Python emitter       | ✅ Complete |
+| Type generation      | ✅ Complete |
+| Guard validation     | ✅ Complete |
+| Dataflow analysis    | ✅ Complete |
+| Test runner          | ✅ Complete |
+| Watch mode           | ✅ Complete |
+| VS Code extension    | 🔜 Planned  |
+| TypeScript target    | 🔜 Planned  |
+| LSP server           | 🔜 Planned  |
 
-**160 tests passing** — See [GitHub Issues](https://github.com/Mnehmos/mnehmos.nls.lang/issues) for roadmap.
+**160 tests passing** — Production-ready for Python target. See [GitHub Issues](https://github.com/Mnehmos/mnehmos.nls.lang/issues) for roadmap.
 
 ## Documentation
+
+📚 **[Full Documentation](https://mnehmos.github.io/mnehmos.nls.lang/)** — Hosted on GitHub Pages
 
 - [Getting Started](docs/getting-started.md)
 - [Language Specification](docs/language-spec.md)
