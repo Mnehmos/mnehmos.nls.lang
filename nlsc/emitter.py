@@ -265,6 +265,53 @@ def _desc_to_expr(desc: str) -> str:
     return f"{func_name}()  # TODO: implement"
 
 
+def _convert_main_line(line: str) -> Optional[str]:
+    """
+    Convert an NLS main block line to Python.
+    
+    Handles:
+    - WHILE condition { -> while condition:
+    - } -> (closing brace, returns None)
+    - PRINT expr -> print(expr)
+    - var = func-name(args) -> var = func_name(args)
+    - Comments: # ... -> # ...
+    """
+    line = line.strip()
+    
+    # Skip empty lines
+    if not line:
+        return None
+    
+    # Skip comments
+    if line.startswith("#"):
+        return line
+    
+    # Closing brace (handled by indentation logic in caller)
+    if line == "}":
+        return None
+    
+    # WHILE condition {
+    while_match = re.match(r'^WHILE\s+(.+?)\s*\{?\s*$', line, re.IGNORECASE)
+    if while_match:
+        condition = while_match.group(1)
+        # Convert kebab-case to snake_case in condition
+        condition = re.sub(r'([a-z])-([a-z])', r'\1_\2', condition)
+        return f"while {condition}:"
+    
+    # PRINT statement
+    print_match = re.match(r'^PRINT\s+(.+)$', line, re.IGNORECASE)
+    if print_match:
+        expr = print_match.group(1)
+        # Convert kebab-case to snake_case
+        expr = re.sub(r'([a-z])-([a-z])', r'\1_\2', expr)
+        return f"print({expr})"
+    
+    # General statement (assignment, function call)
+    # Convert kebab-case function names to snake_case
+    converted = re.sub(r'([a-z])-([a-z])', r'\1_\2', line)
+    return converted
+
+
 def emit_body_mock(anlu: ANLU) -> str:
     """
     Generate function body using mock/template approach.
@@ -379,10 +426,10 @@ def emit_python(nl_file: NLFile, mode: str = "mock") -> str:
             lines.append(imp)
         lines.append("")
 
-    # Add user-specified imports
+    # Add user-specified imports (use relative star import for cross-module type access)
     if nl_file.module.imports:
         for imp in nl_file.module.imports:
-            lines.append(f"import {imp.strip()}")
+            lines.append(f"from .{imp.strip()} import *")
         lines.append("")
 
     # Emit types first (before functions)
@@ -407,6 +454,30 @@ def emit_python(nl_file: NLFile, mode: str = "mock") -> str:
         lines.append("# --- Literal blocks ---")
         for literal in nl_file.literals:
             lines.append(literal)
+
+    # Add main block if present
+    if nl_file.main_block:
+        lines.append("")
+        lines.append("")
+        lines.append("if __name__ == '__main__':")
+        indent_depth = 1  # Start at 1 for main block
+        for main_line in nl_file.main_block:
+            stripped = main_line.strip()
+            
+            # Handle closing brace - decrease indent
+            if stripped == "}":
+                indent_depth = max(1, indent_depth - 1)
+                continue
+            
+            # Convert NLS main syntax to Python
+            py_line = _convert_main_line(main_line)
+            if py_line:
+                indent = "    " * indent_depth
+                lines.append(f"{indent}{py_line}")
+                
+                # If this line ends with :, next lines are indented
+                if py_line.endswith(":"):
+                    indent_depth += 1
 
     return "\n".join(lines)
 

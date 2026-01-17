@@ -1,0 +1,6 @@
+project:
+  name: text-rpg
+  version: 0.1.0
+
+compiler:
+  default_target: python

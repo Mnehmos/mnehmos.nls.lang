@@ -23,7 +23,7 @@ class ParseError(Exception):
 # Regex patterns for parsing
 PATTERNS = {
     "anlu_header": re.compile(r"^\[([A-Za-z][A-Za-z0-9.-]*)\]\s*$"),
-    "directive": re.compile(r"^@(module|version|target|imports|types|type|test|literal)\s*(.*)$"),
+    "directive": re.compile(r"^@(module|version|target|imports|types|type|test|literal|main)\s*(.*)$"),
     "purpose": re.compile(r"^PURPOSE:\s*(.+)$", re.IGNORECASE),
     "inputs": re.compile(r"^INPUTS:\s*$", re.IGNORECASE),
     "guards": re.compile(r"^GUARDS:\s*$", re.IGNORECASE),
@@ -302,6 +302,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
     anlus: list[ANLU] = []
     tests: list[TestSuite] = []
     literals: list[str] = []
+    main_block: list[str] = []
     
     # Current parsing state
     current_anlu: Optional[ANLU] = None
@@ -312,10 +313,27 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
     literal_lang = ""
     literal_buffer: list[str] = []
     brace_depth = 0
+    in_main_block = False
+    main_buffer: list[str] = []
+    main_brace_depth = 0
     # Track variable assignments for dataflow analysis
     logic_assigns: dict[str, int] = {}
     
     for line_num, line in enumerate(lines, start=1):
+        # Handle main blocks
+        if in_main_block:
+            if "{" in line:
+                main_brace_depth += line.count("{")
+            if "}" in line:
+                main_brace_depth -= line.count("}")
+                if main_brace_depth <= 0:
+                    # End of main block
+                    in_main_block = False
+                    continue
+            # Add line to main block (strip leading indent)
+            main_buffer.append(line.strip())
+            continue
+        
         # Handle literal blocks
         if in_literal_block:
             if "{" in line:
@@ -351,6 +369,10 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                 module.target = directive_value
             elif directive_type == "imports":
                 module.imports = [i.strip() for i in directive_value.split(",")]
+            elif directive_type == "main":
+                # Start main block
+                in_main_block = True
+                main_brace_depth = 1 if "{" in line else 0
             elif directive_type == "literal":
                 # Start literal block
                 in_literal_block = True
@@ -516,6 +538,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
         anlus=anlus,
         tests=tests,
         literals=literals,
+        main_block=main_buffer,
         source_path=source_path
     )
 
