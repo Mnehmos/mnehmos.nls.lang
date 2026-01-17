@@ -193,7 +193,7 @@ RETURNS: a + b + c
         py_code = emit_python(nl_file)
 
         # Atomize
-        anlus = atomize_python_file(py_code)
+        anlus, _ = atomize_python_file(py_code)
 
         assert len(anlus) == 1
         assert len(anlus[0]["inputs"]) == 3
