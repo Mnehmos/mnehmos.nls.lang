@@ -5,8 +5,7 @@ Generates and verifies .nl.lock files to ensure reproducible builds.
 """
 
 import hashlib
-import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -46,10 +45,10 @@ class Lockfile:
     generated_at: str = ""
     compiler_version: str = __version__
     llm_backend: str = "mock"
-    
+
     modules: dict[str, ModuleLock] = field(default_factory=dict)
     targets: dict[str, TargetLock] = field(default_factory=dict)
-    
+
     def __post_init__(self):
         if not self.generated_at:
             self.generated_at = datetime.now(timezone.utc).isoformat()

@@ -48,23 +48,23 @@ def parse_input(text: str) -> Input:
     # Split on first colon
     if ":" not in text:
         return Input(name=text.strip(), type="any")
-    
+
     name, rest = text.split(":", 1)
     name = name.strip()
     rest = rest.strip()
-    
+
     # Parse type and optional constraints/description
     parts = [p.strip() for p in rest.split(",")]
     type_spec = parts[0] if parts else "any"
     constraints = []
     description = None
-    
+
     for part in parts[1:]:
         if part.startswith('"') and part.endswith('"'):
             description = part[1:-1]
         else:
             constraints.append(part)
-    
+
     return Input(
         name=name,
         type=type_spec,
@@ -277,7 +277,7 @@ def parse_edge_case(text: str) -> EdgeCase:
         condition, behavior = text.split("->", 1)
     else:
         return EdgeCase(condition=text.strip(), behavior="")
-    
+
     return EdgeCase(
         condition=condition.strip(),
         behavior=behavior.strip()
@@ -296,14 +296,14 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
         NLFile with parsed module info and ANLUs
     """
     lines = source.split("\n")
-    
+
     # Initialize module with defaults
     module = Module(name="unnamed")
     anlus: list[ANLU] = []
     tests: list[TestSuite] = []
     literals: list[str] = []
     main_block: list[str] = []
-    
+
     # Current parsing state
     current_anlu: Optional[ANLU] = None
     current_section: Optional[str] = None  # inputs, guards, logic, edge_cases
@@ -318,7 +318,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
     main_brace_depth = 0
     # Track variable assignments for dataflow analysis
     logic_assigns: dict[str, int] = {}
-    
+
     for line_num, line in enumerate(lines, start=1):
         # Handle main blocks
         if in_main_block:
@@ -333,7 +333,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             # Add line to main block (strip leading indent)
             main_buffer.append(line.strip())
             continue
-        
+
         # Handle literal blocks
         if in_literal_block:
             if "{" in line:
@@ -348,19 +348,19 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                     continue
             literal_buffer.append(line)
             continue
-        
+
         # Skip comments and empty lines (unless in a section)
         if PATTERNS["comment"].match(line):
             continue
         if PATTERNS["empty"].match(line) and current_section is None:
             continue
-        
+
         # Check for directives
         directive_match = PATTERNS["directive"].match(line)
         if directive_match:
             directive_type = directive_match.group(1)
             directive_value = directive_match.group(2).strip()
-            
+
             if directive_type == "module":
                 module.name = directive_value
             elif directive_type == "version":
@@ -400,7 +400,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             if current_anlu and directive_type in ("module", "literal", "test", "type"):
                 current_section = None
             continue
-        
+
         # Check for ANLU header
         anlu_match = PATTERNS["anlu_header"].match(line)
         if anlu_match:
@@ -419,7 +419,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             logic_assigns = {}
             current_section = None
             continue
-        
+
         # Parse ANLU fields
         if current_anlu:
             # PURPOSE:
@@ -428,34 +428,34 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                 current_anlu.purpose = purpose_match.group(1).strip()
                 current_section = None
                 continue
-            
+
             # INPUTS:
             if PATTERNS["inputs"].match(line):
                 current_section = "inputs"
                 continue
-            
+
             # GUARDS:
             if PATTERNS["guards"].match(line):
                 current_section = "guards"
                 continue
-            
+
             # LOGIC:
             if PATTERNS["logic"].match(line):
                 current_section = "logic"
                 continue
-            
+
             # EDGE CASES:
             if PATTERNS["edge_cases"].match(line):
                 current_section = "edge_cases"
                 continue
-            
+
             # RETURNS:
             returns_match = PATTERNS["returns"].match(line)
             if returns_match:
                 current_anlu.returns = returns_match.group(1).strip()
                 current_section = None
                 continue
-            
+
             # DEPENDS:
             depends_match = PATTERNS["depends"].match(line)
             if depends_match:
@@ -463,7 +463,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                 current_anlu.depends = [d.strip() for d in deps.split(",")]
                 current_section = None
                 continue
-            
+
             # Parse section content
             if current_section:
                 # Bullet point
@@ -477,7 +477,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                     elif current_section == "edge_cases":
                         current_anlu.edge_cases.append(parse_edge_case(content))
                     continue
-                
+
                 # Numbered item (for LOGIC)
                 numbered_match = PATTERNS["numbered"].match(line)
                 if numbered_match:
@@ -493,7 +493,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                         for var in logic_step.assigns:
                             logic_assigns[var] = step_num
                     continue
-        
+
         # Parse type fields
         if current_type:
             # Check for closing brace
@@ -528,11 +528,11 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                 ))
             elif line.strip() == "}":
                 current_test = None
-    
+
     # Don't forget the last ANLU
     if current_anlu:
         anlus.append(current_anlu)
-    
+
     return NLFile(
         module=module,
         anlus=anlus,
@@ -549,6 +549,6 @@ def parse_nl_path(path: Path) -> NLFile:
         raise ParseError(f"File not found: {path}")
     if not path.suffix == ".nl":
         raise ParseError(f"Expected .nl file, got: {path.suffix}")
-    
+
     source = path.read_text(encoding="utf-8")
     return parse_nl_file(source, source_path=str(path))

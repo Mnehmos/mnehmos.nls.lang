@@ -7,7 +7,6 @@ Outputs:
 - ASCII: Terminal-friendly
 """
 
-from typing import Optional
 from .schema import NLFile, ANLU
 
 
@@ -127,7 +126,7 @@ def emit_dataflow_mermaid(anlu: ANLU) -> str:
     lines = ["graph TD"]
 
     if not anlu.logic_steps:
-        lines.append(f"    empty[No LOGIC steps]")
+        lines.append("    empty[No LOGIC steps]")
         return "\n".join(lines)
 
     # Add step nodes

@@ -13,7 +13,7 @@ from .emitter import emit_python
 
 __all__ = [
     "ANLU",
-    "Module", 
+    "Module",
     "NLFile",
     "parse_nl_file",
     "emit_python",

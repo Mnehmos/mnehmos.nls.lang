@@ -27,7 +27,7 @@ class Input:
     type: str
     constraints: list[str] = field(default_factory=list)
     description: Optional[str] = None
-    
+
     def to_python_type(self) -> str:
         """Convert NLS type to Python type hint"""
         type_map = {
@@ -210,7 +210,7 @@ class ANLU:
         if "." in self.identifier:
             return self.identifier.split(".", 1)[1]
         return None
-    
+
     def to_python_return_type(self) -> str:
         """Convert RETURNS to Python type hint"""
         returns = self.returns.strip()
@@ -317,7 +317,7 @@ class ANLU:
             return "Any"
 
         return type_map.get(returns, returns)
-    
+
     @property
     def python_name(self) -> str:
         """Convert kebab-case identifier to snake_case for Python"""
@@ -360,7 +360,7 @@ class TypeDefinition:
     line_number: int = 0
 
 
-@dataclass 
+@dataclass
 class TestCase:
     """A test assertion for an ANLU"""
     expression: str
@@ -394,33 +394,33 @@ class NLFile:
     tests: list[TestSuite] = field(default_factory=list)
     literals: list[str] = field(default_factory=list)
     main_block: list[str] = field(default_factory=list)  # @main block content
-    
+
     # Source info
     source_path: Optional[str] = None
-    
+
     def get_anlu(self, identifier: str) -> Optional[ANLU]:
         """Find an ANLU by identifier"""
         for anlu in self.anlus:
             if anlu.identifier == identifier:
                 return anlu
         return None
-    
+
     def dependency_order(self) -> list[ANLU]:
         """Return ANLUs in topological order based on dependencies"""
         # Simple implementation - assumes no circular deps for V0
         ordered = []
         remaining = list(self.anlus)
         resolved = set()
-        
+
         while remaining:
             for anlu in remaining[:]:
                 deps_satisfied = all(
-                    dep.strip("[]") in resolved 
+                    dep.strip("[]") in resolved
                     for dep in anlu.depends
                 )
                 if deps_satisfied:
                     ordered.append(anlu)
                     resolved.add(anlu.identifier)
                     remaining.remove(anlu)
-        
+
         return ordered

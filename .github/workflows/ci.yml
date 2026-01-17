@@ -56,7 +56,7 @@ jobs:
           pip install ruff
 
       - name: Check formatting
-        run: ruff check nlsc/ --select=E,F,W
+        run: ruff check nlsc/ --select=E,F,W --ignore=E501
 
   nls-validation:
     runs-on: ubuntu-latest

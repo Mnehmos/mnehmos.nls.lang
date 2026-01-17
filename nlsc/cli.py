@@ -88,12 +88,12 @@ def parse_nl_file_auto(source_path: Path) -> NLFile:
 def cmd_init(args: argparse.Namespace) -> int:
     """Initialize a new NLS project"""
     project_dir = Path(args.path or ".")
-    
+
     # Create project directory if it doesn't exist
     project_dir.mkdir(parents=True, exist_ok=True)
-    
+
     print(f"Initializing NLS project in {project_dir.absolute()}...")
-    
+
     # Create config file
     config_path = project_dir / "nl.config.yaml"
     if not config_path.exists():
@@ -125,27 +125,27 @@ validation:
         print(f"  {_check()} Created {config_path.name}")
     else:
         print(f"  • {config_path.name} already exists")
-    
+
     # Create directories
     src_dir = project_dir / "src"
     tests_dir = project_dir / "tests"
-    
+
     for dir_path in [src_dir, tests_dir]:
         if not dir_path.exists():
             dir_path.mkdir(parents=True)
             print(f"  {_check()} Created {dir_path.name}/")
         else:
             print(f"  • {dir_path.name}/ already exists")
-    
+
     # Create __init__.py files
     for init_path in [src_dir / "__init__.py", tests_dir / "__init__.py"]:
         if not init_path.exists():
             init_path.write_text("", encoding="utf-8")
-    
+
     print("\nNLS project initialized! Next steps:")
     print("  1. Create a .nl file in src/")
     print("  2. Run: nlsc compile src/your-file.nl")
-    
+
     return 0
 
 
@@ -167,7 +167,7 @@ def cmd_compile(args: argparse.Namespace) -> int:
     except ParseError as e:
         print(f"  {_cross()} Parse error: {e}", file=sys.stderr)
         return 1
-    
+
     # Resolve dependencies
     result = resolve_dependencies(nl_file)
     if not result.success:
@@ -176,31 +176,31 @@ def cmd_compile(args: argparse.Namespace) -> int:
             print(f"    - {err.anlu_id}: {err.message}", file=sys.stderr)
         return 1
     print(f"  {_check()} Resolved dependencies")
-    
+
     # Emit Python
     target = args.target or "python"
     if target != "python":
         print(f"  {_cross()} Target '{target}' not yet supported", file=sys.stderr)
         return 1
-    
+
     python_code = emit_python(nl_file, mode="mock")
-    
+
     # Determine output path
     output_path = source_path.with_suffix(".py")
     if args.output:
         output_path = Path(args.output)
-    
+
     output_path.write_text(python_code, encoding="utf-8")
     line_count = python_code.count("\n") + 1
     print(f"  {_check()} Generated {output_path.name} ({line_count} lines)")
-    
+
     # Generate tests if present
     test_code = emit_tests(nl_file)
     if test_code and nl_file.tests:
         test_path = source_path.parent / f"test_{source_path.stem}.py"
         test_path.write_text(test_code, encoding="utf-8")
         print(f"  {_check()} Generated {test_path.name}")
-    
+
     # Generate lockfile
     lock_path = source_path.with_suffix(".nl.lock")
     lockfile = generate_lockfile(
@@ -211,8 +211,8 @@ def cmd_compile(args: argparse.Namespace) -> int:
     )
     write_lockfile(lockfile, lock_path)
     print(f"  {_check()} Updated {lock_path.name}")
-    
-    print(f"\nCompilation complete!")
+
+    print("\nCompilation complete!")
     return 0
 
 
@@ -234,7 +234,7 @@ def cmd_verify(args: argparse.Namespace) -> int:
     except ParseError as e:
         print(f"  {_cross()} Parse error: {e}", file=sys.stderr)
         return 1
-    
+
     # Resolve
     result = resolve_dependencies(nl_file)
     if not result.success:
@@ -243,7 +243,7 @@ def cmd_verify(args: argparse.Namespace) -> int:
             print(f"    - {err.anlu_id}: {err.message}")
         return 1
     print(f"  {_check()} Dependencies valid")
-    
+
     # Validate each ANLU
     errors = []
     for anlu in nl_file.anlus:
@@ -251,15 +251,15 @@ def cmd_verify(args: argparse.Namespace) -> int:
             errors.append(f"{anlu.identifier}: Missing PURPOSE")
         if not anlu.returns:
             errors.append(f"{anlu.identifier}: Missing RETURNS")
-    
+
     if errors:
         print(f"  {_cross()} Validation errors:")
         for err in errors:
             print(f"    - {err}")
         return 1
-    
+
     print(f"  {_check()} All ANLUs valid")
-    print(f"\nVerification passed!")
+    print("\nVerification passed!")
     return 0
 
 
@@ -463,7 +463,7 @@ def cmd_diff(args: argparse.Namespace) -> int:
     changes = get_anlu_changes(nl_file, lockfile)
 
     if lockfile is None:
-        print(f"No lockfile found. All ANLUs shown as new.\n")
+        print("No lockfile found. All ANLUs shown as new.\n")
 
     # Output based on flags
     if args.stat:
@@ -563,7 +563,7 @@ def cmd_lock_check(args: argparse.Namespace) -> int:
     errors = verify_lockfile(lockfile, nl_file)
 
     if errors:
-        print(f"Lockfile out of date:")
+        print("Lockfile out of date:")
         for err in errors:
             print(f"  • {err}")
         return 1
@@ -639,7 +639,7 @@ The conversation is the programming. The .nl file is the receipt.
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
-    
+
     # init command
     init_parser = subparsers.add_parser("init", help="Initialize NLS project")
     init_parser.add_argument(
@@ -648,7 +648,7 @@ The conversation is the programming. The .nl file is the receipt.
         default=".",
         help="Project directory (default: current)"
     )
-    
+
     # compile command
     compile_parser = subparsers.add_parser("compile", help="Compile .nl file")
     compile_parser.add_argument(
@@ -664,7 +664,7 @@ The conversation is the programming. The .nl file is the receipt.
         "-o", "--output",
         help="Output file path"
     )
-    
+
     # verify command
     verify_parser = subparsers.add_parser("verify", help="Verify .nl file")
     verify_parser.add_argument(
