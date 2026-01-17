@@ -15,6 +15,7 @@ PURPOSE: Shorten text to a maximum length with ellipsis
 INPUTS:
   • text: string
   • max_length: number
+RETURNS: truncated text with ellipsis if needed
 
 @literal python {
 def truncate(text: str, max_length: int) -> str:
@@ -30,6 +31,7 @@ def truncate(text: str, max_length: int) -> str:
 PURPOSE: Convert text to URL-friendly slug format
 INPUTS:
   • text: string
+RETURNS: URL-friendly slug string
 
 @literal python {
 import re

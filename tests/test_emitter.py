@@ -145,5 +145,6 @@ RETURNS: void
 """
         nl_file = parse_nl_file(source)
         code = emit_python(nl_file)
-        assert "import datetime" in code
-        assert "import json" in code
+        # @imports uses relative imports for cross-module NL imports
+        assert "from .datetime import *" in code
+        assert "from .json import *" in code
