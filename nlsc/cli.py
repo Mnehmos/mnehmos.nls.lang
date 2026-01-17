@@ -9,6 +9,7 @@ Commands:
     nlsc test <file>       Run @test specifications
     nlsc atomize <file>    Extract ANLUs from Python code
     nlsc diff <file>       Show changes since last compile
+    nlsc watch <dir>       Watch directory for .nl changes
 """
 
 import argparse
@@ -33,6 +34,7 @@ from .graph import (
 from .atomize import atomize_file
 from .diff import get_anlu_changes, format_changes_output, format_stat_output, generate_full_diff
 from .lockfile import read_lockfile
+from .watch import NLWatcher, format_timestamp
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -436,6 +438,51 @@ def cmd_diff(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_watch(args: argparse.Namespace) -> int:
+    """Watch directory for .nl file changes and recompile"""
+    watch_path = Path(args.dir)
+
+    if not watch_path.exists():
+        print(f"Error: Directory not found: {watch_path}", file=sys.stderr)
+        return 1
+
+    if not watch_path.is_dir():
+        print(f"Error: Not a directory: {watch_path}", file=sys.stderr)
+        return 1
+
+    quiet = args.quiet
+    run_tests = args.test
+    debounce_ms = args.debounce
+
+    def on_compile(path: Path, success: bool, error: str | None) -> None:
+        """Callback for compile events"""
+        timestamp = format_timestamp()
+        if success:
+            if not quiet:
+                print(f"{timestamp} ✓ Compiled {path.name}")
+        else:
+            print(f"{timestamp} ✗ {path.name}: {error}", file=sys.stderr)
+
+    print(f"Watching {watch_path.absolute()} for .nl changes...")
+    print("Press Ctrl+C to stop.\n")
+
+    watcher = NLWatcher(
+        watch_path=watch_path,
+        debounce_ms=debounce_ms,
+        quiet=quiet,
+        run_tests=run_tests,
+        on_compile=on_compile,
+    )
+
+    try:
+        watcher.start()
+    except KeyboardInterrupt:
+        watcher.stop()
+        print("\nStopped watching.")
+
+    return 0
+
+
 def main() -> int:
     """Main entry point for nlsc CLI"""
     parser = argparse.ArgumentParser(
@@ -575,6 +622,34 @@ The conversation is the programming. The .nl file is the receipt.
         help="Show full unified diff"
     )
 
+    # watch command
+    watch_parser = subparsers.add_parser(
+        "watch",
+        help="Watch directory for .nl changes"
+    )
+    watch_parser.add_argument(
+        "dir",
+        nargs="?",
+        default=".",
+        help="Directory to watch (default: current)"
+    )
+    watch_parser.add_argument(
+        "-q", "--quiet",
+        action="store_true",
+        help="Suppress success messages"
+    )
+    watch_parser.add_argument(
+        "-t", "--test",
+        action="store_true",
+        help="Run tests after successful compile"
+    )
+    watch_parser.add_argument(
+        "-d", "--debounce",
+        type=int,
+        default=100,
+        help="Debounce interval in ms (default: 100)"
+    )
+
     args = parser.parse_args()
     
     if args.command is None:
@@ -595,6 +670,8 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_atomize(args)
     elif args.command == "diff":
         return cmd_diff(args)
+    elif args.command == "watch":
+        return cmd_watch(args)
 
     return 0
 
