@@ -76,7 +76,7 @@ def clamp(value: float, minimum: float, maximum: float) -> Any:
     return max(minimum, min(maximum, value))
 
 
-def pluralize(word: str, count: float) -> float:
+def pluralize(word: str, count: float) -> str:
     """
     Return singular or plural form based on count.
 
