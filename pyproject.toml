@@ -38,14 +38,19 @@ llm = [
 treesitter = [
     "tree-sitter>=0.23.0",
 ]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.0",
+    "pymdown-extensions>=10.0",
+]
 
 [project.scripts]
 nlsc = "nlsc.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/mnehmos/natural-lang-source"
-Documentation = "https://github.com/mnehmos/natural-lang-source#readme"
-Repository = "https://github.com/mnehmos/natural-lang-source"
+Homepage = "https://github.com/Mnehmos/mnehmos.nls.lang"
+Documentation = "https://mnehmos.github.io/mnehmos.nls.lang/"
+Repository = "https://github.com/Mnehmos/mnehmos.nls.lang"
 
 [tool.setuptools.packages.find]
 where = ["."]
