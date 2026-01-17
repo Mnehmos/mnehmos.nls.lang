@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
-from .schema import ANLU, Module, NLFile, Input, Guard, EdgeCase, TestSuite, TestCase
+from .schema import ANLU, Module, NLFile, Input, Guard, EdgeCase, TestSuite, TestCase, TypeDefinition, TypeField
 
 
 class ParseError(Exception):
@@ -22,8 +22,8 @@ class ParseError(Exception):
 
 # Regex patterns for parsing
 PATTERNS = {
-    "anlu_header": re.compile(r"^\[([a-z][a-z0-9-]*)\]\s*$"),
-    "directive": re.compile(r"^@(module|version|target|imports|types|test|literal)\s*(.*)$"),
+    "anlu_header": re.compile(r"^\[([A-Za-z][A-Za-z0-9.-]*)\]\s*$"),
+    "directive": re.compile(r"^@(module|version|target|imports|types|type|test|literal)\s*(.*)$"),
     "purpose": re.compile(r"^PURPOSE:\s*(.+)$", re.IGNORECASE),
     "inputs": re.compile(r"^INPUTS:\s*$", re.IGNORECASE),
     "guards": re.compile(r"^GUARDS:\s*$", re.IGNORECASE),
@@ -35,6 +35,7 @@ PATTERNS = {
     "numbered": re.compile(r"^\s*(\d+)\.\s*(.+)$"),
     "comment": re.compile(r"^\s*#.*$"),
     "empty": re.compile(r"^\s*$"),
+    "indented_field": re.compile(r"^\s+(\w+)\s*:\s*(.+)$"),
 }
 
 
@@ -101,6 +102,41 @@ def parse_guard(text: str) -> Guard:
     return Guard(condition=condition, error_message=error_part)
 
 
+def parse_type_field(text: str) -> TypeField:
+    """
+    Parse a type field line like:
+    • name: string
+    • age: number, "Person's age in years"
+    • items: list of string, required
+    """
+    # Split on first colon
+    if ":" not in text:
+        return TypeField(name=text.strip(), type="any")
+
+    name, rest = text.split(":", 1)
+    name = name.strip()
+    rest = rest.strip()
+
+    # Parse type and optional constraints/description
+    parts = [p.strip() for p in rest.split(",")]
+    type_spec = parts[0] if parts else "any"
+    constraints = []
+    description = None
+
+    for part in parts[1:]:
+        if part.startswith('"') and part.endswith('"'):
+            description = part[1:-1]
+        else:
+            constraints.append(part)
+
+    return TypeField(
+        name=name,
+        type=type_spec,
+        constraints=constraints,
+        description=description
+    )
+
+
 def parse_edge_case(text: str) -> EdgeCase:
     """
     Parse an edge case line like:
@@ -142,6 +178,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
     current_anlu: Optional[ANLU] = None
     current_section: Optional[str] = None  # inputs, guards, logic, edge_cases
     current_test: Optional[TestSuite] = None
+    current_type: Optional[TypeDefinition] = None
     in_literal_block = False
     literal_lang = ""
     literal_buffer: list[str] = []
@@ -194,9 +231,20 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                 if test_match:
                     current_test = TestSuite(anlu_id=test_match.group(1))
                     tests.append(current_test)
-            
+            elif directive_type == "type":
+                # Parse type header like: @type Person {
+                # or @type Person extends Entity {
+                type_match = re.match(r"([A-Z][a-zA-Z0-9]*)\s*(?:extends\s+([A-Z][a-zA-Z0-9]*))?\s*\{?", directive_value)
+                if type_match:
+                    current_type = TypeDefinition(
+                        name=type_match.group(1),
+                        base=type_match.group(2),
+                        line_number=line_num
+                    )
+                    module.types.append(current_type)
+
             # Save current ANLU if switching context
-            if current_anlu and directive_type in ("module", "literal", "test"):
+            if current_anlu and directive_type in ("module", "literal", "test", "type"):
                 current_section = None
             continue
         
@@ -282,6 +330,29 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                         current_anlu.logic.append(numbered_match.group(2))
                     continue
         
+        # Parse type fields
+        if current_type:
+            # Check for closing brace
+            if line.strip() == "}":
+                current_type = None
+                continue
+
+            # Bullet point field
+            bullet_match = PATTERNS["bullet"].match(line)
+            if bullet_match:
+                content = bullet_match.group(1)
+                current_type.fields.append(parse_type_field(content))
+                continue
+
+            # Indented field (no bullet): "  name: type, constraint"
+            indented_match = PATTERNS["indented_field"].match(line)
+            if indented_match:
+                field_name = indented_match.group(1)
+                field_rest = indented_match.group(2)
+                content = f"{field_name}: {field_rest}"
+                current_type.fields.append(parse_type_field(content))
+                continue
+
         # Parse test assertions
         if current_test:
             # Simple assertion like: add(2, 3) == 5
