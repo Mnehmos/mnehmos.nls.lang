@@ -225,10 +225,17 @@ class ANLU:
                 return "Any"
 
         # Simple expressions like "a + b" -> infer from operation
-        if "+" in returns or "-" in returns:
-            return "float"
-        if "×" in returns or "*" in returns or "/" in returns or "÷" in returns:
-            return "float"
+        # But not if they contain string literals (string concatenation)
+        has_string_literal = "'" in returns or '"' in returns
+        if not has_string_literal:
+            if "+" in returns or "-" in returns:
+                return "float"
+            if "×" in returns or "*" in returns or "/" in returns or "÷" in returns:
+                return "float"
+
+        # String concatenation with + returns str
+        if has_string_literal and "+" in returns:
+            return "str"
 
         type_map = {
             "number": "float",
