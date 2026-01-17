@@ -17,7 +17,7 @@ def parse_json_safe(text: str) -> Any:
     return json.loads(text)
 
 
-def flatten_list(nested: list[list of any]) -> list:
+def flatten_list(nested: list[list[Any]]) -> list:
     """
     Flatten a nested list by one level.
 
@@ -31,7 +31,7 @@ def flatten_list(nested: list[list of any]) -> list:
     return result
 
 
-def dict_merge(base: dictionary, update: dictionary) -> Any:
+def dict_merge(base: dict, update: dict) -> Any:
     """
     Merge two dictionaries, with update taking precedence.
 

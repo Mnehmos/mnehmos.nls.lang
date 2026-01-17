@@ -49,7 +49,7 @@ def process_order(user: User, products: list[Product]) -> dict:
     return dictionary
 
 
-def get_or_default(value: string or null, default: str) -> Any:
+def get_or_default(value: Optional[str], default: str) -> Any:
     """
     Return value if not None, otherwise default.
 
