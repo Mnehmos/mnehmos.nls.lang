@@ -197,6 +197,9 @@ def emit_body_from_logic(anlu: ANLU) -> str:
     returns = anlu.returns.strip()
     returns_expr = returns.replace("×", "*").replace("÷", "/")
 
+    # Check if returns_expr is a type name that needs conversion
+    returns_expr = _convert_type_return(returns_expr, anlu)
+
     if lines:
         lines.append(f"    return {returns_expr}")
     else:
@@ -204,6 +207,50 @@ def emit_body_from_logic(anlu: ANLU) -> str:
         lines.append(f"    return {returns_expr}")
 
     return "\n".join(lines)
+
+
+def _convert_type_return(returns_expr: str, anlu) -> str:
+    """
+    Convert type name returns to valid Python expressions.
+
+    If RETURNS is a type name like "dictionary" that wasn't assigned
+    in LOGIC steps, convert to an appropriate empty value or placeholder.
+    """
+    # Check if returns_expr was assigned in logic steps
+    assigned_vars = set()
+    for step in anlu.logic_steps:
+        assigned_vars.update(step.assigns)
+
+    # If it's a variable that was assigned, use it as-is
+    if returns_expr in assigned_vars:
+        return returns_expr
+
+    # Check if it's an input parameter name
+    input_names = {inp.name for inp in anlu.inputs}
+    if returns_expr in input_names:
+        return returns_expr
+
+    # Type name mappings to empty values
+    type_defaults = {
+        "dictionary": "{}",
+        "dict": "{}",
+        "list": "[]",
+        "string": '""',
+        "str": '""',
+        "number": "0",
+        "float": "0.0",
+        "int": "0",
+        "boolean": "False",
+        "bool": "False",
+    }
+
+    # Check if it's a type name
+    returns_lower = returns_expr.lower()
+    if returns_lower in type_defaults:
+        return type_defaults[returns_lower]
+
+    # Otherwise return as-is (might be a valid expression)
+    return returns_expr
 
 
 def _extract_action(step) -> Optional[str]:
