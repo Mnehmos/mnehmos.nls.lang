@@ -145,6 +145,7 @@ def extract_logic_steps(func: ast.FunctionDef) -> list[str]:
     - Assignments (x = expr)
     - Augmented assignments (x += expr)
     - Expression statements (method calls like obj.update(args))
+    - For loops (FOR each X IN Y: body)
 
     Returns list of step strings.
     """
@@ -167,7 +168,7 @@ def extract_logic_steps(func: ast.FunctionDef) -> list[str]:
                 in_guards = False
 
         # Any non-guard statement means we're past guards
-        if isinstance(node, (ast.Assign, ast.AugAssign, ast.Expr)):
+        if isinstance(node, (ast.Assign, ast.AugAssign, ast.Expr, ast.For)):
             if not (isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant)):
                 in_guards = False
 
@@ -206,11 +207,56 @@ def extract_logic_steps(func: ast.FunctionDef) -> list[str]:
             except Exception:
                 pass
 
+        # Capture for loops
+        if isinstance(node, ast.For):
+            try:
+                target = ast.unparse(node.target)
+                iter_expr = ast.unparse(node.iter)
+                # Extract the body as a simple statement if possible
+                body_stmts = _extract_for_body(node.body)
+                if body_stmts and len(iter_expr) < 40:
+                    for stmt in body_stmts:
+                        logic_steps.append(f"FOR each {target} IN {iter_expr}: {stmt}")
+            except Exception:
+                pass
+
         # Stop at return
         if isinstance(node, ast.Return):
             break
 
     return logic_steps
+
+
+def _extract_for_body(body: list) -> list[str]:
+    """Extract simple statements from a for loop body."""
+    stmts = []
+    for node in body:
+        try:
+            if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
+                # Method call like result.extend(sublist)
+                call_str = ast.unparse(node.value)
+                if len(call_str) < 60:
+                    stmts.append(call_str)
+            elif isinstance(node, ast.Assign):
+                # Assignment
+                if isinstance(node.targets[0], ast.Name):
+                    expr = ast.unparse(node.value)
+                    if len(expr) < 60:
+                        stmts.append(f"{node.targets[0].id} = {expr}")
+            elif isinstance(node, ast.AugAssign):
+                # Augmented assignment
+                if isinstance(node.target, ast.Name):
+                    op_map = {
+                        ast.Add: "+=", ast.Sub: "-=", ast.Mult: "*=",
+                        ast.Div: "/=", ast.Mod: "%=",
+                    }
+                    op_str = op_map.get(type(node.op), "?=")
+                    expr = ast.unparse(node.value)
+                    if len(expr) < 60:
+                        stmts.append(f"{node.target.id} {op_str} {expr}")
+        except Exception:
+            pass
+    return stmts
 
 
 def extract_return_expression(func: ast.FunctionDef) -> str:
