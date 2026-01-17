@@ -238,6 +238,17 @@ class ANLU:
                         # Check if it looks like a boolean expression
                         if any(op in expr for op in [">", "<", "==", "!=", ">=", "<=", " and ", " or ", " not "]):
                             return "bool"
+                        # Check if it's a constructor call (Type(...))
+                        import re
+                        ctor_match = re.match(r'([A-Z][a-zA-Z0-9_]*)\s*\(', expr)
+                        if ctor_match:
+                            return ctor_match.group(1)
+                        # Check if it's an empty list []
+                        if expr.strip() == "[]":
+                            return "list"
+                        # Check if it's an empty dict {}
+                        if expr.strip() == "{}":
+                            return "dict"
                     break
 
         # Check if RETURNS variable matches an input name - use input's type
@@ -245,9 +256,13 @@ class ANLU:
             if returns == inp.name:
                 return inp.to_python_type()
 
-        # Default fallback for unknown variable names - assume float for simple identifiers
+        # Default fallback for unknown identifiers
         if returns.isidentifier():
-            return "float"
+            # If it starts with uppercase, treat as custom type
+            if returns[0].isupper():
+                return returns
+            # Otherwise it's probably a variable - use Any
+            return "Any"
 
         return type_map.get(returns, returns)
     
