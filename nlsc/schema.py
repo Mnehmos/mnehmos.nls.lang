@@ -375,6 +375,29 @@ class TestSuite:
 
 
 @dataclass
+class PropertyAssertion:
+    """A single property assertion with optional quantifier"""
+    expression: str
+    quantifier: Optional[str] = None  # "forall" or None
+    variable: Optional[str] = None  # variable name for forall
+    variable_type: Optional[str] = None  # type for forall
+
+
+@dataclass
+class PropertyTest:
+    """Property-based test specifications from @property block"""
+    anlu_id: str
+    assertions: list[PropertyAssertion] = field(default_factory=list)
+
+
+@dataclass
+class Invariant:
+    """Type invariant specifications from @invariant block"""
+    type_name: str
+    conditions: list[str] = field(default_factory=list)
+
+
+@dataclass
 class Module:
     """Module-level metadata from directives"""
     name: str
@@ -392,6 +415,8 @@ class NLFile:
     module: Module
     anlus: list[ANLU] = field(default_factory=list)
     tests: list[TestSuite] = field(default_factory=list)
+    properties: list[PropertyTest] = field(default_factory=list)
+    invariants: list[Invariant] = field(default_factory=list)
     literals: list[str] = field(default_factory=list)
     main_block: list[str] = field(default_factory=list)  # @main block content
 

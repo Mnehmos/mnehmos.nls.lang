@@ -9,7 +9,11 @@ import re
 from pathlib import Path
 from typing import Optional
 
-from .schema import ANLU, Module, NLFile, Input, Guard, EdgeCase, TestSuite, TestCase, TypeDefinition, TypeField, LogicStep
+from .schema import (
+    ANLU, Module, NLFile, Input, Guard, EdgeCase,
+    TestSuite, TestCase, TypeDefinition, TypeField, LogicStep,
+    PropertyTest, PropertyAssertion, Invariant
+)
 
 
 class ParseError(Exception):
@@ -23,7 +27,7 @@ class ParseError(Exception):
 # Regex patterns for parsing
 PATTERNS = {
     "anlu_header": re.compile(r"^\[([A-Za-z][A-Za-z0-9.-]*)\]\s*$"),
-    "directive": re.compile(r"^@(module|version|target|imports|types|type|test|literal|main)\s*(.*)$"),
+    "directive": re.compile(r"^@(module|version|target|imports|types|type|test|property|invariant|literal|main)\s*(.*)$"),
     "purpose": re.compile(r"^PURPOSE:\s*(.+)$", re.IGNORECASE),
     "inputs": re.compile(r"^INPUTS:\s*$", re.IGNORECASE),
     "guards": re.compile(r"^GUARDS:\s*$", re.IGNORECASE),
@@ -301,6 +305,8 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
     module = Module(name="unnamed")
     anlus: list[ANLU] = []
     tests: list[TestSuite] = []
+    properties: list[PropertyTest] = []
+    invariants: list[Invariant] = []
     literals: list[str] = []
 
     # Current parsing state
@@ -308,6 +314,8 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
     current_section: Optional[str] = None  # inputs, guards, logic, edge_cases
     current_test: Optional[TestSuite] = None
     current_type: Optional[TypeDefinition] = None
+    current_property: Optional[PropertyTest] = None
+    current_invariant: Optional[Invariant] = None
     in_literal_block = False
     literal_buffer: list[str] = []
     brace_depth = 0
@@ -393,9 +401,21 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                         line_number=line_num
                     )
                     module.types.append(current_type)
+            elif directive_type == "property":
+                # Parse property header like: @property [add] {
+                prop_match = re.match(r"\[([a-z][a-z0-9-]*)\]\s*\{?", directive_value)
+                if prop_match:
+                    current_property = PropertyTest(anlu_id=prop_match.group(1))
+                    properties.append(current_property)
+            elif directive_type == "invariant":
+                # Parse invariant header like: @invariant Account {
+                inv_match = re.match(r"([A-Z][a-zA-Z0-9]*)\s*\{?", directive_value)
+                if inv_match:
+                    current_invariant = Invariant(type_name=inv_match.group(1))
+                    invariants.append(current_invariant)
 
             # Save current ANLU if switching context
-            if current_anlu and directive_type in ("module", "literal", "test", "type"):
+            if current_anlu and directive_type in ("module", "literal", "test", "type", "property", "invariant"):
                 current_section = None
             continue
 
@@ -527,6 +547,39 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             elif line.strip() == "}":
                 current_test = None
 
+        # Parse property assertions
+        if current_property:
+            stripped = line.strip()
+            if stripped == "}":
+                current_property = None
+            elif stripped and not stripped.startswith("#"):
+                # Remove trailing comments
+                if "#" in stripped:
+                    stripped = stripped.split("#")[0].strip()
+                if stripped:
+                    # Check for forall quantifier: forall x: type -> assertion
+                    forall_match = re.match(r"forall\s+(\w+):\s*(\w+)\s*->\s*(.+)", stripped)
+                    if forall_match:
+                        current_property.assertions.append(PropertyAssertion(
+                            expression=forall_match.group(3).strip(),
+                            quantifier="forall",
+                            variable=forall_match.group(1),
+                            variable_type=forall_match.group(2)
+                        ))
+                    else:
+                        # Simple property assertion
+                        current_property.assertions.append(PropertyAssertion(
+                            expression=stripped
+                        ))
+
+        # Parse invariant conditions
+        if current_invariant:
+            stripped = line.strip()
+            if stripped == "}":
+                current_invariant = None
+            elif stripped and not stripped.startswith("#"):
+                current_invariant.conditions.append(stripped)
+
     # Don't forget the last ANLU
     if current_anlu:
         anlus.append(current_anlu)
@@ -535,6 +588,8 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
         module=module,
         anlus=anlus,
         tests=tests,
+        properties=properties,
+        invariants=invariants,
         literals=literals,
         main_block=main_buffer,
         source_path=source_path
