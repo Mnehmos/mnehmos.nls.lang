@@ -197,6 +197,22 @@ class ANLU:
         """Convert RETURNS to Python type hint"""
         returns = self.returns.strip()
 
+        # Handle boolean literals
+        if returns == "True" or returns == "False":
+            return "bool"
+
+        # Handle f-strings (f'...' or f"...")
+        if returns.startswith("f'") or returns.startswith('f"'):
+            return "str"
+
+        # Handle ternary expressions (x if condition else y)
+        if " if " in returns and " else " in returns:
+            return "Any"
+
+        # Handle dictionary keyword
+        if returns.lower() == "dictionary":
+            return "dict"
+
         # Simple expressions like "a + b" -> infer from operation
         if "+" in returns or "-" in returns:
             return "float"
