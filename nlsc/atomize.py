@@ -59,6 +59,38 @@ def python_type_to_nl(type_node: ast.expr | None) -> str:
     return ast.unparse(type_node) if hasattr(ast, "unparse") else "any"
 
 
+def extract_logic_steps(func: ast.FunctionDef) -> list[str]:
+    """
+    Extract LOGIC steps from function body (assignments before return).
+
+    Returns list of "variable = expression" strings.
+    """
+    logic_steps = []
+
+    # Only look at direct children of the function body (not nested)
+    for node in func.body:
+        # Skip docstring
+        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant):
+            continue
+
+        # Capture assignments
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    try:
+                        expr = ast.unparse(node.value)
+                        if len(expr) < 80:  # Keep it readable
+                            logic_steps.append(f"{target.id} = {expr}")
+                    except Exception:
+                        pass
+
+        # Stop at return
+        if isinstance(node, ast.Return):
+            break
+
+    return logic_steps
+
+
 def extract_return_expression(func: ast.FunctionDef) -> str:
     """
     Extract the return expression from a function.
@@ -123,6 +155,9 @@ def extract_anlu_from_function(func: ast.FunctionDef) -> dict[str, Any]:
         }
         inputs.append(input_def)
 
+    # Extract LOGIC steps (intermediate assignments)
+    logic_steps = extract_logic_steps(func)
+
     # Extract return expression
     returns = extract_return_expression(func)
 
@@ -130,6 +165,7 @@ def extract_anlu_from_function(func: ast.FunctionDef) -> dict[str, Any]:
         "identifier": snake_to_kebab(func.name),
         "purpose": purpose,
         "inputs": inputs,
+        "logic": logic_steps,
         "returns": returns,
     }
 
@@ -186,6 +222,11 @@ def atomize_to_nl(code: str, module_name: str = "extracted") -> str:
             lines.append("INPUTS:")
             for inp in anlu["inputs"]:
                 lines.append(f"  - {inp['name']}: {inp['type']}")
+
+        if anlu.get("logic"):
+            lines.append("LOGIC:")
+            for i, step in enumerate(anlu["logic"], 1):
+                lines.append(f"  {i}. {step}")
 
         lines.append(f"RETURNS: {anlu['returns']}")
         lines.append("")
