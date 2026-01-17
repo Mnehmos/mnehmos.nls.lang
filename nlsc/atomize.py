@@ -217,13 +217,57 @@ def extract_return_expression(func: ast.FunctionDef) -> str:
     """
     Extract the return expression from a function.
 
+    Handles:
+    - Simple return statements
+    - Conditional returns (if/else with returns in both branches)
+    - Early returns with default follow-up
+
     For simple functions, returns the expression as a string.
+    For conditional returns, expresses as "X if condition else Y".
     For complex functions, returns a placeholder.
     """
-    # Find return statements
+    # First, check for conditional return pattern in the function body
+    for node in func.body:
+        # Skip docstring
+        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant):
+            continue
+
+        # Skip guard patterns (if/raise)
+        if isinstance(node, ast.If):
+            if len(node.body) == 1 and isinstance(node.body[0], ast.Raise):
+                continue
+
+            # Check for if/else with returns in both branches
+            if_returns = _get_branch_return(node.body)
+            else_returns = _get_branch_return(node.orelse) if node.orelse else None
+
+            if if_returns and else_returns:
+                # Express as conditional: "X if condition else Y"
+                try:
+                    condition = ast.unparse(node.test)
+                    if len(if_returns) < 30 and len(else_returns) < 30 and len(condition) < 30:
+                        return f"{if_returns} if {condition} else {else_returns}"
+                except Exception:
+                    pass
+
+            # Early return with default follow-up
+            if if_returns and not node.orelse:
+                # Look for a return after this if block
+                idx = func.body.index(node)
+                for following in func.body[idx + 1:]:
+                    if isinstance(following, ast.Return) and following.value:
+                        try:
+                            default_expr = ast.unparse(following.value)
+                            condition = ast.unparse(node.test)
+                            if len(if_returns) < 30 and len(default_expr) < 30 and len(condition) < 30:
+                                return f"{if_returns} if {condition} else {default_expr}"
+                        except Exception:
+                            pass
+                        break
+
+    # Fallback: find any return statement
     for node in ast.walk(func):
         if isinstance(node, ast.Return) and node.value:
-            # For simple expressions, return them directly
             try:
                 expr = ast.unparse(node.value)
                 # Only return simple expressions
@@ -238,6 +282,16 @@ def extract_return_expression(func: ast.FunctionDef) -> str:
         return return_type
 
     return "result"
+
+
+def _get_branch_return(body: list) -> str | None:
+    """Get return expression from a branch body, if it's a simple return."""
+    if len(body) == 1 and isinstance(body[0], ast.Return) and body[0].value:
+        try:
+            return ast.unparse(body[0].value)
+        except Exception:
+            pass
+    return None
 
 
 def snake_to_kebab(name: str) -> str:
