@@ -18,7 +18,7 @@ def add(a: float, b: float) -> float:
     """Add two numbers"""
     return a + b
 '''
-        anlus = atomize_python_file(code)
+        anlus, _ = atomize_python_file(code)
 
         assert len(anlus) == 1
         anlu = anlus[0]
@@ -36,7 +36,7 @@ def validate(name: str, count: int, ratio: float, active: bool) -> bool:
     """Validate input data"""
     return True
 '''
-        anlus = atomize_python_file(code)
+        anlus, _ = atomize_python_file(code)
 
         assert len(anlus) == 1
         inputs = anlus[0]["inputs"]
@@ -51,7 +51,7 @@ def validate(name: str, count: int, ratio: float, active: bool) -> bool:
 def multiply(x: float, y: float) -> float:
     return x * y
 '''
-        anlus = atomize_python_file(code)
+        anlus, _ = atomize_python_file(code)
 
         assert len(anlus) == 1
         # Should generate purpose from function name
@@ -68,7 +68,7 @@ def subtract(a: float, b: float) -> float:
     """Subtract b from a"""
     return a - b
 '''
-        anlus = atomize_python_file(code)
+        anlus, _ = atomize_python_file(code)
 
         assert len(anlus) == 2
         assert anlus[0]["identifier"] == "add"
@@ -146,7 +146,7 @@ def public(x: int) -> int:
     """Public function"""
     return x * 2
 '''
-        anlus = atomize_python_file(code)
+        anlus, _ = atomize_python_file(code)
 
         assert len(anlus) == 1
         assert anlus[0]["identifier"] == "public"
@@ -158,7 +158,7 @@ def process(data: str):
     """Process some data"""
     return data.upper()
 '''
-        anlus = atomize_python_file(code)
+        anlus, _ = atomize_python_file(code)
 
         assert len(anlus) == 1
         # Should infer or default
@@ -171,7 +171,7 @@ def sum_all(values: list[float]) -> float:
     """Sum all values"""
     return sum(values)
 '''
-        anlus = atomize_python_file(code)
+        anlus, _ = atomize_python_file(code)
 
         assert len(anlus) == 1
         assert anlus[0]["inputs"][0]["type"] == "list of number"
@@ -183,6 +183,6 @@ def process_data(input_value: str) -> str:
     """Process the data"""
     return input_value
 '''
-        anlus = atomize_python_file(code)
+        anlus, _ = atomize_python_file(code)
 
         assert anlus[0]["identifier"] == "process-data"

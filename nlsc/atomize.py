@@ -377,6 +377,72 @@ def snake_to_kebab(name: str) -> str:
     return name.replace("_", "-")
 
 
+def extract_type_from_class(cls: ast.ClassDef) -> dict[str, Any] | None:
+    """
+    Extract type definition from a Python class (especially dataclasses).
+
+    Args:
+        cls: AST node for the class definition
+
+    Returns:
+        Dictionary with type fields, or None if not extractable
+    """
+    # Get docstring
+    docstring = ast.get_docstring(cls)
+    description = ""
+    if docstring:
+        description = docstring.split("\n")[0].strip()
+
+    # Check if it's a dataclass (has @dataclass decorator)
+    is_dataclass = False
+    for decorator in cls.decorator_list:
+        if isinstance(decorator, ast.Name) and decorator.id == "dataclass":
+            is_dataclass = True
+            break
+        if isinstance(decorator, ast.Call):
+            if isinstance(decorator.func, ast.Name) and decorator.func.id == "dataclass":
+                is_dataclass = True
+                break
+
+    # Extract fields from class body
+    fields = []
+    for node in cls.body:
+        # Skip docstring
+        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant):
+            continue
+
+        # Annotated assignment (field: type or field: type = default)
+        if isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Name):
+                field_name = node.target.id
+                field_type = python_type_to_nl(node.annotation)
+
+                # Check for default value
+                default = None
+                if node.value:
+                    try:
+                        default = ast.unparse(node.value)
+                    except Exception:
+                        pass
+
+                fields.append({
+                    "name": field_name,
+                    "type": field_type,
+                    "default": default,
+                })
+
+    # Only extract classes with annotated fields (dataclasses or typed classes)
+    if not fields:
+        return None
+
+    return {
+        "name": cls.name,
+        "description": description,
+        "fields": fields,
+        "is_dataclass": is_dataclass,
+    }
+
+
 def extract_anlu_from_function(func: ast.FunctionDef) -> dict[str, Any]:
     """
     Extract ANLU specification from a Python function.
@@ -428,18 +494,19 @@ def extract_anlu_from_function(func: ast.FunctionDef) -> dict[str, Any]:
     }
 
 
-def atomize_python_file(code: str) -> list[dict[str, Any]]:
+def atomize_python_file(code: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """
-    Extract ANLUs from Python source code.
+    Extract ANLUs and type definitions from Python source code.
 
     Args:
         code: Python source code as string
 
     Returns:
-        List of ANLU dictionaries
+        Tuple of (list of ANLU dictionaries, list of type definitions)
     """
     tree = ast.parse(code)
     anlus = []
+    types = []
 
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef):
@@ -450,7 +517,16 @@ def atomize_python_file(code: str) -> list[dict[str, Any]]:
             anlu = extract_anlu_from_function(node)
             anlus.append(anlu)
 
-    return anlus
+        if isinstance(node, ast.ClassDef):
+            # Skip private classes
+            if node.name.startswith("_"):
+                continue
+
+            type_def = extract_type_from_class(node)
+            if type_def:
+                types.append(type_def)
+
+    return anlus, types
 
 
 def atomize_to_nl(code: str, module_name: str = "extracted") -> str:
@@ -464,13 +540,25 @@ def atomize_to_nl(code: str, module_name: str = "extracted") -> str:
     Returns:
         NL specification as string
     """
-    anlus = atomize_python_file(code)
+    anlus, types = atomize_python_file(code)
 
     lines = [
         f"@module {module_name}",
         "@target python",
         "",
     ]
+
+    # Output type definitions first
+    for type_def in types:
+        lines.append(f"@type {type_def['name']}")
+        if type_def["description"]:
+            lines.append(f"  # {type_def['description']}")
+        for field in type_def["fields"]:
+            field_str = f"  - {field['name']}: {field['type']}"
+            if field["default"]:
+                field_str += f" (default: {field['default']})"
+            lines.append(field_str)
+        lines.append("")
 
     for anlu in anlus:
         lines.append(f"[{anlu['identifier']}]")
