@@ -51,41 +51,154 @@ def emit_docstring(anlu: ANLU) -> str:
     return "\n".join(lines)
 
 
+def emit_body_from_logic(anlu: ANLU) -> str:
+    """
+    Generate function body deterministically from LOGIC steps.
+
+    Uses dataflow information to generate proper Python code:
+    - Assignment steps (var = expr) become Python assignments
+    - Conditional steps (IF cond THEN action) become if statements
+    - Output bindings (→ var) become assignments
+    - RETURNS becomes the return statement
+    """
+    lines = []
+
+    # Process each logic step
+    for step in anlu.logic_steps:
+        # Check if this is a conditional step
+        if step.condition:
+            # Generate if statement
+            condition = step.condition.strip()
+            # Handle NOT prefix
+            if condition.upper().startswith("NOT "):
+                condition = f"not {condition[4:]}"
+            lines.append(f"    if {condition}:")
+
+            # Generate the action inside the if block
+            action = _extract_action(step)
+            if action:
+                lines.append(f"        {action}")
+            else:
+                lines.append(f"        pass  # {step.description}")
+        else:
+            # Non-conditional step
+            action = _extract_action(step)
+            if action:
+                lines.append(f"    {action}")
+            elif step.description:
+                # Descriptive step without assignment - emit as comment
+                lines.append(f"    # {step.description}")
+
+    # Generate return statement
+    returns = anlu.returns.strip()
+    returns_expr = returns.replace("×", "*").replace("÷", "/")
+
+    if lines:
+        lines.append(f"    return {returns_expr}")
+    else:
+        # No logic steps - just return the expression
+        lines.append(f"    return {returns_expr}")
+
+    return "\n".join(lines)
+
+
+def _extract_action(step) -> Optional[str]:
+    """
+    Extract executable Python action from a logic step.
+
+    Returns the action string, or None if it's purely descriptive.
+    """
+    desc = step.description.strip()
+
+    # Remove state name prefix if present
+    if desc.startswith("["):
+        bracket_end = desc.find("]")
+        if bracket_end > 0:
+            desc = desc[bracket_end + 1:].strip()
+
+    # Remove output binding suffix
+    for arrow in ["→", "->"]:
+        if arrow in desc:
+            desc = desc.split(arrow)[0].strip()
+
+    # Remove IF...THEN wrapper if present
+    if desc.upper().startswith("IF ") and " THEN " in desc.upper():
+        then_pos = desc.upper().find(" THEN ")
+        desc = desc[then_pos + 6:].strip()
+
+    # Check for assignment pattern
+    if "=" in desc and not desc.startswith("=") and not "==" in desc:
+        # This is an assignment - return it
+        return desc
+
+    # Check if step has explicit assigns from output binding
+    if step.output_binding and step.assigns:
+        # Generate assignment from description
+        # Try to extract meaningful action
+        return f"{step.output_binding} = {_desc_to_expr(desc)}"
+
+    # Not an assignment - purely descriptive
+    return None
+
+
+def _desc_to_expr(desc: str) -> str:
+    """
+    Convert descriptive text to a Python expression placeholder.
+
+    For V1, we keep descriptive steps as function calls to be defined.
+    """
+    # Clean up the description
+    desc = desc.strip()
+
+    # If it looks like a function call already, return it
+    if "(" in desc and ")" in desc:
+        return desc
+
+    # Otherwise, convert to a TODO function call
+    func_name = desc.lower().replace(" ", "_").replace("-", "_")
+    # Keep only valid identifier characters
+    func_name = re.sub(r'[^a-z0-9_]', '', func_name)
+    return f"{func_name}()  # TODO: implement"
+
+
 def emit_body_mock(anlu: ANLU) -> str:
     """
     Generate function body using mock/template approach.
-    
+
     Handles simple patterns deterministically:
     - RETURNS: a + b -> return a + b
     - RETURNS: a × b -> return a * b
     - RETURNS: a - b -> return a - b
     - RETURNS: a / b -> return a / b
     """
+    # If we have logic_steps, use deterministic emission
+    if anlu.logic_steps:
+        return emit_body_from_logic(anlu)
+
     returns = anlu.returns.strip()
-    
+
     # Direct expression returns (a + b, a × b, etc.)
     # Replace math symbols
     expr = returns.replace("×", "*").replace("÷", "/")
-    
+
     # Check if it's a simple expression with known operators
     if re.match(r"^[a-z_][a-z0-9_]*\s*[\+\-\*\/]\s*[a-z_][a-z0-9_]*$", expr, re.IGNORECASE):
         return f"    return {expr}"
-    
+
     # Check for function-like returns: "result with field1, field2"
     if " with " in returns.lower():
         # For now, just return a dict
         parts = returns.split(" with ", 1)
         return f'    # TODO: Return {parts[0]} with fields: {parts[1]}\n    return {{}}'
-    
-    # If logic steps are provided, generate from those
+
+    # If raw logic is provided but no logic_steps, generate comments
     if anlu.logic:
         lines = ["    # Generated from LOGIC steps:"]
         for i, step in enumerate(anlu.logic, 1):
             lines.append(f"    # {i}. {step}")
-        lines.append(f"    # TODO: Implement logic")
-        lines.append(f"    raise NotImplementedError('{anlu.identifier}')")
+        lines.append(f"    return {expr}")
         return "\n".join(lines)
-    
+
     # If guards are provided, generate guard checks
     if anlu.guards:
         lines = []
@@ -93,14 +206,15 @@ def emit_body_mock(anlu: ANLU) -> str:
             lines.append(f"    # Guard: {guard.condition}")
             if guard.error_message:
                 lines.append(f'    # → {guard.error_type or "Error"}({guard.error_message})')
-        lines.append(f"    raise NotImplementedError('{anlu.identifier}')")
+        lines.append(f"    return {expr}")
         return "\n".join(lines)
-    
+
     # Fallback: return the expression as-is if it looks like valid Python
-    if expr and not " " in expr:
+    if expr and " " not in expr:
         return f"    return {expr}"
-    
-    return f"    raise NotImplementedError('{anlu.identifier}')"
+
+    # Last resort - return the expression
+    return f"    return {expr}"
 
 
 def emit_anlu(anlu: ANLU, mode: str = "mock") -> str:

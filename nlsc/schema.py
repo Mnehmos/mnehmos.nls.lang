@@ -195,19 +195,58 @@ class ANLU:
     
     def to_python_return_type(self) -> str:
         """Convert RETURNS to Python type hint"""
+        returns = self.returns.strip()
+
         # Simple expressions like "a + b" -> infer from operation
-        if "+" in self.returns or "-" in self.returns:
+        if "+" in returns or "-" in returns:
             return "float"
-        if "×" in self.returns or "*" in self.returns:
+        if "×" in returns or "*" in returns or "/" in returns or "÷" in returns:
             return "float"
-        
+
         type_map = {
             "number": "float",
             "string": "str",
             "boolean": "bool",
             "void": "None",
         }
-        return type_map.get(self.returns, self.returns)
+
+        # Check if it's a known type name
+        if returns.lower() in type_map:
+            return type_map[returns.lower()]
+
+        # Check if it's a custom type name (capitalized)
+        if returns and returns[0].isupper():
+            return returns
+
+        # Check if RETURNS is a variable assigned in logic_steps
+        if self.logic_steps:
+            for step in self.logic_steps:
+                if returns in step.assigns:
+                    # Variable was assigned - infer from the assignment expression
+                    desc = step.description.strip()
+                    # Check if assignment is arithmetic
+                    if "=" in desc:
+                        expr = desc.split("=", 1)[1].strip()
+                        if any(op in expr for op in ["+", "-", "*", "/", "×", "÷"]):
+                            return "float"
+                        # Check if it's a function call that might return a number
+                        if "sum(" in expr or "len(" in expr or "max(" in expr or "min(" in expr:
+                            return "float"
+                        # Check if it looks like a boolean expression
+                        if any(op in expr for op in [">", "<", "==", "!=", ">=", "<=", " and ", " or ", " not "]):
+                            return "bool"
+                    break
+
+        # Check if RETURNS variable matches an input name - use input's type
+        for inp in self.inputs:
+            if returns == inp.name:
+                return inp.to_python_type()
+
+        # Default fallback for unknown variable names - assume float for simple identifiers
+        if returns.isidentifier():
+            return "float"
+
+        return type_map.get(returns, returns)
     
     @property
     def python_name(self) -> str:
