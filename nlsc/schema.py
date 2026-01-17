@@ -65,17 +65,27 @@ class EdgeCase:
 
 @dataclass
 class LogicStep:
-    """A parsed LOGIC step with dataflow information"""
+    """A parsed LOGIC step with dataflow and FSM information"""
     number: int
     description: str
     assigns: list[str] = field(default_factory=list)
     uses: list[str] = field(default_factory=list)
     depends_on: list[int] = field(default_factory=list)
 
+    # FSM features (Issue #3)
+    state_name: Optional[str] = None
+    output_binding: Optional[str] = None
+    condition: Optional[str] = None
+
     @property
     def is_independent(self) -> bool:
         """True if this step has no dependencies on other steps"""
         return len(self.depends_on) == 0
+
+    @property
+    def is_conditional(self) -> bool:
+        """True if this step has an IF condition"""
+        return self.condition is not None
 
 
 @dataclass
@@ -133,6 +143,41 @@ class ANLU:
                 del remaining[num]
 
         return groups
+
+    def fsm_states(self) -> list[str]:
+        """Return list of state names from LOGIC steps (FSM nodes)"""
+        return [
+            step.state_name
+            for step in self.logic_steps
+            if step.state_name is not None
+        ]
+
+    def fsm_transitions(self) -> list[tuple[str, str]]:
+        """
+        Return list of (from_state, to_state) transitions based on dependencies.
+        Only includes transitions between named states.
+        """
+        transitions = []
+
+        # Build map of step number -> state name
+        step_to_state = {
+            step.number: step.state_name
+            for step in self.logic_steps
+            if step.state_name is not None
+        }
+
+        for step in self.logic_steps:
+            if step.state_name is None:
+                continue
+
+            for dep_num in step.depends_on:
+                if dep_num in step_to_state:
+                    from_state = step_to_state[dep_num]
+                    to_state = step.state_name
+                    if (from_state, to_state) not in transitions:
+                        transitions.append((from_state, to_state))
+
+        return transitions
 
     @property
     def bound_type(self) -> Optional[str]:

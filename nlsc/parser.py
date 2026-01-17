@@ -163,7 +163,7 @@ def extract_variables(expression: str) -> list[str]:
 
 def parse_logic_step(number: int, text: str, previous_assigns: dict[str, int]) -> LogicStep:
     """
-    Parse a LOGIC step line, extracting assignment and variable usage.
+    Parse a LOGIC step line, extracting assignment, variable usage, and FSM features.
 
     Args:
         number: Step number (1-indexed)
@@ -171,23 +171,60 @@ def parse_logic_step(number: int, text: str, previous_assigns: dict[str, int]) -
         previous_assigns: Map of variable name -> step number that assigned it
 
     Returns:
-        LogicStep with dataflow information
+        LogicStep with dataflow and FSM information
     """
     assigns = []
     uses = []
     depends_on = []
+    state_name = None
+    output_binding = None
+    condition = None
 
-    # Check for assignment pattern: var = expression
-    assignment_match = re.match(r'^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$', text.strip())
+    working_text = text.strip()
+
+    # 1. Parse [state_name] prefix
+    state_match = re.match(r'^\[([a-zA-Z_][a-zA-Z0-9_-]*)\]\s*(.+)$', working_text)
+    if state_match:
+        state_name = state_match.group(1)
+        working_text = state_match.group(2)
+
+    # 2. Parse → variable or -> variable output binding (at end)
+    output_match = re.search(r'\s*(?:→|->)\s*([a-zA-Z_][a-zA-Z0-9_]*)$', working_text)
+    if output_match:
+        output_binding = output_match.group(1)
+        working_text = working_text[:output_match.start()].strip()
+        # Output binding is also an assignment
+        assigns.append(output_binding)
+
+    # 3. Parse IF condition THEN syntax
+    if_match = re.match(r'^IF\s+(.+?)\s+THEN\s+(.+)$', working_text, re.IGNORECASE)
+    if if_match:
+        condition = if_match.group(1).strip()
+        working_text = if_match.group(2).strip()
+        # Extract variables from condition too
+        uses.extend(extract_variables(condition))
+
+    # 4. Check for assignment pattern: var = expression
+    assignment_match = re.match(r'^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$', working_text)
 
     if assignment_match:
         var_name = assignment_match.group(1)
         expression = assignment_match.group(2)
-        assigns = [var_name]
-        uses = extract_variables(expression)
+        if var_name not in assigns:  # Don't duplicate if already from output binding
+            assigns.append(var_name)
+        uses.extend(extract_variables(expression))
     else:
         # No assignment - just extract any variables mentioned
-        uses = extract_variables(text)
+        uses.extend(extract_variables(working_text))
+
+    # Remove duplicates from uses while preserving order
+    seen = set()
+    unique_uses = []
+    for var in uses:
+        if var not in seen:
+            seen.add(var)
+            unique_uses.append(var)
+    uses = unique_uses
 
     # Build dependencies based on which previous steps assigned variables we use
     for var in uses:
@@ -203,7 +240,10 @@ def parse_logic_step(number: int, text: str, previous_assigns: dict[str, int]) -
         description=text.strip(),
         assigns=assigns,
         uses=uses,
-        depends_on=depends_on
+        depends_on=depends_on,
+        state_name=state_name,
+        output_binding=output_binding,
+        condition=condition
     )
 
 
