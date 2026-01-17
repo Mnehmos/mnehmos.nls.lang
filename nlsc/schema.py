@@ -216,6 +216,9 @@ class ANLU:
 
         # Check if it's a custom type name (capitalized)
         if returns and returns[0].isupper():
+            # If it's a constructor call like "Point(1, 2)", extract "Point"
+            if "(" in returns:
+                return returns.split("(")[0]
             return returns
 
         # Check if RETURNS is a variable assigned in logic_steps
@@ -323,6 +326,7 @@ class NLFile:
     anlus: list[ANLU] = field(default_factory=list)
     tests: list[TestSuite] = field(default_factory=list)
     literals: list[str] = field(default_factory=list)
+    main_block: list[str] = field(default_factory=list)  # @main block content
     
     # Source info
     source_path: Optional[str] = None
