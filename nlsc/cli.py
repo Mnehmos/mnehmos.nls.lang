@@ -37,6 +37,23 @@ from .diff import get_anlu_changes, format_changes_output, format_stat_output, g
 from .lockfile import read_lockfile
 from .watch import NLWatcher, format_timestamp
 
+# Unicode symbols with ASCII fallbacks for Windows console
+def _check() -> str:
+    """Return checkmark, falling back to ASCII if needed."""
+    try:
+        "\u2713".encode(sys.stdout.encoding or 'utf-8')
+        return "\u2713"
+    except (UnicodeEncodeError, LookupError):
+        return "[OK]"
+
+def _cross() -> str:
+    """Return cross mark, falling back to ASCII if needed."""
+    try:
+        "\u2717".encode(sys.stdout.encoding or 'utf-8')
+        return "\u2717"
+    except (UnicodeEncodeError, LookupError):
+        return "[X]"
+
 # Parser selection
 _use_treesitter = False
 
@@ -105,7 +122,7 @@ validation:
   max_anlu_complexity: 10
 """
         config_path.write_text(config_content, encoding="utf-8")
-        print(f"  ✓ Created {config_path.name}")
+        print(f"  {_check()} Created {config_path.name}")
     else:
         print(f"  • {config_path.name} already exists")
     
@@ -116,7 +133,7 @@ validation:
     for dir_path in [src_dir, tests_dir]:
         if not dir_path.exists():
             dir_path.mkdir(parents=True)
-            print(f"  ✓ Created {dir_path.name}/")
+            print(f"  {_check()} Created {dir_path.name}/")
         else:
             print(f"  • {dir_path.name}/ already exists")
     
@@ -146,24 +163,24 @@ def cmd_compile(args: argparse.Namespace) -> int:
     # Parse
     try:
         nl_file = parse_nl_file_auto(source_path)
-        print(f"  ✓ Parsed {len(nl_file.anlus)} ANLUs")
+        print(f"  {_check()} Parsed {len(nl_file.anlus)} ANLUs")
     except ParseError as e:
-        print(f"  ✗ Parse error: {e}", file=sys.stderr)
+        print(f"  {_cross()} Parse error: {e}", file=sys.stderr)
         return 1
     
     # Resolve dependencies
     result = resolve_dependencies(nl_file)
     if not result.success:
-        print(f"  ✗ Resolution errors:", file=sys.stderr)
+        print(f"  {_cross()} Resolution errors:", file=sys.stderr)
         for err in result.errors:
             print(f"    - {err.anlu_id}: {err.message}", file=sys.stderr)
         return 1
-    print(f"  ✓ Resolved dependencies")
+    print(f"  {_check()} Resolved dependencies")
     
     # Emit Python
     target = args.target or "python"
     if target != "python":
-        print(f"  ✗ Target '{target}' not yet supported", file=sys.stderr)
+        print(f"  {_cross()} Target '{target}' not yet supported", file=sys.stderr)
         return 1
     
     python_code = emit_python(nl_file, mode="mock")
@@ -175,14 +192,14 @@ def cmd_compile(args: argparse.Namespace) -> int:
     
     output_path.write_text(python_code, encoding="utf-8")
     line_count = python_code.count("\n") + 1
-    print(f"  ✓ Generated {output_path.name} ({line_count} lines)")
+    print(f"  {_check()} Generated {output_path.name} ({line_count} lines)")
     
     # Generate tests if present
     test_code = emit_tests(nl_file)
     if test_code and nl_file.tests:
         test_path = source_path.parent / f"test_{source_path.stem}.py"
         test_path.write_text(test_code, encoding="utf-8")
-        print(f"  ✓ Generated {test_path.name}")
+        print(f"  {_check()} Generated {test_path.name}")
     
     # Generate lockfile
     lock_path = source_path.with_suffix(".nl.lock")
@@ -193,7 +210,7 @@ def cmd_compile(args: argparse.Namespace) -> int:
         llm_backend="mock"
     )
     write_lockfile(lockfile, lock_path)
-    print(f"  ✓ Updated {lock_path.name}")
+    print(f"  {_check()} Updated {lock_path.name}")
     
     print(f"\nCompilation complete!")
     return 0
@@ -213,19 +230,19 @@ def cmd_verify(args: argparse.Namespace) -> int:
     # Parse
     try:
         nl_file = parse_nl_file_auto(source_path)
-        print(f"  ✓ Syntax valid: {len(nl_file.anlus)} ANLUs")
+        print(f"  {_check()} Syntax valid: {len(nl_file.anlus)} ANLUs")
     except ParseError as e:
-        print(f"  ✗ Parse error: {e}", file=sys.stderr)
+        print(f"  {_cross()} Parse error: {e}", file=sys.stderr)
         return 1
     
     # Resolve
     result = resolve_dependencies(nl_file)
     if not result.success:
-        print(f"  ✗ Resolution errors:")
+        print(f"  {_cross()} Resolution errors:")
         for err in result.errors:
             print(f"    - {err.anlu_id}: {err.message}")
         return 1
-    print(f"  ✓ Dependencies valid")
+    print(f"  {_check()} Dependencies valid")
     
     # Validate each ANLU
     errors = []
@@ -236,12 +253,12 @@ def cmd_verify(args: argparse.Namespace) -> int:
             errors.append(f"{anlu.identifier}: Missing RETURNS")
     
     if errors:
-        print(f"  ✗ Validation errors:")
+        print(f"  {_cross()} Validation errors:")
         for err in errors:
             print(f"    - {err}")
         return 1
     
-    print(f"  ✓ All ANLUs valid")
+    print(f"  {_check()} All ANLUs valid")
     print(f"\nVerification passed!")
     return 0
 
@@ -373,10 +390,10 @@ def cmd_test(args: argparse.Namespace) -> int:
 
         # Report results
         if result.returncode == 0:
-            print(f"✓ All {total_cases} tests passed!")
+            print(f"{_check()} All {total_cases} tests passed!")
             return 0
         else:
-            print(f"✗ Tests failed")
+            print(f"{_cross()} Tests failed")
             if result.stdout:
                 print(result.stdout)
             if result.stderr:
@@ -407,14 +424,14 @@ def cmd_atomize(args: argparse.Namespace) -> int:
         anlu_count = nl_content.count("[") - nl_content.count("[[")
         final_output = output_path or source_path.with_suffix(".nl")
 
-        print(f"  ✓ Extracted {anlu_count} ANLUs")
-        print(f"  ✓ Wrote {final_output}")
+        print(f"  {_check()} Extracted {anlu_count} ANLUs")
+        print(f"  {_check()} Wrote {final_output}")
         return 0
     except SyntaxError as e:
-        print(f"  ✗ Python syntax error: {e}", file=sys.stderr)
+        print(f"  {_cross()} Python syntax error: {e}", file=sys.stderr)
         return 1
     except Exception as e:
-        print(f"  ✗ Error: {e}", file=sys.stderr)
+        print(f"  {_cross()} Error: {e}", file=sys.stderr)
         return 1
 
 
@@ -492,9 +509,9 @@ def cmd_watch(args: argparse.Namespace) -> int:
         timestamp = format_timestamp()
         if success:
             if not quiet:
-                print(f"{timestamp} ✓ Compiled {path.name}")
+                print(f"{timestamp} " + _check() + "  Compiled {path.name}")
         else:
-            print(f"{timestamp} ✗ {path.name}: {error}", file=sys.stderr)
+            print(f"{timestamp} " + _cross() + "  {path.name}: {error}", file=sys.stderr)
 
     print(f"Watching {watch_path.absolute()} for .nl changes...")
     print("Press Ctrl+C to stop.\n")
@@ -643,7 +660,7 @@ The conversation is the programming. The .nl file is the receipt.
 
     # diff command
     diff_parser = subparsers.add_parser(
-        "diff",
+        "dif",
         help="Show changes since last compile"
     )
     diff_parser.add_argument(
@@ -658,7 +675,7 @@ The conversation is the programming. The .nl file is the receipt.
     diff_parser.add_argument(
         "--full",
         action="store_true",
-        help="Show full unified diff"
+        help="Show full unified dif"
     )
 
     # watch command
@@ -711,7 +728,7 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_test(args)
     elif args.command == "atomize":
         return cmd_atomize(args)
-    elif args.command == "diff":
+    elif args.command == "dif":
         return cmd_diff(args)
     elif args.command == "watch":
         return cmd_watch(args)
