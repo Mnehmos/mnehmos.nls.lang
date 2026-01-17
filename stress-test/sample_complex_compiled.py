@@ -46,7 +46,7 @@ def process_order(user: User, products: list[Product]) -> dict:
     """
     total = sum((p.price for p in products))
     order_id = f'ORD-{user.email}-{len(products)}'
-    return dictionary
+    return {}
 
 
 def get_or_default(value: Optional[str], default: str) -> Any:
