@@ -139,9 +139,14 @@ def extract_guards(func: ast.FunctionDef) -> list[dict[str, str]]:
 
 def extract_logic_steps(func: ast.FunctionDef) -> list[str]:
     """
-    Extract LOGIC steps from function body (assignments before return).
+    Extract LOGIC steps from function body.
 
-    Returns list of "variable = expression" strings.
+    Captures:
+    - Assignments (x = expr)
+    - Augmented assignments (x += expr)
+    - Expression statements (method calls like obj.update(args))
+
+    Returns list of step strings.
     """
     logic_steps = []
 
@@ -161,8 +166,10 @@ def extract_logic_steps(func: ast.FunctionDef) -> list[str]:
             else:
                 in_guards = False
 
-        if isinstance(node, ast.Assign):
-            in_guards = False  # Past guards now
+        # Any non-guard statement means we're past guards
+        if isinstance(node, (ast.Assign, ast.AugAssign, ast.Expr)):
+            if not (isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant)):
+                in_guards = False
 
         # Capture assignments
         if isinstance(node, ast.Assign):
@@ -174,6 +181,30 @@ def extract_logic_steps(func: ast.FunctionDef) -> list[str]:
                             logic_steps.append(f"{target.id} = {expr}")
                     except Exception:
                         pass
+
+        # Capture augmented assignments (+=, -=, etc.)
+        if isinstance(node, ast.AugAssign):
+            if isinstance(node.target, ast.Name):
+                try:
+                    op_map = {
+                        ast.Add: "+=", ast.Sub: "-=", ast.Mult: "*=",
+                        ast.Div: "/=", ast.Mod: "%=", ast.FloorDiv: "//=",
+                    }
+                    op_str = op_map.get(type(node.op), "?=")
+                    expr = ast.unparse(node.value)
+                    if len(expr) < 60:
+                        logic_steps.append(f"{node.target.id} {op_str} {expr}")
+                except Exception:
+                    pass
+
+        # Capture expression statements (method calls like obj.method(args))
+        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
+            try:
+                call_str = ast.unparse(node.value)
+                if len(call_str) < 80:
+                    logic_steps.append(call_str)
+            except Exception:
+                pass
 
         # Stop at return
         if isinstance(node, ast.Return):
