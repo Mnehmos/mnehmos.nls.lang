@@ -7,6 +7,7 @@ Commands:
     nlsc verify <file>     Verify .nl file without generating
     nlsc graph <file>      Visualize dependencies and dataflow
     nlsc test <file>       Run @test specifications
+    nlsc atomize <file>    Extract ANLUs from Python code
 """
 
 import argparse
@@ -28,6 +29,7 @@ from .graph import (
     emit_dataflow_ascii,
     emit_fsm_mermaid,
 )
+from .atomize import atomize_file
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -344,6 +346,40 @@ def cmd_test(args: argparse.Namespace) -> int:
             return 1
 
 
+def cmd_atomize(args: argparse.Namespace) -> int:
+    """Extract ANLUs from Python source code"""
+    source_path = Path(args.file)
+
+    if not source_path.exists():
+        print(f"Error: File not found: {source_path}", file=sys.stderr)
+        return 1
+
+    # Determine output path
+    output_path = Path(args.output) if args.output else None
+
+    # Determine module name
+    module_name = args.module
+
+    print(f"Atomizing {source_path}...")
+
+    try:
+        nl_content = atomize_file(source_path, output_path, module_name)
+
+        # Count ANLUs
+        anlu_count = nl_content.count("[") - nl_content.count("[[")
+        final_output = output_path or source_path.with_suffix(".nl")
+
+        print(f"  ✓ Extracted {anlu_count} ANLUs")
+        print(f"  ✓ Wrote {final_output}")
+        return 0
+    except SyntaxError as e:
+        print(f"  ✗ Python syntax error: {e}", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"  ✗ Error: {e}", file=sys.stderr)
+        return 1
+
+
 def main() -> int:
     """Main entry point for nlsc CLI"""
     parser = argparse.ArgumentParser(
@@ -445,6 +481,24 @@ The conversation is the programming. The .nl file is the receipt.
         help="Verbose output"
     )
 
+    # atomize command
+    atomize_parser = subparsers.add_parser(
+        "atomize",
+        help="Extract ANLUs from Python code"
+    )
+    atomize_parser.add_argument(
+        "file",
+        help="Path to Python file"
+    )
+    atomize_parser.add_argument(
+        "-o", "--output",
+        help="Output .nl file path"
+    )
+    atomize_parser.add_argument(
+        "-m", "--module",
+        help="Module name for generated .nl"
+    )
+
     args = parser.parse_args()
     
     if args.command is None:
@@ -461,6 +515,8 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_graph(args)
     elif args.command == "test":
         return cmd_test(args)
+    elif args.command == "atomize":
+        return cmd_atomize(args)
 
     return 0
 
