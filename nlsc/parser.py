@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
-from .schema import ANLU, Module, NLFile, Input, Guard, EdgeCase, TestSuite, TestCase, TypeDefinition, TypeField
+from .schema import ANLU, Module, NLFile, Input, Guard, EdgeCase, TestSuite, TestCase, TypeDefinition, TypeField, LogicStep
 
 
 class ParseError(Exception):
@@ -137,6 +137,76 @@ def parse_type_field(text: str) -> TypeField:
     )
 
 
+def extract_variables(expression: str) -> list[str]:
+    """
+    Extract variable names from an expression.
+    Excludes literals, operators, and function names.
+    """
+    # Remove string literals
+    expression = re.sub(r'"[^"]*"', '', expression)
+    expression = re.sub(r"'[^']*'", '', expression)
+
+    # Find all word tokens
+    tokens = re.findall(r'\b([a-zA-Z_][a-zA-Z0-9_]*)\b', expression)
+
+    # Filter out common keywords, functions, and literals
+    keywords = {
+        'True', 'False', 'None', 'and', 'or', 'not', 'in', 'is',
+        'if', 'else', 'for', 'while', 'return', 'def', 'class',
+        'sum', 'len', 'min', 'max', 'abs', 'round', 'int', 'float', 'str',
+        'list', 'dict', 'set', 'tuple', 'range', 'enumerate', 'zip',
+        'IF', 'THEN', 'ELSE', 'AND', 'OR', 'NOT'
+    }
+
+    return [t for t in tokens if t not in keywords]
+
+
+def parse_logic_step(number: int, text: str, previous_assigns: dict[str, int]) -> LogicStep:
+    """
+    Parse a LOGIC step line, extracting assignment and variable usage.
+
+    Args:
+        number: Step number (1-indexed)
+        text: The step description
+        previous_assigns: Map of variable name -> step number that assigned it
+
+    Returns:
+        LogicStep with dataflow information
+    """
+    assigns = []
+    uses = []
+    depends_on = []
+
+    # Check for assignment pattern: var = expression
+    assignment_match = re.match(r'^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$', text.strip())
+
+    if assignment_match:
+        var_name = assignment_match.group(1)
+        expression = assignment_match.group(2)
+        assigns = [var_name]
+        uses = extract_variables(expression)
+    else:
+        # No assignment - just extract any variables mentioned
+        uses = extract_variables(text)
+
+    # Build dependencies based on which previous steps assigned variables we use
+    for var in uses:
+        if var in previous_assigns:
+            step_num = previous_assigns[var]
+            if step_num not in depends_on:
+                depends_on.append(step_num)
+
+    depends_on.sort()
+
+    return LogicStep(
+        number=number,
+        description=text.strip(),
+        assigns=assigns,
+        uses=uses,
+        depends_on=depends_on
+    )
+
+
 def parse_edge_case(text: str) -> EdgeCase:
     """
     Parse an edge case line like:
@@ -183,6 +253,8 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
     literal_lang = ""
     literal_buffer: list[str] = []
     brace_depth = 0
+    # Track variable assignments for dataflow analysis
+    logic_assigns: dict[str, int] = {}
     
     for line_num, line in enumerate(lines, start=1):
         # Handle literal blocks
@@ -254,7 +326,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             # Save previous ANLU
             if current_anlu:
                 anlus.append(current_anlu)
-            
+
             # Start new ANLU
             current_anlu = ANLU(
                 identifier=anlu_match.group(1),
@@ -262,6 +334,8 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                 returns="",
                 line_number=line_num
             )
+            # Reset dataflow tracking for new ANLU
+            logic_assigns = {}
             current_section = None
             continue
         
@@ -327,7 +401,16 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                 numbered_match = PATTERNS["numbered"].match(line)
                 if numbered_match:
                     if current_section == "logic":
-                        current_anlu.logic.append(numbered_match.group(2))
+                        step_num = int(numbered_match.group(1))
+                        step_text = numbered_match.group(2)
+                        # Keep raw logic for backwards compatibility
+                        current_anlu.logic.append(step_text)
+                        # Parse with dataflow extraction
+                        logic_step = parse_logic_step(step_num, step_text, logic_assigns)
+                        current_anlu.logic_steps.append(logic_step)
+                        # Update assigns tracker
+                        for var in logic_step.assigns:
+                            logic_assigns[var] = step_num
                     continue
         
         # Parse type fields

@@ -64,6 +64,21 @@ class EdgeCase:
 
 
 @dataclass
+class LogicStep:
+    """A parsed LOGIC step with dataflow information"""
+    number: int
+    description: str
+    assigns: list[str] = field(default_factory=list)
+    uses: list[str] = field(default_factory=list)
+    depends_on: list[int] = field(default_factory=list)
+
+    @property
+    def is_independent(self) -> bool:
+        """True if this step has no dependencies on other steps"""
+        return len(self.depends_on) == 0
+
+
+@dataclass
 class ANLU:
     """
     Atomic Natural Language Unit
@@ -79,12 +94,45 @@ class ANLU:
     inputs: list[Input] = field(default_factory=list)
     guards: list[Guard] = field(default_factory=list)
     logic: list[str] = field(default_factory=list)
+    logic_steps: list["LogicStep"] = field(default_factory=list)
     edge_cases: list[EdgeCase] = field(default_factory=list)
     depends: list[str] = field(default_factory=list)
     literal: Optional[str] = None
 
     # Metadata
     line_number: int = 0
+
+    def parallel_groups(self) -> list[list[int]]:
+        """
+        Return groups of step numbers that can execute in parallel.
+        Each group contains steps that have all their dependencies satisfied
+        by previous groups.
+        """
+        if not self.logic_steps:
+            return []
+
+        groups = []
+        completed = set()
+
+        remaining = {step.number: step for step in self.logic_steps}
+
+        while remaining:
+            # Find all steps whose dependencies are satisfied
+            ready = []
+            for num, step in remaining.items():
+                if all(dep in completed for dep in step.depends_on):
+                    ready.append(num)
+
+            if not ready:
+                # Circular dependency or error - break to avoid infinite loop
+                break
+
+            groups.append(ready)
+            for num in ready:
+                completed.add(num)
+                del remaining[num]
+
+        return groups
 
     @property
     def bound_type(self) -> Optional[str]:
