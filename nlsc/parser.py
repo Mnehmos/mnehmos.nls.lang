@@ -100,7 +100,16 @@ def parse_guard(text: str) -> Guard:
             error_message=error_match.group(3)
         )
 
-    # Parse error specification like ValueError(Amount must be positive)
+    # Parse error specification like ValueError("Division by zero") - quoted message
+    quoted_error_match = re.match(r'(\w+)\("([^"]+)"\)', error_part)
+    if quoted_error_match:
+        return Guard(
+            condition=condition,
+            error_type=quoted_error_match.group(1),
+            error_message=quoted_error_match.group(2)
+        )
+
+    # Parse error specification like ValueError(Amount must be positive) - unquoted
     simple_error_match = re.match(r"(\w+)\(([^)]+)\)", error_part)
     if simple_error_match:
         return Guard(

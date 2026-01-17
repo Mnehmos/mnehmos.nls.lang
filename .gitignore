@@ -48,3 +48,14 @@ Thumbs.db
 
 # Test projects created during development
 examples/testproject/
+
+# Tree-sitter build artifacts
+tree-sitter-nl/*.obj
+tree-sitter-nl/*.lib
+tree-sitter-nl/*.exp
+tree-sitter-nl/build/*.dll
+tree-sitter-nl/build/*.so
+tree-sitter-nl/build/*.dylib
+
+# Windows artifacts
+nul
