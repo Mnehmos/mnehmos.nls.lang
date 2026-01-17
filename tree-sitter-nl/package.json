@@ -1,0 +1,62 @@
+{
+  "name": "tree-sitter-nl",
+  "version": "1.0.0",
+  "description": "Tree-sitter grammar for NL (Natural Language Source) files",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mnehmos/mnehmos.nls.lang.git"
+  },
+  "license": "MIT",
+  "author": "Mnehmos",
+  "main": "bindings/node",
+  "types": "bindings/node",
+  "keywords": [
+    "parser",
+    "tree-sitter",
+    "nl",
+    "nls",
+    "natural-language-source",
+    "compiler"
+  ],
+  "files": [
+    "grammar.js",
+    "binding.gyp",
+    "prebuilds/**",
+    "bindings/node/*",
+    "queries/*",
+    "src/**"
+  ],
+  "scripts": {
+    "build": "tree-sitter generate && node-gyp build",
+    "test": "tree-sitter test",
+    "parse": "tree-sitter parse",
+    "generate": "tree-sitter generate"
+  },
+  "dependencies": {
+    "node-addon-api": "^8.3.0",
+    "node-gyp-build": "^4.8.4"
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.24.5"
+  },
+  "peerDependencies": {
+    "tree-sitter": "^0.21.1"
+  },
+  "peerDependenciesMeta": {
+    "tree-sitter": {
+      "optional": true
+    }
+  },
+  "tree-sitter": [
+    {
+      "scope": "source.nl",
+      "injection-regex": "^nl$",
+      "file-types": [
+        "nl"
+      ],
+      "highlights": "queries/highlights.scm",
+      "folds": "queries/folds.scm",
+      "injections": "queries/injections.scm"
+    }
+  ]
+}

@@ -1,0 +1,271 @@
+(* ============================================================================
+   NL (Natural Language Source) - Formal Grammar Specification
+   EBNF Notation (ISO/IEC 14977)
+
+   Version: 1.0.0
+   Date: 2026-01-17
+
+   This grammar defines the complete syntax of .nl files, which describe
+   software behavior in plain English that compiles to executable code.
+   ============================================================================ *)
+
+
+(* ============================================================================
+   TOP-LEVEL STRUCTURE
+   ============================================================================ *)
+
+nl_file = { item } ;
+
+item = comment
+     | directive
+     | anlu_block
+     | type_block
+     | test_block
+     | literal_block
+     | NEWLINE ;
+
+
+(* ============================================================================
+   COMMENTS
+   ============================================================================ *)
+
+comment = "#" , { any_char - NEWLINE } , NEWLINE ;
+
+
+(* ============================================================================
+   DIRECTIVES
+   ============================================================================ *)
+
+directive = module_directive
+          | version_directive
+          | target_directive
+          | imports_directive ;
+
+module_directive  = "@module"  , SPACE , identifier , NEWLINE ;
+version_directive = "@version" , SPACE , version_string , NEWLINE ;
+target_directive  = "@target"  , SPACE , target_name , NEWLINE ;
+imports_directive = "@imports" , SPACE , import_list , NEWLINE ;
+
+version_string = digit , { digit } , "." , digit , { digit } , [ "." , digit , { digit } ] ;
+target_name    = "python" | "typescript" | "rust" ;
+import_list    = identifier , { "," , [ SPACE ] , identifier } ;
+
+
+(* ============================================================================
+   ANLU BLOCK (Atomic Natural Language Unit)
+   ============================================================================ *)
+
+anlu_block = anlu_header , { anlu_section } ;
+
+anlu_header = "[" , anlu_identifier , "]" , NEWLINE ;
+
+anlu_identifier = letter , { letter | digit | "-" | "." } ;
+
+anlu_section = purpose_section
+             | inputs_section
+             | guards_section
+             | logic_section
+             | returns_section
+             | depends_section
+             | edge_cases_section ;
+
+(* PURPOSE: single line description *)
+purpose_section = "PURPOSE:" , SPACE , text_line , NEWLINE ;
+
+(* INPUTS: bulleted list of parameters *)
+inputs_section = "INPUTS:" , NEWLINE , { input_item } ;
+input_item     = INDENT , bullet , input_def , NEWLINE ;
+input_def      = identifier , ":" , SPACE , type_spec , [ "," , input_constraints ] ;
+input_constraints = { constraint_item } ;
+constraint_item   = SPACE , ( "required" | "optional" | quoted_string | identifier ) , [ "," ] ;
+
+(* GUARDS: bulleted list of preconditions *)
+guards_section = "GUARDS:" , NEWLINE , { guard_item } ;
+guard_item     = INDENT , bullet , guard_condition , [ arrow , error_spec ] , NEWLINE ;
+guard_condition = text_content ;
+error_spec     = error_call | text_content ;
+error_call     = identifier , "(" , error_args , ")" ;
+error_args     = [ error_arg , { "," , SPACE , error_arg } ] ;
+error_arg      = identifier | quoted_string ;
+
+(* LOGIC: numbered list of steps *)
+logic_section = "LOGIC:" , NEWLINE , { logic_item } ;
+logic_item    = INDENT , number , "." , SPACE , logic_step , NEWLINE ;
+logic_step    = [ state_prefix ] , [ condition_prefix ] , step_description , [ output_binding ] ;
+state_prefix  = "[" , identifier , "]" , SPACE ;
+condition_prefix = "IF" , SPACE , expression , SPACE , "THEN" , SPACE ;
+step_description = text_content ;
+output_binding = SPACE , arrow , SPACE , identifier ;
+
+(* RETURNS: expression or type *)
+returns_section = "RETURNS:" , SPACE , return_expression , NEWLINE ;
+return_expression = expression | type_spec ;
+
+(* DEPENDS: list of ANLU dependencies *)
+depends_section = "DEPENDS:" , SPACE , depends_list , NEWLINE ;
+depends_list    = anlu_reference , { "," , [ SPACE ] , anlu_reference } ;
+anlu_reference  = [ "[" ] , anlu_identifier , [ "]" ] ;
+
+(* EDGE CASES: special handling *)
+edge_cases_section = "EDGE" , SPACE , "CASES:" , NEWLINE , { edge_case_item } ;
+edge_case_item     = INDENT , bullet , edge_condition , arrow , edge_behavior , NEWLINE ;
+edge_condition     = text_content ;
+edge_behavior      = text_content ;
+
+
+(* ============================================================================
+   TYPE BLOCK
+   ============================================================================ *)
+
+type_block = type_header , { type_field } , type_close ;
+
+type_header = "@type" , SPACE , type_name , [ extends_clause ] , SPACE , "{" , NEWLINE ;
+extends_clause = SPACE , "extends" , SPACE , type_name ;
+type_name = upper_letter , { letter | digit } ;
+
+type_field = INDENT , [ bullet ] , field_def , NEWLINE ;
+field_def  = identifier , ":" , SPACE , type_spec , [ "," , field_constraints ] ;
+field_constraints = { constraint_item } ;
+
+type_close = "}" , NEWLINE ;
+
+
+(* ============================================================================
+   TEST BLOCK
+   ============================================================================ *)
+
+test_block = test_header , { test_assertion } , test_close ;
+
+test_header = "@test" , SPACE , "[" , anlu_identifier , "]" , SPACE , "{" , NEWLINE ;
+
+test_assertion = INDENT , expression , SPACE , "==" , SPACE , expected_value , NEWLINE ;
+expected_value = expression ;
+
+test_close = "}" , NEWLINE ;
+
+
+(* ============================================================================
+   LITERAL BLOCK
+   ============================================================================ *)
+
+literal_block = literal_header , literal_content , literal_close ;
+
+literal_header = "@literal" , SPACE , language_name , SPACE , "{" , NEWLINE ;
+language_name  = identifier ;
+
+literal_content = { literal_line } ;
+literal_line    = { any_char - "}" } , NEWLINE ;
+
+literal_close = "}" , NEWLINE ;
+
+
+(* ============================================================================
+   TYPE SYSTEM
+   ============================================================================ *)
+
+type_spec = primitive_type
+          | list_type
+          | map_type
+          | optional_type
+          | custom_type ;
+
+primitive_type = "number" | "string" | "boolean" | "void" | "any" ;
+
+list_type = "list" , SPACE , "of" , SPACE , type_spec ;
+
+map_type = "map" , SPACE , "of" , SPACE , type_spec , SPACE , "to" , SPACE , type_spec ;
+
+optional_type = type_spec , "?" ;
+
+custom_type = type_name ;
+
+
+(* ============================================================================
+   EXPRESSIONS
+   ============================================================================ *)
+
+expression = term , { binary_op , term } ;
+
+term = [ unary_op ] , ( literal | identifier | function_call | "(" , expression , ")" ) ;
+
+function_call = identifier , "(" , [ arg_list ] , ")" ;
+arg_list      = expression , { "," , SPACE , expression } ;
+
+binary_op = "+" | "-" | "*" | "/" | "×" | "÷"
+          | "==" | "!=" | "<" | ">" | "<=" | ">="
+          | "and" | "or" | "AND" | "OR"
+          | "." ;
+
+unary_op = "-" | "not" | "NOT" ;
+
+
+(* ============================================================================
+   LITERALS
+   ============================================================================ *)
+
+literal = number_literal | string_literal | boolean_literal ;
+
+number_literal  = [ "-" ] , digit , { digit } , [ "." , digit , { digit } ] ;
+string_literal  = quoted_string ;
+boolean_literal = "true" | "false" | "True" | "False" ;
+
+quoted_string = '"' , { any_char - '"' } , '"'
+              | "'" , { any_char - "'" } , "'" ;
+
+
+(* ============================================================================
+   LEXICAL ELEMENTS
+   ============================================================================ *)
+
+identifier = letter , { letter | digit | "_" } ;
+
+letter       = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j"
+             | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t"
+             | "u" | "v" | "w" | "x" | "y" | "z"
+             | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
+             | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T"
+             | "U" | "V" | "W" | "X" | "Y" | "Z" ;
+
+upper_letter = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
+             | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T"
+             | "U" | "V" | "W" | "X" | "Y" | "Z" ;
+
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+number = digit , { digit } ;
+
+bullet = "•" | "-" | "*" ;
+
+arrow = "→" | "->" ;
+
+text_line = { any_char - NEWLINE } ;
+text_content = { any_char - ( NEWLINE | arrow ) } ;
+
+any_char = ? any Unicode character ? ;
+
+SPACE  = " " | "\t" ;
+INDENT = SPACE , { SPACE } ;
+NEWLINE = "\n" | "\r\n" ;
+
+
+(* ============================================================================
+   GRAMMAR NOTES
+
+   1. ANLU identifiers use kebab-case (e.g., [calculate-tax], [is-empty])
+   2. Type names use PascalCase (e.g., @type Person, @type AuthToken)
+   3. Bullets are flexible: •, -, or * are all valid
+   4. Arrows are flexible: → (Unicode) or -> (ASCII)
+   5. Section headers are case-insensitive (PURPOSE: == purpose:)
+   6. Whitespace within sections uses indentation for visual structure
+   7. Literal blocks preserve all content exactly (for code injection)
+   8. Comments begin with # and extend to end of line
+
+   SEMANTIC NOTES
+
+   1. ANLUs with dots in identifiers (Type.method) are bound methods
+   2. DEPENDS creates compile-time dependency ordering
+   3. GUARDS are checked before LOGIC execution
+   4. LOGIC steps can reference each other via dataflow (variable assignment)
+   5. @literal blocks bypass the compiler for exact code output
+   6. @test blocks generate executable test suites
+   ============================================================================ *)

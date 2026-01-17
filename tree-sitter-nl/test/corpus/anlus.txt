@@ -1,0 +1,321 @@
+================================================================================
+Simple ANLU - add function
+================================================================================
+
+[add]
+PURPOSE: Add two numbers
+INPUTS:
+  - a: number
+  - b: number
+RETURNS: a + b
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (anlu_block
+    (anlu_header
+      name: (anlu_identifier))
+    (purpose_section
+      (section_header)
+      description: (text_line))
+    (inputs_section
+      (section_header)
+      (input_item
+        (bullet)
+        name: (identifier)
+        type: (type_spec
+          (primitive_type)))
+      (input_item
+        (bullet)
+        name: (identifier)
+        type: (type_spec
+          (primitive_type))))
+    (returns_section
+      (section_header)
+      value: (return_expression
+        (expression
+          (binary_expression
+            left: (expression
+              (identifier))
+            (binary_op)
+            right: (expression
+              (identifier))))))))
+
+================================================================================
+ANLU with kebab-case identifier
+================================================================================
+
+[is-empty]
+PURPOSE: Check if string is empty
+INPUTS:
+  - text: string
+RETURNS: not text
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (anlu_block
+    (anlu_header
+      name: (anlu_identifier))
+    (purpose_section
+      (section_header)
+      description: (text_line))
+    (inputs_section
+      (section_header)
+      (input_item
+        (bullet)
+        name: (identifier)
+        type: (type_spec
+          (primitive_type))))
+    (returns_section
+      (section_header)
+      value: (return_expression
+        (expression
+          (unary_expression
+            (unary_op)
+            operand: (expression
+              (identifier))))))))
+
+================================================================================
+ANLU with guards
+================================================================================
+
+[divide]
+PURPOSE: Divide two numbers
+INPUTS:
+  - a: number
+  - b: number
+GUARDS:
+  - b must not be zero -> ValueError(Division by zero)
+RETURNS: a / b
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (anlu_block
+    (anlu_header
+      name: (anlu_identifier))
+    (purpose_section
+      (section_header)
+      description: (text_line))
+    (inputs_section
+      (section_header)
+      (input_item
+        (bullet)
+        name: (identifier)
+        type: (type_spec
+          (primitive_type)))
+      (input_item
+        (bullet)
+        name: (identifier)
+        type: (type_spec
+          (primitive_type))))
+    (guards_section
+      (section_header)
+      (guard_item
+        (bullet)
+        condition: (guard_condition)
+        (arrow)
+        error: (error_spec
+          (error_call
+            type: (identifier)
+            (error_args
+              (identifier))))))
+    (returns_section
+      (section_header)
+      value: (return_expression
+        (expression
+          (binary_expression
+            left: (expression
+              (identifier))
+            (binary_op)
+            right: (expression
+              (identifier))))))))
+
+================================================================================
+ANLU with logic steps
+================================================================================
+
+[calculate-total]
+PURPOSE: Calculate order total with tax
+INPUTS:
+  - subtotal: number
+  - tax_rate: number
+LOGIC:
+  1. tax = subtotal * tax_rate
+  2. total = subtotal + tax
+RETURNS: total
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (anlu_block
+    (anlu_header
+      name: (anlu_identifier))
+    (purpose_section
+      (section_header)
+      description: (text_line))
+    (inputs_section
+      (section_header)
+      (input_item
+        (bullet)
+        name: (identifier)
+        type: (type_spec
+          (primitive_type)))
+      (input_item
+        (bullet)
+        name: (identifier)
+        type: (type_spec
+          (primitive_type))))
+    (logic_section
+      (section_header)
+      (logic_item
+        number: (step_number)
+        step: (logic_step
+          description: (step_description)))
+      (logic_item
+        number: (step_number)
+        step: (logic_step
+          description: (step_description))))
+    (returns_section
+      (section_header)
+      value: (return_expression
+        (expression
+          (identifier))))))
+
+================================================================================
+ANLU with edge cases
+================================================================================
+
+[safe-divide]
+PURPOSE: Divide with safe fallback
+INPUTS:
+  - a: number
+  - b: number
+  - fallback: number
+EDGE CASES:
+  - b is zero -> return fallback
+  - result is infinity -> return fallback
+RETURNS: a / b
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (anlu_block
+    (anlu_header
+      name: (anlu_identifier))
+    (purpose_section
+      (section_header)
+      description: (text_line))
+    (inputs_section
+      (section_header)
+      (input_item
+        (bullet)
+        name: (identifier)
+        type: (type_spec
+          (primitive_type)))
+      (input_item
+        (bullet)
+        name: (identifier)
+        type: (type_spec
+          (primitive_type)))
+      (input_item
+        (bullet)
+        name: (identifier)
+        type: (type_spec
+          (primitive_type))))
+    (edge_cases_section
+      (section_header)
+      (edge_case_item
+        (bullet)
+        condition: (edge_condition)
+        (arrow)
+        behavior: (edge_behavior))
+      (edge_case_item
+        (bullet)
+        condition: (edge_condition)
+        (arrow)
+        behavior: (edge_behavior)))
+    (returns_section
+      (section_header)
+      value: (return_expression
+        (expression
+          (binary_expression
+            left: (expression
+              (identifier))
+            (binary_op)
+            right: (expression
+              (identifier))))))))
+
+================================================================================
+ANLU with depends
+================================================================================
+
+[process-order]
+PURPOSE: Process customer order
+INPUTS:
+  - order: Order
+DEPENDS: [validate-order], [calculate-total]
+RETURNS: ProcessedOrder
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (anlu_block
+    (anlu_header
+      name: (anlu_identifier))
+    (purpose_section
+      (section_header)
+      description: (text_line))
+    (inputs_section
+      (section_header)
+      (input_item
+        (bullet)
+        name: (identifier)
+        type: (type_spec
+          (custom_type
+            (type_name)))))
+    (depends_section
+      (section_header)
+      dependencies: (depends_list
+        (anlu_reference
+          (anlu_identifier))
+        (anlu_reference
+          (anlu_identifier))))
+    (returns_section
+      (section_header)
+      value: (return_expression
+        (expression
+          (identifier))))))
+
+================================================================================
+ANLU with bullet variants
+================================================================================
+
+[multi-bullet]
+PURPOSE: Test bullet variations
+INPUTS:
+  * a: number
+  - b: string
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (anlu_block
+    (anlu_header
+      name: (anlu_identifier))
+    (purpose_section
+      (section_header)
+      description: (text_line))
+    (inputs_section
+      (section_header)
+      (input_item
+        (bullet)
+        name: (identifier)
+        type: (type_spec
+          (primitive_type)))
+      (input_item
+        (bullet)
+        name: (identifier)
+        type: (type_spec
+          (primitive_type))))))

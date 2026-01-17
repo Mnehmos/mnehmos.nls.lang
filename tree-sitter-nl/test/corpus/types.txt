@@ -1,0 +1,180 @@
+================================================================================
+Simple type definition
+================================================================================
+
+@type Person {
+  name: string
+  age: number
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (type_block
+    (type_header
+      name: (type_name))
+    (type_field
+      name: (identifier)
+      type: (type_spec
+        (primitive_type)))
+    (type_field
+      name: (identifier)
+      type: (type_spec
+        (primitive_type)))
+    (type_close)))
+
+================================================================================
+Type with inheritance
+================================================================================
+
+@type Employee extends Person {
+  salary: number
+  department: string
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (type_block
+    (type_header
+      name: (type_name)
+      (extends_clause
+        base: (type_name)))
+    (type_field
+      name: (identifier)
+      type: (type_spec
+        (primitive_type)))
+    (type_field
+      name: (identifier)
+      type: (type_spec
+        (primitive_type)))
+    (type_close)))
+
+================================================================================
+Type with list field
+================================================================================
+
+@type ShoppingCart {
+  items: list of string
+  total: number
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (type_block
+    (type_header
+      name: (type_name))
+    (type_field
+      name: (identifier)
+      type: (type_spec
+        (list_type
+          element: (type_spec
+            (primitive_type)))))
+    (type_field
+      name: (identifier)
+      type: (type_spec
+        (primitive_type)))
+    (type_close)))
+
+================================================================================
+Type with bullet fields
+================================================================================
+
+@type Config {
+  - host: string
+  - port: number
+  - debug: boolean
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (type_block
+    (type_header
+      name: (type_name))
+    (type_field
+      (bullet)
+      name: (identifier)
+      type: (type_spec
+        (primitive_type)))
+    (type_field
+      (bullet)
+      name: (identifier)
+      type: (type_spec
+        (primitive_type)))
+    (type_field
+      (bullet)
+      name: (identifier)
+      type: (type_spec
+        (primitive_type)))
+    (type_close)))
+
+================================================================================
+Type with constraints
+================================================================================
+
+@type User {
+  email: string, required
+  age: number, optional
+  bio: string, "User biography"
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (type_block
+    (type_header
+      name: (type_name))
+    (type_field
+      name: (identifier)
+      type: (type_spec
+        (primitive_type))
+      (field_constraints))
+    (type_field
+      name: (identifier)
+      type: (type_spec
+        (primitive_type))
+      (field_constraints))
+    (type_field
+      name: (identifier)
+      type: (type_spec
+        (primitive_type))
+      (field_constraints
+        (quoted_string)))
+    (type_close)))
+
+================================================================================
+Type with custom type field
+================================================================================
+
+@type Order {
+  customer: Customer
+  items: list of OrderItem
+  status: OrderStatus
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (type_block
+    (type_header
+      name: (type_name))
+    (type_field
+      name: (identifier)
+      type: (type_spec
+        (custom_type
+          (type_name))))
+    (type_field
+      name: (identifier)
+      type: (type_spec
+        (list_type
+          element: (type_spec
+            (custom_type
+              (type_name))))))
+    (type_field
+      name: (identifier)
+      type: (type_spec
+        (custom_type
+          (type_name))))
+    (type_close)))
