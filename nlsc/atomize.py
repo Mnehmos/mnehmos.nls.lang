@@ -443,7 +443,7 @@ def extract_type_from_class(cls: ast.ClassDef) -> dict[str, Any] | None:
     }
 
 
-def extract_anlu_from_function(func: ast.FunctionDef) -> dict[str, Any]:
+def extract_anlu_from_function(func: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[str, Any]:
     """
     Extract ANLU specification from a Python function.
 
@@ -509,12 +509,13 @@ def atomize_python_file(code: str) -> tuple[list[dict[str, Any]], list[dict[str,
     types = []
 
     for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             # Skip private functions
             if node.name.startswith("_"):
                 continue
 
             anlu = extract_anlu_from_function(node)
+            anlu["is_async"] = isinstance(node, ast.AsyncFunctionDef)
             anlus.append(anlu)
 
         if isinstance(node, ast.ClassDef):
@@ -563,6 +564,9 @@ def atomize_to_nl(code: str, module_name: str = "extracted") -> str:
     for anlu in anlus:
         lines.append(f"[{anlu['identifier']}]")
         lines.append(f"PURPOSE: {anlu['purpose']}")
+
+        if anlu.get("is_async"):
+            lines.append("ASYNC: true")
 
         if anlu["inputs"]:
             lines.append("INPUTS:")
