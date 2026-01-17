@@ -8,12 +8,86 @@ LLM integration can be added as a separate backend.
 import re
 from typing import Optional
 
-from .schema import ANLU, NLFile
+from .schema import ANLU, NLFile, TypeDefinition
 
 
 class EmitError(Exception):
     """Error during code emission"""
     pass
+
+
+def emit_type_definition(type_def: TypeDefinition) -> str:
+    """
+    Generate Python dataclass from TypeDefinition.
+
+    Args:
+        type_def: The type definition to emit
+
+    Returns:
+        Python dataclass as a string
+    """
+    lines = []
+
+    # Emit decorator and class line
+    lines.append("@dataclass")
+    if type_def.base:
+        lines.append(f"class {type_def.name}({type_def.base}):")
+    else:
+        lines.append(f"class {type_def.name}:")
+
+    # Emit fields
+    if not type_def.fields:
+        lines.append("    pass")
+    else:
+        for field in type_def.fields:
+            py_type = field.to_python_type()
+            lines.append(f"    {field.name}: {py_type}")
+
+        # Emit __post_init__ for constraints
+        constraint_checks = _emit_constraint_checks(type_def)
+        if constraint_checks:
+            lines.append("")
+            lines.append("    def __post_init__(self):")
+            lines.extend(constraint_checks)
+
+    return "\n".join(lines)
+
+
+def _emit_constraint_checks(type_def: TypeDefinition) -> list[str]:
+    """
+    Generate constraint validation code for __post_init__.
+
+    Returns list of indented check lines.
+    """
+    checks = []
+
+    for field in type_def.fields:
+        for constraint in field.constraints:
+            constraint_lower = constraint.lower().strip()
+
+            if constraint_lower == "non-negative":
+                checks.append(f"        if self.{field.name} < 0:")
+                checks.append(f"            raise ValueError('{field.name} must be non-negative')")
+
+            elif constraint_lower == "required":
+                checks.append(f"        if not self.{field.name}:")
+                checks.append(f"            raise ValueError('{field.name} is required')")
+
+            elif constraint_lower == "positive":
+                checks.append(f"        if self.{field.name} <= 0:")
+                checks.append(f"            raise ValueError('{field.name} must be positive')")
+
+            elif constraint_lower.startswith("min:"):
+                min_val = constraint_lower.split(":", 1)[1].strip()
+                checks.append(f"        if self.{field.name} < {min_val}:")
+                checks.append(f"            raise ValueError('{field.name} must be at least {min_val}')")
+
+            elif constraint_lower.startswith("max:"):
+                max_val = constraint_lower.split(":", 1)[1].strip()
+                checks.append(f"        if self.{field.name} > {max_val}:")
+                checks.append(f"            raise ValueError('{field.name} must be at most {max_val}')")
+
+    return checks
 
 
 def emit_function_signature(anlu: ANLU) -> str:
@@ -240,11 +314,11 @@ def emit_anlu(anlu: ANLU, mode: str = "mock") -> str:
 def emit_python(nl_file: NLFile, mode: str = "mock") -> str:
     """
     Emit complete Python module from NLFile.
-    
+
     Args:
         nl_file: Parsed NLFile
         mode: Emission mode ("mock" or "llm")
-    
+
     Returns:
         Complete Python source code
     """
@@ -255,36 +329,85 @@ def emit_python(nl_file: NLFile, mode: str = "mock") -> str:
         f'"""',
         ""
     ]
-    
-    # Add imports
-    if nl_file.module.imports:
-        for imp in nl_file.module.imports:
-            lines.append(f"import {imp.strip()}")
-        lines.append("")
-    
+
+    # Track imports to add
+    imports_needed = []
+
+    # Add dataclass import if types exist
+    if nl_file.module.types:
+        imports_needed.append("from dataclasses import dataclass")
+
     # Add type imports if needed
     has_any = any(
         "any" in (inp.type for inp in anlu.inputs)
         for anlu in nl_file.anlus
     )
     if has_any:
-        lines.insert(4, "from typing import Any")
-    
+        imports_needed.append("from typing import Any")
+
+    # Emit collected imports
+    if imports_needed:
+        for imp in imports_needed:
+            lines.append(imp)
+        lines.append("")
+
+    # Add user-specified imports
+    if nl_file.module.imports:
+        for imp in nl_file.module.imports:
+            lines.append(f"import {imp.strip()}")
+        lines.append("")
+
+    # Emit types first (before functions)
+    if nl_file.module.types:
+        # Order types: base types before derived types
+        ordered_types = _order_types(nl_file.module.types)
+        for type_def in ordered_types:
+            lines.append("")
+            lines.append(emit_type_definition(type_def))
+            lines.append("")
+
     # Emit each ANLU in dependency order
     ordered = nl_file.dependency_order()
     for anlu in ordered:
         lines.append("")
         lines.append(emit_anlu(anlu, mode))
         lines.append("")
-    
+
     # Add any literal blocks
     if nl_file.literals:
         lines.append("")
         lines.append("# --- Literal blocks ---")
         for literal in nl_file.literals:
             lines.append(literal)
-    
+
     return "\n".join(lines)
+
+
+def _order_types(types: list[TypeDefinition]) -> list[TypeDefinition]:
+    """
+    Order types so base types come before derived types.
+    """
+    ordered = []
+    remaining = list(types)
+    resolved = set()
+
+    # Simple topological sort
+    while remaining:
+        made_progress = False
+        for type_def in remaining[:]:
+            # If no base or base already resolved, add it
+            if type_def.base is None or type_def.base in resolved:
+                ordered.append(type_def)
+                resolved.add(type_def.name)
+                remaining.remove(type_def)
+                made_progress = True
+
+        if not made_progress and remaining:
+            # Circular dependency or external base - add remaining
+            ordered.extend(remaining)
+            break
+
+    return ordered
 
 
 def emit_tests(nl_file: NLFile) -> Optional[str]:
