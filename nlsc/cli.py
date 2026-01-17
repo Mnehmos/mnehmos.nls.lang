@@ -6,10 +6,13 @@ Commands:
     nlsc compile <file>    Compile .nl file to target language
     nlsc verify <file>     Verify .nl file without generating
     nlsc graph <file>      Visualize dependencies and dataflow
+    nlsc test <file>       Run @test specifications
 """
 
 import argparse
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from . import __version__
@@ -266,6 +269,81 @@ def cmd_graph(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_test(args: argparse.Namespace) -> int:
+    """Run @test specifications from a .nl file"""
+    source_path = Path(args.file)
+
+    if not source_path.exists():
+        print(f"Error: File not found: {source_path}", file=sys.stderr)
+        return 1
+
+    # Parse
+    try:
+        nl_file = parse_nl_path(source_path)
+    except ParseError as e:
+        print(f"Parse error: {e}", file=sys.stderr)
+        return 1
+
+    # Check for tests
+    if not nl_file.tests:
+        print(f"No @test blocks found in {source_path}")
+        return 0
+
+    # Create temp directory for generated code
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+
+        # Generate the module code
+        python_code = emit_python(nl_file, mode="mock")
+        module_name = nl_file.module.name.replace("-", "_")
+        module_path = temp_path / f"{module_name}.py"
+        module_path.write_text(python_code, encoding="utf-8")
+
+        # Generate the test code
+        test_code = emit_tests(nl_file)
+        if not test_code:
+            print(f"No tests generated from {source_path}")
+            return 0
+
+        # Fix import to be direct (not relative)
+        test_code = test_code.replace(f"from .{module_name} import *", f"from {module_name} import *")
+        test_path = temp_path / f"test_{module_name}.py"
+        test_path.write_text(test_code, encoding="utf-8")
+
+        # Create __init__.py
+        init_path = temp_path / "__init__.py"
+        init_path.write_text("", encoding="utf-8")
+
+        # Print summary
+        total_cases = sum(len(ts.cases) for ts in nl_file.tests)
+        print(f"Running {total_cases} test cases from {source_path}...")
+        for ts in nl_file.tests:
+            print(f"  • [{ts.anlu_id}]: {len(ts.cases)} cases")
+        print()
+
+        # Run pytest
+        verbose_flag = "-v" if getattr(args, "verbose", False) else "-q"
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", str(test_path), verbose_flag, "--tb=short"],
+            cwd=str(temp_path),
+            capture_output=not getattr(args, "verbose", False),
+            text=True,
+            env={**__import__("os").environ, "PYTHONPATH": str(temp_path)}
+        )
+
+        # Report results
+        if result.returncode == 0:
+            print(f"✓ All {total_cases} tests passed!")
+            return 0
+        else:
+            print(f"✗ Tests failed")
+            if result.stdout:
+                print(result.stdout)
+            if result.stderr:
+                print(result.stderr, file=sys.stderr)
+            return 1
+
+
 def main() -> int:
     """Main entry point for nlsc CLI"""
     parser = argparse.ArgumentParser(
@@ -352,6 +430,21 @@ The conversation is the programming. The .nl file is the receipt.
         help="Output file path (default: stdout)"
     )
 
+    # test command
+    test_parser = subparsers.add_parser(
+        "test",
+        help="Run @test specifications"
+    )
+    test_parser.add_argument(
+        "file",
+        help="Path to .nl file"
+    )
+    test_parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="Verbose output"
+    )
+
     args = parser.parse_args()
     
     if args.command is None:
@@ -366,6 +459,8 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_verify(args)
     elif args.command == "graph":
         return cmd_graph(args)
+    elif args.command == "test":
+        return cmd_test(args)
 
     return 0
 
