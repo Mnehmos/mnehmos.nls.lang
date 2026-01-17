@@ -69,8 +69,7 @@ Type with list field
       name: (identifier)
       type: (type_spec
         (list_type
-          element: (type_spec
-            (primitive_type)))))
+          element: (primitive_type))))
     (type_field
       name: (identifier)
       type: (type_spec
@@ -169,12 +168,12 @@ Type with custom type field
       name: (identifier)
       type: (type_spec
         (list_type
-          element: (type_spec
-            (custom_type
-              (type_name))))))
+          element: (custom_type
+            (type_name)))))
     (type_field
       name: (identifier)
       type: (type_spec
         (custom_type
           (type_name))))
     (type_close)))
+

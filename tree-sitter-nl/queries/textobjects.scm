@@ -39,7 +39,7 @@
 ; Conditionals (IF...THEN in logic)
 (condition_prefix) @conditional.outer
 (condition_prefix
-  condition: (expression) @conditional.inner)
+  (condition_text) @conditional.inner)
 
 ; Assignments (output bindings)
 (output_binding) @assignment.outer

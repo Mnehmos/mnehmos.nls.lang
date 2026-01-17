@@ -46,17 +46,5 @@
     "tree-sitter": {
       "optional": true
     }
-  },
-  "tree-sitter": [
-    {
-      "scope": "source.nl",
-      "injection-regex": "^nl$",
-      "file-types": [
-        "nl"
-      ],
-      "highlights": "queries/highlights.scm",
-      "folds": "queries/folds.scm",
-      "injections": "queries/injections.scm"
-    }
-  ]
+  }
 }

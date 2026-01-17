@@ -1,0 +1,37 @@
+{
+  "grammars": [
+    {
+      "name": "nl",
+      "camelcase": "Nl",
+      "scope": "source.nl",
+      "path": ".",
+      "file-types": [
+        "nl"
+      ],
+      "highlights": "queries/highlights.scm",
+      "injections": "queries/injections.scm",
+      "injection-regex": "^nl$"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "license": "MIT",
+    "description": "Tree-sitter grammar for NL (Natural Language Source) files",
+    "authors": [
+      {
+        "name": "Mnehmos"
+      }
+    ],
+    "links": {
+      "repository": "https://github.com/Mnehmos/mnehmos.nls.lang.git"
+    }
+  },
+  "bindings": {
+    "c": true,
+    "go": true,
+    "node": true,
+    "python": true,
+    "rust": true,
+    "swift": true
+  }
+}

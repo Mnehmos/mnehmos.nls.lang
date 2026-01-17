@@ -32,26 +32,24 @@ Test block simple
     (test_header
       anlu: (anlu_identifier))
     (test_assertion
-      expression: (expression
-        (function_call
-          function: (identifier)
-          (argument_list
-            (expression
-              (number))
-            (expression
-              (number)))))
-      expected: (expression
+      call: (test_call
+        function: (identifier)
+        (test_args
+          (test_value
+            (number))
+          (test_value
+            (number))))
+      expected: (test_value
         (number)))
     (test_assertion
-      expression: (expression
-        (function_call
-          function: (identifier)
-          (argument_list
-            (expression
-              (number))
-            (expression
-              (number)))))
-      expected: (expression
+      call: (test_call
+        function: (identifier)
+        (test_args
+          (test_value
+            (number))
+          (test_value
+            (number))))
+      expected: (test_value
         (number)))
     (test_close)))
 
@@ -71,26 +69,24 @@ Test block with negative numbers
     (test_header
       anlu: (anlu_identifier))
     (test_assertion
-      expression: (expression
-        (function_call
-          function: (identifier)
-          (argument_list
-            (expression
-              (number))
-            (expression
-              (number)))))
-      expected: (expression
+      call: (test_call
+        function: (identifier)
+        (test_args
+          (test_value
+            (number))
+          (test_value
+            (number))))
+      expected: (test_value
         (number)))
     (test_assertion
-      expression: (expression
-        (function_call
-          function: (identifier)
-          (argument_list
-            (expression
-              (number))
-            (expression
-              (number)))))
-      expected: (expression
+      call: (test_call
+        function: (identifier)
+        (test_args
+          (test_value
+            (number))
+          (test_value
+            (number))))
+      expected: (test_value
         (number)))
     (test_close)))
 
@@ -138,10 +134,10 @@ def slugify(text: str) -> str:
     (anlu_header
       name: (anlu_identifier))
     (purpose_section
-      (section_header)
-      description: (text_line))
+      header: (section_keyword)
+      description: (description_text))
     (inputs_section
-      (section_header)
+      header: (section_keyword)
       (input_item
         (bullet)
         name: (identifier)
@@ -152,3 +148,4 @@ def slugify(text: str) -> str:
       language: (identifier))
     content: (literal_content)
     (literal_close)))
+

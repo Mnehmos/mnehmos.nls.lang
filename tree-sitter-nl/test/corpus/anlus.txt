@@ -16,10 +16,10 @@ RETURNS: a + b
     (anlu_header
       name: (anlu_identifier))
     (purpose_section
-      (section_header)
-      description: (text_line))
+      header: (section_keyword)
+      description: (description_text))
     (inputs_section
-      (section_header)
+      header: (section_keyword)
       (input_item
         (bullet)
         name: (identifier)
@@ -31,15 +31,8 @@ RETURNS: a + b
         type: (type_spec
           (primitive_type))))
     (returns_section
-      (section_header)
-      value: (return_expression
-        (expression
-          (binary_expression
-            left: (expression
-              (identifier))
-            (binary_op)
-            right: (expression
-              (identifier))))))))
+      header: (section_keyword)
+      value: (returns_text))))
 
 ================================================================================
 ANLU with kebab-case identifier
@@ -58,23 +51,18 @@ RETURNS: not text
     (anlu_header
       name: (anlu_identifier))
     (purpose_section
-      (section_header)
-      description: (text_line))
+      header: (section_keyword)
+      description: (description_text))
     (inputs_section
-      (section_header)
+      header: (section_keyword)
       (input_item
         (bullet)
         name: (identifier)
         type: (type_spec
           (primitive_type))))
     (returns_section
-      (section_header)
-      value: (return_expression
-        (expression
-          (unary_expression
-            (unary_op)
-            operand: (expression
-              (identifier))))))))
+      header: (section_keyword)
+      value: (returns_text))))
 
 ================================================================================
 ANLU with guards
@@ -86,7 +74,7 @@ INPUTS:
   - a: number
   - b: number
 GUARDS:
-  - b must not be zero -> ValueError(Division by zero)
+  - b must not be zero -> ValueError("Division by zero")
 RETURNS: a / b
 
 --------------------------------------------------------------------------------
@@ -96,10 +84,10 @@ RETURNS: a / b
     (anlu_header
       name: (anlu_identifier))
     (purpose_section
-      (section_header)
-      description: (text_line))
+      header: (section_keyword)
+      description: (description_text))
     (inputs_section
-      (section_header)
+      header: (section_keyword)
       (input_item
         (bullet)
         name: (identifier)
@@ -111,26 +99,16 @@ RETURNS: a / b
         type: (type_spec
           (primitive_type))))
     (guards_section
-      (section_header)
+      header: (section_keyword)
       (guard_item
         (bullet)
-        condition: (guard_condition)
+        condition: (guard_text)
         (arrow)
         error: (error_spec
-          (error_call
-            type: (identifier)
-            (error_args
-              (identifier))))))
+          (error_text))))
     (returns_section
-      (section_header)
-      value: (return_expression
-        (expression
-          (binary_expression
-            left: (expression
-              (identifier))
-            (binary_op)
-            right: (expression
-              (identifier))))))))
+      header: (section_keyword)
+      value: (returns_text))))
 
 ================================================================================
 ANLU with logic steps
@@ -153,10 +131,10 @@ RETURNS: total
     (anlu_header
       name: (anlu_identifier))
     (purpose_section
-      (section_header)
-      description: (text_line))
+      header: (section_keyword)
+      description: (description_text))
     (inputs_section
-      (section_header)
+      header: (section_keyword)
       (input_item
         (bullet)
         name: (identifier)
@@ -168,20 +146,18 @@ RETURNS: total
         type: (type_spec
           (primitive_type))))
     (logic_section
-      (section_header)
+      header: (section_keyword)
       (logic_item
         number: (step_number)
-        step: (logic_step
-          description: (step_description)))
+        (logic_step
+          description: (step_text)))
       (logic_item
         number: (step_number)
-        step: (logic_step
-          description: (step_description))))
+        (logic_step
+          description: (step_text))))
     (returns_section
-      (section_header)
-      value: (return_expression
-        (expression
-          (identifier))))))
+      header: (section_keyword)
+      value: (returns_text))))
 
 ================================================================================
 ANLU with edge cases
@@ -205,10 +181,10 @@ RETURNS: a / b
     (anlu_header
       name: (anlu_identifier))
     (purpose_section
-      (section_header)
-      description: (text_line))
+      header: (section_keyword)
+      description: (description_text))
     (inputs_section
-      (section_header)
+      header: (section_keyword)
       (input_item
         (bullet)
         name: (identifier)
@@ -225,27 +201,20 @@ RETURNS: a / b
         type: (type_spec
           (primitive_type))))
     (edge_cases_section
-      (section_header)
+      header: (section_keyword)
       (edge_case_item
         (bullet)
-        condition: (edge_condition)
+        condition: (edge_condition_text)
         (arrow)
-        behavior: (edge_behavior))
+        behavior: (edge_behavior_text))
       (edge_case_item
         (bullet)
-        condition: (edge_condition)
+        condition: (edge_condition_text)
         (arrow)
-        behavior: (edge_behavior)))
+        behavior: (edge_behavior_text)))
     (returns_section
-      (section_header)
-      value: (return_expression
-        (expression
-          (binary_expression
-            left: (expression
-              (identifier))
-            (binary_op)
-            right: (expression
-              (identifier))))))))
+      header: (section_keyword)
+      value: (returns_text))))
 
 ================================================================================
 ANLU with depends
@@ -265,10 +234,10 @@ RETURNS: ProcessedOrder
     (anlu_header
       name: (anlu_identifier))
     (purpose_section
-      (section_header)
-      description: (text_line))
+      header: (section_keyword)
+      description: (description_text))
     (inputs_section
-      (section_header)
+      header: (section_keyword)
       (input_item
         (bullet)
         name: (identifier)
@@ -276,17 +245,15 @@ RETURNS: ProcessedOrder
           (custom_type
             (type_name)))))
     (depends_section
-      (section_header)
+      header: (section_keyword)
       dependencies: (depends_list
         (anlu_reference
           (anlu_identifier))
         (anlu_reference
           (anlu_identifier))))
     (returns_section
-      (section_header)
-      value: (return_expression
-        (expression
-          (identifier))))))
+      header: (section_keyword)
+      value: (returns_text))))
 
 ================================================================================
 ANLU with bullet variants
@@ -305,10 +272,10 @@ INPUTS:
     (anlu_header
       name: (anlu_identifier))
     (purpose_section
-      (section_header)
-      description: (text_line))
+      header: (section_keyword)
+      description: (description_text))
     (inputs_section
-      (section_header)
+      header: (section_keyword)
       (input_item
         (bullet)
         name: (identifier)
@@ -319,3 +286,4 @@ INPUTS:
         name: (identifier)
         type: (type_spec
           (primitive_type))))))
+

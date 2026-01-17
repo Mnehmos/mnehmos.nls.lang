@@ -8,17 +8,14 @@
 module.exports = grammar({
   name: "nl",
 
-  // External scanner for literal blocks (complex brace matching)
-  externals: ($) => [$._literal_content],
+  // External scanner for literal block content (proper brace matching)
+  externals: ($) => [$.literal_content],
 
   // Extra tokens that can appear anywhere
-  extras: ($) => [/\s/, $.comment],
+  extras: ($) => [/[ \t]/, $.comment],
 
-  // Word token for keyword extraction
-  word: ($) => $.identifier,
-
-  // Conflict resolution
-  conflicts: ($) => [[$.expression, $.type_spec]],
+  // Inline rules (don't create nodes)
+  inline: ($) => [$._item, $._anlu_section, $._literal, $._error_arg],
 
   rules: {
     // =========================================================================
@@ -33,7 +30,8 @@ module.exports = grammar({
         $.anlu_block,
         $.type_block,
         $.test_block,
-        $.literal_block
+        $.literal_block,
+        $._newline
       ),
 
     comment: ($) => token(seq("#", /.*/)),
@@ -72,13 +70,12 @@ module.exports = grammar({
     // ANLU BLOCK (Atomic Natural Language Unit)
     // =========================================================================
 
-    anlu_block: ($) =>
-      seq($.anlu_header, repeat($._anlu_section)),
+    anlu_block: ($) => seq($.anlu_header, repeat($._anlu_section)),
 
     anlu_header: ($) =>
       seq("[", field("name", $.anlu_identifier), "]", $._newline),
 
-    anlu_identifier: ($) => /[a-zA-Z][a-zA-Z0-9.-]*/,
+    anlu_identifier: ($) => /[a-zA-Z][a-zA-Z0-9._-]*/,
 
     _anlu_section: ($) =>
       choice(
@@ -94,14 +91,20 @@ module.exports = grammar({
     // PURPOSE: single line description
     purpose_section: ($) =>
       seq(
-        alias(/PURPOSE:/i, $.section_header),
-        field("description", $.text_line),
+        field("header", alias(/PURPOSE:/i, $.section_keyword)),
+        field("description", $.description_text),
         $._newline
       ),
 
+    description_text: ($) => /[^\n]+/,
+
     // INPUTS: bulleted list of parameters
     inputs_section: ($) =>
-      seq(alias(/INPUTS:/i, $.section_header), $._newline, repeat1($.input_item)),
+      seq(
+        field("header", alias(/INPUTS:/i, $.section_keyword)),
+        $._newline,
+        repeat1($.input_item)
+      ),
 
     input_item: ($) =>
       seq(
@@ -114,49 +117,52 @@ module.exports = grammar({
       ),
 
     input_constraints: ($) =>
-      repeat1(seq(",", choice("required", "optional", $.quoted_string, $.identifier))),
+      repeat1(
+        seq(",", choice("required", "optional", $.quoted_string, $.identifier))
+      ),
 
     // GUARDS: bulleted list of preconditions
     guards_section: ($) =>
-      seq(alias(/GUARDS:/i, $.section_header), $._newline, repeat1($.guard_item)),
+      seq(
+        field("header", alias(/GUARDS:/i, $.section_keyword)),
+        $._newline,
+        repeat1($.guard_item)
+      ),
 
     guard_item: ($) =>
       seq(
         $.bullet,
-        field("condition", $.guard_condition),
+        field("condition", $.guard_text),
         optional(seq($.arrow, field("error", $.error_spec))),
         $._newline
       ),
 
-    guard_condition: ($) => /[^\n→\->]+/,
+    guard_text: ($) => /[^\n→-]+/,
 
-    error_spec: ($) =>
-      choice($.error_call, $.text_content),
+    error_spec: ($) => choice(
+      prec.dynamic(2, $.error_call),
+      prec.dynamic(1, $.error_text)
+    ),
 
     error_call: ($) =>
-      seq(
-        field("type", $.identifier),
-        "(",
-        optional($.error_args),
-        ")"
-      ),
+      seq(field("type", $.identifier), "(", optional($.error_args), ")"),
 
-    error_args: ($) =>
-      seq($._error_arg, repeat(seq(",", $._error_arg))),
+    error_args: ($) => seq($._error_arg, repeat(seq(",", $._error_arg))),
 
     _error_arg: ($) => choice($.identifier, $.quoted_string),
 
+    error_text: ($) => /[^\n]+/,
+
     // LOGIC: numbered list of steps
     logic_section: ($) =>
-      seq(alias(/LOGIC:/i, $.section_header), $._newline, repeat1($.logic_item)),
+      seq(
+        field("header", alias(/LOGIC:/i, $.section_keyword)),
+        $._newline,
+        repeat1($.logic_item)
+      ),
 
     logic_item: ($) =>
-      seq(
-        field("number", $.step_number),
-        ".",
-        field("step", $.logic_step),
-        $._newline
-      ),
+      seq(field("number", $.step_number), ".", $.logic_step, $._newline),
 
     step_number: ($) => /\d+/,
 
@@ -164,75 +170,86 @@ module.exports = grammar({
       seq(
         optional($.state_prefix),
         optional($.condition_prefix),
-        field("description", $.step_description),
+        field("description", $.step_text),
         optional($.output_binding)
       ),
 
-    state_prefix: ($) => seq("[", field("state", $.identifier), "]"),
+    state_prefix: ($) => seq("[", field("state", $.state_name), "]"),
+
+    state_name: ($) => /[a-zA-Z_][a-zA-Z0-9_-]*/,
 
     condition_prefix: ($) =>
-      seq(
-        alias(/IF/i, $.keyword),
-        field("condition", $.expression),
-        alias(/THEN/i, $.keyword)
+      seq(alias(/IF/i, $.keyword), $.condition_text, alias(/THEN/i, $.keyword)),
+
+    // Condition text: sequence of tokens that aren't THEN
+    condition_text: ($) => prec.right(repeat1($.condition_token)),
+
+    condition_token: ($) =>
+      choice(
+        /[a-zA-Z_][a-zA-Z0-9_]*/,
+        /[0-9]+(\.[0-9]+)?/,
+        /[<>=!]+/,
+        /[()\[\]]/,
+        /[+\-*/]/,
+        "and",
+        "or",
+        "not"
       ),
 
-    step_description: ($) => /[^\n→\->[\]]+/,
+    step_text: ($) => /[^\n→-]+/,
 
     output_binding: ($) => seq($.arrow, field("variable", $.identifier)),
 
     // RETURNS: expression or type
     returns_section: ($) =>
       seq(
-        alias(/RETURNS:/i, $.section_header),
-        field("value", $.return_expression),
+        field("header", alias(/RETURNS:/i, $.section_keyword)),
+        field("value", $.returns_text),
         $._newline
       ),
 
-    return_expression: ($) => choice($.expression, $.type_spec),
+    returns_text: ($) => /[^\n]+/,
 
     // DEPENDS: list of ANLU dependencies
     depends_section: ($) =>
       seq(
-        alias(/DEPENDS:/i, $.section_header),
+        field("header", alias(/DEPENDS:/i, $.section_keyword)),
         field("dependencies", $.depends_list),
         $._newline
       ),
 
-    depends_list: ($) => seq($.anlu_reference, repeat(seq(",", $.anlu_reference))),
+    depends_list: ($) =>
+      seq($.anlu_reference, repeat(seq(",", $.anlu_reference))),
 
     anlu_reference: ($) =>
-      choice(
-        seq("[", $.anlu_identifier, "]"),
-        $.anlu_identifier
-      ),
+      choice(seq("[", $.anlu_identifier, "]"), $.anlu_identifier),
 
     // EDGE CASES: special handling
     edge_cases_section: ($) =>
-      seq(alias(/EDGE\s+CASES:/i, $.section_header), $._newline, repeat1($.edge_case_item)),
+      seq(
+        field("header", alias(/EDGE\s+CASES:/i, $.section_keyword)),
+        $._newline,
+        repeat1($.edge_case_item)
+      ),
 
     edge_case_item: ($) =>
       seq(
         $.bullet,
-        field("condition", $.edge_condition),
+        field("condition", $.edge_condition_text),
         $.arrow,
-        field("behavior", $.edge_behavior),
+        field("behavior", $.edge_behavior_text),
         $._newline
       ),
 
-    edge_condition: ($) => /[^\n→\->]+/,
-    edge_behavior: ($) => /[^\n]+/,
+    edge_condition_text: ($) => /[^\n→-]+/,
+    edge_behavior_text: ($) => /[^\n]+/,
 
     // =========================================================================
     // TYPE BLOCK
     // =========================================================================
 
     type_block: ($) =>
-      seq(
-        $.type_header,
-        repeat($.type_field),
-        $.type_close
-      ),
+      seq($.type_header, repeat($.type_field), $.type_close),
 
     type_header: ($) =>
       seq(
@@ -243,8 +260,7 @@ module.exports = grammar({
         $._newline
       ),
 
-    extends_clause: ($) =>
-      seq("extends", field("base", $.type_name)),
+    extends_clause: ($) => seq("extends", field("base", $.type_name)),
 
     type_name: ($) => /[A-Z][a-zA-Z0-9]*/,
 
@@ -259,7 +275,9 @@ module.exports = grammar({
       ),
 
     field_constraints: ($) =>
-      repeat1(seq(",", choice("required", "optional", $.quoted_string, $.identifier))),
+      repeat1(
+        seq(",", choice("required", "optional", $.quoted_string, $.identifier))
+      ),
 
     type_close: ($) => seq("}", $._newline),
 
@@ -268,11 +286,7 @@ module.exports = grammar({
     // =========================================================================
 
     test_block: ($) =>
-      seq(
-        $.test_header,
-        repeat($.test_assertion),
-        $.test_close
-      ),
+      seq($.test_header, repeat($.test_assertion), $.test_close),
 
     test_header: ($) =>
       seq(
@@ -286,11 +300,18 @@ module.exports = grammar({
 
     test_assertion: ($) =>
       seq(
-        field("expression", $.expression),
+        field("call", $.test_call),
         "==",
-        field("expected", $.expression),
+        field("expected", $.test_value),
         $._newline
       ),
+
+    test_call: ($) =>
+      seq(field("function", $.identifier), "(", optional($.test_args), ")"),
+
+    test_args: ($) => seq($.test_value, repeat(seq(",", $.test_value))),
+
+    test_value: ($) => choice($.number, $.quoted_string, $.boolean, $.identifier),
 
     test_close: ($) => seq("}", $._newline),
 
@@ -299,23 +320,10 @@ module.exports = grammar({
     // =========================================================================
 
     literal_block: ($) =>
-      seq(
-        $.literal_header,
-        field("content", $.literal_content),
-        $.literal_close
-      ),
+      seq($.literal_header, field("content", $.literal_content), $.literal_close),
 
     literal_header: ($) =>
-      seq(
-        "@literal",
-        field("language", $.identifier),
-        "{",
-        $._newline
-      ),
-
-    // Literal content captures everything until closing brace
-    // Uses external scanner for proper brace matching
-    literal_content: ($) => repeat1(/[^\}]+|\}(?!\s*\n)/),
+      seq("@literal", field("language", $.identifier), "{", $._newline),
 
     literal_close: ($) => seq("}", $._newline),
 
@@ -324,97 +332,19 @@ module.exports = grammar({
     // =========================================================================
 
     type_spec: ($) =>
-      choice(
-        $.primitive_type,
-        $.list_type,
-        $.map_type,
-        $.optional_type,
-        $.custom_type
-      ),
+      seq($._base_type, optional("?")),
+
+    _base_type: ($) =>
+      choice($.primitive_type, $.list_type, $.map_type, $.custom_type),
 
     primitive_type: ($) => choice("number", "string", "boolean", "void", "any"),
 
-    list_type: ($) => seq("list", "of", field("element", $.type_spec)),
+    list_type: ($) => seq("list", "of", field("element", $._base_type)),
 
     map_type: ($) =>
-      seq(
-        "map",
-        "of",
-        field("key", $.type_spec),
-        "to",
-        field("value", $.type_spec)
-      ),
-
-    optional_type: ($) => seq($.type_spec, "?"),
+      seq("map", "of", field("key", $._base_type), "to", field("value", $._base_type)),
 
     custom_type: ($) => $.type_name,
-
-    // =========================================================================
-    // EXPRESSIONS
-    // =========================================================================
-
-    expression: ($) =>
-      choice(
-        $.binary_expression,
-        $.unary_expression,
-        $.function_call,
-        $.parenthesized_expression,
-        $.member_expression,
-        $._literal,
-        $.identifier
-      ),
-
-    binary_expression: ($) =>
-      prec.left(
-        1,
-        seq(field("left", $.expression), $.binary_op, field("right", $.expression))
-      ),
-
-    unary_expression: ($) =>
-      prec(2, seq($.unary_op, field("operand", $.expression))),
-
-    function_call: ($) =>
-      prec(
-        3,
-        seq(
-          field("function", $.identifier),
-          "(",
-          optional($.argument_list),
-          ")"
-        )
-      ),
-
-    argument_list: ($) => seq($.expression, repeat(seq(",", $.expression))),
-
-    parenthesized_expression: ($) => seq("(", $.expression, ")"),
-
-    member_expression: ($) =>
-      prec.left(4, seq(field("object", $.expression), ".", field("property", $.identifier))),
-
-    binary_op: ($) =>
-      choice(
-        // Arithmetic
-        "+",
-        "-",
-        "*",
-        "/",
-        "×",
-        "÷",
-        // Comparison
-        "==",
-        "!=",
-        "<",
-        ">",
-        "<=",
-        ">=",
-        // Logical
-        "and",
-        "or",
-        "AND",
-        "OR"
-      ),
-
-    unary_op: ($) => choice("-", "not", "NOT"),
 
     // =========================================================================
     // LITERALS
@@ -424,8 +354,7 @@ module.exports = grammar({
 
     number: ($) => /-?\d+(\.\d+)?/,
 
-    quoted_string: ($) =>
-      choice(seq('"', /[^"]*/, '"'), seq("'", /[^']*/, "'")),
+    quoted_string: ($) => choice(/"[^"]*"/, /'[^']*'/),
 
     boolean: ($) => choice("true", "false", "True", "False"),
 
@@ -438,9 +367,6 @@ module.exports = grammar({
     bullet: ($) => choice("•", "-", "*"),
 
     arrow: ($) => choice("→", "->"),
-
-    text_line: ($) => /[^\n]+/,
-    text_content: ($) => /[^\n→\->]+/,
 
     _newline: ($) => /\r?\n/,
   },
