@@ -673,7 +673,7 @@ def emit_property_tests(nl_file: NLFile) -> Optional[str]:
                 lines.append("")
             else:
                 # Simple property assertion
-                lines.append(f"    @given(a=st.floats(allow_nan=False), b=st.floats(allow_nan=False))")
+                lines.append("    @given(a=st.floats(allow_nan=False), b=st.floats(allow_nan=False))")
                 lines.append(f"    def test_property_{i + 1}(self, a, b):")
                 lines.append(f"        assert {assertion.expression}")
                 lines.append("")
