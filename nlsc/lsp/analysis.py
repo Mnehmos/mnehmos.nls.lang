@@ -263,13 +263,13 @@ def find_all_references(
         # Find @type Name definitions
         type_pattern = rf"@type\s+({re.escape(name)})\b"
         for i, line in enumerate(lines):
-            match = re.search(type_pattern, line)
-            if match:
+            type_match = re.search(type_pattern, line)
+            if type_match:
                 references.append(
                     SymbolLocation(
                         line=i,
-                        start_char=match.start(1),
-                        end_char=match.end(1),
+                        start_char=type_match.start(1),
+                        end_char=type_match.end(1),
                         name=name,
                         kind="type",
                     )
@@ -278,12 +278,12 @@ def find_all_references(
         # Find type references after :
         ref_pattern = rf":\s*({re.escape(name)})\b"
         for i, line in enumerate(lines):
-            for match in re.finditer(ref_pattern, line):
+            for ref_match in re.finditer(ref_pattern, line):
                 references.append(
                     SymbolLocation(
                         line=i,
-                        start_char=match.start(1),
-                        end_char=match.end(1),
+                        start_char=ref_match.start(1),
+                        end_char=ref_match.end(1),
                         name=name,
                         kind="type_ref",
                     )

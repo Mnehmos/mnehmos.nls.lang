@@ -84,7 +84,7 @@ def did_close(ls: NLSLanguageServer, params: lsp.DidCloseTextDocumentParams) -> 
     ls.document_content.pop(uri, None)
     ls.diagnostics_cache.pop(uri, None)
     # Clear diagnostics for closed file
-    ls.publish_diagnostics(uri, [])
+    ls.text_document_publish_diagnostics(lsp.PublishDiagnosticsParams(uri=uri, diagnostics=[]))
 
 
 @server.feature(lsp.TEXT_DOCUMENT_HOVER)
@@ -520,7 +520,9 @@ def _parse_and_publish_diagnostics(
         )
 
     ls.diagnostics_cache[uri] = diagnostics
-    ls.publish_diagnostics(uri, diagnostics)
+    ls.text_document_publish_diagnostics(
+        lsp.PublishDiagnosticsParams(uri=uri, diagnostics=diagnostics)
+    )
 
 
 def _check_semantic_issues(nl_file: NLFile) -> list[lsp.Diagnostic]:
