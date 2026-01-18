@@ -14,6 +14,7 @@ Commands:
 """
 
 import argparse
+import os
 import subprocess
 import sys
 import tempfile
@@ -646,7 +647,9 @@ def cmd_run(args: argparse.Namespace) -> int:
         cleanup = True
 
     # Write generated Python
-    module_name = nl_file.module.name or source_path.stem
+    # Normalize module name to valid Python identifier (replace hyphens with underscores)
+    raw_name = nl_file.module.name or source_path.stem
+    module_name = raw_name.replace("-", "_")
     py_path = temp_dir / f"{module_name}.py"
     py_path.write_text(python_code, encoding="utf-8")
 
@@ -656,12 +659,15 @@ def cmd_run(args: argparse.Namespace) -> int:
     # Check for common main patterns
     main_candidates = ["main", "run", "start"]
     for candidate in main_candidates:
+        # Also check with underscores since we normalize hyphens
+        candidate_normalized = candidate.replace("-", "_")
         for anlu in nl_file.anlus:
-            if anlu.identifier == candidate:
-                # Add -c to call the function
+            if anlu.identifier == candidate or anlu.identifier == candidate_normalized:
+                # Add -c to call the function - use repr() for safe path escaping on all platforms
+                safe_path = repr(str(temp_dir))
                 run_args = [
                     sys.executable, "-c",
-                    f"import sys; sys.path.insert(0, '{str(temp_dir)}'); from {module_name} import {candidate}; {candidate}()"
+                    f"import sys; sys.path.insert(0, {safe_path}); from {module_name} import {candidate_normalized}; {candidate_normalized}()"
                 ]
                 break
         else:
@@ -670,7 +676,14 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     # Execute
     try:
-        env = {**dict(subprocess.os.environ), "PYTHONPATH": str(temp_dir)}
+        # Preserve existing PYTHONPATH if present
+        env = os.environ.copy()
+        existing_pythonpath = env.get("PYTHONPATH", "")
+        if existing_pythonpath:
+            env["PYTHONPATH"] = f"{temp_dir}{os.pathsep}{existing_pythonpath}"
+        else:
+            env["PYTHONPATH"] = str(temp_dir)
+
         proc = subprocess.run(
             run_args,
             cwd=str(temp_dir),
