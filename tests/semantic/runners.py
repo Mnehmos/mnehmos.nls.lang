@@ -37,9 +37,9 @@ class PythonRunner:
             ExecutionResult with success status and return value or exception
         """
         namespace: dict[str, Any] = {}
-        exec(code, namespace)
 
         try:
+            exec(code, namespace)
             result = namespace[function](*args)
             return ExecutionResult.from_success(result)
         except Exception as e:
@@ -62,9 +62,9 @@ class PythonRunner:
             ExecutionResult with the created instance or exception
         """
         namespace: dict[str, Any] = {}
-        exec(code, namespace)
 
         try:
+            exec(code, namespace)
             cls = namespace[class_name]
             instance = cls(**kwargs)
             return ExecutionResult.from_success(instance)
