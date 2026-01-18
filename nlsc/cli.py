@@ -26,6 +26,7 @@ from .schema import NLFile
 from .resolver import resolve_dependencies
 from .emitter import emit_python, emit_tests
 from .lockfile import generate_lockfile, write_lockfile, verify_lockfile
+from .sourcemap import generate_source_map
 from .graph import (
     emit_mermaid,
     emit_dot,
@@ -625,6 +626,7 @@ def cmd_lock_update(args: argparse.Namespace) -> int:
 def cmd_run(args: argparse.Namespace) -> int:
     """Compile and execute a .nl file in one step"""
     source_path = Path(args.file)
+    verbose = getattr(args, "verbose", False)
 
     if not source_path.exists():
         print(f"Error: File not found: {source_path}", file=sys.stderr)
@@ -645,7 +647,12 @@ def cmd_run(args: argparse.Namespace) -> int:
             print(f"  - {err.anlu_id}: {err.message}", file=sys.stderr)
         return 1
 
-    # Emit Python
+    # Emit Python (target flag for future multi-target support)
+    target = getattr(args, "target", "python")
+    if target != "python":
+        print(f"Error: Target '{target}' not yet supported", file=sys.stderr)
+        return 1
+
     python_code = emit_python(nl_file, mode="mock")
 
     # Create temp directory or use --keep location
@@ -664,6 +671,14 @@ def cmd_run(args: argparse.Namespace) -> int:
     py_path = temp_dir / f"{module_name}.py"
     py_path.write_text(python_code, encoding="utf-8")
 
+    # Generate source map for error translation
+    source_map = generate_source_map(nl_file, python_code)
+    source_map.py_path = str(py_path)
+
+    if verbose:
+        print(f"Compiled {source_path} -> {py_path}")
+        print(f"Source mappings: {len(source_map.mappings)} entries")
+
     # Build run command - look for main-like functions
     run_args = [sys.executable, str(py_path)]
 
@@ -680,6 +695,8 @@ def cmd_run(args: argparse.Namespace) -> int:
                     sys.executable, "-c",
                     f"import sys; sys.path.insert(0, {safe_path}); from {module_name} import {candidate_normalized}; {candidate_normalized}()"
                 ]
+                if verbose:
+                    print(f"Found entry point: {candidate}")
                 break
         else:
             continue
@@ -699,7 +716,19 @@ def cmd_run(args: argparse.Namespace) -> int:
             run_args,
             cwd=str(temp_dir),
             env=env,
+            capture_output=True,
+            text=True,
         )
+
+        # Output stdout
+        if proc.stdout:
+            print(proc.stdout, end="")
+
+        # Translate and output stderr with source mapping
+        if proc.stderr:
+            translated_stderr = source_map.translate_error(proc.stderr)
+            print(translated_stderr, end="", file=sys.stderr)
+
         exit_code = proc.returncode
     except Exception as e:
         print(f"Execution error: {e}", file=sys.stderr)
@@ -779,6 +808,17 @@ The conversation is the programming. The .nl file is the receipt.
         "-k", "--keep",
         metavar="DIR",
         help="Keep generated files in specified directory"
+    )
+    run_parser.add_argument(
+        "-t", "--target",
+        choices=["python"],
+        default="python",
+        help="Target language for code generation (default: python)"
+    )
+    run_parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="Show detailed output including source mapping"
     )
 
     # verify command
