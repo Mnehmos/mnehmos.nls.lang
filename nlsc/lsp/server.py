@@ -375,11 +375,13 @@ def formatting(
 
     # Return a single edit that replaces the entire document
     lines = text.split("\n")
+    end_line = max(0, len(lines) - 1)
+    end_char = len(lines[-1]) if lines else 0
     return [
         lsp.TextEdit(
             range=lsp.Range(
                 start=lsp.Position(line=0, character=0),
-                end=lsp.Position(line=len(lines), character=0),
+                end=lsp.Position(line=end_line, character=end_char),
             ),
             new_text=formatted,
         )
