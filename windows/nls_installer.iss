@@ -2,7 +2,7 @@
 ; Built with Inno Setup - https://jrsoftware.org/isinfo.php
 
 #define MyAppName "NLS Compiler"
-#define MyAppVersion "0.2.0"
+#define MyAppVersion "0.2.1"
 #define MyAppPublisher "Mnehmos"
 #define MyAppURL "https://github.com/Mnehmos/mnehmos.nls.lang"
 #define MyAppExeName "nls_launcher.exe"
