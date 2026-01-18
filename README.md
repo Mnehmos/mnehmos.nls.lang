@@ -26,6 +26,19 @@ cd mnehmos.nls.lang
 pip install -e ".[dev,treesitter]"
 ```
 
+### Windows File Association
+
+Get custom icons for `.nl` files in Windows Explorer:
+
+```bash
+# Download and run the installer from GitHub Releases
+# Or use the CLI:
+nlsc assoc --user   # Current user (no admin)
+nlsc assoc          # System-wide (requires admin)
+```
+
+Then right-click any `.nl` file → **Open with** → select the NLS launcher and check "Always use this app".
+
 ## Quick Start
 
 ```bash
@@ -131,6 +144,8 @@ def distance(p1: Point, p2: Point) -> float:
 | `nlsc diff <file>`       | Show changes since last compile        |
 | `nlsc watch <dir>`       | Continuous compilation on file changes |
 | `nlsc atomize <file.py>` | Extract ANLUs from existing Python     |
+| `nlsc assoc`             | Install Windows file association       |
+| `nlsc lsp`               | Start the NLS language server          |
 
 ### Global Options
 
@@ -317,9 +332,10 @@ DEPENDS: [other-function], [another]
 | Watch mode             | ✅ Complete |
 | GitHub Action          | ✅ Complete |
 | PyPI distribution      | ✅ Complete |
-| VS Code extension      | 🔜 Planned  |
+| VS Code extension      | ✅ Complete |
+| LSP server             | ✅ Complete |
+| Windows installer      | ✅ Complete |
 | TypeScript target      | 🔜 Planned  |
-| LSP server             | 🔜 Planned  |
 
 **239 tests passing** — Production-ready for Python target. See [GitHub Issues](https://github.com/Mnehmos/mnehmos.nls.lang/issues) for roadmap.
 
