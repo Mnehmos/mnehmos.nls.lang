@@ -570,16 +570,22 @@ def _check_semantic_issues(nl_file: NLFile) -> list[lsp.Diagnostic]:
     return diagnostics
 
 
-def start_server(transport: str = "stdio") -> None:
+def start_server(
+    transport: str = "stdio",
+    host: str = "127.0.0.1",
+    port: int = 2087,
+) -> None:
     """Start the NLS language server.
 
     Args:
         transport: Communication transport ("stdio" or "tcp")
+        host: Host address for TCP mode (default: "127.0.0.1")
+        port: Port number for TCP mode (default: 2087)
     """
     if transport == "stdio":
         server.start_io()
     elif transport == "tcp":
-        server.start_tcp("127.0.0.1", 2087)
+        server.start_tcp(host, port)
     else:
         raise ValueError(f"Unknown transport: {transport}")
 

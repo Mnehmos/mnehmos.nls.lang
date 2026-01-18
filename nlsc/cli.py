@@ -753,20 +753,15 @@ def cmd_lsp(args: argparse.Namespace) -> int:
         return 1
 
     transport = getattr(args, "transport", "stdio")
+    host = getattr(args, "host", "127.0.0.1")
     port = getattr(args, "port", 2087)
 
     if transport == "stdio":
         print("Starting NLS Language Server (stdio)...", file=sys.stderr)
-        start_server("stdio")
-    elif transport == "tcp":
-        print(f"Starting NLS Language Server (tcp://127.0.0.1:{port})...", file=sys.stderr)
-        # For TCP, we need to set the port first
-        from nlsc.lsp.server import server
-        server.start_tcp("127.0.0.1", port)
     else:
-        print(f"Error: Unknown transport: {transport}", file=sys.stderr)
-        return 1
+        print(f"Starting NLS Language Server (tcp://{host}:{port})...", file=sys.stderr)
 
+    start_server(transport=transport, host=host, port=port)
     return 0
 
 
@@ -996,6 +991,11 @@ The conversation is the programming. The .nl file is the receipt.
         choices=["stdio", "tcp"],
         default="stdio",
         help="Transport protocol (default: stdio)"
+    )
+    lsp_parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="Host address for tcp transport (default: 127.0.0.1)"
     )
     lsp_parser.add_argument(
         "--port",
