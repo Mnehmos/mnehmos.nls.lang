@@ -30,6 +30,8 @@ module.exports = grammar({
         $.anlu_block,
         $.type_block,
         $.test_block,
+        $.invariant_block,
+        $.property_block,
         $.literal_block,
         $._newline
       ),
@@ -118,7 +120,16 @@ module.exports = grammar({
 
     input_constraints: ($) =>
       repeat1(
-        seq(",", choice("required", "optional", $.quoted_string, $.identifier))
+        seq(
+          ",",
+          choice(
+            "required",
+            "optional",
+            $.constraint_pair,
+            $.quoted_string,
+            $.identifier
+          )
+        )
       ),
 
     // GUARDS: bulleted list of preconditions
@@ -276,7 +287,24 @@ module.exports = grammar({
 
     field_constraints: ($) =>
       repeat1(
-        seq(",", choice("required", "optional", $.quoted_string, $.identifier))
+        seq(
+          ",",
+          choice(
+            "required",
+            "optional",
+            $.constraint_pair,
+            $.quoted_string,
+            $.identifier
+          )
+        )
+      ),
+
+    // Support for key: value constraints like "min: 1", "max: 100"
+    constraint_pair: ($) =>
+      seq(
+        field("key", $.identifier),
+        ":",
+        field("value", choice($.number, $.identifier, $.quoted_string))
       ),
 
     type_close: ($) => seq("}", $._newline),
@@ -314,6 +342,39 @@ module.exports = grammar({
     test_value: ($) => choice($.number, $.quoted_string, $.boolean, $.identifier),
 
     test_close: ($) => seq("}", $._newline),
+
+    // =========================================================================
+    // INVARIANT BLOCK
+    // =========================================================================
+
+    invariant_block: ($) =>
+      seq($.invariant_header, repeat($.invariant_assertion), $.invariant_close),
+
+    invariant_header: ($) =>
+      seq("@invariant", field("type", $.type_name), "{", $._newline),
+
+    invariant_assertion: ($) =>
+      seq(field("expression", $.expression_text), $._newline),
+
+    invariant_close: ($) => seq("}", $._newline),
+
+    // =========================================================================
+    // PROPERTY BLOCK
+    // =========================================================================
+
+    property_block: ($) =>
+      seq($.property_header, repeat($.property_assertion), $.property_close),
+
+    property_header: ($) =>
+      seq("@property", "[", field("anlu", $.anlu_identifier), "]", "{", $._newline),
+
+    property_assertion: ($) =>
+      seq(field("expression", $.expression_text), $._newline),
+
+    property_close: ($) => seq("}", $._newline),
+
+    // Expression text - captures everything until end of line
+    expression_text: ($) => /[^\n}]+/,
 
     // =========================================================================
     // LITERAL BLOCK

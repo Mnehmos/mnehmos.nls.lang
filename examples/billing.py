@@ -16,10 +16,6 @@ class LineItem:
     def __post_init__(self):
         if not self.description:
             raise ValueError('description is required')
-        if self.quantity < 1:
-            raise ValueError('quantity must be at least 1')
-        if self.unit_price < 0:
-            raise ValueError('unit_price must be at least 0')
 
 
 @dataclass
