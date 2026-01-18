@@ -3,12 +3,16 @@
 These tests verify compiler invariants using property-based testing.
 """
 
+import keyword
 import pytest
 from hypothesis import given, strategies as st, assume, settings
 
 from nlsc.parser import parse_nl_file, ParseError
 from nlsc.emitter import emit_python
 from nlsc.schema import Input, TypeField
+
+# Python keywords and builtins to avoid in generated identifiers
+PYTHON_RESERVED = set(keyword.kwlist) | {"True", "False", "None"}
 
 
 # --- Strategies for NLS constructs ---
@@ -90,9 +94,9 @@ class TestEmitterProperties:
     @settings(max_examples=50)
     def test_emitted_code_compiles(self, func_name, param_name):
         """Generated Python should always be syntactically valid"""
-        # Avoid Python keywords
-        assume(param_name not in ("if", "for", "while", "def", "class", "return", "import", "from", "as", "in", "is", "not", "and", "or", "True", "False", "None"))
-        assume(func_name not in ("if", "for", "while", "def", "class", "return", "import", "from", "as", "in", "is", "not", "and", "or", "True", "False", "None"))
+        # Avoid Python keywords and reserved names
+        assume(param_name not in PYTHON_RESERVED)
+        assume(func_name not in PYTHON_RESERVED)
 
         source = f"""\
 @module test
@@ -177,7 +181,7 @@ class TestInvariantProperties:
     @settings(max_examples=30)
     def test_numeric_constraints_generate_valid_checks(self, field_name, constraint_value):
         """Numeric constraints should generate valid Python comparisons"""
-        assume(field_name not in ("if", "for", "while", "def", "class", "return"))
+        assume(field_name not in PYTHON_RESERVED)
 
         source = f"""\
 @module test
