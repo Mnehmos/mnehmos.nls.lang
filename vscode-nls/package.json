@@ -29,9 +29,6 @@
     "nlsc"
   ],
   "main": "./out/extension.js",
-  "activationEvents": [
-    "onLanguage:nl"
-  ],
   "contributes": {
     "languages": [
       {
