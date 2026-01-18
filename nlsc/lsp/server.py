@@ -355,6 +355,130 @@ def references(
     ]
 
 
+@server.feature(lsp.TEXT_DOCUMENT_FORMATTING)
+def formatting(
+    ls: NLSLanguageServer,
+    params: lsp.DocumentFormattingParams,
+) -> list[lsp.TextEdit] | None:
+    """Format the entire document."""
+    uri = params.text_document.uri
+    text = ls.document_content.get(uri)
+
+    if not text:
+        return None
+
+    formatted = _format_nl_document(text)
+
+    if formatted == text:
+        return None
+
+    # Return a single edit that replaces the entire document
+    lines = text.split("\n")
+    return [
+        lsp.TextEdit(
+            range=lsp.Range(
+                start=lsp.Position(line=0, character=0),
+                end=lsp.Position(line=len(lines), character=0),
+            ),
+            new_text=formatted,
+        )
+    ]
+
+
+def _format_nl_document(text: str) -> str:
+    """Format an NLS document.
+
+    Formatting rules:
+    - Normalize section keywords to uppercase
+    - Ensure consistent indentation (2 spaces for list items)
+    - Single blank line between major sections
+    - Trim trailing whitespace
+    - Ensure file ends with newline
+    """
+    lines = text.split("\n")
+    formatted_lines: list[str] = []
+    in_section = False
+    prev_was_blank = False
+
+    section_keywords = {
+        "purpose", "inputs", "guards", "logic", "returns",
+        "depends", "calls", "notes", "examples",
+    }
+
+    for line in lines:
+        stripped = line.strip()
+
+        # Handle blank lines
+        if not stripped:
+            if not prev_was_blank and formatted_lines:
+                formatted_lines.append("")
+                prev_was_blank = True
+            continue
+
+        prev_was_blank = False
+
+        # Check for section keywords
+        lower_stripped = stripped.lower()
+        if lower_stripped.rstrip(":") in section_keywords:
+            # Normalize to uppercase with colon
+            keyword = lower_stripped.rstrip(":").upper()
+            formatted_lines.append(f"{keyword}:")
+            in_section = True
+            continue
+
+        # Check for ANLU header [name]
+        if stripped.startswith("[") and "]" in stripped:
+            # Add blank line before ANLU if needed
+            if formatted_lines and formatted_lines[-1] != "":
+                formatted_lines.append("")
+            formatted_lines.append(stripped)
+            in_section = False
+            continue
+
+        # Check for directives (@module, @type, etc.)
+        if stripped.startswith("@"):
+            formatted_lines.append(stripped)
+            in_section = stripped.startswith("@type")
+            continue
+
+        # Check for list items
+        if stripped.startswith("-"):
+            # Ensure 2-space indent for list items
+            content = stripped[1:].strip()
+            formatted_lines.append(f"  - {content}")
+            continue
+
+        # Check for numbered items
+        if len(stripped) > 1 and stripped[0].isdigit() and stripped[1] == ".":
+            # Ensure 2-space indent for numbered items
+            content = stripped[2:].strip()
+            number = stripped[0]
+            formatted_lines.append(f"  {number}. {content}")
+            continue
+
+        # Type field lines (inside @type block)
+        if in_section and ":" in stripped:
+            # Indent type fields
+            formatted_lines.append(f"  {stripped}")
+            continue
+
+        # Check for closing brace
+        if stripped == "}":
+            formatted_lines.append("}")
+            in_section = False
+            continue
+
+        # Default: preserve line with trimmed trailing space
+        formatted_lines.append(stripped)
+
+    # Ensure file ends with newline
+    result = "\n".join(formatted_lines)
+    if result and not result.endswith("\n"):
+        result += "\n"
+
+    return result
+
+
 def _parse_and_publish_diagnostics(
     ls: NLSLanguageServer,
     uri: str,
