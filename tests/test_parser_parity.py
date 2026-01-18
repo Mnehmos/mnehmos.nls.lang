@@ -186,6 +186,10 @@ def compare_properties(regex_file: NLFile, ts_file: NLFile) -> list[str]:
                     errors.append(f"{prefix}: assertion[{j}].expression mismatch: '{ra.expression}' vs '{ta.expression}'")
                 if ra.quantifier != ta.quantifier:
                     errors.append(f"{prefix}: assertion[{j}].quantifier mismatch: {ra.quantifier} vs {ta.quantifier}")
+                if ra.variable != ta.variable:
+                    errors.append(f"{prefix}: assertion[{j}].variable mismatch: '{ra.variable}' vs '{ta.variable}'")
+                if ra.variable_type != ta.variable_type:
+                    errors.append(f"{prefix}: assertion[{j}].variable_type mismatch: '{ra.variable_type}' vs '{ta.variable_type}'")
 
     return errors
 
@@ -447,6 +451,32 @@ RETURNS: greeting message
         assert not errors, "\n".join(errors)
         assert len(regex_result.main_block) == 2
         assert "greet" in regex_result.main_block[0]
+
+    def test_main_block_nested_braces(self):
+        """Test @main block with nested braces."""
+        source = """[process]
+PURPOSE: Process items
+RETURNS: void
+
+@main {
+  if (condition) {
+    process()
+  }
+  for item in items {
+    handle(item)
+  }
+}
+"""
+        regex_result = parse_nl_file(source)
+        ts_result = parse_nl_file_treesitter(source)
+
+        errors = compare_main_block(regex_result, ts_result)
+        assert not errors, "\n".join(errors)
+        # Should capture all 6 lines inside @main (not just until first })
+        assert len(regex_result.main_block) == 6
+        assert "if (condition) {" in regex_result.main_block[0]
+        assert "}" in regex_result.main_block[2]  # closing brace of if
+        assert "for item in items {" in regex_result.main_block[3]
 
 
 class TestParserParityExamples:

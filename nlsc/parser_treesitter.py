@@ -106,9 +106,13 @@ def _parse_invariant_blocks(source: str) -> list[Invariant]:
 
 
 def _parse_main_block(source: str) -> list[str]:
-    """Parse @main block using regex fallback."""
+    """Parse @main block using regex fallback.
+
+    Tracks brace depth to handle nested braces correctly.
+    """
     main_buffer = []
     in_main = False
+    brace_depth = 0
 
     for line in source.split("\n"):
         stripped = line.strip()
@@ -116,11 +120,22 @@ def _parse_main_block(source: str) -> list[str]:
         # Start of @main block
         if stripped.startswith("@main"):
             in_main = True
+            # Check if opening brace is on same line
+            if "{" in stripped:
+                brace_depth = 1
             continue
 
         # Inside main block
         if in_main:
-            if stripped == "}":
+            # Count braces in this line
+            open_braces = stripped.count("{")
+            close_braces = stripped.count("}")
+
+            # Update depth before processing
+            brace_depth += open_braces - close_braces
+
+            # Block ends when depth reaches 0
+            if brace_depth <= 0:
                 in_main = False
             elif stripped and not stripped.startswith("#"):
                 main_buffer.append(stripped)
