@@ -21,7 +21,7 @@ NLS semantics are divided into:
 | Boolean | `true`, `false` | Two-valued logic |
 | None | `none`, `null` | Absence of value |
 | List | `[1, 2, 3]` | Ordered, mutable sequence |
-| Dict | `{key: value}` | String-keyed associative map |
+| Dict | `{key: value}` | Key-value map (literal syntax uses string keys; type `dict of K to V` allows any hashable key) |
 
 **Invariants:**
 - Numbers: All targets use IEEE 754 doubles (precision may vary for integers)
@@ -71,7 +71,7 @@ NLS semantics are divided into:
 
 ### Function Calls
 
-```
+```nl
 function_name(arg1, arg2, ...)
 ```
 
@@ -82,7 +82,7 @@ function_name(arg1, arg2, ...)
 
 ### Field Access
 
-```
+```nl
 object.field
 ```
 
@@ -310,6 +310,7 @@ This section documents the **Core NLS → Python** mapping.
 | `ValueError` | `ValueError` |
 | `TypeError` | `TypeError` |
 | `RuntimeError` | `RuntimeError` |
+| `DivisionError` | `ZeroDivisionError` |
 | Custom `XError` | `class XError(Exception)` |
 
 ### Guards
