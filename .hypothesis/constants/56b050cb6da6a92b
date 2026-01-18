@@ -1,0 +1,4 @@
+# file: F:\Github\mnehmos.nls.lang\nlsc\schema.py
+# hypothesis_version: 6.150.2
+
+[' and ', ' else ', ' if ', ' not ', ' or ', ' or none', ' or null', '!=', '"', "'", '(', ')', '*', '+', '-', '.', '/', '0.1.0', '<', '<=', '=', '==', '>', '>=', 'Any', 'False', 'LogicStep', 'None', 'True', '[]', '_', 'any', 'bool', 'boolean', 'custom', 'dict', 'dictionary', 'f"', "f'", 'float', 'int', 'integer', 'len(', 'list', 'list of ', 'list of list of ', 'max(', 'min(', 'number', 'python', 'str', 'string', 'sum(', 'void', '{}', '×', '÷']

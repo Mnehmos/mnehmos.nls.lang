@@ -3,7 +3,7 @@
 import pytest
 
 from nlsc.parser import parse_nl_file
-from nlsc.emitter import emit_python, emit_anlu
+from nlsc.emitter import emit_python, emit_anlu, _is_safe_numeric
 
 
 class TestEmitMath:
@@ -148,3 +148,47 @@ RETURNS: void
         # @imports uses relative imports for cross-module NL imports
         assert "from .datetime import *" in code
         assert "from .json import *" in code
+
+
+class TestSecurityValidation:
+    """Tests for security validation in code generation"""
+
+    def test_is_safe_numeric_integers(self):
+        assert _is_safe_numeric("0") is True
+        assert _is_safe_numeric("42") is True
+        assert _is_safe_numeric("-1") is True
+        assert _is_safe_numeric("999999") is True
+
+    def test_is_safe_numeric_floats(self):
+        assert _is_safe_numeric("3.14") is True
+        assert _is_safe_numeric("-0.5") is True
+        assert _is_safe_numeric("1e10") is True
+
+    def test_is_safe_numeric_rejects_code(self):
+        assert _is_safe_numeric("0; import os") is False
+        assert _is_safe_numeric("__import__('os')") is False
+        assert _is_safe_numeric("exec('bad')") is False
+        assert _is_safe_numeric("1 + 1") is False
+
+    def test_is_safe_numeric_rejects_special_values(self):
+        """Reject infinity and NaN which could cause unexpected behavior"""
+        assert _is_safe_numeric("inf") is False
+        assert _is_safe_numeric("-inf") is False
+        assert _is_safe_numeric("nan") is False
+        assert _is_safe_numeric("Infinity") is False
+
+    def test_malicious_constraint_not_emitted(self):
+        """Ensure malicious min/max constraints are silently skipped"""
+        source = """\
+@module test
+@target python
+
+@type BadType {
+    value: number, min: 0; import os
+}
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        # The malicious constraint should NOT appear in output
+        assert "import os" not in code
+        assert "__import__" not in code

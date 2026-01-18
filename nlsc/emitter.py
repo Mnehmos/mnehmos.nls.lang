@@ -5,10 +5,34 @@ Uses mock/template-based generation for V0.
 LLM integration can be added as a separate backend.
 """
 
+import math
 import re
 from typing import Optional
 
 from .schema import ANLU, NLFile, TypeDefinition, Invariant
+
+
+def _is_safe_numeric(value: str) -> bool:
+    """Validate that a constraint value is a safe numeric literal.
+
+    Checks that the value can be parsed as a finite number (int or float).
+    Rejects special values (inf, nan) and any non-numeric strings that
+    could lead to code injection when interpolated into generated code.
+
+    Args:
+        value: The string value to validate
+
+    Returns:
+        True if the value is a safe, finite numeric literal
+    """
+    try:
+        num = float(value)
+        # Reject infinity and NaN
+        if math.isnan(num) or math.isinf(num):
+            return False
+        return True
+    except ValueError:
+        return False
 
 
 class EmitError(Exception):
@@ -83,13 +107,17 @@ def _emit_constraint_checks(type_def: TypeDefinition) -> list[str]:
 
             elif constraint_lower.startswith("min:"):
                 min_val = constraint_lower.split(":", 1)[1].strip()
-                checks.append(f"        if self.{field.name} < {min_val}:")
-                checks.append(f"            raise ValueError('{field.name} must be at least {min_val}')")
+                if _is_safe_numeric(min_val):
+                    checks.append(f"        if self.{field.name} < {min_val}:")
+                    checks.append(f"            raise ValueError('{field.name} must be at least {min_val}')")
+                # Skip non-numeric min constraints to prevent code injection
 
             elif constraint_lower.startswith("max:"):
                 max_val = constraint_lower.split(":", 1)[1].strip()
-                checks.append(f"        if self.{field.name} > {max_val}:")
-                checks.append(f"            raise ValueError('{field.name} must be at most {max_val}')")
+                if _is_safe_numeric(max_val):
+                    checks.append(f"        if self.{field.name} > {max_val}:")
+                    checks.append(f"            raise ValueError('{field.name} must be at most {max_val}')")
+                # Skip non-numeric max constraints to prevent code injection
 
     return checks
 
