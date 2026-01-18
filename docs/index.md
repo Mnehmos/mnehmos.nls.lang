@@ -40,9 +40,24 @@ def divide(numerator: float, divisor: float) -> float:
 
 ## Installation
 
-```bash
-pip install nlsc
-```
+=== "pip"
+
+    ```bash
+    pip install nlsc
+    ```
+
+=== "pip (with tree-sitter)"
+
+    ```bash
+    pip install "nlsc[treesitter]"
+    ```
+
+=== "VS Code"
+
+    Search "NLS" in Extensions, or:
+    ```
+    ext install mnehmos.nls-language
+    ```
 
 ## Project Status
 
@@ -60,7 +75,9 @@ pip install nlsc
 | Watch mode             | ✅ Complete |
 | GitHub Action          | ✅ Complete |
 | PyPI distribution      | ✅ Complete |
-| VS Code extension      | 🔜 Planned  |
+| VS Code extension      | ✅ Complete |
+| LSP server             | ✅ Complete |
+| Windows installer      | ✅ Complete |
 | TypeScript target      | 🔜 Planned  |
 
 **239 tests passing** — Production-ready for Python target.
@@ -71,22 +88,18 @@ pip install nlsc
 
 - :material-download: **[Installation](getting-started.md#installation)**
 
-  Install nlsc with pip
+    Install nlsc with pip or VS Code
 
 - :material-console: **[CLI Reference](cli-reference.md)**
 
-  All 8 commands documented
+    All commands documented
 
 - :material-book-open: **[Language Spec](language-spec.md)**
 
-  Full syntax reference
+    Full syntax reference
 
 - :material-cog: **[Architecture](architecture.md)**
 
-  How the compiler works
-
-- :material-target: **[Core Semantics](core-semantics.md)**
-
-  Target-neutral semantic specification
+    How the compiler works
 
 </div>

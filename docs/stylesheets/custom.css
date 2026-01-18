@@ -1,0 +1,323 @@
+/* === NLS DOCS - MNEHMOS DESIGN SYSTEM === */
+/* Copper accent with stone palette */
+
+:root {
+  --copper: #b87333;
+  --copper-light: #d4956a;
+  --copper-dark: #a06429;
+
+  /* Override Material theme colors */
+  --md-primary-fg-color: #1c1917;
+  --md-primary-bg-color: #fafaf9;
+  --md-accent-fg-color: var(--copper);
+  --md-accent-fg-color--transparent: rgba(184, 115, 51, 0.1);
+
+  /* Text colors */
+  --md-default-fg-color: #44403c;
+  --md-default-fg-color--light: #78716c;
+  --md-default-fg-color--lighter: #a8a29e;
+  --md-default-fg-color--lightest: #d6d3d1;
+
+  /* Background */
+  --md-default-bg-color: #fafaf9;
+  --md-default-bg-color--light: #f5f5f4;
+  --md-default-bg-color--lighter: #e7e5e4;
+  --md-default-bg-color--lightest: #d6d3d1;
+
+  /* Code */
+  --md-code-fg-color: #1c1917;
+  --md-code-bg-color: #f5f5f4;
+
+  /* Typography */
+  --md-text-font: "Inter", sans-serif;
+  --md-code-font: "JetBrains Mono", monospace;
+}
+
+/* === DARK MODE === */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #fafaf9;
+  --md-primary-bg-color: #1c1917;
+  --md-accent-fg-color: var(--copper-light);
+
+  --md-default-fg-color: #e7e5e4;
+  --md-default-fg-color--light: #d6d3d1;
+  --md-default-fg-color--lighter: #a8a29e;
+  --md-default-fg-color--lightest: #78716c;
+
+  --md-default-bg-color: #1c1917;
+  --md-default-bg-color--light: #292524;
+  --md-default-bg-color--lighter: #44403c;
+  --md-default-bg-color--lightest: #57534e;
+
+  --md-code-fg-color: #e7e5e4;
+  --md-code-bg-color: #292524;
+}
+
+/* === HEADER === */
+.md-header {
+  background: linear-gradient(135deg, #1c1917 0%, #292524 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.md-header__title {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* === NAVIGATION === */
+.md-nav__link:hover,
+.md-nav__link:focus {
+  color: var(--copper);
+}
+
+.md-nav__link--active {
+  color: var(--copper);
+  font-weight: 600;
+}
+
+.md-nav__item--active > .md-nav__link {
+  color: var(--copper);
+}
+
+/* Sidebar */
+.md-sidebar {
+  border-right: 1px solid var(--md-default-bg-color--lighter);
+}
+
+/* === CONTENT === */
+.md-content {
+  max-width: 900px;
+}
+
+/* Links */
+.md-content a:not(.md-button) {
+  color: var(--copper);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(184, 115, 51, 0.3);
+  transition: all 0.2s ease;
+}
+
+.md-content a:not(.md-button):hover {
+  color: var(--copper-dark);
+  text-decoration-color: var(--copper);
+}
+
+/* Headings */
+.md-typeset h1 {
+  color: #1c1917;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.md-typeset h2 {
+  color: #1c1917;
+  font-weight: 700;
+  border-bottom: 1px solid #e7e5e4;
+  padding-bottom: 0.5rem;
+}
+
+.md-typeset h3 {
+  color: #1c1917;
+  font-weight: 600;
+}
+
+[data-md-color-scheme="slate"] .md-typeset h1,
+[data-md-color-scheme="slate"] .md-typeset h2,
+[data-md-color-scheme="slate"] .md-typeset h3 {
+  color: #fafaf9;
+}
+
+[data-md-color-scheme="slate"] .md-typeset h2 {
+  border-bottom-color: #44403c;
+}
+
+/* === CODE BLOCKS === */
+.md-typeset pre {
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.md-typeset code {
+  border-radius: 4px;
+  padding: 0.2em 0.4em;
+}
+
+/* Code copy button */
+.md-clipboard {
+  color: var(--copper);
+}
+
+.md-clipboard:hover {
+  color: var(--copper-light);
+}
+
+/* === BLOCKQUOTES === */
+.md-typeset blockquote {
+  border-left: 4px solid var(--copper);
+  background: var(--md-default-bg-color--light);
+  padding: 1rem 1.5rem;
+  border-radius: 0 8px 8px 0;
+  color: var(--md-default-fg-color--light);
+}
+
+/* === TABLES === */
+.md-typeset table:not([class]) {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.md-typeset table:not([class]) th {
+  background: var(--md-default-bg-color--light);
+  font-weight: 600;
+}
+
+.md-typeset table:not([class]) tr:hover {
+  background: var(--md-accent-fg-color--transparent);
+}
+
+/* === BUTTONS === */
+.md-button {
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.md-button--primary {
+  background: var(--copper);
+  border-color: var(--copper);
+}
+
+.md-button--primary:hover {
+  background: var(--copper-dark);
+  border-color: var(--copper-dark);
+  box-shadow: 0 4px 12px rgba(184, 115, 51, 0.3);
+}
+
+/* === ADMONITIONS === */
+.md-typeset .admonition,
+.md-typeset details {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.md-typeset .admonition.note,
+.md-typeset details.note {
+  border-color: var(--copper);
+}
+
+.md-typeset .note > .admonition-title,
+.md-typeset .note > summary {
+  background-color: rgba(184, 115, 51, 0.1);
+}
+
+.md-typeset .note > .admonition-title::before,
+.md-typeset .note > summary::before {
+  background-color: var(--copper);
+}
+
+/* === SEARCH === */
+.md-search__input {
+  border-radius: 8px;
+  background: var(--md-default-bg-color--light);
+}
+
+.md-search__input:hover,
+.md-search__input:focus {
+  background: var(--md-default-bg-color);
+  box-shadow: 0 0 0 2px var(--copper);
+}
+
+/* === FOOTER === */
+.md-footer {
+  background: #1c1917;
+}
+
+.md-footer-meta {
+  background: #0c0a09;
+}
+
+/* === TABS === */
+.md-typeset .tabbed-labels > label {
+  color: var(--md-default-fg-color--light);
+}
+
+.md-typeset .tabbed-labels > label:hover {
+  color: var(--copper);
+}
+
+.md-typeset .tabbed-labels > label.tabbed-labels__label--active {
+  color: var(--copper);
+  border-color: var(--copper);
+}
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--md-default-bg-color--light);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #a8a29e;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #78716c;
+}
+
+/* === SELECTION === */
+::selection {
+  background-color: var(--copper);
+  color: white;
+}
+
+/* === FOCUS STATES === */
+*:focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 2px;
+}
+
+/* === SMOOTH SCROLL === */
+html {
+  scroll-behavior: smooth;
+}
+
+/* === HERO SECTION (index page) === */
+.md-typeset .hero-title {
+  background: linear-gradient(135deg, var(--copper), var(--copper-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* === STATUS BADGES === */
+.md-typeset table td:last-child {
+  white-space: nowrap;
+}
+
+/* === GRID CARDS === */
+.md-typeset .grid.cards > ul > li {
+  border: 1px solid var(--md-default-bg-color--lighter);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.md-typeset .grid.cards > ul > li:hover {
+  border-color: var(--copper);
+  box-shadow: 0 4px 12px rgba(184, 115, 51, 0.15);
+}
+
+/* === TOC === */
+.md-nav__link--passed {
+  color: var(--copper);
+}
+
+.md-nav--secondary .md-nav__link--active {
+  color: var(--copper);
+}
