@@ -198,3 +198,189 @@ class TestInvariantProperties:
         compile(code, "<string>", "exec")
         # Should contain the constraint check
         assert f"self.{field_name} < {constraint_value}" in code or f"if self.{field_name}" in code
+
+
+class TestGuardProperties:
+    """Property-based tests for guard generation"""
+
+    @given(
+        param_name=st.from_regex(r"[a-z][a-z0-9_]{0,10}", fullmatch=True),
+        error_msg=st.text(min_size=1, max_size=50, alphabet=st.characters(
+            whitelist_categories=('L', 'N', 'P', 'Zs'),
+            blacklist_characters='"\'\\`\n\r\x00'
+        ))
+    )
+    @settings(max_examples=30)
+    def test_guards_generate_valid_raises(self, param_name, error_msg):
+        """Guards should generate valid raise statements"""
+        assume(param_name not in PYTHON_RESERVED)
+        assume(len(error_msg.strip()) > 0)
+
+        source = f"""\
+@module test
+@target python
+
+[test-func]
+PURPOSE: Test with guard
+INPUTS:
+  - {param_name}: number
+GUARDS:
+  - {param_name} < 0 -> ValueError("{error_msg}")
+RETURNS: {param_name}
+"""
+        try:
+            nl_file = parse_nl_file(source)
+            code = emit_python(nl_file)
+            compile(code, "<string>", "exec")
+            assert "raise ValueError" in code
+        except (ParseError, ValueError):
+            pass
+
+    @given(
+        error_type=st.sampled_from(["ValueError", "TypeError", "RuntimeError"]),
+        condition=st.sampled_from(["x < 0", "x > 100", "x == 0", "not x"])
+    )
+    @settings(max_examples=20)
+    def test_error_types_preserved(self, error_type, condition):
+        """Different error types should be preserved in generated code"""
+        source = f"""\
+@module test
+@target python
+
+[test-func]
+PURPOSE: Test error types
+INPUTS:
+  - x: number
+GUARDS:
+  - {condition} -> {error_type}("invalid")
+RETURNS: x
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        compile(code, "<string>", "exec")
+        assert f"raise {error_type}" in code
+
+
+class TestLogicStepProperties:
+    """Property-based tests for logic step parsing and emission"""
+
+    @given(
+        var_name=st.from_regex(r"[a-z][a-z0-9_]{0,8}", fullmatch=True),
+        operation=st.sampled_from(["+", "-", "*", "/"])
+    )
+    @settings(max_examples=30)
+    def test_arithmetic_logic_compiles(self, var_name, operation):
+        """Arithmetic in logic steps should compile"""
+        assume(var_name not in PYTHON_RESERVED)
+
+        source = f"""\
+@module test
+@target python
+
+[compute]
+PURPOSE: Compute result
+INPUTS:
+  - a: number
+  - b: number
+LOGIC:
+  1. Calculate a {operation} b -> {var_name}
+RETURNS: {var_name}
+"""
+        try:
+            nl_file = parse_nl_file(source)
+            code = emit_python(nl_file)
+            compile(code, "<string>", "exec")
+            # Variable should be assigned
+            assert f"{var_name} =" in code
+        except (ParseError, ValueError):
+            pass
+
+    @given(
+        step_count=st.integers(min_value=1, max_value=5)
+    )
+    @settings(max_examples=20)
+    def test_multiple_logic_steps_preserve_order(self, step_count):
+        """Multiple logic steps should maintain their order"""
+        steps = [f"  {i+1}. Set step{i} to {i} -> var{i}" for i in range(step_count)]
+        logic_block = "\n".join(steps)
+
+        source = f"""\
+@module test
+@target python
+
+[multi-step]
+PURPOSE: Multiple steps
+LOGIC:
+{logic_block}
+RETURNS: void
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        compile(code, "<string>", "exec")
+
+        # Check variables appear in order
+        positions = []
+        for i in range(step_count):
+            pos = code.find(f"var{i}")
+            if pos >= 0:
+                positions.append(pos)
+
+        # Positions should be in ascending order (preserves step order)
+        assert positions == sorted(positions)
+
+
+class TestSecurityProperties:
+    """Property-based tests for security validation"""
+
+    @given(
+        injection=st.sampled_from([
+            "__import__('os')",
+            "exec('code')",
+            "eval('1+1')",
+            "os.system('ls')",
+            "; rm -rf /",
+            "$(whoami)",
+            "`id`"
+        ])
+    )
+    def test_injection_rejected_in_constraints(self, injection):
+        """Code injection attempts in constraints should be rejected or sanitized"""
+        source = f"""\
+@module test
+@target python
+
+@type Unsafe {{
+  value: number, min: {injection}
+}}
+"""
+        try:
+            nl_file = parse_nl_file(source)
+            code = emit_python(nl_file)
+            # If it emits, the injection should NOT be in executable position
+            # Either it's sanitized or skipped
+            assert injection not in code or f'"{injection}"' in code or f"'{injection}'" in code
+        except (ParseError, ValueError):
+            # Rejection is also acceptable
+            pass
+
+    @given(
+        numeric=st.one_of(
+            st.integers(min_value=-1000000, max_value=1000000),
+            st.floats(min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False)
+        )
+    )
+    def test_valid_numerics_accepted(self, numeric):
+        """Valid numeric values should be accepted in constraints"""
+        source = f"""\
+@module test
+@target python
+
+@type Bounded {{
+  value: number, min: {numeric}
+}}
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        compile(code, "<string>", "exec")
+        # The numeric should appear in the generated code
+        assert str(int(numeric)) in code or f"{numeric}" in code[:100] or "self.value" in code
