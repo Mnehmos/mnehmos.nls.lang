@@ -4,12 +4,14 @@ This document presents benchmark results comparing the regex and tree-sitter par
 
 ## Benchmark Results
 
-| ANLUs | Source Size | Regex Parser | Tree-Sitter | Ratio |
-|-------|-------------|--------------|-------------|-------|
-| 10 | 2.3 KB | 0.52ms | 0.76ms | 1.5x slower |
-| 50 | 11.7 KB | 1.85ms | 2.54ms | 1.4x slower |
-| 100 | 23.4 KB | 3.58ms | 5.14ms | 1.4x slower |
-| 200 | 47.5 KB | 7.18ms | 10.81ms | 1.5x slower |
+| ANLUs | Source Size | Regex Parser | Tree-Sitter | TS Overhead |
+|-------|-------------|--------------|-------------|-------------|
+| 10 | 2.3 KB | 0.52ms | 0.76ms | 1.5x |
+| 50 | 11.7 KB | 1.85ms | 2.54ms | 1.4x |
+| 100 | 23.4 KB | 3.58ms | 5.14ms | 1.4x |
+| 200 | 47.5 KB | 7.18ms | 10.81ms | 1.5x |
+
+*TS Overhead: How much slower tree-sitter is compared to regex (e.g., 1.5x means 50% slower)*
 
 ## Analysis
 

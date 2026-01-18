@@ -139,10 +139,11 @@ def main():
         ts_result = try_treesitter_parser(source)
         print(format_result(ts_result))
 
-        # Calculate speedup if both worked
+        # Calculate relative performance if both worked
         if "error" not in regex_result and "error" not in ts_result:
-            speedup = regex_result["mean_ms"] / ts_result["mean_ms"]
-            print(f"  Speedup (ts vs regex): {speedup:.2f}x")
+            # Show how much slower tree-sitter is compared to regex
+            ts_overhead = ts_result["mean_ms"] / regex_result["mean_ms"]
+            print(f"  Tree-sitter overhead: {ts_overhead:.2f}x slower than regex")
 
         results.append({
             "num_anlus": num_anlus,
@@ -156,8 +157,8 @@ def main():
     print("=" * 60)
     print("Summary (mean parse time in ms)")
     print("=" * 60)
-    print(f"{'ANLUs':>6s} {'Size(KB)':>8s} {'Regex':>10s} {'TreeSitter':>12s} {'Speedup':>8s}")
-    print("-" * 50)
+    print(f"{'ANLUs':>6s} {'Size(KB)':>8s} {'Regex':>10s} {'TreeSitter':>12s} {'TS Overhead':>12s}")
+    print("-" * 55)
 
     for r in results:
         regex_ms = r["regex"].get("mean_ms", "N/A")
@@ -167,11 +168,12 @@ def main():
         ts_str = f"{ts_ms:.2f}" if isinstance(ts_ms, float) else "ERROR"
 
         if isinstance(regex_ms, float) and isinstance(ts_ms, float):
-            speedup = f"{regex_ms / ts_ms:.2f}x"
+            # Show tree-sitter overhead (how much slower it is)
+            overhead = f"{ts_ms / regex_ms:.2f}x"
         else:
-            speedup = "N/A"
+            overhead = "N/A"
 
-        print(f"{r['num_anlus']:>6d} {r['source_kb']:>8.1f} {regex_str:>10s} {ts_str:>12s} {speedup:>8s}")
+        print(f"{r['num_anlus']:>6d} {r['source_kb']:>8.1f} {regex_str:>10s} {ts_str:>12s} {overhead:>12s}")
 
     print()
     print("Benchmark complete.")
