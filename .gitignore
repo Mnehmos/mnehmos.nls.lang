@@ -37,6 +37,7 @@ ENV/
 .pytest_cache/
 .coverage
 htmlcov/
+.hypothesis/
 
 # NLS generated files (optional - you may want to commit these)
 # *.nl.lock
