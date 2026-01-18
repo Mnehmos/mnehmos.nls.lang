@@ -31,6 +31,7 @@ dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "hypothesis>=6.0",
+    "mypy>=1.0",
 ]
 llm = [
     "anthropic>=0.18.0",
@@ -62,3 +63,17 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+# Start with relaxed settings, tighten over time
+check_untyped_defs = false
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "nlsc.parser_treesitter"
+# Tree-sitter bindings have dynamic typing
+ignore_errors = true

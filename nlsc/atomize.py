@@ -59,7 +59,7 @@ def python_type_to_nl(type_node: ast.expr | None) -> str:
     return ast.unparse(type_node) if hasattr(ast, "unparse") else "any"
 
 
-def extract_guards(func: ast.FunctionDef) -> list[dict[str, str]]:
+def extract_guards(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[dict[str, str]]:
     """
     Extract GUARDS from if/raise patterns at the start of function body.
 
@@ -137,7 +137,7 @@ def extract_guards(func: ast.FunctionDef) -> list[dict[str, str]]:
     return guards
 
 
-def extract_logic_steps(func: ast.FunctionDef) -> list[str]:
+def extract_logic_steps(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
     """
     Extract LOGIC steps from function body.
 
@@ -210,7 +210,7 @@ def extract_logic_steps(func: ast.FunctionDef) -> list[str]:
         # Capture for loops
         if isinstance(node, ast.For):
             try:
-                target = ast.unparse(node.target)
+                target = ast.unparse(node.target)  # type: ignore[assignment]
                 iter_expr = ast.unparse(node.iter)
                 # Extract the body as a simple statement if possible
                 body_stmts = _extract_for_body(node.body)
@@ -259,7 +259,7 @@ def _extract_for_body(body: list) -> list[str]:
     return stmts
 
 
-def extract_return_expression(func: ast.FunctionDef) -> str:
+def extract_return_expression(func: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
     """
     Extract the return expression from a function.
 
@@ -344,7 +344,7 @@ def extract_return_expression(func: ast.FunctionDef) -> str:
                         break
 
     # Fallback: find any return statement
-    for node in ast.walk(func):
+    for node in ast.walk(func):  # type: ignore[assignment]
         if isinstance(node, ast.Return) and node.value:
             try:
                 expr = ast.unparse(node.value)

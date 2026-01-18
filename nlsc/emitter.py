@@ -9,7 +9,7 @@ import math
 import re
 from typing import Optional
 
-from .schema import ANLU, NLFile, TypeDefinition, Invariant
+from .schema import ANLU, NLFile, TypeDefinition, Invariant, LogicStep
 
 
 def _is_safe_numeric(value: str) -> bool:
@@ -307,13 +307,13 @@ def _convert_type_return(returns_expr: str, anlu) -> str:
     return returns_expr
 
 
-def _extract_action(step) -> Optional[str]:
+def _extract_action(step: LogicStep) -> Optional[str]:
     """
     Extract executable Python action from a logic step.
 
     Returns the action string, or None if it's purely descriptive.
     """
-    desc = step.description.strip()
+    desc: str = step.description.strip()
 
     # Remove state name prefix if present
     if desc.startswith("["):
