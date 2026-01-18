@@ -54,14 +54,25 @@ def _cross() -> str:
     except (UnicodeEncodeError, LookupError):
         return "[X]"
 
-# Parser selection
-_use_treesitter = False
+# Parser selection - default to tree-sitter if available
+def _detect_treesitter() -> bool:
+    """Check if tree-sitter parser is available."""
+    try:
+        from . import parser_treesitter
+        return parser_treesitter.is_available()
+    except ImportError:
+        return False
+
+
+_use_treesitter = _detect_treesitter()
 
 
 def set_parser_backend(backend: str) -> None:
-    """Set the parser backend to use: 'regex' or 'treesitter'."""
+    """Set the parser backend to use: 'regex', 'treesitter', or 'auto'."""
     global _use_treesitter
-    if backend == "treesitter":
+    if backend == "auto":
+        _use_treesitter = _detect_treesitter()
+    elif backend == "treesitter":
         # Check if tree-sitter is available
         try:
             from . import parser_treesitter
@@ -633,9 +644,9 @@ The conversation is the programming. The .nl file is the receipt.
     )
     parser.add_argument(
         "--parser",
-        choices=["regex", "treesitter"],
-        default="regex",
-        help="Parser backend: 'regex' (default) or 'treesitter'"
+        choices=["auto", "regex", "treesitter"],
+        default="auto",
+        help="Parser backend: 'auto' (default, uses tree-sitter if available), 'regex', or 'treesitter'"
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
