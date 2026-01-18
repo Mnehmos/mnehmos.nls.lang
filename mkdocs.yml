@@ -49,6 +49,7 @@ nav:
   - Getting Started: getting-started.md
   - CLI Reference: cli-reference.md
   - Language Specification: language-spec.md
+  - Core Semantics: core-semantics.md
   - Architecture: architecture.md
 
 extra:
