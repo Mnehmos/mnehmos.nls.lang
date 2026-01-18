@@ -4,6 +4,7 @@ NLS CLI - Command-line interface for nlsc
 Commands:
     nlsc init              Initialize a new NLS project
     nlsc compile <file>    Compile .nl file to target language
+    nlsc run <file>        Compile and execute in one step
     nlsc verify <file>     Verify .nl file without generating
     nlsc graph <file>      Visualize dependencies and dataflow
     nlsc test <file>       Run @test specifications
@@ -609,6 +610,85 @@ def cmd_lock_update(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_run(args: argparse.Namespace) -> int:
+    """Compile and execute a .nl file in one step"""
+    source_path = Path(args.file)
+
+    if not source_path.exists():
+        print(f"Error: File not found: {source_path}", file=sys.stderr)
+        return 1
+
+    # Parse
+    try:
+        nl_file = parse_nl_file_auto(source_path)
+    except ParseError as e:
+        print(f"Parse error: {e}", file=sys.stderr)
+        return 1
+
+    # Resolve dependencies
+    result = resolve_dependencies(nl_file)
+    if not result.success:
+        print("Resolution errors:", file=sys.stderr)
+        for err in result.errors:
+            print(f"  - {err.anlu_id}: {err.message}", file=sys.stderr)
+        return 1
+
+    # Emit Python
+    python_code = emit_python(nl_file, mode="mock")
+
+    # Create temp directory or use --keep location
+    if args.keep:
+        temp_dir = Path(args.keep)
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        cleanup = False
+    else:
+        temp_dir = Path(tempfile.mkdtemp(prefix="nlsc_run_"))
+        cleanup = True
+
+    # Write generated Python
+    module_name = nl_file.module.name or source_path.stem
+    py_path = temp_dir / f"{module_name}.py"
+    py_path.write_text(python_code, encoding="utf-8")
+
+    # Build run command - look for main-like functions
+    run_args = [sys.executable, str(py_path)]
+
+    # Check for common main patterns
+    main_candidates = ["main", "run", "start"]
+    for candidate in main_candidates:
+        for anlu in nl_file.anlus:
+            if anlu.identifier == candidate:
+                # Add -c to call the function
+                run_args = [
+                    sys.executable, "-c",
+                    f"import sys; sys.path.insert(0, '{str(temp_dir)}'); from {module_name} import {candidate}; {candidate}()"
+                ]
+                break
+        else:
+            continue
+        break
+
+    # Execute
+    try:
+        env = {**dict(subprocess.os.environ), "PYTHONPATH": str(temp_dir)}
+        proc = subprocess.run(
+            run_args,
+            cwd=str(temp_dir),
+            env=env,
+        )
+        exit_code = proc.returncode
+    except Exception as e:
+        print(f"Execution error: {e}", file=sys.stderr)
+        exit_code = 1
+    finally:
+        # Cleanup temp directory unless --keep
+        if cleanup:
+            import shutil
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+    return exit_code
+
+
 def main() -> int:
     """Main entry point for nlsc CLI"""
     parser = argparse.ArgumentParser(
@@ -663,6 +743,18 @@ The conversation is the programming. The .nl file is the receipt.
     compile_parser.add_argument(
         "-o", "--output",
         help="Output file path"
+    )
+
+    # run command
+    run_parser = subparsers.add_parser("run", help="Compile and execute .nl file")
+    run_parser.add_argument(
+        "file",
+        help="Path to .nl file"
+    )
+    run_parser.add_argument(
+        "-k", "--keep",
+        metavar="DIR",
+        help="Keep generated files in specified directory"
     )
 
     # verify command
@@ -816,6 +908,8 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_init(args)
     elif args.command == "compile":
         return cmd_compile(args)
+    elif args.command == "run":
+        return cmd_run(args)
     elif args.command == "verify":
         return cmd_verify(args)
     elif args.command == "graph":
