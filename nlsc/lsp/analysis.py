@@ -1,0 +1,178 @@
+"""Document analysis utilities for the NLS language server.
+
+Provides utilities for finding symbols at positions, extracting
+hover information, and other analysis tasks.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from nlsc.schema import ANLU, NLFile, TypeDefinition
+
+
+@dataclass
+class SymbolLocation:
+    """Location of a symbol in the source."""
+
+    line: int  # 0-indexed
+    start_char: int
+    end_char: int
+    name: str
+    kind: str  # "anlu", "type", "field", "input", "guard"
+
+
+def find_symbol_at_position(
+    text: str,
+    nl_file: NLFile,
+    line: int,
+    character: int,
+) -> SymbolLocation | None:
+    """Find the symbol at a given position in the document.
+
+    Args:
+        text: The document text
+        nl_file: Parsed NLFile
+        line: 0-indexed line number
+        character: 0-indexed character position
+
+    Returns:
+        SymbolLocation if a symbol is found, None otherwise
+    """
+    lines = text.split("\n")
+    if line >= len(lines):
+        return None
+
+    current_line = lines[line]
+
+    # Check for ANLU identifier [name]
+    anlu_match = re.search(r"\[([a-zA-Z][a-zA-Z0-9_-]*)\]", current_line)
+    if anlu_match:
+        start, end = anlu_match.span(1)
+        if start <= character <= end:
+            return SymbolLocation(
+                line=line,
+                start_char=start,
+                end_char=end,
+                name=anlu_match.group(1),
+                kind="anlu",
+            )
+
+    # Check for @type Name
+    type_match = re.search(r"@type\s+([A-Z][a-zA-Z0-9]*)", current_line)
+    if type_match:
+        start, end = type_match.span(1)
+        if start <= character <= end:
+            return SymbolLocation(
+                line=line,
+                start_char=start,
+                end_char=end,
+                name=type_match.group(1),
+                kind="type",
+            )
+
+    # Check for type references in INPUTS or fields
+    type_ref_match = re.search(r":\s*([A-Z][a-zA-Z0-9]*)", current_line)
+    if type_ref_match:
+        start, end = type_ref_match.span(1)
+        if start <= character <= end:
+            return SymbolLocation(
+                line=line,
+                start_char=start,
+                end_char=end,
+                name=type_ref_match.group(1),
+                kind="type_ref",
+            )
+
+    # Check for ANLU references in DEPENDS or CALLS
+    depends_match = re.search(r"\[([a-zA-Z][a-zA-Z0-9_-]*)\]", current_line)
+    if depends_match and "DEPENDS" in current_line.upper():
+        start, end = depends_match.span(1)
+        if start <= character <= end:
+            return SymbolLocation(
+                line=line,
+                start_char=start,
+                end_char=end,
+                name=depends_match.group(1),
+                kind="anlu_ref",
+            )
+
+    return None
+
+
+def get_anlu_hover_content(anlu: ANLU) -> str:
+    """Generate hover content for an ANLU.
+
+    Args:
+        anlu: The ANLU to generate hover content for
+
+    Returns:
+        Markdown formatted hover content
+    """
+    lines = [f"### [{anlu.identifier}]"]
+
+    if anlu.purpose:
+        lines.append(f"\n**PURPOSE:** {anlu.purpose}")
+
+    if anlu.inputs:
+        lines.append("\n**INPUTS:**")
+        for inp in anlu.inputs:
+            constraint_str = ""
+            if inp.constraints:
+                constraint_str = f" ({', '.join(inp.constraints)})"
+            lines.append(f"- `{inp.name}`: {inp.type}{constraint_str}")
+
+    if anlu.guards:
+        lines.append(f"\n**GUARDS:** {len(anlu.guards)} guard(s)")
+
+    if anlu.logic:
+        lines.append(f"\n**LOGIC:** {len(anlu.logic)} step(s)")
+
+    if anlu.returns:
+        lines.append(f"\n**RETURNS:** `{anlu.returns}`")
+
+    if anlu.depends:
+        lines.append(f"\n**DEPENDS:** {', '.join(anlu.depends)}")
+
+    return "\n".join(lines)
+
+
+def get_type_hover_content(type_def: TypeDefinition) -> str:
+    """Generate hover content for a type definition.
+
+    Args:
+        type_def: The TypeDefinition to generate hover content for
+
+    Returns:
+        Markdown formatted hover content
+    """
+    lines = [f"### @type {type_def.name}"]
+
+    if type_def.fields:
+        lines.append("\n**Fields:**")
+        for field in type_def.fields:
+            constraint_str = ""
+            if field.constraints:
+                constraint_str = f" ({', '.join(field.constraints)})"
+            lines.append(f"- `{field.name}`: {field.type}{constraint_str}")
+
+    return "\n".join(lines)
+
+
+def find_anlu_by_name(nl_file: NLFile, name: str) -> ANLU | None:
+    """Find an ANLU by its identifier."""
+    for anlu in nl_file.anlus:
+        if anlu.identifier == name:
+            return anlu
+    return None
+
+
+def find_type_by_name(nl_file: NLFile, name: str) -> TypeDefinition | None:
+    """Find a type definition by its name."""
+    for type_def in nl_file.module.types:
+        if type_def.name == name:
+            return type_def
+    return None

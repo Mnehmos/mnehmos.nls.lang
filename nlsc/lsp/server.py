@@ -16,6 +16,13 @@ from typing import TYPE_CHECKING
 from lsprotocol import types as lsp
 from pygls.lsp.server import LanguageServer
 
+from nlsc.lsp.analysis import (
+    find_anlu_by_name,
+    find_symbol_at_position,
+    find_type_by_name,
+    get_anlu_hover_content,
+    get_type_hover_content,
+)
 from nlsc.parser import parse_nl_file
 from nlsc.schema import NLFile
 
@@ -37,6 +44,8 @@ class NLSLanguageServer(LanguageServer):
         )
         # Cache of parsed files: uri -> NLFile
         self.parsed_files: dict[str, NLFile] = {}
+        # Cache of document content: uri -> text
+        self.document_content: dict[str, str] = {}
         # Cache of parse errors: uri -> list of diagnostics
         self.diagnostics_cache: dict[str, list[lsp.Diagnostic]] = {}
 
@@ -50,6 +59,7 @@ def did_open(ls: NLSLanguageServer, params: lsp.DidOpenTextDocumentParams) -> No
     """Handle document open - parse and publish diagnostics."""
     uri = params.text_document.uri
     text = params.text_document.text
+    ls.document_content[uri] = text
     _parse_and_publish_diagnostics(ls, uri, text)
 
 
@@ -60,6 +70,7 @@ def did_change(ls: NLSLanguageServer, params: lsp.DidChangeTextDocumentParams) -
     # Get the full text from the change (we use full sync)
     if params.content_changes:
         text = params.content_changes[-1].text
+        ls.document_content[uri] = text
         _parse_and_publish_diagnostics(ls, uri, text)
 
 
@@ -68,9 +79,67 @@ def did_close(ls: NLSLanguageServer, params: lsp.DidCloseTextDocumentParams) -> 
     """Handle document close - clean up caches."""
     uri = params.text_document.uri
     ls.parsed_files.pop(uri, None)
+    ls.document_content.pop(uri, None)
     ls.diagnostics_cache.pop(uri, None)
     # Clear diagnostics for closed file
     ls.publish_diagnostics(uri, [])
+
+
+@server.feature(lsp.TEXT_DOCUMENT_HOVER)
+def hover(ls: NLSLanguageServer, params: lsp.HoverParams) -> lsp.Hover | None:
+    """Provide hover information for symbols."""
+    uri = params.text_document.uri
+    position = params.position
+
+    # Get document text and parsed file
+    text = ls.document_content.get(uri)
+    nl_file = ls.parsed_files.get(uri)
+
+    if not text or not nl_file:
+        return None
+
+    # Find symbol at position
+    symbol = find_symbol_at_position(text, nl_file, position.line, position.character)
+
+    if not symbol:
+        return None
+
+    # Generate hover content based on symbol type
+    content: str | None = None
+
+    if symbol.kind == "anlu":
+        anlu = find_anlu_by_name(nl_file, symbol.name)
+        if anlu:
+            content = get_anlu_hover_content(anlu)
+
+    elif symbol.kind == "anlu_ref":
+        anlu = find_anlu_by_name(nl_file, symbol.name)
+        if anlu:
+            content = get_anlu_hover_content(anlu)
+
+    elif symbol.kind == "type":
+        type_def = find_type_by_name(nl_file, symbol.name)
+        if type_def:
+            content = get_type_hover_content(type_def)
+
+    elif symbol.kind == "type_ref":
+        type_def = find_type_by_name(nl_file, symbol.name)
+        if type_def:
+            content = get_type_hover_content(type_def)
+
+    if content:
+        return lsp.Hover(
+            contents=lsp.MarkupContent(
+                kind=lsp.MarkupKind.Markdown,
+                value=content,
+            ),
+            range=lsp.Range(
+                start=lsp.Position(line=symbol.line, character=symbol.start_char),
+                end=lsp.Position(line=symbol.line, character=symbol.end_char),
+            ),
+        )
+
+    return None
 
 
 def _parse_and_publish_diagnostics(
