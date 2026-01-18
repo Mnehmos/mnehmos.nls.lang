@@ -534,12 +534,13 @@ def _check_semantic_issues(nl_file: NLFile) -> list[lsp.Diagnostic]:
 
     # Check for missing PURPOSE in ANLUs
     for anlu in nl_file.anlus:
+        anlu_line = anlu.line_number if anlu.line_number else 0
         if not anlu.purpose:
             diagnostics.append(
                 lsp.Diagnostic(
                     range=lsp.Range(
-                        start=lsp.Position(line=0, character=0),
-                        end=lsp.Position(line=0, character=100),
+                        start=lsp.Position(line=anlu_line, character=0),
+                        end=lsp.Position(line=anlu_line, character=100),
                     ),
                     message=f"ANLU [{anlu.identifier}] is missing PURPOSE",
                     severity=lsp.DiagnosticSeverity.Warning,
@@ -552,8 +553,8 @@ def _check_semantic_issues(nl_file: NLFile) -> list[lsp.Diagnostic]:
             diagnostics.append(
                 lsp.Diagnostic(
                     range=lsp.Range(
-                        start=lsp.Position(line=0, character=0),
-                        end=lsp.Position(line=0, character=100),
+                        start=lsp.Position(line=anlu_line, character=0),
+                        end=lsp.Position(line=anlu_line, character=100),
                     ),
                     message=f"ANLU [{anlu.identifier}] has complex RETURNS but no LOGIC steps",
                     severity=lsp.DiagnosticSeverity.Hint,
