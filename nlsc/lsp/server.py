@@ -451,13 +451,18 @@ def _format_nl_document(text: str) -> str:
             formatted_lines.append(f"  - {content}")
             continue
 
-        # Check for numbered items
-        if len(stripped) > 1 and stripped[0].isdigit() and stripped[1] == ".":
-            # Ensure 2-space indent for numbered items
-            content = stripped[2:].strip()
-            number = stripped[0]
-            formatted_lines.append(f"  {number}. {content}")
-            continue
+        # Check for numbered items (handles multi-digit: 1., 10., 100., etc.)
+        if stripped and stripped[0].isdigit():
+            # Find where the number ends
+            dot_pos = 0
+            while dot_pos < len(stripped) and stripped[dot_pos].isdigit():
+                dot_pos += 1
+            if dot_pos < len(stripped) and stripped[dot_pos] == ".":
+                # Ensure 2-space indent for numbered items
+                number = stripped[:dot_pos]
+                content = stripped[dot_pos + 1 :].strip()
+                formatted_lines.append(f"  {number}. {content}")
+                continue
 
         # Type field lines (inside @type block)
         if in_section and ":" in stripped:
