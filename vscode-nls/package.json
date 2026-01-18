@@ -1,5 +1,6 @@
 {
   "name": "nls-language",
+  "icon": "images/icon.png",
   "displayName": "NLS - Natural Language Source",
   "description": "Language support for .nl specification files - syntax highlighting, snippets, diagnostics, and nlsc integration",
   "version": "0.1.0",
@@ -27,9 +28,7 @@
     "compiler",
     "nlsc"
   ],
-  "activationEvents": [
-    "onLanguage:nl"
-  ],
+
   "main": "./out/extension.js",
   "contributes": {
     "languages": [
@@ -43,7 +42,11 @@
         "extensions": [
           ".nl"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./images/icon.png",
+          "dark": "./images/icon.png"
+        }
       }
     ],
     "grammars": [
