@@ -1,0 +1,6 @@
+Windows Registry Editor Version 5.00
+
+; NLS File Association - Uninstall (current user)
+
+[-HKEY_CURRENT_USER\SOFTWARE\Classes\.nl]
+[-HKEY_CURRENT_USER\SOFTWARE\Classes\NLSFile]

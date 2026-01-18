@@ -1,0 +1,24 @@
+Windows Registry Editor Version 5.00
+
+; NLS File Association - Current user only (no admin required)
+; NOTE: Update the icon path below before importing!
+
+; Register .nl file extension
+[HKEY_CURRENT_USER\SOFTWARE\Classes\.nl]
+@="NLSFile"
+"Content Type"="text/plain"
+"PerceivedType"="text"
+
+; Define NLSFile program ID
+[HKEY_CURRENT_USER\SOFTWARE\Classes\NLSFile]
+@="NLS Specification File"
+
+; Set default icon
+; !!! IMPORTANT: Replace the path below with your actual icon path !!!
+[HKEY_CURRENT_USER\SOFTWARE\Classes\NLSFile\DefaultIcon]
+@="C:\\Users\\YOUR_USERNAME\\.nlsc\\nls-file.ico"
+
+; Optional: Open with VS Code
+; Uncomment and update path if desired
+;[HKEY_CURRENT_USER\SOFTWARE\Classes\NLSFile\shell\open\command]
+;@="\"C:\\Users\\YOUR_USERNAME\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe\" \"%1\""

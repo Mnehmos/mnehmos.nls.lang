@@ -70,3 +70,10 @@ nul
 # VS Code extension
 vscode-nls/out/
 vscode-nls/node_modules/
+vscode-nls/*.vsix
+
+# Windows installer artifacts
+windows/build/
+windows/dist/
+windows/installer_output/
+windows/*.spec

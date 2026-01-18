@@ -3,7 +3,7 @@
   "icon": "images/icon.png",
   "displayName": "NLS - Natural Language Source",
   "description": "Language support for .nl specification files - syntax highlighting, snippets, diagnostics, and nlsc integration",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "mnehmos",
   "license": "MIT",
   "repository": {
@@ -28,8 +28,10 @@
     "compiler",
     "nlsc"
   ],
-
   "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:nl"
+  ],
   "contributes": {
     "languages": [
       {
@@ -180,6 +182,7 @@
     "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
+    "@vscode/vsce": "^3.7.1",
     "eslint": "^8.56.0",
     "typescript": "^5.3.3"
   },

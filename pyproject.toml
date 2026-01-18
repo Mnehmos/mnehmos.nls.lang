@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nlsc"
-version = "0.1.0"
+version = "0.2.0"
 description = "Natural Language Source Compiler - Compile .nl specs to executable code"
 readme = "README.md"
 license = {text = "MIT"}
@@ -61,6 +61,9 @@ Repository = "https://github.com/Mnehmos/mnehmos.nls.lang"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["nlsc*"]
+
+[tool.setuptools.package-data]
+nlsc = ["resources/*.ico"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

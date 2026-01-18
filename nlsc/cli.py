@@ -12,6 +12,7 @@ Commands:
     nlsc diff <file>       Show changes since last compile
     nlsc watch <dir>       Watch directory for .nl changes
     nlsc lsp               Start the NLS language server
+    nlsc assoc             Install Windows Explorer file association
 """
 
 import argparse
@@ -40,6 +41,8 @@ from .atomize import atomize_file
 from .diff import get_anlu_changes, format_changes_output, format_stat_output, generate_full_diff
 from .lockfile import read_lockfile
 from .watch import NLWatcher, format_timestamp
+import platform
+import shutil
 
 # Unicode symbols with ASCII fallbacks for Windows console
 def _check() -> str:
@@ -748,6 +751,111 @@ def cmd_run(args: argparse.Namespace) -> int:
     return exit_code
 
 
+def cmd_assoc(args: argparse.Namespace) -> int:
+    """Install Windows file association for .nl files"""
+    if platform.system() != "Windows":
+        print("Error: File association command is only available on Windows", file=sys.stderr)
+        return 1
+
+    import winreg
+
+    uninstall = getattr(args, "uninstall", False)
+    current_user = getattr(args, "user", False)
+
+    # Determine icon location
+    icon_path = None
+
+    # First, check for bundled icon in package resources
+    package_dir = Path(__file__).parent
+    bundled_icon = package_dir / "resources" / "nls-file.ico"
+    if bundled_icon.exists():
+        # Copy to user's app data for persistence
+        app_data = Path(os.environ.get("LOCALAPPDATA", "")) / "nlsc"
+        app_data.mkdir(parents=True, exist_ok=True)
+        dest_icon = app_data / "nls-file.ico"
+        shutil.copy2(bundled_icon, dest_icon)
+        icon_path = dest_icon
+
+    if not icon_path:
+        print("Error: Could not find nls-file.ico in package resources", file=sys.stderr)
+        print("Run 'python windows/generate_ico.py' from the project root first", file=sys.stderr)
+        return 1
+
+    # Choose registry root
+    if current_user:
+        root_key = winreg.HKEY_CURRENT_USER
+        base_path = r"SOFTWARE\Classes"
+        print("Installing for current user...")
+    else:
+        root_key = winreg.HKEY_CLASSES_ROOT
+        base_path = ""
+        print("Installing system-wide (requires admin)...")
+
+    ext_path = f"{base_path}\\.nl" if base_path else ".nl"
+    progid_path = f"{base_path}\\NLSFile" if base_path else "NLSFile"
+
+    try:
+        if uninstall:
+            print("Uninstalling NLS file association...")
+            # Delete keys
+            try:
+                winreg.DeleteKey(root_key, f"{progid_path}\\DefaultIcon")
+            except FileNotFoundError:
+                pass
+            try:
+                winreg.DeleteKey(root_key, progid_path)
+            except FileNotFoundError:
+                pass
+            try:
+                winreg.DeleteKey(root_key, ext_path)
+            except FileNotFoundError:
+                pass
+            print(f"  {_check()} Uninstalled file association")
+        else:
+            print(f"Installing NLS file association...")
+            print(f"  Icon: {icon_path}")
+
+            # Create .nl extension key
+            with winreg.CreateKey(root_key, ext_path) as key:
+                winreg.SetValueEx(key, "", 0, winreg.REG_SZ, "NLSFile")
+                winreg.SetValueEx(key, "Content Type", 0, winreg.REG_SZ, "text/plain")
+                winreg.SetValueEx(key, "PerceivedType", 0, winreg.REG_SZ, "text")
+            print(f"  {_check()} Registered .nl extension")
+
+            # Create NLSFile ProgID
+            with winreg.CreateKey(root_key, progid_path) as key:
+                winreg.SetValueEx(key, "", 0, winreg.REG_SZ, "NLS Specification File")
+            print(f"  {_check()} Created NLSFile ProgID")
+
+            # Create DefaultIcon
+            with winreg.CreateKey(root_key, f"{progid_path}\\DefaultIcon") as key:
+                winreg.SetValueEx(key, "", 0, winreg.REG_SZ, f'"{icon_path}"')
+            print(f"  {_check()} Set default icon")
+
+        # Notify shell of changes
+        try:
+            import ctypes
+            SHCNE_ASSOCCHANGED = 0x08000000
+            SHCNF_IDLIST = 0
+            ctypes.windll.shell32.SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, None, None)
+            print(f"  {_check()} Notified shell of changes")
+        except Exception:
+            pass
+
+        print("\nDone! If icons don't appear immediately:")
+        print("  1. Restart Windows Explorer")
+        print("  2. Or log out and back in")
+
+        return 0
+
+    except PermissionError:
+        print("Error: Permission denied. Run as administrator or use --user flag.", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+
 def cmd_lsp(args: argparse.Namespace) -> int:
     """Start the NLS language server"""
     try:
@@ -1013,6 +1121,22 @@ The conversation is the programming. The .nl file is the receipt.
         help="TCP port for tcp transport (default: 2087)"
     )
 
+    # assoc command (Windows only)
+    assoc_parser = subparsers.add_parser(
+        "assoc",
+        help="Install Windows file association for .nl files"
+    )
+    assoc_parser.add_argument(
+        "--uninstall",
+        action="store_true",
+        help="Remove file association instead of installing"
+    )
+    assoc_parser.add_argument(
+        "--user",
+        action="store_true",
+        help="Install for current user only (no admin required)"
+    )
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -1047,6 +1171,8 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_lock_update(args)
     elif args.command == "lsp":
         return cmd_lsp(args)
+    elif args.command == "assoc":
+        return cmd_assoc(args)
 
     return 0
 
