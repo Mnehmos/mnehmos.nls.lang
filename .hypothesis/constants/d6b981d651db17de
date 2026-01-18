@@ -1,0 +1,4 @@
+# file: F:\Github\mnehmos.nls.lang\nlsc\emitter.py
+# hypothesis_version: 6.150.2
+
+['    """', '    Args:', '    Returns:', '    pass', '    return None', ' THEN ', ' with ', '""', '"""', '#', '(', '([a-z])-([a-z])', ')', '*', ', ', '-', '->', '/', '0', '0.0', ':', '=', '==', '@dataclass', 'False', 'IF ', 'NOT ', 'ValueError', '[', '[]', '[^a-z0-9_]', '\\', '\\1_\\2', ']', '^PRINT\\s+(.+)$', '_', 'any', 'bool', 'boolean', 'dict', 'dictionary', 'float', 'forall', 'import pytest', 'int', 'integer', 'list', 'max:', 'min:', 'mock', 'non-negative', 'none', 'number', 'positive', 'required', 'self.', 'st.booleans()', 'st.integers()', 'st.none()', 'st.text()', 'str', 'string', 'unknown', 'void', 'x', '{}', '}', '×', '÷', '→']

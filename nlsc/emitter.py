@@ -5,6 +5,7 @@ Uses mock/template-based generation for V0.
 LLM integration can be added as a separate backend.
 """
 
+import math
 import re
 from typing import Optional
 
@@ -12,9 +13,23 @@ from .schema import ANLU, NLFile, TypeDefinition, Invariant
 
 
 def _is_safe_numeric(value: str) -> bool:
-    """Check if a value is a safe numeric literal (int or float)."""
+    """Validate that a constraint value is a safe numeric literal.
+
+    Checks that the value can be parsed as a finite number (int or float).
+    Rejects special values (inf, nan) and any non-numeric strings that
+    could lead to code injection when interpolated into generated code.
+
+    Args:
+        value: The string value to validate
+
+    Returns:
+        True if the value is a safe, finite numeric literal
+    """
     try:
-        float(value)
+        num = float(value)
+        # Reject infinity and NaN
+        if math.isnan(num) or math.isinf(num):
+            return False
         return True
     except ValueError:
         return False

@@ -170,6 +170,13 @@ class TestSecurityValidation:
         assert _is_safe_numeric("exec('bad')") is False
         assert _is_safe_numeric("1 + 1") is False
 
+    def test_is_safe_numeric_rejects_special_values(self):
+        """Reject infinity and NaN which could cause unexpected behavior"""
+        assert _is_safe_numeric("inf") is False
+        assert _is_safe_numeric("-inf") is False
+        assert _is_safe_numeric("nan") is False
+        assert _is_safe_numeric("Infinity") is False
+
     def test_malicious_constraint_not_emitted(self):
         """Ensure malicious min/max constraints are silently skipped"""
         source = """\
