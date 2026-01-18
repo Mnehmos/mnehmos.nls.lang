@@ -1,0 +1,178 @@
+{
+  "name": "nls-language",
+  "displayName": "NLS - Natural Language Source",
+  "description": "Language support for .nl specification files - syntax highlighting, snippets, diagnostics, and nlsc integration",
+  "version": "0.1.0",
+  "publisher": "mnehmos",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mnehmos/mnehmos.nls.lang"
+  },
+  "bugs": {
+    "url": "https://github.com/Mnehmos/mnehmos.nls.lang/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Linters"
+  ],
+  "keywords": [
+    "nls",
+    "natural language",
+    "specification",
+    "compiler",
+    "nlsc"
+  ],
+  "activationEvents": [
+    "onLanguage:nl"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "nl",
+        "aliases": [
+          "NLS",
+          "Natural Language Source",
+          "nl"
+        ],
+        "extensions": [
+          ".nl"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "nl",
+        "scopeName": "source.nl",
+        "path": "./syntaxes/nl.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.python": "python",
+          "meta.embedded.block.typescript": "typescript",
+          "meta.embedded.block.rust": "rust"
+        }
+      }
+    ],
+    "snippets": [
+      {
+        "language": "nl",
+        "path": "./snippets/nl.snippets.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "nls.verify",
+        "title": "NLS: Verify Current File",
+        "icon": "$(check)"
+      },
+      {
+        "command": "nls.compile",
+        "title": "NLS: Compile to Python",
+        "icon": "$(play)"
+      },
+      {
+        "command": "nls.test",
+        "title": "NLS: Run Tests",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "nls.graph",
+        "title": "NLS: Show Dependency Graph",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "nls.openGenerated",
+        "title": "NLS: Open Generated Python File"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "nls.verify",
+          "when": "resourceLangId == nl",
+          "group": "navigation"
+        },
+        {
+          "command": "nls.compile",
+          "when": "resourceLangId == nl",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "nls.verify",
+          "when": "resourceLangId == nl",
+          "group": "nls"
+        },
+        {
+          "command": "nls.compile",
+          "when": "resourceLangId == nl",
+          "group": "nls"
+        },
+        {
+          "command": "nls.test",
+          "when": "resourceLangId == nl",
+          "group": "nls"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "nls.verify",
+        "key": "ctrl+shift+v",
+        "mac": "cmd+shift+v",
+        "when": "resourceLangId == nl"
+      },
+      {
+        "command": "nls.compile",
+        "key": "ctrl+shift+b",
+        "mac": "cmd+shift+b",
+        "when": "resourceLangId == nl"
+      }
+    ],
+    "configuration": {
+      "title": "NLS",
+      "properties": {
+        "nls.nlscPath": {
+          "type": "string",
+          "default": "nlsc",
+          "description": "Path to nlsc executable"
+        },
+        "nls.validateOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Validate .nl files on save"
+        },
+        "nls.validateOnType": {
+          "type": "boolean",
+          "default": false,
+          "description": "Validate .nl files while typing (may impact performance)"
+        },
+        "nls.compileOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically compile on save"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
+  }
+}

@@ -178,6 +178,7 @@ mnehmos.nls.lang/
 ├── tree-sitter-nl/           # Grammar & parser
 ├── action/                   # GitHub Action
 ├── stress-test/              # Performance tests
+├── vscode-nls/               # VS Code extension
 │
 ├── pyproject.toml           # Package config
 ├── mkdocs.yml               # Docs config
@@ -280,7 +281,7 @@ timestamp: "2025-01-17T14:00:00Z"
 | Watch mode | ✅ Complete |
 | GitHub Action | ✅ Complete |
 | PyPI distribution | ✅ Complete |
-| VS Code extension | 🔜 Planned |
+| VS Code extension | ✅ Basic (syntax, snippets) |
 | TypeScript target | 🔜 Planned |
 | LSP server | 🔜 Planned |
 

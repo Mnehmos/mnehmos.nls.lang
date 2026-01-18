@@ -1,0 +1,202 @@
+{
+  "ANLU Block": {
+    "prefix": ["anlu", "["],
+    "body": [
+      "[${1:function-name}]",
+      "PURPOSE: ${2:Description of what this function does}",
+      "INPUTS:",
+      "  - ${3:param}: ${4:number}",
+      "RETURNS: ${5:expression}",
+      "$0"
+    ],
+    "description": "Create a new ANLU specification block"
+  },
+
+  "ANLU with Guards": {
+    "prefix": ["anlug", "guarded"],
+    "body": [
+      "[${1:function-name}]",
+      "PURPOSE: ${2:Description}",
+      "INPUTS:",
+      "  - ${3:param}: ${4:number}",
+      "GUARDS:",
+      "  - ${5:condition} -> ${6:ValueError}(\"${7:error message}\")",
+      "RETURNS: ${8:expression}",
+      "$0"
+    ],
+    "description": "ANLU with guard validation clause"
+  },
+
+  "ANLU with Logic": {
+    "prefix": ["anlul", "logic"],
+    "body": [
+      "[${1:function-name}]",
+      "PURPOSE: ${2:Description}",
+      "INPUTS:",
+      "  - ${3:param}: ${4:number}",
+      "LOGIC:",
+      "  1. ${5:first step} -> ${6:result1}",
+      "  2. ${7:second step} -> ${8:result2}",
+      "RETURNS: ${9:expression}",
+      "$0"
+    ],
+    "description": "ANLU with step-by-step logic"
+  },
+
+  "Full ANLU": {
+    "prefix": ["anluf", "full"],
+    "body": [
+      "[${1:function-name}]",
+      "PURPOSE: ${2:Description}",
+      "INPUTS:",
+      "  - ${3:param1}: ${4:number}",
+      "  - ${5:param2}: ${6:number}",
+      "GUARDS:",
+      "  - ${7:validation condition} -> ${8:ValueError}(\"${9:error message}\")",
+      "LOGIC:",
+      "  1. ${10:first step} -> ${11:intermediate}",
+      "  2. ${12:second step}",
+      "EDGE CASES:",
+      "  - ${13:edge condition} -> ${14:behavior}",
+      "RETURNS: ${15:result}",
+      "DEPENDS: [${16:other-anlu}]",
+      "$0"
+    ],
+    "description": "Complete ANLU with all sections"
+  },
+
+  "Type Definition": {
+    "prefix": ["type", "@type"],
+    "body": [
+      "@type ${1:TypeName} {",
+      "  ${2:field}: ${3:number}",
+      "  $0",
+      "}"
+    ],
+    "description": "Define a custom data type"
+  },
+
+  "Type with Extends": {
+    "prefix": ["typex", "extends"],
+    "body": [
+      "@type ${1:TypeName} extends ${2:BaseType} {",
+      "  ${3:field}: ${4:number}",
+      "  $0",
+      "}"
+    ],
+    "description": "Type that extends a base type"
+  },
+
+  "Test Block": {
+    "prefix": ["test", "@test"],
+    "body": [
+      "@test [${1:anlu-name}] {",
+      "  ${2:function}(${3:args}) == ${4:expected}",
+      "  $0",
+      "}"
+    ],
+    "description": "Create a test specification block"
+  },
+
+  "Property Block": {
+    "prefix": ["property", "@property"],
+    "body": [
+      "@property [${1:anlu-name}] {",
+      "  ${2:function}(${3:a}, ${4:b}) == ${5:function}(${4:b}, ${3:a})  # ${6:commutativity}",
+      "  $0",
+      "}"
+    ],
+    "description": "Create a property-based test block"
+  },
+
+  "Invariant Block": {
+    "prefix": ["invariant", "@invariant"],
+    "body": [
+      "@invariant ${1:TypeName} {",
+      "  ${2:field} >= ${3:0}",
+      "  $0",
+      "}"
+    ],
+    "description": "Create a type invariant block"
+  },
+
+  "Literal Block": {
+    "prefix": ["literal", "@literal"],
+    "body": [
+      "@literal ${1|python,typescript,rust,javascript|} {",
+      "${2:code}",
+      "}"
+    ],
+    "description": "Embed literal code in target language"
+  },
+
+  "Module Header": {
+    "prefix": ["module", "header"],
+    "body": [
+      "# ${1:Module Description}",
+      "",
+      "@module ${2:module-name}",
+      "@version ${3:1.0.0}",
+      "@target ${4|python,typescript,rust|}",
+      "",
+      "$0"
+    ],
+    "description": "Module header with all directives"
+  },
+
+  "Input Item": {
+    "prefix": ["input", "-"],
+    "body": [
+      "  - ${1:name}: ${2|number,string,boolean,list of number,list of string,integer|}${3:, ${4|required,optional|}}"
+    ],
+    "description": "Add an input parameter"
+  },
+
+  "Guard Clause": {
+    "prefix": ["guard", "check"],
+    "body": [
+      "  - ${1:condition} -> ${2|ValueError,TypeError,RuntimeError|}(\"${3:error message}\")"
+    ],
+    "description": "Add a guard validation clause"
+  },
+
+  "Logic Step": {
+    "prefix": ["step", "logic"],
+    "body": [
+      "  ${1:1}. ${2:description} -> ${3:variable}"
+    ],
+    "description": "Add a numbered logic step"
+  },
+
+  "Conditional Logic": {
+    "prefix": ["if", "conditional"],
+    "body": [
+      "  ${1:1}. IF ${2:condition} THEN ${3:action} -> ${4:result}"
+    ],
+    "description": "Conditional logic step with IF/THEN"
+  },
+
+  "State Logic Step": {
+    "prefix": ["state", "fsm"],
+    "body": [
+      "  ${1:1}. [${2:state_name}] ${3:action} -> ${4:result}"
+    ],
+    "description": "Logic step with FSM state prefix"
+  },
+
+  "Edge Case": {
+    "prefix": ["edge", "case"],
+    "body": [
+      "  - ${1:condition} -> ${2:behavior}"
+    ],
+    "description": "Add an edge case handler"
+  },
+
+  "Forall Property": {
+    "prefix": ["forall", "quantifier"],
+    "body": [
+      "  forall ${1:x}: ${2:number} -> ${3:assertion}"
+    ],
+    "description": "Universal quantifier for property testing"
+  }
+}

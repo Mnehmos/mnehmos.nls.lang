@@ -46,6 +46,12 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
+# Roo AI artifacts
+.roo/
+
+# Ruff cache
+.ruff_cache/
+
 # Test projects created during development
 examples/testproject/
 
