@@ -43,6 +43,7 @@ class NLSLanguageServer(LanguageServer):
         super().__init__(
             name="nls-language-server",
             version="0.1.0",
+            text_document_sync_kind=lsp.TextDocumentSyncKind.Full,
         )
         # Cache of parsed files: uri -> NLFile
         self.parsed_files: dict[str, NLFile] = {}
