@@ -44,7 +44,7 @@ export function registerCommands(
     
     // NLS: Run Tests
     context.subscriptions.push(
-        vscode.commands.registerCommand('nls.test', async () => {
+        vscode.commands.registerCommand('nls.test', async (testName?: string) => {
             const editor = vscode.window.activeTextEditor;
             if (!editor || editor.document.languageId !== 'nl') {
                 vscode.window.showWarningMessage('No .nl file is open');
@@ -56,7 +56,32 @@ export function registerCommands(
             
             const terminal = vscode.window.createTerminal('NLS Test');
             terminal.show();
-            terminal.sendText(`${nlscPath()} test "${filePath}"`);
+            
+            let cmd = `${nlscPath()} test "${filePath}"`;
+            if (testName) {
+                // Escape test name if needed, but for now assuming simple id
+                cmd += ` --case "${testName}"`;
+            }
+            
+            terminal.sendText(cmd);
+        })
+    );
+
+    // NLS: Run Program
+    context.subscriptions.push(
+        vscode.commands.registerCommand('nls.run', async () => {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor || editor.document.languageId !== 'nl') {
+                vscode.window.showWarningMessage('No .nl file is open');
+                return;
+            }
+            
+            await editor.document.save();
+            const filePath = editor.document.uri.fsPath;
+            
+            const terminal = vscode.window.createTerminal('NLS Run');
+            terminal.show();
+            terminal.sendText(`${nlscPath()} run "${filePath}"`);
         })
     );
     

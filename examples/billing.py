@@ -68,7 +68,8 @@ def calculate_subtotal(invoice: Invoice) -> Any:
     Returns:
         subtotal
     """
-    subtotal = sum_each_items_total()  # TODO: implement
+    # Sum each item's total
+    subtotal = None  # TODO: implement
     return subtotal
 
 
@@ -87,8 +88,10 @@ def apply_discount(amount: float, discount_percent: float) -> Any:
         raise ValueError('Discount cannot be negative')
     if not (discount_percent <= 100):
         raise ValueError('Discount cannot exceed 100%')
-    discount = calculate_discount_amount()  # TODO: implement
-    final = subtract_from_original()  # TODO: implement
+    # Calculate discount amount
+    discount = None  # TODO: implement
+    # Subtract from original
+    final = None  # TODO: implement
     return amount * (1 - discount_percent / 100)
 
 
@@ -118,8 +121,12 @@ def calculate_invoice_total(invoice: Invoice) -> Any:
     Returns:
         total
     """
-    subtotal = calculate_subtotal_from_all_items()  # TODO: implement
-    discounted = apply_discount_to_subtotal()  # TODO: implement
-    tax = calculate_tax_on_discounted_amount()  # TODO: implement
-    total = add_tax_to_discounted_amount()  # TODO: implement
+    # Calculate subtotal from all items
+    subtotal = None  # TODO: implement
+    # Apply discount to subtotal
+    discounted = None  # TODO: implement
+    # Calculate tax on discounted amount
+    tax = None  # TODO: implement
+    # Add tax to discounted amount
+    total = None  # TODO: implement
     return total

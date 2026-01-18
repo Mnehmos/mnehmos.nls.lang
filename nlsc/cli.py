@@ -395,8 +395,13 @@ def cmd_test(args: argparse.Namespace) -> int:
 
         # Run pytest
         verbose_flag = "-v" if getattr(args, "verbose", False) else "-q"
+        pytest_args = [sys.executable, "-m", "pytest", str(test_path), verbose_flag, "--tb=short"]
+        
+        if getattr(args, "case", None):
+            pytest_args.extend(["-k", args.case])
+
         result = subprocess.run(
-            [sys.executable, "-m", "pytest", str(test_path), verbose_flag, "--tb=short"],
+            pytest_args,
             cwd=str(temp_path),
             capture_output=not getattr(args, "verbose", False),
             text=True,
@@ -893,6 +898,10 @@ The conversation is the programming. The .nl file is the receipt.
         "-v", "--verbose",
         action="store_true",
         help="Verbose output"
+    )
+    test_parser.add_argument(
+        "-k", "--case",
+        help="Run specific test case (regex pattern)"
     )
 
     # atomize command

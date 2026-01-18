@@ -81,6 +81,11 @@
         "icon": "$(beaker)"
       },
       {
+        "command": "nls.run",
+        "title": "NLS: Run Program",
+        "icon": "$(play)"
+      },
+      {
         "command": "nls.graph",
         "title": "NLS: Show Dependency Graph",
         "icon": "$(type-hierarchy)"

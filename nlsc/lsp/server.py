@@ -796,6 +796,65 @@ def _check_semantic_issues(nl_file: NLFile) -> list[lsp.Diagnostic]:
     return diagnostics
 
 
+
+@server.feature(lsp.TEXT_DOCUMENT_CODE_LENS)
+def code_lens(ls: NLSLanguageServer, params: lsp.CodeLensParams) -> list[lsp.CodeLens] | None:
+    """Provide code lenses for runnable blocks (@test, @main)."""
+    uri = params.text_document.uri
+    text = ls.document_content.get(uri)
+    
+    if not text:
+        return None
+        
+    lenses: list[lsp.CodeLens] = []
+    lines = text.split("\n")
+    
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        
+        # @test block -> Run Test
+        if stripped.startswith("@test") and "{" in stripped:
+            # Extract test name, handling brackets: @test [name] or @test name
+            match = re.search(r"@test\s+(?:\[)?([a-zA-Z0-9_-]+)(?:\])?", stripped)
+            if match:
+                raw_name = match.group(1)
+                # Normalize to match emit_tests class name: TestName (TitleCase with underscores)
+                # calculate-tax -> calculate_tax -> Calculate_Tax
+                norm_name = raw_name.replace("-", "_").title()
+                test_class = f"Test{norm_name}"
+                
+                lenses.append(
+                    lsp.CodeLens(
+                        range=lsp.Range(
+                            start=lsp.Position(line=i, character=0),
+                            end=lsp.Position(line=i, character=len(line)),
+                        ),
+                        command=lsp.Command(
+                            title="Run Test",
+                            command="nls.test",
+                            arguments=[test_class],
+                        ),
+                    )
+                )
+        
+        # @main block -> Run Program
+        elif stripped.startswith("@main") and "{" in stripped:
+            lenses.append(
+                lsp.CodeLens(
+                    range=lsp.Range(
+                        start=lsp.Position(line=i, character=0),
+                        end=lsp.Position(line=i, character=len(line)),
+                    ),
+                    command=lsp.Command(
+                        title="Run Program",
+                        command="nls.run",
+                    ),
+                )
+            )
+            
+    return lenses
+
+
 def start_server(
     transport: str = "stdio",
     host: str = "127.0.0.1",
