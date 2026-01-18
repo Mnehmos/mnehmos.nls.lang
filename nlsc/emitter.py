@@ -11,6 +11,15 @@ from typing import Optional
 from .schema import ANLU, NLFile, TypeDefinition, Invariant
 
 
+def _is_safe_numeric(value: str) -> bool:
+    """Check if a value is a safe numeric literal (int or float)."""
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
+
 class EmitError(Exception):
     """Error during code emission"""
     pass
@@ -83,13 +92,17 @@ def _emit_constraint_checks(type_def: TypeDefinition) -> list[str]:
 
             elif constraint_lower.startswith("min:"):
                 min_val = constraint_lower.split(":", 1)[1].strip()
-                checks.append(f"        if self.{field.name} < {min_val}:")
-                checks.append(f"            raise ValueError('{field.name} must be at least {min_val}')")
+                if _is_safe_numeric(min_val):
+                    checks.append(f"        if self.{field.name} < {min_val}:")
+                    checks.append(f"            raise ValueError('{field.name} must be at least {min_val}')")
+                # Skip non-numeric min constraints to prevent code injection
 
             elif constraint_lower.startswith("max:"):
                 max_val = constraint_lower.split(":", 1)[1].strip()
-                checks.append(f"        if self.{field.name} > {max_val}:")
-                checks.append(f"            raise ValueError('{field.name} must be at most {max_val}')")
+                if _is_safe_numeric(max_val):
+                    checks.append(f"        if self.{field.name} > {max_val}:")
+                    checks.append(f"            raise ValueError('{field.name} must be at most {max_val}')")
+                # Skip non-numeric max constraints to prevent code injection
 
     return checks
 
