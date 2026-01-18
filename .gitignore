@@ -66,3 +66,7 @@ tree-sitter-nl/build/*.dylib
 
 # Windows artifacts
 nul
+
+# VS Code extension
+vscode-nls/out/
+vscode-nls/node_modules/
