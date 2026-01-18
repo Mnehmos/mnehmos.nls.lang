@@ -345,32 +345,57 @@ def _extract_action(step: LogicStep) -> Optional[str]:
 
     # Check if step has explicit assigns from output binding
     if step.output_binding and step.assigns:
-        # Generate assignment from description
-        # Try to extract meaningful action
-        return f"{step.output_binding} = {_desc_to_expr(desc)}"
+        # Try to extract meaningful action from description
+        expr = _desc_to_expr(desc)
+        if expr:
+            return f"{step.output_binding} = {expr}"
+        # Descriptive text only - emit as comment + placeholder
+        return f"# {desc}\n    {step.output_binding} = None  # TODO: implement"
 
     # Not an assignment - purely descriptive
     return None
 
 
-def _desc_to_expr(desc: str) -> str:
+def _desc_to_expr(desc: str) -> Optional[str]:
     """
-    Convert descriptive text to a Python expression placeholder.
+    Convert a logic step description to a Python expression.
 
-    For V1, we keep descriptive steps as function calls to be defined.
+    Returns:
+        - Python function call if description contains [anlu-name]
+        - The expression if it looks like valid code
+        - None if it's purely descriptive text (no valid code to emit)
     """
     # Clean up the description
     desc = desc.strip()
 
-    # If it looks like a function call already, return it
-    if "(" in desc and ")" in desc:
-        return desc
+    # Check for explicit ANLU reference: [anlu-name](args)
+    anlu_call = re.match(r'\[([a-zA-Z][a-zA-Z0-9_-]*)\]\s*\(([^)]*)\)', desc)
+    if anlu_call:
+        # Convert kebab-case to snake_case for Python
+        func_name = anlu_call.group(1).replace("-", "_")
+        args = anlu_call.group(2).strip()
+        return f"{func_name}({args})"
 
-    # Otherwise, convert to a TODO function call
-    func_name = desc.lower().replace(" ", "_").replace("-", "_")
-    # Keep only valid identifier characters
-    func_name = re.sub(r'[^a-z0-9_]', '', func_name)
-    return f"{func_name}()  # TODO: implement"
+    # Check for ANLU reference without args: [anlu-name]
+    anlu_ref = re.match(r'\[([a-zA-Z][a-zA-Z0-9_-]*)\]', desc)
+    if anlu_ref:
+        func_name = anlu_ref.group(1).replace("-", "_")
+        # Extract any following text as potential args
+        remaining = desc[anlu_ref.end():].strip()
+        if remaining.startswith("(") and ")" in remaining:
+            # Has args
+            args = remaining[1:remaining.find(")")].strip()
+            return f"{func_name}({args})"
+        return f"{func_name}()"
+
+    # Check if already looks like Python code (has assignment or function call)
+    if "=" in desc and "==" not in desc:
+        return desc  # Already an assignment
+    if "(" in desc and ")" in desc:
+        return desc  # Already a function call
+
+    # Purely descriptive text - return None, caller should emit as comment
+    return None
 
 
 def _convert_main_line(line: str) -> Optional[str]:
@@ -530,7 +555,7 @@ def emit_python(nl_file: NLFile, mode: str = "mock") -> str:
 
     # Add type imports if needed
     has_any = any(
-        "any" in (inp.type for inp in anlu.inputs)
+        "any" in (inp.type for inp in anlu.inputs) or anlu.to_python_return_type() == "Any"
         for anlu in nl_file.anlus
     )
     if has_any:
