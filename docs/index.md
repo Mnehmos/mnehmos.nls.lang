@@ -85,4 +85,8 @@ pip install nlsc
 
   How the compiler works
 
+- :material-target: **[Core Semantics](core-semantics.md)**
+
+  Target-neutral semantic specification
+
 </div>
