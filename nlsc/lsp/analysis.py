@@ -47,47 +47,219 @@ def find_symbol_at_position(
         return None
 
     current_line = lines[line]
+    
+    # Strip trailing \r if present (Windows line endings)
+    if current_line.endswith("\r"):
+        current_line = current_line[:-1]
 
-    # Check for ANLU identifier/reference [name]
-    anlu_match = re.search(r"\[([a-zA-Z][a-zA-Z0-9_-]*)\]", current_line)
-    if anlu_match:
-        start, end = anlu_match.span(1)
-        if start <= character <= end:
-            # Determine if this is a reference (DEPENDS/CALLS) or definition
+    # Helper to check if character is within span
+    def in_span(start: int, end: int) -> bool:
+        return start <= character <= end
+
+    # 1. ANLU identifier/reference [name]
+    for m in re.finditer(r"\[([a-zA-Z][a-zA-Z0-9_-]*)\]", current_line):
+        if in_span(*m.span(0)):  # Include brackets
             line_upper = current_line.upper()
-            kind = "anlu_ref" if ("DEPENDS" in line_upper or "CALLS" in line_upper) else "anlu"
+            is_ref = "DEPENDS" in line_upper or "CALLS" in line_upper
             return SymbolLocation(
-                line=line,
-                start_char=start,
-                end_char=end,
-                name=anlu_match.group(1),
-                kind=kind,
+                line=line, start_char=m.start(0), end_char=m.end(0),
+                name=m.group(1), kind="anlu_ref" if is_ref else "anlu"
             )
 
-    # Check for @type Name
-    type_match = re.search(r"@type\s+([A-Z][a-zA-Z0-9]*)", current_line)
-    if type_match:
-        start, end = type_match.span(1)
-        if start <= character <= end:
+    # 2. Directives: @module, @version, @target, @type, @test, @main, etc.
+    for m in re.finditer(r"@(module|version|target|type|test|property|invariant|literal|main)\b", current_line):
+        if in_span(*m.span(0)):
+            directive = m.group(1)
             return SymbolLocation(
-                line=line,
-                start_char=start,
-                end_char=end,
-                name=type_match.group(1),
-                kind="type",
+                line=line, start_char=m.start(0), end_char=m.end(0),
+                name=f"@{directive}", kind="directive"
             )
 
-    # Check for type references in INPUTS or fields
-    type_ref_match = re.search(r":\s*([A-Z][a-zA-Z0-9]*)", current_line)
-    if type_ref_match:
-        start, end = type_ref_match.span(1)
-        if start <= character <= end:
+    # 3. Section keywords: PURPOSE, INPUTS, GUARDS, LOGIC, RETURNS, etc.
+    for m in re.finditer(r"\b(PURPOSE|INPUTS|GUARDS|LOGIC|RETURNS|DEPENDS|CALLS|NOTES|EXAMPLES|EDGE\s+CASES)\s*:", current_line):
+        if in_span(*m.span(1)):
             return SymbolLocation(
-                line=line,
-                start_char=start,
-                end_char=end,
-                name=type_ref_match.group(1),
-                kind="type_ref",
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1).strip(), kind="section"
+            )
+
+    # 4. Builtin types: number, string, boolean, list, dict, any
+    for m in re.finditer(r"\b(number|string|boolean|list|dict|any|void)\b", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="builtin_type"
+            )
+
+    # 5. Constraints: required, positive, non-negative, min:X, max:X, optional
+    for m in re.finditer(r"\b(required|optional|positive|non-negative|unique)\b", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="constraint"
+            )
+    for m in re.finditer(r"\b(min|max):\s*(\d+)", current_line):
+        if in_span(*m.span(0)):
+            return SymbolLocation(
+                line=line, start_char=m.start(0), end_char=m.end(0),
+                name=f"{m.group(1)}:{m.group(2)}", kind="constraint"
+            )
+
+    # 6. Custom type names (PascalCase) after @type or @invariant or :
+    for m in re.finditer(r"@type\s+([A-Z][a-zA-Z0-9]*)", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="type"
+            )
+    for m in re.finditer(r"@invariant\s+([A-Z][a-zA-Z0-9]*)", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="type_ref"
+            )
+    for m in re.finditer(r":\s*([A-Z][a-zA-Z0-9]*)", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="type_ref"
+            )
+    for m in re.finditer(r"list\s+of\s+([A-Z][a-zA-Z0-9]*)", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="type_ref"
+            )
+
+    # 7. Field/parameter names (after - in INPUTS or in type blocks)
+    for m in re.finditer(r"^\s*-\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="field"
+            )
+    for m in re.finditer(r"^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:", current_line):
+        if in_span(*m.span(1)):
+            # Check this isn't a section keyword
+            name = m.group(1)
+            if name.upper() not in ["PURPOSE", "INPUTS", "GUARDS", "LOGIC", "RETURNS", "DEPENDS", "CALLS", "NOTES", "EXAMPLES"]:
+                return SymbolLocation(
+                    line=line, start_char=m.start(1), end_char=m.end(1),
+                    name=name, kind="field"
+                )
+
+    # 8. Guard/logic operators: →, •, ->
+    for m in re.finditer(r"(→|->|•)", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="operator"
+            )
+
+    # 9. Comments
+    for m in re.finditer(r"(#.*)$", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name="comment", kind="comment"
+            )
+
+    # 10. Function calls like calculate_tax(...) - link to ANLU
+    for m in re.finditer(r"\b([a-z][a-z0-9_]*)\s*\(", current_line):
+        if in_span(*m.span(1)):
+            # Convert snake_case to kebab-case for ANLU lookup
+            func_name = m.group(1)
+            anlu_name = func_name.replace("_", "-")
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=anlu_name, kind="anlu_ref"
+            )
+    # 11. Constructor calls like LineItem(...) - PascalCase with parens
+    for m in re.finditer(r"\b([A-Z][a-zA-Z0-9]*)\s*\(", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="type_ref"
+            )
+
+    # 12. Keyword arguments like quantity=1, unit_price=99.99
+    for m in re.finditer(r"\b([a-z][a-z0-9_]*)\s*=", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="kwarg"
+            )
+
+    # 13. String literals "..." or '...'
+    for m in re.finditer(r'(["\'])([^"\']*)\1', current_line):
+        if in_span(*m.span(0)):
+            return SymbolLocation(
+                line=line, start_char=m.start(0), end_char=m.end(0),
+                name=m.group(2), kind="string"
+            )
+
+    # 14. Numbers (integers and floats) - match digits possibly with decimal
+    for m in re.finditer(r"(?<![a-zA-Z_])(\d+\.?\d*)(?![a-zA-Z_])", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="number"
+            )
+
+    # 15. Comparison/equality operators
+    for m in re.finditer(r"(==|!=|>=|<=|>|<)", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="comparison"
+            )
+
+    # 16. Math operators
+    for m in re.finditer(r"(\+|-(?!\>)|\*|/|%)", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="math_op"
+            )
+
+    # 17. Error types like ValueError, TypeError
+    for m in re.finditer(r"\b([A-Z][a-z]+Error)\s*\(", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="error_type"
+            )
+
+    # 18. Test block keywords: GIVEN, WHEN, THEN
+    for m in re.finditer(r"\b(GIVEN|WHEN|THEN)\s*:", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="test_keyword"
+            )
+
+    # 19. Property block keywords: FOR_ALL, ASSERT, WHERE
+    for m in re.finditer(r"\b(FOR_ALL|ASSERT|WHERE)\s*:", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="property_keyword"
+            )
+
+    # 20. Boolean literals
+    for m in re.finditer(r"\b(true|false|True|False)\b", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1).lower(), kind="boolean"
+            )
+
+    # 21. Identifiers (catch-all for remaining lowercase words)
+    for m in re.finditer(r"\b([a-z][a-z0-9_]*)\b", current_line):
+        if in_span(*m.span(1)):
+            return SymbolLocation(
+                line=line, start_char=m.start(1), end_char=m.end(1),
+                name=m.group(1), kind="identifier"
             )
 
     return None

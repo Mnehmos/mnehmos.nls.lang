@@ -3,6 +3,7 @@ import { DiagnosticsProvider } from './diagnostics';
 import { NLDocumentSymbolProvider } from './documentSymbols';
 import { NLFoldingRangeProvider } from './folding';
 import { registerCommands } from './commands';
+import { activateLspClient, deactivateLspClient } from './lspClient';
 
 let diagnosticsProvider: DiagnosticsProvider;
 
@@ -27,12 +28,16 @@ export function activate(context: vscode.ExtensionContext): void {
         )
     );
 
-    // Set up diagnostics (nlsc verify integration)
+    // Set up diagnostics (nlsc verify integration) as fallback
     diagnosticsProvider = new DiagnosticsProvider();
     context.subscriptions.push(diagnosticsProvider);
 
     // Register commands
     registerCommands(context, diagnosticsProvider);
+
+    // Start LSP client for hover, definition, completions
+    // LSP also provides diagnostics, so it may override the fallback
+    activateLspClient(context);
 
     // Watch for configuration changes
     context.subscriptions.push(
@@ -46,8 +51,10 @@ export function activate(context: vscode.ExtensionContext): void {
     console.log('NLS extension activated');
 }
 
-export function deactivate(): void {
+export function deactivate(): Thenable<void> | undefined {
     if (diagnosticsProvider) {
         diagnosticsProvider.dispose();
     }
+    return deactivateLspClient();
 }
+

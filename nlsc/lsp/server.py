@@ -96,14 +96,175 @@ def _get_hover_content(nl_file: NLFile, symbol: SymbolLocation) -> str | None:
     Returns:
         Markdown hover content or None
     """
-    if symbol.kind in ("anlu", "anlu_ref"):
-        anlu = find_anlu_by_name(nl_file, symbol.name)
+    kind = symbol.kind
+    name = symbol.name
+    
+    if kind in ("anlu", "anlu_ref"):
+        anlu = find_anlu_by_name(nl_file, name)
         if anlu:
             return get_anlu_hover_content(anlu)
-    elif symbol.kind in ("type", "type_ref"):
-        type_def = find_type_by_name(nl_file, symbol.name)
+        return f"**ANLU Reference:** `[{name}]`\n\n_Definition not found in this file_"
+    
+    elif kind in ("type", "type_ref"):
+        type_def = find_type_by_name(nl_file, name)
         if type_def:
             return get_type_hover_content(type_def)
+        return f"**Type Reference:** `{name}`\n\n_Definition not found in this file_"
+    
+    elif kind == "directive":
+        directives = {
+            "@module": "**@module** - Declares the module name for this NLS file.\n\n```nl\n@module my-module-name\n```",
+            "@version": "**@version** - Specifies the semantic version of this module.\n\n```nl\n@version 1.0.0\n```",
+            "@target": "**@target** - Specifies the compilation target language.\n\nSupported: `python`, `typescript`, `rust`\n\n```nl\n@target python\n```",
+            "@type": "**@type** - Defines a custom data type with fields.\n\n```nl\n@type MyType {\n  field_name: type, constraints\n}\n```",
+            "@test": "**@test** - Defines a property-based test block.\n\n```nl\n@test test-name {\n  GIVEN: initial conditions\n  WHEN: action\n  THEN: expected result\n}\n```",
+            "@property": "**@property** - Defines an invariant property that must hold.\n\n```nl\n@property property-name {\n  FOR_ALL: x: Type\n  ASSERT: condition\n}\n```",
+            "@invariant": "**@invariant** - Defines runtime invariants for a type.\n\n```nl\n@invariant TypeName {\n  field_name >= 0\n  field_name <= 100\n}\n```",
+            "@literal": "**@literal** - Defines a literal/constant value.\n\n```nl\n@literal CONSTANT_NAME = value\n```",
+            "@main": "**@main** - Defines the program entry point.\n\n```nl\n@main {\n  # Main program logic\n}\n```",
+        }
+        return directives.get(name, f"**Directive:** `{name}`")
+    
+    elif kind == "section":
+        sections = {
+            "PURPOSE": "**PURPOSE:** - Describes what this ANLU does in plain English.",
+            "INPUTS": "**INPUTS:** - Lists input parameters with types and constraints.\n\n```nl\nINPUTS:\n  - param_name: type, constraints\n```",
+            "GUARDS": "**GUARDS:** - Pre-conditions that must be true. Uses `→` for results.\n\n```nl\nGUARDS:\n  - condition → ValueError(\"message\")\n```",
+            "LOGIC": "**LOGIC:** - Step-by-step computation logic. Uses `•` for assignments.\n\n```nl\nLOGIC:\n  1. Calculate intermediate • result = expr\n  2. Process further\n```",
+            "RETURNS": "**RETURNS:** - The value or expression returned by this ANLU.",
+            "DEPENDS": "**DEPENDS:** - Lists other ANLUs this one depends on.\n\n```nl\nDEPENDS: [other-anlu], [another]\n```",
+            "CALLS": "**CALLS:** - External functions/APIs this ANLU calls.",
+            "NOTES": "**NOTES:** - Additional implementation notes or documentation.",
+            "EXAMPLES": "**EXAMPLES:** - Usage examples for this ANLU.",
+            "EDGE CASES": "**EDGE CASES:** - Special cases and how they're handled.",
+        }
+        return sections.get(name, f"**Section:** `{name}`")
+    
+    elif kind == "builtin_type":
+        builtins = {
+            "number": "**number** - Numeric type (int or float in Python, number in TypeScript).",
+            "string": "**string** - Text string type.",
+            "boolean": "**boolean** - True/False type.",
+            "list": "**list** - Ordered collection. Use `list of Type` for typed lists.",
+            "dict": "**dict** - Key-value mapping type.",
+            "any": "**any** - Any type (use sparingly).",
+            "void": "**void** - No return value.",
+        }
+        return builtins.get(name, f"**Built-in Type:** `{name}`")
+    
+    elif kind == "constraint":
+        constraints = {
+            "required": "**required** - Field must be provided (non-null).",
+            "optional": "**optional** - Field can be omitted (nullable).",
+            "positive": "**positive** - Number must be > 0.",
+            "non-negative": "**non-negative** - Number must be >= 0.",
+            "unique": "**unique** - Values must be unique in collection.",
+        }
+        if name in constraints:
+            return constraints[name]
+        if name.startswith("min:"):
+            return f"**min:{name[4:]}** - Minimum value constraint."
+        if name.startswith("max:"):
+            return f"**max:{name[4:]}** - Maximum value constraint."
+        return f"**Constraint:** `{name}`"
+    
+    elif kind == "field":
+        return f"**Field/Parameter:** `{name}`\n\n_Hover over the type for more info_"
+    
+    elif kind == "operator":
+        operators = {
+            "→": "**→** (arrow) - Guard result operator.\n\n`condition → result`",
+            "->": "**->** (arrow) - Guard result operator.\n\n`condition -> result`",
+            "•": "**•** (bullet) - Assignment in LOGIC steps.\n\n`variable • expression`",
+            "||": "**||** - Logical OR operator.",
+            "&&": "**&&** - Logical AND operator.",
+        }
+        return operators.get(name, f"**Operator:** `{name}`")
+    
+    elif kind == "comment":
+        return "**Comment** - Documentation or notes. Comments start with `#`."
+    
+    elif kind == "test":
+        return f"**Test Block:** `{name}`\n\nProperty-based test definition."
+    
+    elif kind == "property":
+        return f"**Property Block:** `{name}`\n\nInvariant property that must always hold."
+    
+    elif kind == "invariant":
+        return f"**Invariant Block:** Constraints for type `{name}`."
+    
+    elif kind == "literal":
+        return f"**Literal:** `{name}`\n\nConstant value definition."
+    
+    elif kind == "kwarg":
+        return f"**Keyword Argument:** `{name}`\n\nNamed parameter in function/constructor call."
+    
+    elif kind == "string":
+        if len(name) > 50:
+            display = name[:50] + "..."
+        else:
+            display = name
+        return f"**String Literal:** `\"{display}\"`"
+    
+    elif kind == "identifier":
+        return f"**Identifier:** `{name}`\n\n_Local variable or reference_"
+    
+    elif kind == "number":
+        if "." in name:
+            return f"**Float Literal:** `{name}`"
+        return f"**Integer Literal:** `{name}`"
+    
+    elif kind == "comparison":
+        comparisons = {
+            "==": "**==** (equals) - Test equality.",
+            "!=": "**!=** (not equals) - Test inequality.",
+            ">=": "**>=** (greater or equal) - Test if left >= right.",
+            "<=": "**<=** (less or equal) - Test if left <= right.",
+            ">": "**>** (greater) - Test if left > right.",
+            "<": "**<** (less) - Test if left < right.",
+        }
+        return comparisons.get(name, f"**Comparison:** `{name}`")
+    
+    elif kind == "math_op":
+        ops = {
+            "+": "**+** (plus) - Addition operator.",
+            "-": "**-** (minus) - Subtraction operator.",
+            "*": "**\\*** (times) - Multiplication operator.",
+            "/": "**//** (divide) - Division operator.",
+            "%": "**%** (modulo) - Remainder operator.",
+        }
+        return ops.get(name, f"**Math Operator:** `{name}`")
+    
+    elif kind == "error_type":
+        errors = {
+            "ValueError": "**ValueError** - Raised when a value is invalid.\n\nCommon in GUARDS for input validation.",
+            "TypeError": "**TypeError** - Raised when a type is incorrect.",
+            "IndexError": "**IndexError** - Raised when index is out of range.",
+            "KeyError": "**KeyError** - Raised when key not found in dict.",
+        }
+        return errors.get(name, f"**Error Type:** `{name}`\n\nPython exception type.")
+    
+    elif kind == "test_keyword":
+        keywords = {
+            "GIVEN": "**GIVEN:** - Sets up initial test conditions.\n\n```nl\n@test example {\n  GIVEN: initial state\n  WHEN: action\n  THEN: expected result\n}\n```",
+            "WHEN": "**WHEN:** - Describes the action being tested.\n\n```nl\nWHEN: [function-name](inputs)\n```",
+            "THEN": "**THEN:** - Describes expected outcome.\n\n```nl\nTHEN: result == expected_value\n```",
+        }
+        return keywords.get(name, f"**Test Keyword:** `{name}`")
+    
+    elif kind == "property_keyword":
+        keywords = {
+            "FOR_ALL": "**FOR_ALL:** - Universal quantifier.\n\nDeclares variables that must satisfy the property for all values.\n\n```nl\nFOR_ALL: x: number, y: number\n```",
+            "ASSERT": "**ASSERT:** - The property assertion.\n\nThe condition that must be true.\n\n```nl\nASSERT: [add](x, y) == [add](y, x)\n```",
+            "WHERE": "**WHERE:** - Constraints on FOR_ALL variables.\n\n```nl\nWHERE: x > 0, y > 0\n```",
+        }
+        return keywords.get(name, f"**Property Keyword:** `{name}`")
+    
+    elif kind == "boolean":
+        if name == "true":
+            return "**true** - Boolean true value."
+        return "**false** - Boolean false value."
+    
     return None
 
 
