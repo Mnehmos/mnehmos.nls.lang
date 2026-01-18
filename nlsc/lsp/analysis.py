@@ -48,17 +48,20 @@ def find_symbol_at_position(
 
     current_line = lines[line]
 
-    # Check for ANLU identifier [name]
+    # Check for ANLU identifier/reference [name]
     anlu_match = re.search(r"\[([a-zA-Z][a-zA-Z0-9_-]*)\]", current_line)
     if anlu_match:
         start, end = anlu_match.span(1)
         if start <= character <= end:
+            # Determine if this is a reference (DEPENDS/CALLS) or definition
+            line_upper = current_line.upper()
+            kind = "anlu_ref" if ("DEPENDS" in line_upper or "CALLS" in line_upper) else "anlu"
             return SymbolLocation(
                 line=line,
                 start_char=start,
                 end_char=end,
                 name=anlu_match.group(1),
-                kind="anlu",
+                kind=kind,
             )
 
     # Check for @type Name
@@ -85,19 +88,6 @@ def find_symbol_at_position(
                 end_char=end,
                 name=type_ref_match.group(1),
                 kind="type_ref",
-            )
-
-    # Check for ANLU references in DEPENDS or CALLS
-    depends_match = re.search(r"\[([a-zA-Z][a-zA-Z0-9_-]*)\]", current_line)
-    if depends_match and "DEPENDS" in current_line.upper():
-        start, end = depends_match.span(1)
-        if start <= character <= end:
-            return SymbolLocation(
-                line=line,
-                start_char=start,
-                end_char=end,
-                name=depends_match.group(1),
-                kind="anlu_ref",
             )
 
     return None
