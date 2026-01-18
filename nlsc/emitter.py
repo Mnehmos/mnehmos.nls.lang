@@ -70,7 +70,8 @@ def emit_type_definition(type_def: TypeDefinition, invariant: Optional[Invariant
 
         # Emit __post_init__ for constraints and invariants
         constraint_checks = _emit_constraint_checks(type_def)
-        invariant_checks = _emit_invariant_checks(invariant) if invariant else []
+        field_names = [f.name for f in type_def.fields]
+        invariant_checks = _emit_invariant_checks(invariant, field_names) if invariant else []
 
         if constraint_checks or invariant_checks:
             lines.append("")
@@ -122,21 +123,27 @@ def _emit_constraint_checks(type_def: TypeDefinition) -> list[str]:
     return checks
 
 
-def _emit_invariant_checks(invariant: Invariant) -> list[str]:
+def _emit_invariant_checks(invariant: Invariant, field_names: list[str]) -> list[str]:
     """
     Generate invariant validation code for __post_init__.
+
+    Args:
+        invariant: The invariant block containing conditions
+        field_names: List of field names from the type definition
 
     Returns list of indented check lines.
     """
     checks = []
 
     for condition in invariant.conditions:
-        # Normalize condition - add self. prefix if not present
         normalized = condition.strip()
-        if not normalized.startswith("self."):
-            # Check if it references any field names without self prefix
-            # For simple conditions like "balance >= 0", prefix with self.
-            normalized = f"self.{normalized}"
+
+        # Prefix all field references with self.
+        # Use word boundaries to avoid partial matches (e.g., 'low' in 'allow')
+        for field_name in field_names:
+            # Match field name as a whole word, not already prefixed with self.
+            pattern = rf'\b(?<!self\.)({re.escape(field_name)})\b'
+            normalized = re.sub(pattern, r'self.\1', normalized)
 
         checks.append(f"        if not ({normalized}):")
         checks.append(f'            raise ValueError("Invariant violated: {condition}")')
