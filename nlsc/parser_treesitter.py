@@ -24,108 +24,9 @@ except ImportError:
 
 from .schema import (
     ANLU, Module, NLFile, Input, Guard, EdgeCase,
-    TestSuite, TestCase, TypeDefinition, TypeField, LogicStep,
-    PropertyTest, PropertyAssertion, Invariant
+    TestSuite, TestCase, TypeDefinition, TypeField, LogicStep
 )
 from .parser import ParseError
-
-
-# =============================================================================
-# REGEX FALLBACK FOR BLOCKS NOT IN TREE-SITTER GRAMMAR
-# =============================================================================
-# Tree-sitter grammar doesn't support @property, @invariant, @main blocks yet.
-# These are parsed using simple regex patterns for feature parity with regex parser.
-
-def _parse_property_blocks(source: str) -> list[PropertyTest]:
-    """Parse @property blocks using regex fallback."""
-    properties = []
-    current_property = None
-
-    for line in source.split("\n"):
-        stripped = line.strip()
-
-        # Start of @property block
-        if stripped.startswith("@property"):
-            prop_match = re.match(r"@property\s+\[([a-z][a-z0-9-]*)\]\s*\{?", stripped)
-            if prop_match:
-                current_property = PropertyTest(anlu_id=prop_match.group(1))
-                properties.append(current_property)
-            continue
-
-        # Inside property block
-        if current_property:
-            if stripped == "}":
-                current_property = None
-            elif stripped and not stripped.startswith("#"):
-                # Remove trailing comments
-                if "#" in stripped:
-                    stripped = stripped.split("#")[0].strip()
-                if stripped:
-                    # Check for forall quantifier: forall x: type -> assertion
-                    forall_match = re.match(r"forall\s+(\w+):\s*(\w+)\s*->\s*(.+)", stripped)
-                    if forall_match:
-                        current_property.assertions.append(PropertyAssertion(
-                            expression=forall_match.group(3).strip(),
-                            quantifier="forall",
-                            variable=forall_match.group(1),
-                            variable_type=forall_match.group(2)
-                        ))
-                    else:
-                        # Simple property assertion
-                        current_property.assertions.append(PropertyAssertion(
-                            expression=stripped
-                        ))
-
-    return properties
-
-
-def _parse_invariant_blocks(source: str) -> list[Invariant]:
-    """Parse @invariant blocks using regex fallback."""
-    invariants = []
-    current_invariant = None
-
-    for line in source.split("\n"):
-        stripped = line.strip()
-
-        # Start of @invariant block
-        if stripped.startswith("@invariant"):
-            inv_match = re.match(r"@invariant\s+([A-Z][a-zA-Z0-9]*)\s*\{?", stripped)
-            if inv_match:
-                current_invariant = Invariant(type_name=inv_match.group(1))
-                invariants.append(current_invariant)
-            continue
-
-        # Inside invariant block
-        if current_invariant:
-            if stripped == "}":
-                current_invariant = None
-            elif stripped and not stripped.startswith("#"):
-                current_invariant.conditions.append(stripped)
-
-    return invariants
-
-
-def _parse_main_block(source: str) -> list[str]:
-    """Parse @main block using regex fallback."""
-    main_buffer = []
-    in_main = False
-
-    for line in source.split("\n"):
-        stripped = line.strip()
-
-        # Start of @main block
-        if stripped.startswith("@main"):
-            in_main = True
-            continue
-
-        # Inside main block
-        if in_main:
-            if stripped == "}":
-                in_main = False
-            elif stripped and not stripped.startswith("#"):
-                main_buffer.append(stripped)
-
-    return main_buffer
 
 
 # Path to the tree-sitter-nl grammar
@@ -710,19 +611,11 @@ def parse_nl_file_treesitter(source: str, source_path: Optional[str] = None) -> 
         elif child.type == "literal_block":
             literals.append(_parse_literal_block(child, source_bytes))
 
-    # Parse blocks not supported by tree-sitter grammar using regex fallback
-    properties = _parse_property_blocks(source)
-    invariants = _parse_invariant_blocks(source)
-    main_block = _parse_main_block(source)
-
     return NLFile(
         module=module,
         anlus=anlus,
         tests=tests,
-        properties=properties,
-        invariants=invariants,
         literals=literals,
-        main_block=main_block,
         source_path=source_path
     )
 
