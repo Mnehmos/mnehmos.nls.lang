@@ -17,6 +17,7 @@ from lsprotocol import types as lsp
 from pygls.lsp.server import LanguageServer
 
 from nlsc.lsp.analysis import (
+    SymbolLocation,
     find_all_references,
     find_anlu_by_name,
     find_definition_location,
@@ -88,6 +89,27 @@ def did_close(ls: NLSLanguageServer, params: lsp.DidCloseTextDocumentParams) -> 
     ls.text_document_publish_diagnostics(lsp.PublishDiagnosticsParams(uri=uri, diagnostics=[]))
 
 
+def _get_hover_content(nl_file: NLFile, symbol: SymbolLocation) -> str | None:
+    """Get hover content for a symbol.
+
+    Args:
+        nl_file: Parsed NLFile
+        symbol: Symbol location info
+
+    Returns:
+        Markdown hover content or None
+    """
+    if symbol.kind in ("anlu", "anlu_ref"):
+        anlu = find_anlu_by_name(nl_file, symbol.name)
+        if anlu:
+            return get_anlu_hover_content(anlu)
+    elif symbol.kind in ("type", "type_ref"):
+        type_def = find_type_by_name(nl_file, symbol.name)
+        if type_def:
+            return get_type_hover_content(type_def)
+    return None
+
+
 @server.feature(lsp.TEXT_DOCUMENT_HOVER)
 def hover(ls: NLSLanguageServer, params: lsp.HoverParams) -> lsp.Hover | None:
     """Provide hover information for symbols."""
@@ -108,27 +130,7 @@ def hover(ls: NLSLanguageServer, params: lsp.HoverParams) -> lsp.Hover | None:
         return None
 
     # Generate hover content based on symbol type
-    content: str | None = None
-
-    if symbol.kind == "anlu":
-        anlu = find_anlu_by_name(nl_file, symbol.name)
-        if anlu:
-            content = get_anlu_hover_content(anlu)
-
-    elif symbol.kind == "anlu_ref":
-        anlu = find_anlu_by_name(nl_file, symbol.name)
-        if anlu:
-            content = get_anlu_hover_content(anlu)
-
-    elif symbol.kind == "type":
-        type_def = find_type_by_name(nl_file, symbol.name)
-        if type_def:
-            content = get_type_hover_content(type_def)
-
-    elif symbol.kind == "type_ref":
-        type_def = find_type_by_name(nl_file, symbol.name)
-        if type_def:
-            content = get_type_hover_content(type_def)
+    content = _get_hover_content(nl_file, symbol)
 
     if content:
         return lsp.Hover(
