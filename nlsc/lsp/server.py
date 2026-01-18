@@ -142,6 +142,142 @@ def hover(ls: NLSLanguageServer, params: lsp.HoverParams) -> lsp.Hover | None:
     return None
 
 
+# NLS keywords and built-in types for completions
+NLS_KEYWORDS = [
+    "PURPOSE",
+    "INPUTS",
+    "GUARDS",
+    "LOGIC",
+    "RETURNS",
+    "DEPENDS",
+    "CALLS",
+    "NOTES",
+    "EXAMPLES",
+]
+
+NLS_BUILTIN_TYPES = [
+    "number",
+    "string",
+    "boolean",
+    "list",
+    "dict",
+    "any",
+]
+
+NLS_CONSTRAINTS = [
+    "required",
+    "positive",
+    "non-negative",
+    "min:",
+    "max:",
+]
+
+
+@server.feature(
+    lsp.TEXT_DOCUMENT_COMPLETION,
+    lsp.CompletionOptions(trigger_characters=["[", ":", "@", " "]),
+)
+def completions(
+    ls: NLSLanguageServer,
+    params: lsp.CompletionParams,
+) -> lsp.CompletionList | None:
+    """Provide completion suggestions."""
+    uri = params.text_document.uri
+    position = params.position
+
+    text = ls.document_content.get(uri)
+    nl_file = ls.parsed_files.get(uri)
+
+    if not text:
+        return None
+
+    lines = text.split("\n")
+    if position.line >= len(lines):
+        return None
+
+    current_line = lines[position.line]
+    prefix = current_line[:position.character]
+
+    items: list[lsp.CompletionItem] = []
+
+    # Check context and provide appropriate completions
+
+    # After [ - suggest ANLU names
+    if "[" in prefix and "]" not in prefix[prefix.rfind("["):]:
+        if nl_file:
+            for anlu in nl_file.anlus:
+                items.append(
+                    lsp.CompletionItem(
+                        label=anlu.identifier,
+                        kind=lsp.CompletionItemKind.Function,
+                        detail=anlu.purpose or "ANLU",
+                        documentation=f"RETURNS: {anlu.returns}" if anlu.returns else None,
+                    )
+                )
+
+    # After : - suggest types
+    elif prefix.rstrip().endswith(":") or ": " in prefix[-5:]:
+        # Built-in types
+        for type_name in NLS_BUILTIN_TYPES:
+            items.append(
+                lsp.CompletionItem(
+                    label=type_name,
+                    kind=lsp.CompletionItemKind.TypeParameter,
+                    detail="Built-in type",
+                )
+            )
+        # Custom types from file
+        if nl_file:
+            for type_def in nl_file.module.types:
+                items.append(
+                    lsp.CompletionItem(
+                        label=type_def.name,
+                        kind=lsp.CompletionItemKind.Class,
+                        detail=f"@type with {len(type_def.fields)} fields",
+                    )
+                )
+
+    # After @ - suggest directives
+    elif prefix.rstrip().endswith("@"):
+        directives = ["module", "target", "version", "type", "invariant", "property", "test", "main"]
+        for directive in directives:
+            items.append(
+                lsp.CompletionItem(
+                    label=directive,
+                    kind=lsp.CompletionItemKind.Keyword,
+                    detail="NLS directive",
+                )
+            )
+
+    # Start of line after ANLU header - suggest keywords
+    elif prefix.strip() == "" or prefix.strip().isupper():
+        for keyword in NLS_KEYWORDS:
+            items.append(
+                lsp.CompletionItem(
+                    label=keyword,
+                    kind=lsp.CompletionItemKind.Keyword,
+                    detail="NLS section keyword",
+                    insert_text=f"{keyword}:",
+                )
+            )
+
+    # After type declaration - suggest constraints
+    elif any(t in prefix for t in NLS_BUILTIN_TYPES) or (nl_file and any(t.name in prefix for t in nl_file.module.types)):
+        for constraint in NLS_CONSTRAINTS:
+            items.append(
+                lsp.CompletionItem(
+                    label=constraint,
+                    kind=lsp.CompletionItemKind.Property,
+                    detail="Field constraint",
+                )
+            )
+
+    if not items:
+        return None
+
+    return lsp.CompletionList(is_incomplete=False, items=items)
+
+
 def _parse_and_publish_diagnostics(
     ls: NLSLanguageServer,
     uri: str,
