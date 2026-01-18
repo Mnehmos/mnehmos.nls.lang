@@ -48,7 +48,7 @@ def validate_roundtrip(
         py_code = emit_python(nl_file)
 
         # Execute original
-        ns1 = {}
+        ns1: dict[str, Any] = {}
         exec(py_code, ns1)
 
         if function_name not in ns1:
@@ -64,7 +64,7 @@ def validate_roundtrip(
         py_code2 = emit_python(nl_file2)
 
         # Execute regenerated
-        ns2 = {}
+        ns2: dict[str, Any] = {}
         exec(py_code2, ns2)
 
         if function_name not in ns2:

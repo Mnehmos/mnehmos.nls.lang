@@ -12,6 +12,8 @@ import difflib
 from dataclasses import dataclass
 from typing import Literal
 
+from typing import Optional
+
 from .schema import NLFile
 from .lockfile import Lockfile, hash_anlu
 
@@ -24,7 +26,7 @@ class ANLUChange:
     details: str = ""
 
 
-def get_anlu_changes(nl_file: NLFile, lockfile: Lockfile) -> list[ANLUChange]:
+def get_anlu_changes(nl_file: NLFile, lockfile: Optional[Lockfile]) -> list[ANLUChange]:
     """
     Compare current NL file against lockfile to detect changes.
 

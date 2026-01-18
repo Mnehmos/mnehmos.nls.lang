@@ -267,8 +267,8 @@ def cmd_verify(args: argparse.Namespace) -> int:
 
     if errors:
         print(f"  {_cross()} Validation errors:")
-        for err in errors:
-            print(f"    - {err}")
+        for validation_err in errors:
+            print(f"    - {validation_err}")
         return 1
 
     print(f"  {_check()} All ANLUs valid")
