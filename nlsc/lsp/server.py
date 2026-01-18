@@ -700,14 +700,21 @@ def _parse_and_publish_diagnostics(
     )
 
 
+    return diagnostics
+
+
 def _check_semantic_issues(nl_file: NLFile) -> list[lsp.Diagnostic]:
     """Check for semantic issues in parsed NLFile."""
     diagnostics: list[lsp.Diagnostic] = []
 
-    # Check for missing PURPOSE in ANLUs
+    # Build set of all defined ANLU names for validation
+    defined_anlus = {a.identifier for a in nl_file.anlus}
+
+    # Check for missing PURPOSE in ANLUs and other logic issues
     for anlu in nl_file.anlus:
         # Convert 1-indexed parser line_number to 0-indexed LSP position
         anlu_line = max(0, anlu.line_number - 1) if anlu.line_number else 0
+        
         if not anlu.purpose:
             diagnostics.append(
                 lsp.Diagnostic(
@@ -721,19 +728,70 @@ def _check_semantic_issues(nl_file: NLFile) -> list[lsp.Diagnostic]:
                 )
             )
 
-        # Check for RETURNS without LOGIC in functions with complex returns
-        if anlu.returns and not anlu.logic and "+" in anlu.returns:
-            diagnostics.append(
-                lsp.Diagnostic(
-                    range=lsp.Range(
-                        start=lsp.Position(line=anlu_line, character=0),
-                        end=lsp.Position(line=anlu_line, character=100),
-                    ),
-                    message=f"ANLU [{anlu.identifier}] has complex RETURNS but no LOGIC steps",
-                    severity=lsp.DiagnosticSeverity.Hint,
-                    source="nlsc",
+        # Validate RETURNS consistency
+        if anlu.returns:
+            input_names = {i.name for i in anlu.inputs}
+            assigned_vars = set()
+            for step in anlu.logic_steps:
+                assigned_vars.update(step.assigns)
+            
+            # Extract simple variable name from RETURNS (ignore expressions for now)
+            # Only check if it's a simple identifier
+            ret_var = anlu.returns.strip()
+            if ret_var.isidentifier() and not ret_var.startswith("f'") and not ret_var.startswith('"'):
+                if ret_var not in input_names and ret_var not in assigned_vars:
+                    # Check if it's a literal or type
+                    is_literal = ret_var in ["True", "False", "None"] or ret_var[0].isupper() or ret_var.isdigit()
+                    if not is_literal:
+                        diagnostics.append(
+                            lsp.Diagnostic(
+                                range=lsp.Range(
+                                    start=lsp.Position(line=anlu_line, character=0),
+                                    end=lsp.Position(line=anlu_line, character=100),
+                                ),
+                                message=f"RETURNS '{ret_var}' is undefined (not in INPUTS or LOGIC assignments)",
+                                severity=lsp.DiagnosticSeverity.Error,
+                                source="nlsc",
+                            )
+                        )
+
+        # Validate LOGIC steps
+        for step in anlu.logic_steps:
+            # Check for undefined ANLU references in logic
+            # Regex to find [anlu-name] in description
+            import re
+            for m in re.finditer(r'\[([a-zA-Z][a-zA-Z0-9_-]*)\]', step.description):
+                ref_name = m.group(1)
+                if ref_name not in defined_anlus:
+                    diagnostics.append(
+                        lsp.Diagnostic(
+                            range=lsp.Range(
+                                start=lsp.Position(line=anlu_line, character=0),
+                                end=lsp.Position(line=anlu_line, character=100),
+                            ),
+                            message=f"LOGIC references undefined ANLU [{ref_name}]",
+                            severity=lsp.DiagnosticSeverity.Warning,
+                            source="nlsc",
+                        )
+                    )
+            
+            # Check for descriptive steps with bindings but no code
+            # If step has output binding (-> var) but no [anlu] ref and no assignment (=)
+            is_assignment = "=" in step.description and "==" not in step.description
+            has_anlu_ref = "[" in step.description and "]" in step.description
+            
+            if step.output_binding and not is_assignment and not has_anlu_ref:
+                diagnostics.append(
+                    lsp.Diagnostic(
+                        range=lsp.Range(
+                            start=lsp.Position(line=anlu_line, character=0),
+                            end=lsp.Position(line=anlu_line, character=100),
+                        ),
+                        message=f"Logic step {step.number} has binding '{step.output_binding}' but no executable action. Use [anlu-name] or explicit assignment.",
+                        severity=lsp.DiagnosticSeverity.Warning,
+                        source="nlsc",
+                    )
                 )
-            )
 
     return diagnostics
 
