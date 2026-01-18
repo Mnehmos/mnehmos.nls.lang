@@ -161,6 +161,80 @@ def compare_tests(regex_file: NLFile, ts_file: NLFile) -> list[str]:
     return errors
 
 
+def compare_properties(regex_file: NLFile, ts_file: NLFile) -> list[str]:
+    """Compare property tests from both parsers."""
+    errors = []
+
+    if len(regex_file.properties) != len(ts_file.properties):
+        errors.append(
+            f"Property count mismatch: regex={len(regex_file.properties)}, "
+            f"ts={len(ts_file.properties)}"
+        )
+        return errors
+
+    for i, (rp, tp) in enumerate(zip(regex_file.properties, ts_file.properties)):
+        prefix = f"Property[{i}] {rp.anlu_id}"
+
+        if rp.anlu_id != tp.anlu_id:
+            errors.append(f"{prefix}: anlu_id mismatch: {rp.anlu_id} vs {tp.anlu_id}")
+
+        if len(rp.assertions) != len(tp.assertions):
+            errors.append(f"{prefix}: assertion count mismatch: {len(rp.assertions)} vs {len(tp.assertions)}")
+        else:
+            for j, (ra, ta) in enumerate(zip(rp.assertions, tp.assertions)):
+                if ra.expression != ta.expression:
+                    errors.append(f"{prefix}: assertion[{j}].expression mismatch: '{ra.expression}' vs '{ta.expression}'")
+                if ra.quantifier != ta.quantifier:
+                    errors.append(f"{prefix}: assertion[{j}].quantifier mismatch: {ra.quantifier} vs {ta.quantifier}")
+
+    return errors
+
+
+def compare_invariants(regex_file: NLFile, ts_file: NLFile) -> list[str]:
+    """Compare invariants from both parsers."""
+    errors = []
+
+    if len(regex_file.invariants) != len(ts_file.invariants):
+        errors.append(
+            f"Invariant count mismatch: regex={len(regex_file.invariants)}, "
+            f"ts={len(ts_file.invariants)}"
+        )
+        return errors
+
+    for i, (ri, ti) in enumerate(zip(regex_file.invariants, ts_file.invariants)):
+        prefix = f"Invariant[{i}] {ri.type_name}"
+
+        if ri.type_name != ti.type_name:
+            errors.append(f"{prefix}: type_name mismatch: {ri.type_name} vs {ti.type_name}")
+
+        if len(ri.conditions) != len(ti.conditions):
+            errors.append(f"{prefix}: condition count mismatch: {len(ri.conditions)} vs {len(ti.conditions)}")
+        else:
+            for j, (rc, tc) in enumerate(zip(ri.conditions, ti.conditions)):
+                if rc != tc:
+                    errors.append(f"{prefix}: condition[{j}] mismatch: '{rc}' vs '{tc}'")
+
+    return errors
+
+
+def compare_main_block(regex_file: NLFile, ts_file: NLFile) -> list[str]:
+    """Compare main block from both parsers."""
+    errors = []
+
+    if len(regex_file.main_block) != len(ts_file.main_block):
+        errors.append(
+            f"Main block line count mismatch: regex={len(regex_file.main_block)}, "
+            f"ts={len(ts_file.main_block)}"
+        )
+        return errors
+
+    for i, (rl, tl) in enumerate(zip(regex_file.main_block, ts_file.main_block)):
+        if rl != tl:
+            errors.append(f"Main block line[{i}] mismatch: '{rl}' vs '{tl}'")
+
+    return errors
+
+
 class TestParserParity:
     """Test that regex and tree-sitter parsers produce identical output."""
 
@@ -300,6 +374,79 @@ RETURNS: ProcessedOrder
 
         errors = compare_anlus(regex_result, ts_result)
         assert not errors, "\n".join(errors)
+
+    def test_property_blocks(self):
+        """Test @property block parsing."""
+        source = """[add]
+PURPOSE: Add two numbers
+INPUTS:
+  - a: number
+  - b: number
+RETURNS: a + b
+
+@property [add] {
+  add(0, x) == x  # Identity property
+  add(x, y) == add(y, x)  # Commutative property
+  forall n: number -> add(n, 0) == n
+}
+"""
+        regex_result = parse_nl_file(source)
+        ts_result = parse_nl_file_treesitter(source)
+
+        errors = compare_properties(regex_result, ts_result)
+        assert not errors, "\n".join(errors)
+        assert len(regex_result.properties) == 1
+        assert regex_result.properties[0].anlu_id == "add"
+        assert len(regex_result.properties[0].assertions) == 3
+
+    def test_invariant_blocks(self):
+        """Test @invariant block parsing."""
+        source = """@type Account {
+  balance: number
+  owner: string
+}
+
+@invariant Account {
+  balance >= 0
+  owner != ""
+}
+
+[deposit]
+PURPOSE: Deposit money
+INPUTS:
+  - account: Account
+  - amount: number
+RETURNS: updated account
+"""
+        regex_result = parse_nl_file(source)
+        ts_result = parse_nl_file_treesitter(source)
+
+        errors = compare_invariants(regex_result, ts_result)
+        assert not errors, "\n".join(errors)
+        assert len(regex_result.invariants) == 1
+        assert regex_result.invariants[0].type_name == "Account"
+        assert len(regex_result.invariants[0].conditions) == 2
+
+    def test_main_block(self):
+        """Test @main block parsing."""
+        source = """[greet]
+PURPOSE: Print greeting
+INPUTS:
+  - name: string
+RETURNS: greeting message
+
+@main {
+  print(greet("World"))
+  process_all_items()
+}
+"""
+        regex_result = parse_nl_file(source)
+        ts_result = parse_nl_file_treesitter(source)
+
+        errors = compare_main_block(regex_result, ts_result)
+        assert not errors, "\n".join(errors)
+        assert len(regex_result.main_block) == 2
+        assert "greet" in regex_result.main_block[0]
 
 
 class TestParserParityExamples:
