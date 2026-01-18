@@ -11,7 +11,7 @@ Provides language intelligence features for .nl files:
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+import re
 
 from lsprotocol import types as lsp
 from pygls.lsp.server import LanguageServer
@@ -28,9 +28,6 @@ from nlsc.lsp.analysis import (
 )
 from nlsc.parser import parse_nl_file
 from nlsc.schema import NLFile
-
-if TYPE_CHECKING:
-    pass
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -178,6 +175,14 @@ NLS_CONSTRAINTS = [
 ]
 
 
+def _has_type_in_prefix(prefix: str, types: list[str]) -> bool:
+    """Check if prefix contains a type name as a whole word."""
+    for t in types:
+        if re.search(rf"\b{re.escape(t)}\b", prefix):
+            return True
+    return False
+
+
 @server.feature(
     lsp.TEXT_DOCUMENT_COMPLETION,
     lsp.CompletionOptions(trigger_characters=["[", ":", "@", " "]),
@@ -266,8 +271,8 @@ def completions(
                 )
             )
 
-    # After type declaration - suggest constraints
-    elif any(t in prefix for t in NLS_BUILTIN_TYPES) or (nl_file and any(t.name in prefix for t in nl_file.module.types)):
+    # After type declaration - suggest constraints (use word-boundary matching)
+    elif _has_type_in_prefix(prefix, NLS_BUILTIN_TYPES) or (nl_file and _has_type_in_prefix(prefix, [t.name for t in nl_file.module.types])):
         for constraint in NLS_CONSTRAINTS:
             items.append(
                 lsp.CompletionItem(
@@ -512,7 +517,6 @@ def _parse_and_publish_diagnostics(
 
         # Try to extract line number from error message
         if "line" in error_msg.lower():
-            import re
             match = re.search(r"line\s*(\d+)", error_msg, re.IGNORECASE)
             if match:
                 line = max(0, int(match.group(1)) - 1)  # LSP is 0-indexed
@@ -541,7 +545,8 @@ def _check_semantic_issues(nl_file: NLFile) -> list[lsp.Diagnostic]:
 
     # Check for missing PURPOSE in ANLUs
     for anlu in nl_file.anlus:
-        anlu_line = anlu.line_number if anlu.line_number else 0
+        # Convert 1-indexed parser line_number to 0-indexed LSP position
+        anlu_line = max(0, anlu.line_number - 1) if anlu.line_number else 0
         if not anlu.purpose:
             diagnostics.append(
                 lsp.Diagnostic(
