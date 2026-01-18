@@ -700,7 +700,7 @@ def _parse_and_publish_diagnostics(
     )
 
 
-    return diagnostics
+
 
 
 def _check_semantic_issues(nl_file: NLFile) -> list[lsp.Diagnostic]:
