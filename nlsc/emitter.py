@@ -143,7 +143,7 @@ def _emit_invariant_checks(invariant: Invariant, field_names: list[str]) -> list
         for field_name in field_names:
             # Match field name as a whole word, not already prefixed with self.
             pattern = rf'\b(?<!self\.)({re.escape(field_name)})\b'
-            normalized = re.sub(pattern, rf'self.\1', normalized)
+            normalized = re.sub(pattern, r'self.\1', normalized)
 
         checks.append(f"        if not ({normalized}):")
         checks.append(f'            raise ValueError("Invariant violated: {condition}")')

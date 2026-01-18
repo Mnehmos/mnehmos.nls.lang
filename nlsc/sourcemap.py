@@ -50,7 +50,7 @@ class SourceMap:
 
             # Only translate if it's our generated file
             if self.py_path not in file_path:
-                return match.group(0)
+                return str(match.group(0))
 
             mapping = self.get_nl_line(py_line)
             if mapping:
@@ -59,7 +59,7 @@ class SourceMap:
                     context = f" ({mapping.context})"
                 return f'File "{self.nl_path}", line {mapping.nl_line}{context}'
 
-            return match.group(0)
+            return str(match.group(0))
 
         return re.sub(pattern, replace_line, error_text)
 
