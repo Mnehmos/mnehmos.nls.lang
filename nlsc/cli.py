@@ -396,7 +396,7 @@ def cmd_test(args: argparse.Namespace) -> int:
         # Run pytest
         verbose_flag = "-v" if getattr(args, "verbose", False) else "-q"
         pytest_args = [sys.executable, "-m", "pytest", str(test_path), verbose_flag, "--tb=short"]
-        
+
         if getattr(args, "case", None):
             pytest_args.extend(["-k", args.case])
 

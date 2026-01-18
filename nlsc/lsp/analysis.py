@@ -47,7 +47,7 @@ def find_symbol_at_position(
         return None
 
     current_line = lines[line]
-    
+
     # Strip trailing \r if present (Windows line endings)
     if current_line.endswith("\r"):
         current_line = current_line[:-1]

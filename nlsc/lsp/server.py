@@ -98,19 +98,19 @@ def _get_hover_content(nl_file: NLFile, symbol: SymbolLocation) -> str | None:
     """
     kind = symbol.kind
     name = symbol.name
-    
+
     if kind in ("anlu", "anlu_ref"):
         anlu = find_anlu_by_name(nl_file, name)
         if anlu:
             return get_anlu_hover_content(anlu)
         return f"**ANLU Reference:** `[{name}]`\n\n_Definition not found in this file_"
-    
+
     elif kind in ("type", "type_ref"):
         type_def = find_type_by_name(nl_file, name)
         if type_def:
             return get_type_hover_content(type_def)
         return f"**Type Reference:** `{name}`\n\n_Definition not found in this file_"
-    
+
     elif kind == "directive":
         directives = {
             "@module": "**@module** - Declares the module name for this NLS file.\n\n```nl\n@module my-module-name\n```",
@@ -124,7 +124,7 @@ def _get_hover_content(nl_file: NLFile, symbol: SymbolLocation) -> str | None:
             "@main": "**@main** - Defines the program entry point.\n\n```nl\n@main {\n  # Main program logic\n}\n```",
         }
         return directives.get(name, f"**Directive:** `{name}`")
-    
+
     elif kind == "section":
         sections = {
             "PURPOSE": "**PURPOSE:** - Describes what this ANLU does in plain English.",
@@ -139,7 +139,7 @@ def _get_hover_content(nl_file: NLFile, symbol: SymbolLocation) -> str | None:
             "EDGE CASES": "**EDGE CASES:** - Special cases and how they're handled.",
         }
         return sections.get(name, f"**Section:** `{name}`")
-    
+
     elif kind == "builtin_type":
         builtins = {
             "number": "**number** - Numeric type (int or float in Python, number in TypeScript).",
@@ -151,7 +151,7 @@ def _get_hover_content(nl_file: NLFile, symbol: SymbolLocation) -> str | None:
             "void": "**void** - No return value.",
         }
         return builtins.get(name, f"**Built-in Type:** `{name}`")
-    
+
     elif kind == "constraint":
         constraints = {
             "required": "**required** - Field must be provided (non-null).",
@@ -167,10 +167,10 @@ def _get_hover_content(nl_file: NLFile, symbol: SymbolLocation) -> str | None:
         if name.startswith("max:"):
             return f"**max:{name[4:]}** - Maximum value constraint."
         return f"**Constraint:** `{name}`"
-    
+
     elif kind == "field":
         return f"**Field/Parameter:** `{name}`\n\n_Hover over the type for more info_"
-    
+
     elif kind == "operator":
         operators = {
             "→": "**→** (arrow) - Guard result operator.\n\n`condition → result`",
@@ -180,40 +180,40 @@ def _get_hover_content(nl_file: NLFile, symbol: SymbolLocation) -> str | None:
             "&&": "**&&** - Logical AND operator.",
         }
         return operators.get(name, f"**Operator:** `{name}`")
-    
+
     elif kind == "comment":
         return "**Comment** - Documentation or notes. Comments start with `#`."
-    
+
     elif kind == "test":
         return f"**Test Block:** `{name}`\n\nProperty-based test definition."
-    
+
     elif kind == "property":
         return f"**Property Block:** `{name}`\n\nInvariant property that must always hold."
-    
+
     elif kind == "invariant":
         return f"**Invariant Block:** Constraints for type `{name}`."
-    
+
     elif kind == "literal":
         return f"**Literal:** `{name}`\n\nConstant value definition."
-    
+
     elif kind == "kwarg":
         return f"**Keyword Argument:** `{name}`\n\nNamed parameter in function/constructor call."
-    
+
     elif kind == "string":
         if len(name) > 50:
             display = name[:50] + "..."
         else:
             display = name
         return f"**String Literal:** `\"{display}\"`"
-    
+
     elif kind == "identifier":
         return f"**Identifier:** `{name}`\n\n_Local variable or reference_"
-    
+
     elif kind == "number":
         if "." in name:
             return f"**Float Literal:** `{name}`"
         return f"**Integer Literal:** `{name}`"
-    
+
     elif kind == "comparison":
         comparisons = {
             "==": "**==** (equals) - Test equality.",
@@ -224,7 +224,7 @@ def _get_hover_content(nl_file: NLFile, symbol: SymbolLocation) -> str | None:
             "<": "**<** (less) - Test if left < right.",
         }
         return comparisons.get(name, f"**Comparison:** `{name}`")
-    
+
     elif kind == "math_op":
         ops = {
             "+": "**+** (plus) - Addition operator.",
@@ -234,7 +234,7 @@ def _get_hover_content(nl_file: NLFile, symbol: SymbolLocation) -> str | None:
             "%": "**%** (modulo) - Remainder operator.",
         }
         return ops.get(name, f"**Math Operator:** `{name}`")
-    
+
     elif kind == "error_type":
         errors = {
             "ValueError": "**ValueError** - Raised when a value is invalid.\n\nCommon in GUARDS for input validation.",
@@ -243,7 +243,7 @@ def _get_hover_content(nl_file: NLFile, symbol: SymbolLocation) -> str | None:
             "KeyError": "**KeyError** - Raised when key not found in dict.",
         }
         return errors.get(name, f"**Error Type:** `{name}`\n\nPython exception type.")
-    
+
     elif kind == "test_keyword":
         keywords = {
             "GIVEN": "**GIVEN:** - Sets up initial test conditions.\n\n```nl\n@test example {\n  GIVEN: initial state\n  WHEN: action\n  THEN: expected result\n}\n```",
@@ -251,7 +251,7 @@ def _get_hover_content(nl_file: NLFile, symbol: SymbolLocation) -> str | None:
             "THEN": "**THEN:** - Describes expected outcome.\n\n```nl\nTHEN: result == expected_value\n```",
         }
         return keywords.get(name, f"**Test Keyword:** `{name}`")
-    
+
     elif kind == "property_keyword":
         keywords = {
             "FOR_ALL": "**FOR_ALL:** - Universal quantifier.\n\nDeclares variables that must satisfy the property for all values.\n\n```nl\nFOR_ALL: x: number, y: number\n```",
@@ -259,12 +259,12 @@ def _get_hover_content(nl_file: NLFile, symbol: SymbolLocation) -> str | None:
             "WHERE": "**WHERE:** - Constraints on FOR_ALL variables.\n\n```nl\nWHERE: x > 0, y > 0\n```",
         }
         return keywords.get(name, f"**Property Keyword:** `{name}`")
-    
+
     elif kind == "boolean":
         if name == "true":
             return "**true** - Boolean true value."
         return "**false** - Boolean false value."
-    
+
     return None
 
 
@@ -714,7 +714,7 @@ def _check_semantic_issues(nl_file: NLFile) -> list[lsp.Diagnostic]:
     for anlu in nl_file.anlus:
         # Convert 1-indexed parser line_number to 0-indexed LSP position
         anlu_line = max(0, anlu.line_number - 1) if anlu.line_number else 0
-        
+
         if not anlu.purpose:
             diagnostics.append(
                 lsp.Diagnostic(
@@ -734,7 +734,7 @@ def _check_semantic_issues(nl_file: NLFile) -> list[lsp.Diagnostic]:
             assigned_vars = set()
             for step in anlu.logic_steps:
                 assigned_vars.update(step.assigns)
-            
+
             # Extract simple variable name from RETURNS (ignore expressions for now)
             # Only check if it's a simple identifier
             ret_var = anlu.returns.strip()
@@ -774,12 +774,12 @@ def _check_semantic_issues(nl_file: NLFile) -> list[lsp.Diagnostic]:
                             source="nlsc",
                         )
                     )
-            
+
             # Check for descriptive steps with bindings but no code
             # If step has output binding (-> var) but no [anlu] ref and no assignment (=)
             is_assignment = "=" in step.description and "==" not in step.description
             has_anlu_ref = "[" in step.description and "]" in step.description
-            
+
             if step.output_binding and not is_assignment and not has_anlu_ref:
                 diagnostics.append(
                     lsp.Diagnostic(
@@ -802,16 +802,16 @@ def code_lens(ls: NLSLanguageServer, params: lsp.CodeLensParams) -> list[lsp.Cod
     """Provide code lenses for runnable blocks (@test, @main)."""
     uri = params.text_document.uri
     text = ls.document_content.get(uri)
-    
+
     if not text:
         return None
-        
+
     lenses: list[lsp.CodeLens] = []
     lines = text.split("\n")
-    
+
     for i, line in enumerate(lines):
         stripped = line.strip()
-        
+
         # @test block -> Run Test
         if stripped.startswith("@test") and "{" in stripped:
             # Extract test name, handling brackets: @test [name] or @test name
@@ -822,7 +822,7 @@ def code_lens(ls: NLSLanguageServer, params: lsp.CodeLensParams) -> list[lsp.Cod
                 # calculate-tax -> calculate_tax -> Calculate_Tax
                 norm_name = raw_name.replace("-", "_").title()
                 test_class = f"Test{norm_name}"
-                
+
                 lenses.append(
                     lsp.CodeLens(
                         range=lsp.Range(
@@ -836,7 +836,7 @@ def code_lens(ls: NLSLanguageServer, params: lsp.CodeLensParams) -> list[lsp.Cod
                         ),
                     )
                 )
-        
+
         # @main block -> Run Program
         elif stripped.startswith("@main") and "{" in stripped:
             lenses.append(
@@ -851,7 +851,7 @@ def code_lens(ls: NLSLanguageServer, params: lsp.CodeLensParams) -> list[lsp.Cod
                     ),
                 )
             )
-            
+
     return lenses
 
 
