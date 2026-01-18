@@ -812,7 +812,7 @@ def cmd_assoc(args: argparse.Namespace) -> int:
                 pass
             print(f"  {_check()} Uninstalled file association")
         else:
-            print(f"Installing NLS file association...")
+            print("Installing NLS file association...")
             print(f"  Icon: {icon_path}")
 
             # Create .nl extension key

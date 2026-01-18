@@ -84,3 +84,8 @@ disallow_untyped_defs = false
 module = "nlsc.parser_treesitter"
 # Tree-sitter bindings have dynamic typing
 ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "nlsc.cli"
+# Contains Windows-only winreg code that fails type-check on Linux
+ignore_errors = true
