@@ -349,8 +349,8 @@ def _extract_action(step: LogicStep) -> Optional[str]:
         expr = _desc_to_expr(desc)
         if expr:
             return f"{step.output_binding} = {expr}"
-        # Descriptive text only - emit as comment + placeholder
-        return f"# {desc}\n    {step.output_binding} = None  # TODO: implement"
+        # Descriptive text only - emit as single-line comment + placeholder to preserve indentation
+        return f"{step.output_binding} = None  # TODO: {desc}"
 
     # Not an assignment - purely descriptive
     return None
@@ -362,7 +362,7 @@ def _desc_to_expr(desc: str) -> Optional[str]:
 
     Returns:
         - Python function call if description contains [anlu-name]
-        - The expression if it looks like valid code
+        - The expression if it looks like strictly valid code (single call or assignment)
         - None if it's purely descriptive text (no valid code to emit)
     """
     # Clean up the description
@@ -382,17 +382,21 @@ def _desc_to_expr(desc: str) -> Optional[str]:
         func_name = anlu_ref.group(1).replace("-", "_")
         # Extract any following text as potential args
         remaining = desc[anlu_ref.end():].strip()
-        if remaining.startswith("(") and ")" in remaining:
+        if remaining.startswith("(") and remaining.endswith(")"):
             # Has args
-            args = remaining[1:remaining.find(")")].strip()
+            args = remaining[1:-1].strip()
             return f"{func_name}({args})"
         return f"{func_name}()"
 
-    # Check if already looks like Python code (has assignment or function call)
-    if "=" in desc and "==" not in desc:
-        return desc  # Already an assignment
-    if "(" in desc and ")" in desc:
-        return desc  # Already a function call
+    # Check if strictly looks like a Python assignment: identifier = expr
+    # Must start with identifier, have =, and not be ==
+    if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*\s*=(?!=)', desc):
+        return desc
+
+    # Check if strictly looks like a Python function call: identifier(args)
+    # Must start with identifier, have (, end with ), and nothing else
+    if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*\s*\(.*\)$', desc):
+        return desc
 
     # Purely descriptive text - return None, caller should emit as comment
     return None
