@@ -8,7 +8,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Optional
 
-from .schema import NLFile, ANLU
+from .schema import NLFile
 
 
 @dataclass
