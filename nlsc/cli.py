@@ -11,6 +11,7 @@ Commands:
     nlsc atomize <file>    Extract ANLUs from Python code
     nlsc diff <file>       Show changes since last compile
     nlsc watch <dir>       Watch directory for .nl changes
+    nlsc lsp               Start the NLS language server
 """
 
 import argparse
@@ -742,6 +743,33 @@ def cmd_run(args: argparse.Namespace) -> int:
     return exit_code
 
 
+def cmd_lsp(args: argparse.Namespace) -> int:
+    """Start the NLS language server"""
+    try:
+        from nlsc.lsp import start_server
+    except ImportError as e:
+        print(f"Error: LSP dependencies not installed: {e}", file=sys.stderr)
+        print("Install with: pip install nlsc[lsp]", file=sys.stderr)
+        return 1
+
+    transport = getattr(args, "transport", "stdio")
+    port = getattr(args, "port", 2087)
+
+    if transport == "stdio":
+        print("Starting NLS Language Server (stdio)...", file=sys.stderr)
+        start_server("stdio")
+    elif transport == "tcp":
+        print(f"Starting NLS Language Server (tcp://127.0.0.1:{port})...", file=sys.stderr)
+        # For TCP, we need to set the port first
+        from nlsc.lsp.server import server
+        server.start_tcp("127.0.0.1", port)
+    else:
+        print(f"Error: Unknown transport: {transport}", file=sys.stderr)
+        return 1
+
+    return 0
+
+
 def main() -> int:
     """Main entry point for nlsc CLI"""
     parser = argparse.ArgumentParser(
@@ -958,6 +986,24 @@ The conversation is the programming. The .nl file is the receipt.
         help="Path to .nl file"
     )
 
+    # lsp command
+    lsp_parser = subparsers.add_parser(
+        "lsp",
+        help="Start NLS language server"
+    )
+    lsp_parser.add_argument(
+        "--transport",
+        choices=["stdio", "tcp"],
+        default="stdio",
+        help="Transport protocol (default: stdio)"
+    )
+    lsp_parser.add_argument(
+        "--port",
+        type=int,
+        default=2087,
+        help="TCP port for tcp transport (default: 2087)"
+    )
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -990,6 +1036,8 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_lock_check(args)
     elif args.command == "lock:update":
         return cmd_lock_update(args)
+    elif args.command == "lsp":
+        return cmd_lsp(args)
 
     return 0
 
