@@ -40,6 +40,10 @@ llm = [
 treesitter = [
     "tree-sitter>=0.23.0",
 ]
+lsp = [
+    "pygls>=2.0.0",
+    "lsprotocol>=2023.0.0",
+]
 docs = [
     "mkdocs>=1.5",
     "mkdocs-material>=9.0",
