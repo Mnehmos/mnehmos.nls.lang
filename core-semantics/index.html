@@ -1,0 +1,2062 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Natural Language Source - Write specs in English, compile to Python">
+      
+      
+      
+        <link rel="canonical" href="https://mnehmos.github.io/mnehmos.nls.lang/core-semantics/">
+      
+      
+        <link rel="prev" href="../language-spec/">
+      
+      
+        <link rel="next" href="../architecture/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Core Semantics - NLS Compiler</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#core-nls-semantics" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="NLS Compiler" class="md-header__button md-logo" aria-label="NLS Compiler" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            NLS Compiler
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Core Semantics
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Mnehmos/mnehmos.nls.lang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mnehmos.nls.lang
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="NLS Compiler" class="md-nav__button md-logo" aria-label="NLS Compiler" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    NLS Compiler
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Mnehmos/mnehmos.nls.lang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mnehmos.nls.lang
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../language-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Language Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Semantics
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Semantics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#expressions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expressions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Expressions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#literals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Literals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operators
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Operators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#arithmetic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arithmetic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logical
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-calls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Function Calls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#field-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field Access
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Statements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Statements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#let-bindings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Let-Bindings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conditionals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditionals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#early-return" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Early Return
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type System
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Type System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compound-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compound Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-defined-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User-Defined Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-aliases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type Aliases
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Error Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#guard-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guard Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-propagation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Propagation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#semantic-invariants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Semantic Invariants
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Semantic Invariants">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-guard-ordering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Guard Ordering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-logic-step-dataflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Logic Step Dataflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-type-constraints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Type Constraints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-test-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Test Semantics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-property-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Property Semantics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#target-specific-allowances" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Target-Specific Allowances
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Target-Specific Allowances">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#performance-characteristics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Characteristics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtime-representation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Representation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#idioms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Idioms
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#python-target-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python Target Mapping
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Python Target Mapping">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#guards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guards
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logic-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logic Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future Considerations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Future Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#typescript-target-planned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TypeScript Target (Planned)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#result-type-option" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Result Type Option
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#expressions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expressions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Expressions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#literals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Literals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operators
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Operators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#arithmetic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arithmetic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logical
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-calls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Function Calls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#field-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field Access
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Statements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Statements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#let-bindings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Let-Bindings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conditionals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditionals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#early-return" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Early Return
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type System
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Type System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compound-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compound Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-defined-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User-Defined Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-aliases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type Aliases
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Error Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#guard-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guard Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-propagation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Propagation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#semantic-invariants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Semantic Invariants
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Semantic Invariants">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-guard-ordering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Guard Ordering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-logic-step-dataflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Logic Step Dataflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-type-constraints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Type Constraints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-test-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Test Semantics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-property-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Property Semantics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#target-specific-allowances" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Target-Specific Allowances
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Target-Specific Allowances">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#performance-characteristics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Characteristics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtime-representation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Representation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#idioms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Idioms
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#python-target-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python Target Mapping
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Python Target Mapping">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#guards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guards
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logic-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logic Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future Considerations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Future Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#typescript-target-planned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TypeScript Target (Planned)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#result-type-option" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Result Type Option
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="core-nls-semantics">Core NLS Semantics</h1>
+<p>This document defines the target-neutral semantic core of NLS. All target emitters (Python, TypeScript, etc.) must preserve these semantics while adapting to target-specific idioms.</p>
+<h2 id="overview">Overview</h2>
+<p>NLS semantics are divided into:</p>
+<ol>
+<li><strong>Core Semantics</strong> — Must behave identically across all targets</li>
+<li><strong>Target Semantics</strong> — May differ in representation but must preserve behavior</li>
+<li><strong>Implementation Details</strong> — Left to target discretion</li>
+</ol>
+<h2 id="expressions">Expressions</h2>
+<h3 id="literals">Literals</h3>
+<table>
+<thead>
+<tr>
+<th>Literal Type</th>
+<th>NLS Syntax</th>
+<th>Semantics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Number</td>
+<td><code>42</code>, <code>3.14</code>, <code>-1</code></td>
+<td>IEEE 754 double precision floating point</td>
+</tr>
+<tr>
+<td>String</td>
+<td><code>"hello"</code>, <code>'world'</code></td>
+<td>UTF-8 encoded text</td>
+</tr>
+<tr>
+<td>Boolean</td>
+<td><code>true</code>, <code>false</code></td>
+<td>Two-valued logic</td>
+</tr>
+<tr>
+<td>None</td>
+<td><code>none</code>, <code>null</code></td>
+<td>Absence of value</td>
+</tr>
+<tr>
+<td>List</td>
+<td><code>[1, 2, 3]</code></td>
+<td>Ordered, mutable sequence</td>
+</tr>
+<tr>
+<td>Dict</td>
+<td><code>{key: value}</code></td>
+<td>Key-value map (literal syntax uses string keys; type <code>dict of K to V</code> allows any hashable key)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Invariants:</strong>
+- Numbers: All targets use IEEE 754 doubles (precision may vary for integers)
+- Strings: UTF-8 encoding; immutable in semantics
+- Lists: 0-indexed; mutable; may be heterogeneous if element type is <code>any</code></p>
+<h3 id="operators">Operators</h3>
+<h4 id="arithmetic">Arithmetic</h4>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Meaning</th>
+<th>Operand Types</th>
+<th>Result Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>+</code></td>
+<td>Addition</td>
+<td>number, number</td>
+<td>number</td>
+</tr>
+<tr>
+<td><code>-</code></td>
+<td>Subtraction</td>
+<td>number, number</td>
+<td>number</td>
+</tr>
+<tr>
+<td><code>*</code>, <code>×</code></td>
+<td>Multiplication</td>
+<td>number, number</td>
+<td>number</td>
+</tr>
+<tr>
+<td><code>/</code>, <code>÷</code></td>
+<td>Division</td>
+<td>number, number</td>
+<td>number</td>
+</tr>
+<tr>
+<td><code>%</code></td>
+<td>Modulo</td>
+<td>number, number</td>
+<td>number</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Invariants:</strong>
+- Division by zero raises <code>DivisionError</code>
+- Integer division uses <code>//</code> or explicit <code>floor(a / b)</code></p>
+<h4 id="comparison">Comparison</h4>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>==</code></td>
+<td>Structural equality</td>
+</tr>
+<tr>
+<td><code>!=</code>, <code>≠</code></td>
+<td>Structural inequality</td>
+</tr>
+<tr>
+<td><code>&lt;</code>, <code>&gt;</code></td>
+<td>Ordering</td>
+</tr>
+<tr>
+<td><code>&lt;=</code>, <code>&gt;=</code>, <code>≤</code>, <code>≥</code></td>
+<td>Inclusive ordering</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Invariants:</strong>
+- Equality is structural, not reference-based
+- Ordering is defined for numbers and strings; undefined for other types</p>
+<h4 id="logical">Logical</h4>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>and</code>, <code>&amp;&amp;</code></td>
+<td>Logical AND (short-circuit)</td>
+</tr>
+<tr>
+<td><code>or</code>, <code>\|\|</code></td>
+<td>Logical OR (short-circuit)</td>
+</tr>
+<tr>
+<td><code>not</code>, <code>!</code></td>
+<td>Logical NOT</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Invariants:</strong>
+- Short-circuit evaluation is required
+- Truthiness: <code>false</code>, <code>none</code>, <code>0</code>, <code>""</code>, <code>[]</code> are falsy; all else truthy</p>
+<h3 id="function-calls">Function Calls</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>function_name(arg1, arg2, ...)
+</code></pre></div>
+<p><strong>Semantics:</strong>
+- Arguments evaluated left-to-right
+- Passed by value (for primitives) or by reference (for objects)
+- Return value is the expression result of the function body</p>
+<h3 id="field-access">Field Access</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>object.field
+</code></pre></div>
+<p><strong>Semantics:</strong>
+- Accesses named field on object
+- Raises <code>AttributeError</code> if field doesn't exist
+- For types with <code>@invariant</code>, field access on valid objects always succeeds</p>
+<hr />
+<h2 id="statements">Statements</h2>
+<h3 id="let-bindings">Let-Bindings</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>1. Calculate result -&gt; result
+</code></pre></div>
+<p><strong>Semantics:</strong>
+- Binds a value to a name
+- Bindings are <strong>immutable by default</strong> in NLS semantics
+- Scope is local to the containing function</p>
+<p><strong>Target Mapping:</strong>
+- Python: <code>result = &lt;expression&gt;</code> (relies on convention, not enforcement)
+- TypeScript: <code>const result = &lt;expression&gt;</code> (enforced)</p>
+<h3 id="conditionals">Conditionals</h3>
+<p>NLS uses guard conditions for early exit:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>GUARDS:
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  - amount &gt; 0 -&gt; ValueError(&quot;Amount must be positive&quot;)
+</code></pre></div>
+<p>For inline conditionals in LOGIC:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>3. IF discount_rate &gt; 0 THEN apply discount -&gt; final
+</code></pre></div>
+<p><strong>Semantics:</strong>
+- Guards are evaluated top-to-bottom
+- First failing guard raises its error
+- IF/THEN/ELSE is an expression, not statement (always has a value)</p>
+<h3 id="early-return">Early Return</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>EDGE CASES:
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  - Empty list -&gt; return none
+</code></pre></div>
+<p><strong>Semantics:</strong>
+- Immediately exits function with given value
+- Guards that fail cause early exit with error</p>
+<hr />
+<h2 id="type-system">Type System</h2>
+<h3 id="primitives">Primitives</h3>
+<table>
+<thead>
+<tr>
+<th>NLS Type</th>
+<th>Semantic Meaning</th>
+<th>Python</th>
+<th>TypeScript</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>number</code></td>
+<td>IEEE 754 double</td>
+<td><code>float</code></td>
+<td><code>number</code></td>
+</tr>
+<tr>
+<td><code>string</code></td>
+<td>UTF-8 text</td>
+<td><code>str</code></td>
+<td><code>string</code></td>
+</tr>
+<tr>
+<td><code>boolean</code></td>
+<td>true/false</td>
+<td><code>bool</code></td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>none</code></td>
+<td>Null value</td>
+<td><code>None</code></td>
+<td><code>null</code></td>
+</tr>
+<tr>
+<td><code>void</code></td>
+<td>No return</td>
+<td><code>None</code></td>
+<td><code>void</code></td>
+</tr>
+<tr>
+<td><code>any</code></td>
+<td>Dynamic typing</td>
+<td><code>Any</code></td>
+<td><code>any</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="compound-types">Compound Types</h3>
+<table>
+<thead>
+<tr>
+<th>NLS Type</th>
+<th>Meaning</th>
+<th>Python</th>
+<th>TypeScript</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>list of T</code></td>
+<td>Ordered sequence</td>
+<td><code>list[T]</code></td>
+<td><code>T[]</code></td>
+</tr>
+<tr>
+<td><code>dict of K to V</code></td>
+<td>Key-value map</td>
+<td><code>dict[K, V]</code></td>
+<td><code>Record&lt;K, V&gt;</code></td>
+</tr>
+<tr>
+<td><code>T?</code>, <code>optional T</code></td>
+<td>Nullable</td>
+<td><code>Optional[T]</code></td>
+<td><code>T \| null</code></td>
+</tr>
+<tr>
+<td><code>T \| U</code></td>
+<td>Union</td>
+<td><code>T \| U</code></td>
+<td><code>T \| U</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="user-defined-types">User-Defined Types</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>@type Order {
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  id: string, required
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  items: list of OrderItem
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  total: number
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>}
+</code></pre></div>
+<p><strong>Semantics:</strong>
+- Creates a record type with named fields
+- Fields have types and optional constraints
+- <code>required</code> fields must be provided at construction
+- Omitting <code>required</code> allows field to be optional</p>
+<p><strong>Invariants:</strong>
+- Type fields are accessed by name
+- Field order is preserved (important for some serialization)
+- Types are structural, not nominal (duck typing)</p>
+<h3 id="type-aliases">Type Aliases</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>@type UserId = string
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>@type OrderList = list of Order
+</code></pre></div>
+<p><strong>Semantics:</strong>
+- Creates an alias; semantically equivalent to underlying type
+- May be treated as distinct by some targets (for documentation)</p>
+<hr />
+<h2 id="error-model">Error Model</h2>
+<p>NLS uses typed errors raised through guards.</p>
+<h3 id="guard-errors">Guard Errors</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>GUARDS:
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  - token must not be empty -&gt; AuthError(MISSING, &quot;Token required&quot;)
+</code></pre></div>
+<p><strong>Components:</strong>
+1. <strong>Error Type</strong>: <code>AuthError</code>, <code>ValueError</code>, <code>ValidationError</code>
+2. <strong>Error Code</strong> (optional): <code>MISSING</code>, <code>INVALID_FORMAT</code>
+3. <strong>Message</strong>: Human-readable description</p>
+<p><strong>Semantics:</strong>
+- Guards fail fast (first violation wins)
+- Error types map to target exception/error classes
+- Standard errors: <code>ValueError</code>, <code>TypeError</code>, <code>RuntimeError</code></p>
+<h3 id="error-propagation">Error Propagation</h3>
+<p><strong>Design Decision:</strong> NLS uses exceptions, not Result types.</p>
+<p><strong>Rationale:</strong>
+- Matches Python's natural error model
+- Keeps ANLU specifications focused on happy path
+- Guards explicitly document expected failures</p>
+<p><strong>Invariants:</strong>
+- Errors propagate up call stack until caught
+- Uncaught errors terminate execution
+- All guard errors are documented in specification</p>
+<hr />
+<h2 id="semantic-invariants">Semantic Invariants</h2>
+<p>These MUST be preserved by all target emitters:</p>
+<h3 id="1-guard-ordering">1. Guard Ordering</h3>
+<p>Guards are evaluated in specification order. This is observable when guards have side effects (e.g., logging).</p>
+<h3 id="2-logic-step-dataflow">2. Logic Step Dataflow</h3>
+<p>Variables assigned in earlier LOGIC steps are available in later steps. Emitters must preserve this dependency order.</p>
+<h3 id="3-type-constraints">3. Type Constraints</h3>
+<p>Field constraints (<code>required</code>, <code>min:</code>, <code>max:</code>) are enforced at construction time. Objects with invariants are always valid after construction.</p>
+<h3 id="4-test-semantics">4. Test Semantics</h3>
+<p><code>@test</code> blocks execute in isolation. Each test case is independent—no shared state.</p>
+<h3 id="5-property-semantics">5. Property Semantics</h3>
+<p><code>@property</code> assertions hold for all valid inputs. Emitters should generate property-based tests (using Hypothesis, fast-check, etc.).</p>
+<hr />
+<h2 id="target-specific-allowances">Target-Specific Allowances</h2>
+<p>These MAY differ between targets:</p>
+<h3 id="performance-characteristics">Performance Characteristics</h3>
+<ul>
+<li>List indexing complexity (O(1) vs O(n))</li>
+<li>String concatenation strategy</li>
+<li>Memory layout of types</li>
+</ul>
+<h3 id="runtime-representation">Runtime Representation</h3>
+<ul>
+<li>How types are encoded at runtime</li>
+<li>Debug string formats</li>
+<li>Stack trace formatting</li>
+</ul>
+<h3 id="idioms">Idioms</h3>
+<ul>
+<li>Naming conventions in generated code (snake_case vs camelCase)</li>
+<li>Import style (relative vs absolute)</li>
+<li>Documentation format (docstrings vs JSDoc)</li>
+</ul>
+<hr />
+<h2 id="python-target-mapping">Python Target Mapping</h2>
+<p>This section documents the <strong>Core NLS → Python</strong> mapping.</p>
+<h3 id="types">Types</h3>
+<table>
+<thead>
+<tr>
+<th>NLS</th>
+<th>Python</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>number</code></td>
+<td><code>float</code> (or <code>int</code> for known integers)</td>
+</tr>
+<tr>
+<td><code>string</code></td>
+<td><code>str</code></td>
+</tr>
+<tr>
+<td><code>boolean</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><code>none</code></td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>list of T</code></td>
+<td><code>list[T]</code></td>
+</tr>
+<tr>
+<td><code>dict of K to V</code></td>
+<td><code>dict[K, V]</code></td>
+</tr>
+<tr>
+<td><code>T?</code></td>
+<td><code>Optional[T]</code></td>
+</tr>
+<tr>
+<td><code>@type X</code></td>
+<td><code>@dataclass class X</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="errors">Errors</h3>
+<table>
+<thead>
+<tr>
+<th>NLS Error</th>
+<th>Python Exception</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ValueError</code></td>
+<td><code>ValueError</code></td>
+</tr>
+<tr>
+<td><code>TypeError</code></td>
+<td><code>TypeError</code></td>
+</tr>
+<tr>
+<td><code>RuntimeError</code></td>
+<td><code>RuntimeError</code></td>
+</tr>
+<tr>
+<td><code>DivisionError</code></td>
+<td><code>ZeroDivisionError</code></td>
+</tr>
+<tr>
+<td>Custom <code>XError</code></td>
+<td><code>class XError(Exception)</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="guards">Guards</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>GUARDS:
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>  - amount &gt; 0 -&gt; ValueError(&quot;Message&quot;)
+</code></pre></div>
+<p>Becomes:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">amount</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Message&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="logic-steps">Logic Steps</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>LOGIC:
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  1. Calculate tax -&gt; tax
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  2. Add fee -&gt; total
+</code></pre></div>
+<p>Becomes:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">tax</span> <span class="o">=</span> <span class="n">calculate_tax</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># Step 1</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">total</span> <span class="o">=</span> <span class="n">tax</span> <span class="o">+</span> <span class="n">fee</span>         <span class="c1"># Step 2</span>
+</code></pre></div>
+<hr />
+<h2 id="future-considerations">Future Considerations</h2>
+<h3 id="typescript-target-planned">TypeScript Target (Planned)</h3>
+<p>Will require:
+- <code>number</code> → <code>number</code> (same IEEE 754)
+- <code>@type</code> → <code>interface</code> or <code>type</code>
+- Guards → thrown <code>Error</code> objects
+- Properties → <code>fast-check</code> tests</p>
+<h3 id="result-type-option">Result Type Option</h3>
+<p>Future version may support:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>@config error_model = &quot;result&quot;
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>[divide]
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>RETURNS: Result&lt;number, DivisionError&gt;
+</code></pre></div>
+<p>This would generate <code>Either</code>/<code>Result</code> types instead of exceptions.</p>
+<hr />
+<h2 id="references">References</h2>
+<ul>
+<li><a href="../language-spec/">Language Specification</a> — Surface syntax</li>
+<li><a href="../nl-grammar.ebnf">nl-grammar.ebnf</a> — Formal grammar</li>
+<li>Issue #88 — Core NLS Semantics tracking issue</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/Mnehmos/mnehmos.nls.lang" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "content.code.annotate", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
