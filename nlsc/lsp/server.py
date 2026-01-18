@@ -17,7 +17,9 @@ from lsprotocol import types as lsp
 from pygls.lsp.server import LanguageServer
 
 from nlsc.lsp.analysis import (
+    find_all_references,
     find_anlu_by_name,
+    find_definition_location,
     find_symbol_at_position,
     find_type_by_name,
     get_anlu_hover_content,
@@ -276,6 +278,81 @@ def completions(
         return None
 
     return lsp.CompletionList(is_incomplete=False, items=items)
+
+
+@server.feature(lsp.TEXT_DOCUMENT_DEFINITION)
+def definition(
+    ls: NLSLanguageServer,
+    params: lsp.DefinitionParams,
+) -> lsp.Location | None:
+    """Go to definition of a symbol."""
+    uri = params.text_document.uri
+    position = params.position
+
+    text = ls.document_content.get(uri)
+    nl_file = ls.parsed_files.get(uri)
+
+    if not text or not nl_file:
+        return None
+
+    # Find symbol at position
+    symbol = find_symbol_at_position(text, nl_file, position.line, position.character)
+
+    if not symbol:
+        return None
+
+    # Find definition location
+    def_location = find_definition_location(text, symbol.name, symbol.kind)
+
+    if def_location:
+        return lsp.Location(
+            uri=uri,
+            range=lsp.Range(
+                start=lsp.Position(line=def_location.line, character=def_location.start_char),
+                end=lsp.Position(line=def_location.line, character=def_location.end_char),
+            ),
+        )
+
+    return None
+
+
+@server.feature(lsp.TEXT_DOCUMENT_REFERENCES)
+def references(
+    ls: NLSLanguageServer,
+    params: lsp.ReferenceParams,
+) -> list[lsp.Location] | None:
+    """Find all references to a symbol."""
+    uri = params.text_document.uri
+    position = params.position
+
+    text = ls.document_content.get(uri)
+    nl_file = ls.parsed_files.get(uri)
+
+    if not text or not nl_file:
+        return None
+
+    # Find symbol at position
+    symbol = find_symbol_at_position(text, nl_file, position.line, position.character)
+
+    if not symbol:
+        return None
+
+    # Find all references
+    refs = find_all_references(text, symbol.name, symbol.kind)
+
+    if not refs:
+        return None
+
+    return [
+        lsp.Location(
+            uri=uri,
+            range=lsp.Range(
+                start=lsp.Position(line=ref.line, character=ref.start_char),
+                end=lsp.Position(line=ref.line, character=ref.end_char),
+            ),
+        )
+        for ref in refs
+    ]
 
 
 def _parse_and_publish_diagnostics(
