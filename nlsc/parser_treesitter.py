@@ -754,5 +754,10 @@ def parse_nl_path_treesitter(path: Path) -> NLFile:
 
 
 def is_available() -> bool:
-    """Check if tree-sitter parser is available."""
-    return TREE_SITTER_AVAILABLE
+    """Check if tree-sitter parser is available.
+
+    Returns True only if both:
+    1. tree-sitter Python module is installed
+    2. Compiled NL grammar library exists
+    """
+    return TREE_SITTER_AVAILABLE and LANGUAGE_LIB_PATH.exists()
