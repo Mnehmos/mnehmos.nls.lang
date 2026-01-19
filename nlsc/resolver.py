@@ -61,6 +61,9 @@ def resolve_dependencies(nl_file: NLFile) -> ResolverResult:
         for dep in anlu.depends:
             # Strip brackets if present [dep-name] -> dep-name
             dep_id = dep.strip("[]")
+            # Skip "none" as it's a placeholder meaning no dependencies
+            if dep_id.lower() == "none":
+                continue
             if dep_id not in anlu_map:
                 result.errors.append(ResolutionError(
                     anlu_id=anlu.identifier,
@@ -82,11 +85,15 @@ def resolve_dependencies(nl_file: NLFile) -> ResolverResult:
             # But we want to track: who depends on me?
             pass
 
+    # Helper to filter out "none" placeholder from dependencies
+    def real_deps(anlu):
+        return [d for d in anlu.depends if d.strip("[]").lower() != "none"]
+
     # Actually, let's track: for each ANLU, how many unresolved deps does it have?
-    unresolved = {anlu.identifier: len(anlu.depends) for anlu in nl_file.anlus}
+    unresolved = {anlu.identifier: len(real_deps(anlu)) for anlu in nl_file.anlus}
 
     # Start with ANLUs that have no dependencies
-    ready = [anlu for anlu in nl_file.anlus if not anlu.depends]
+    ready = [anlu for anlu in nl_file.anlus if not real_deps(anlu)]
     resolved = set()
 
     while ready:

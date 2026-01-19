@@ -452,15 +452,27 @@ class NLFile:
         remaining = list(self.anlus)
         resolved = set()
 
-        while remaining:
+        # Track iterations to detect unresolvable dependencies
+        max_iterations = len(remaining) * 2
+
+        while remaining and max_iterations > 0:
+            max_iterations -= 1
+            progress = False
             for anlu in remaining[:]:
                 deps_satisfied = all(
-                    dep.strip("[]") in resolved
+                    dep.strip("[]").lower() == "none" or dep.strip("[]") in resolved
                     for dep in anlu.depends
                 )
                 if deps_satisfied:
                     ordered.append(anlu)
                     resolved.add(anlu.identifier)
                     remaining.remove(anlu)
+                    progress = True
+
+            # If no progress was made, break to avoid infinite loop
+            if not progress:
+                # Add remaining ANLUs anyway (unresolved deps)
+                ordered.extend(remaining)
+                break
 
         return ordered
