@@ -10,11 +10,13 @@ let client: LanguageClient | undefined;
 let outputChannel: vscode.OutputChannel;
 
 export function activateLspClient(context: vscode.ExtensionContext): void {
-    // Create output channel immediately for visibility
-    outputChannel = vscode.window.createOutputChannel('NLS Language Server');
-    context.subscriptions.push(outputChannel);
+    try {
+        // Create output channel immediately for visibility
+        outputChannel = vscode.window.createOutputChannel('NLS Language Server');
+        context.subscriptions.push(outputChannel);
 
-    outputChannel.appendLine('NLS Language Server initializing...');
+        outputChannel.appendLine('NLS Language Server initializing...');
+        outputChannel.appendLine(`Extension path: ${context.extensionPath}`);
 
     const nlscPath = vscode.workspace.getConfiguration('nls').get<string>('nlscPath', 'nlsc');
 
@@ -106,6 +108,14 @@ export function activateLspClient(context: vscode.ExtensionContext): void {
             }
         }
     });
+    } catch (error) {
+        // Catch any initialization errors
+        console.error('NLS LSP Client activation error:', error);
+        if (outputChannel) {
+            outputChannel.appendLine(`FATAL ERROR during activation: ${error}`);
+        }
+        vscode.window.showErrorMessage(`NLS Language Server failed to initialize: ${error}`);
+    }
 }
 
 export function deactivateLspClient(): Thenable<void> | undefined {

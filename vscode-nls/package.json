@@ -3,7 +3,7 @@
   "icon": "images/icon.png",
   "displayName": "NLS - Natural Language Source",
   "description": "Language support for .nl specification files - syntax highlighting, snippets, diagnostics, and nlsc integration",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "publisher": "mnehmos",
   "license": "MIT",
   "repository": {
@@ -16,6 +16,9 @@
   "engines": {
     "vscode": "^1.85.0"
   },
+  "activationEvents": [
+    "onLanguage:nl"
+  ],
   "categories": [
     "Programming Languages",
     "Snippets",

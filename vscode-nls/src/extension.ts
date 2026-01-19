@@ -10,6 +10,12 @@ let diagnosticsProvider: DiagnosticsProvider;
 export function activate(context: vscode.ExtensionContext): void {
     console.log('NLS extension activating...');
 
+    // Create main extension output channel for debugging
+    const mainChannel = vscode.window.createOutputChannel('NLS Extension');
+    context.subscriptions.push(mainChannel);
+    mainChannel.appendLine(`NLS extension activating at ${new Date().toISOString()}`);
+    mainChannel.appendLine(`Extension path: ${context.extensionPath}`);
+
     // Register document symbol provider (outline view)
     const symbolProvider = new NLDocumentSymbolProvider();
     context.subscriptions.push(
@@ -48,6 +54,7 @@ export function activate(context: vscode.ExtensionContext): void {
         })
     );
 
+    mainChannel.appendLine('NLS extension activated successfully');
     console.log('NLS extension activated');
 }
 
