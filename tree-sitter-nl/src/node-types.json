@@ -1130,11 +1130,6 @@
     }
   },
   {
-    "type": "step_text",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "target_directive",
     "named": true,
     "fields": {
@@ -1616,6 +1611,10 @@
   },
   {
     "type": "step_number",
+    "named": true
+  },
+  {
+    "type": "step_text",
     "named": true
   },
   {

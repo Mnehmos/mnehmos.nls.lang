@@ -16,10 +16,6 @@ class LineItem:
     def __post_init__(self):
         if not self.description:
             raise ValueError('description is required')
-        if self.quantity < 1:
-            raise ValueError('quantity must be at least 1')
-        if self.unit_price < 0:
-            raise ValueError('unit_price must be at least 0')
 
 
 @dataclass
@@ -66,10 +62,10 @@ def calculate_subtotal(invoice: Invoice) -> Any:
         invoice: Invoice
 
     Returns:
-        subtotal
+        sum(item.quantity * item.unit_price for item in invoice.items)
     """
-    subtotal = None  # TODO: Sum each item's total
-    return subtotal
+    # Sum each item's total -> subtotal
+    return sum(item.quantity * item.unit_price for item in invoice.items)
 
 
 def apply_discount(amount: float, discount_percent: float) -> Any:
@@ -87,8 +83,8 @@ def apply_discount(amount: float, discount_percent: float) -> Any:
         raise ValueError('Discount cannot be negative')
     if not (discount_percent <= 100):
         raise ValueError('Discount cannot exceed 100%')
-    discount = None  # TODO: Calculate discount amount
-    final = None  # TODO: Subtract from original
+    # Calculate discount amount -> discount
+    # Subtract from original -> final
     return amount * (1 - discount_percent / 100)
 
 
@@ -116,10 +112,10 @@ def calculate_invoice_total(invoice: Invoice) -> Any:
         invoice: Invoice
 
     Returns:
-        total
+        calculate_subtotal(invoice) * (1 - invoice.discount_percent / 100) * (1 + invoice.tax_rate / 100)
     """
-    subtotal = None  # TODO: Calculate subtotal from all items
-    discounted = None  # TODO: Apply discount to subtotal
-    tax = None  # TODO: Calculate tax on discounted amount
-    total = None  # TODO: Add tax to discounted amount
-    return total
+    # Calculate subtotal from all items -> subtotal
+    # Apply discount to subtotal -> discounted
+    # Calculate tax on discounted amount -> tax
+    # Add tax to discounted amount -> total
+    return calculate_subtotal(invoice) * (1 - invoice.discount_percent / 100) * (1 + invoice.tax_rate / 100)

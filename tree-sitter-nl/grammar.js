@@ -207,7 +207,9 @@ module.exports = grammar({
         "not"
       ),
 
-    step_text: ($) => /[^\n→-]+/,
+    // Match step text, stopping at arrow sequences
+    // Uses negative character class - allows hyphen but stops at → or ->
+    step_text: ($) => /[^\n→]*[^\n→ \t-]/,
 
     output_binding: ($) => seq($.arrow, field("variable", $.identifier)),
 

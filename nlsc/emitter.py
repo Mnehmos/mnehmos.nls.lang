@@ -35,6 +35,33 @@ def _is_safe_numeric(value: str) -> bool:
         return False
 
 
+def _is_valid_return_expr(expr: str) -> bool:
+    """Check if an expression is valid Python for a return statement.
+
+    Uses Python's ast.parse to validate expression syntax.
+
+    Returns False if it appears to be descriptive text or invalid syntax.
+    """
+    import ast
+
+    expr = expr.strip()
+
+    # Empty is not valid
+    if not expr:
+        return False
+
+    # No spaces - likely a valid identifier, number, or literal
+    if " " not in expr:
+        return True
+
+    # Use ast.parse to validate - it handles undefined variables correctly
+    try:
+        ast.parse(expr, mode='eval')
+        return True
+    except SyntaxError:
+        return False
+
+
 class EmitError(Exception):
     """Error during code emission"""
     pass
@@ -64,9 +91,17 @@ def emit_type_definition(type_def: TypeDefinition, invariant: Optional[Invariant
     if not type_def.fields:
         lines.append("    pass")
     else:
-        for field in type_def.fields:
+        # Sort fields: required fields first, then optional fields (with defaults)
+        required_fields = [f for f in type_def.fields if not any(c.lower().strip() == "optional" for c in f.constraints)]
+        optional_fields = [f for f in type_def.fields if any(c.lower().strip() == "optional" for c in f.constraints)]
+
+        for field in required_fields:
             py_type = field.to_python_type()
             lines.append(f"    {field.name}: {py_type}")
+
+        for field in optional_fields:
+            py_type = field.to_python_type()
+            lines.append(f"    {field.name}: {py_type} = None")
 
         # Emit __post_init__ for constraints and invariants
         constraint_checks = _emit_constraint_checks(type_def)
@@ -153,12 +188,19 @@ def _emit_invariant_checks(invariant: Invariant, field_names: list[str]) -> list
 
 def emit_function_signature(anlu: ANLU) -> str:
     """Generate Python function signature from ANLU"""
-    # Build parameter list
+    # Separate required and optional parameters
+    required_inputs = [inp for inp in anlu.inputs if not any(c.lower().strip() == "optional" for c in inp.constraints)]
+    optional_inputs = [inp for inp in anlu.inputs if any(c.lower().strip() == "optional" for c in inp.constraints)]
+
+    # Build parameter list: required first, then optional with defaults
     params = []
-    for inp in anlu.inputs:
-        param = inp.name
+    for inp in required_inputs:
         py_type = inp.to_python_type()
-        params.append(f"{param}: {py_type}")
+        params.append(f"{inp.name}: {py_type}")
+
+    for inp in optional_inputs:
+        py_type = inp.to_python_type()
+        params.append(f"{inp.name}: {py_type} = None")
 
     param_str = ", ".join(params)
     return_type = anlu.to_python_return_type()
@@ -261,11 +303,13 @@ def emit_body_from_logic(anlu: ANLU) -> str:
     # Check if returns_expr is a type name that needs conversion
     returns_expr = _convert_type_return(returns_expr, anlu)
 
-    if lines:
+    # Validate that returns_expr is valid Python
+    if _is_valid_return_expr(returns_expr):
         lines.append(f"    return {returns_expr}")
     else:
-        # No logic steps - just return the expression
-        lines.append(f"    return {returns_expr}")
+        # Descriptive text - emit NotImplementedError with the description
+        safe_desc = returns_expr.replace("'", "\\'")
+        lines.append(f"    raise NotImplementedError('TODO: {safe_desc}')")
 
     return "\n".join(lines)
 
@@ -477,36 +521,40 @@ def emit_body_mock(anlu: ANLU) -> str:
     # Replace math symbols
     expr = returns.replace("×", "*").replace("÷", "/")
 
+    # Helper to generate the return line (or NotImplementedError for invalid)
+    def make_return(e: str) -> str:
+        if _is_valid_return_expr(e):
+            return f"    return {e}"
+        safe_desc = e.replace("'", "\\'")
+        return f"    raise NotImplementedError('TODO: {safe_desc}')"
+
     # Check if it's a simple expression with known operators
     if re.match(r"^[a-z_][a-z0-9_]*\s*[\+\-\*\/]\s*[a-z_][a-z0-9_]*$", expr, re.IGNORECASE):
         return f"    return {expr}"
 
     # Check for function-like returns: "result with field1, field2"
     if " with " in returns.lower():
-        # For now, just return a dict
+        # Descriptive return - emit NotImplementedError
         parts = returns.split(" with ", 1)
-        return f'    # TODO: Return {parts[0]} with fields: {parts[1]}\n    return {{}}'
+        safe_desc = returns.replace("'", "\\'")
+        return f"    raise NotImplementedError('TODO: {safe_desc}')"
 
     # If raw logic is provided but no logic_steps, generate comments
     if anlu.logic:
         lines = ["    # Generated from LOGIC steps:"]
         for i, step in enumerate(anlu.logic, 1):
             lines.append(f"    # {i}. {step}")
-        lines.append(f"    return {expr}")
+        lines.append(make_return(expr))
         return "\n".join(lines)
 
     # If guards are provided, generate guard validation code
     if anlu.guards:
         lines = emit_guards(anlu)
-        lines.append(f"    return {expr}")
+        lines.append(make_return(expr))
         return "\n".join(lines)
 
-    # Fallback: return the expression as-is if it looks like valid Python
-    if expr and " " not in expr:
-        return f"    return {expr}"
-
-    # Last resort - return the expression
-    return f"    return {expr}"
+    # Fallback: validate and return
+    return make_return(expr)
 
 
 def emit_anlu(anlu: ANLU, mode: str = "mock") -> str:
@@ -562,8 +610,42 @@ def emit_python(nl_file: NLFile, mode: str = "mock") -> str:
         "any" in (inp.type for inp in anlu.inputs) or anlu.to_python_return_type() == "Any"
         for anlu in nl_file.anlus
     )
+
+    # Check for Optional types (fields or inputs with "optional" constraint)
+    has_optional = False
+    for type_def in nl_file.module.types:
+        for field in type_def.fields:
+            if any(c.lower().strip() == "optional" for c in field.constraints):
+                has_optional = True
+                break
+        if has_optional:
+            break
+    if not has_optional:
+        for anlu in nl_file.anlus:
+            for inp in anlu.inputs:
+                if any(c.lower().strip() == "optional" for c in inp.constraints):
+                    has_optional = True
+                    break
+            if has_optional:
+                break
+
+    # Check for cast() usage in RETURNS expressions
+    has_cast = any(
+        anlu.returns and "cast(" in anlu.returns
+        for anlu in nl_file.anlus
+    )
+
+    # Build typing imports
+    typing_imports = []
     if has_any:
-        imports_needed.append("from typing import Any")
+        typing_imports.append("Any")
+    if has_cast:
+        typing_imports.append("cast")
+    if has_optional:
+        typing_imports.append("Optional")
+
+    if typing_imports:
+        imports_needed.append(f"from typing import {', '.join(typing_imports)}")
 
     # Emit collected imports
     if imports_needed:
@@ -591,9 +673,20 @@ def emit_python(nl_file: NLFile, mode: str = "mock") -> str:
             lines.append(emit_type_definition(type_def, invariant))
             lines.append("")
 
-    # Emit each ANLU in dependency order
+    # Extract function names defined in literal blocks to avoid duplicates
+    literal_functions = set()
+    if nl_file.literals:
+        for literal in nl_file.literals:
+            # Find all "def funcname(" patterns
+            for match in re.finditer(r'^def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(', literal, re.MULTILINE):
+                literal_functions.add(match.group(1))
+
+    # Emit each ANLU in dependency order, skipping those overridden by literal blocks
     ordered = nl_file.dependency_order()
     for anlu in ordered:
+        if anlu.python_name in literal_functions:
+            # Skip - this ANLU is implemented by a literal block
+            continue
         lines.append("")
         lines.append(emit_anlu(anlu, mode))
         lines.append("")
