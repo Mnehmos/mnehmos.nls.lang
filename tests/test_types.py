@@ -233,3 +233,75 @@ RETURNS: Account
         order = result.dependency_order()
         # Types should be processed first
         assert result.module.types[0].name == "Account"
+
+
+class TestOptionalFields:
+    """Tests for optional field handling"""
+
+    def test_type_field_optional_constraint(self):
+        """TypeField with optional constraint should return Optional[T]"""
+        from nlsc.schema import TypeField
+
+        field = TypeField(name="email", type="string", constraints=["optional"])
+        assert field.to_python_type() == "Optional[str]"
+
+    def test_type_field_optional_list(self):
+        """TypeField with optional list should return Optional[list[T]]"""
+        from nlsc.schema import TypeField
+
+        field = TypeField(name="tags", type="list of string", constraints=["optional"])
+        assert field.to_python_type() == "Optional[list[str]]"
+
+    def test_type_field_required_not_optional(self):
+        """TypeField without optional constraint should not be Optional"""
+        from nlsc.schema import TypeField
+
+        field = TypeField(name="name", type="string", constraints=["required"])
+        assert field.to_python_type() == "str"
+
+    def test_input_optional_constraint(self):
+        """Input with optional constraint should return Optional[T]"""
+        from nlsc.schema import Input
+
+        inp = Input(name="notes", type="string", constraints=["optional"])
+        assert inp.to_python_type() == "Optional[str]"
+
+    def test_emit_optional_field_with_default(self):
+        """Emitted optional fields should have = None default"""
+        from nlsc.emitter import emit_type_definition
+        from nlsc.schema import TypeDefinition, TypeField
+
+        type_def = TypeDefinition(
+            name="Task",
+            fields=[
+                TypeField(name="id", type="string", constraints=["required"]),
+                TypeField(name="notes", type="string", constraints=["optional"]),
+            ]
+        )
+        code = emit_type_definition(type_def)
+
+        # Required field should not have default
+        assert "id: str" in code
+        assert "id: str =" not in code
+
+        # Optional field should have = None default
+        assert "notes: Optional[str] = None" in code
+
+    def test_optional_fields_sorted_after_required(self):
+        """Optional fields should come after required fields in dataclass"""
+        from nlsc.emitter import emit_type_definition
+        from nlsc.schema import TypeDefinition, TypeField
+
+        type_def = TypeDefinition(
+            name="Task",
+            fields=[
+                TypeField(name="optional_first", type="string", constraints=["optional"]),
+                TypeField(name="required_field", type="string", constraints=["required"]),
+            ]
+        )
+        code = emit_type_definition(type_def)
+
+        # Required field should come before optional
+        required_pos = code.find("required_field: str")
+        optional_pos = code.find("optional_first: Optional[str]")
+        assert required_pos < optional_pos

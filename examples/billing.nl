@@ -39,7 +39,7 @@ INPUTS:
   - invoice: Invoice
 LOGIC:
   1. Sum each item's total -> subtotal
-RETURNS: subtotal
+RETURNS: sum(item.quantity * item.unit_price for item in invoice.items)
 
 [apply-discount]
 PURPOSE: Apply a percentage discount to an amount.
@@ -72,7 +72,7 @@ LOGIC:
   2. Apply discount to subtotal -> discounted
   3. Calculate tax on discounted amount -> tax
   4. Add tax to discounted amount -> total
-RETURNS: total
+RETURNS: calculate_subtotal(invoice) * (1 - invoice.discount_percent / 100) * (1 + invoice.tax_rate / 100)
 DEPENDS: [calculate-subtotal], [apply-discount], [calculate-tax]
 
 # === Test Specifications ===

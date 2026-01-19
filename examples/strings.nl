@@ -15,35 +15,15 @@ PURPOSE: Shorten text to a maximum length with ellipsis
 INPUTS:
   • text: string
   • max_length: number
-RETURNS: truncated text with ellipsis if needed
-
-@literal python {
-def truncate(text: str, max_length: int) -> str:
-    """Shorten text to a maximum length with ellipsis."""
-    if max_length < 4:
-        raise ValueError("max_length must be >= 4")
-    if len(text) <= max_length:
-        return text
-    return text[:max_length - 3] + "..."
-}
+GUARDS:
+  - max_length >= 4 -> ValueError("max_length must be >= 4")
+RETURNS: text if len(text) <= max_length else text[:int(max_length) - 3] + "..."
 
 [slugify]
 PURPOSE: Convert text to URL-friendly slug format
 INPUTS:
   • text: string
-RETURNS: URL-friendly slug string
-
-@literal python {
-import re
-
-def slugify(text: str) -> str:
-    """Convert text to URL-friendly slug format."""
-    text = text.lower().strip()
-    text = re.sub(r'\s+', '-', text)
-    text = re.sub(r'[^a-z0-9-]', '', text)
-    text = re.sub(r'-+', '-', text)
-    return text.strip('-')
-}
+RETURNS: '-'.join(filter(None, ''.join(c if c.isalnum() else '-' for c in text.lower().strip()).split('-')))
 
 [title-case]
 PURPOSE: Convert text to title case

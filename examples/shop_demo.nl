@@ -11,7 +11,7 @@ GUARDS:
   - divisor != 0 -> ValueError("Cannot divide by zero")
 LOGIC:
   1. result = numerator / divisor
-RETURNS: result
+RETURNS: numerator / divisor
 
 [calculate-discount]
 PURPOSE: Calculate a discounted final price.
@@ -24,7 +24,7 @@ GUARDS:
 LOGIC:
   1. discount_amount = price * (discount_percent / 100)
   2. final_price = price - discount_amount
-RETURNS: final_price
+RETURNS: price - price * (discount_percent / 100)
 
 @test [divide] {
   divide(10, 2) == 5

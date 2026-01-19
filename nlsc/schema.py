@@ -54,15 +54,21 @@ class Input:
         if type_str.startswith("list of list of "):
             inner = type_str[16:]  # Remove "list of list of "
             inner_py = type_map.get(inner.lower(), inner)
-            return f"list[list[{inner_py}]]"
-
+            base_type = f"list[list[{inner_py}]]"
         # Handle "list of X"
-        if type_str.startswith("list of "):
+        elif type_str.startswith("list of "):
             inner = type_str[8:]  # Remove "list of "
             inner_py = type_map.get(inner.lower(), inner)
-            return f"list[{inner_py}]"
+            base_type = f"list[{inner_py}]"
+        else:
+            base_type = type_map.get(type_str.lower(), type_str)
 
-        return type_map.get(type_str.lower(), type_str)
+        # Check if input is marked optional in constraints - wrap in Optional[]
+        is_optional = any(c.lower().strip() == "optional" for c in self.constraints)
+        if is_optional:
+            return f"Optional[{base_type}]"
+
+        return base_type
 
 
 @dataclass
@@ -266,8 +272,8 @@ class ANLU:
         if returns.lower() in type_map:
             return type_map[returns.lower()]
 
-        # Check if it's a custom type name (capitalized)
-        if returns and returns[0].isupper():
+        # Check if it's a custom type name (capitalized, no spaces)
+        if returns and returns[0].isupper() and " " not in returns:
             # If it's a constructor call like "Point(1, 2)", extract "Point"
             if "(" in returns:
                 return returns.split("(")[0]
@@ -316,7 +322,9 @@ class ANLU:
             # Otherwise it's probably a variable - use Any
             return "Any"
 
-        return type_map.get(returns, returns)
+        # If RETURNS contains spaces and isn't a recognized type/pattern,
+        # it's likely descriptive text or an expression - use Any
+        return type_map.get(returns, "Any")
 
     @property
     def python_name(self) -> str:
@@ -346,9 +354,16 @@ class TypeField:
         if self.type.startswith("list of "):
             inner = self.type[8:]  # Remove "list of "
             inner_py = type_map.get(inner, inner)
-            return f"list[{inner_py}]"
+            base_type = f"list[{inner_py}]"
+        else:
+            base_type = type_map.get(self.type, self.type)
 
-        return type_map.get(self.type, self.type)
+        # Check if field is optional - wrap in Optional[]
+        is_optional = any(c.lower().strip() == "optional" for c in self.constraints)
+        if is_optional:
+            return f"Optional[{base_type}]"
+
+        return base_type
 
 
 @dataclass

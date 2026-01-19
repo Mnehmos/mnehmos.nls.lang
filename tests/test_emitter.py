@@ -3,7 +3,7 @@
 import pytest
 
 from nlsc.parser import parse_nl_file
-from nlsc.emitter import emit_python, emit_anlu, _is_safe_numeric
+from nlsc.emitter import emit_python, emit_anlu, _is_safe_numeric, _is_valid_return_expr
 
 
 class TestEmitMath:
@@ -192,3 +192,96 @@ class TestSecurityValidation:
         # The malicious constraint should NOT appear in output
         assert "import os" not in code
         assert "__import__" not in code
+
+
+class TestValidReturnExpr:
+    """Tests for _is_valid_return_expr - validates return expressions"""
+
+    @pytest.mark.parametrize("expr", [
+        "a + b",
+        "(a + b) / 2",
+        "x",
+        "result",
+        "123",
+        "3.14",
+        "task.status.value",
+        "len(items)",
+        'task.status.value in ["pending", "in_progress"]',
+        "1 if x > 0 else 0",
+        "(estimate.optimistic + 4 * estimate.realistic + estimate.pessimistic) / 6",
+        "TimeEstimate(opt, real, pess)",
+        "{}",
+        "[]",
+        "[x for x in items]",
+        "sum(values)",
+        "a == b",
+        "x > 0 and y < 10",
+    ])
+    def test_valid_expressions(self, expr):
+        assert _is_valid_return_expr(expr), f"Should be valid: {expr}"
+
+    @pytest.mark.parametrize("expr", [
+        "weight based on priority value",
+        "highest priority",
+        "count of matching tasks",
+        "TimeEstimate with summed values",
+        "user with lowest workload",
+        "updated task with no assignee",
+        "tasks with matching tag",
+        "",
+    ])
+    def test_invalid_descriptive_text(self, expr):
+        assert not _is_valid_return_expr(expr), f"Should be invalid: {expr}"
+
+
+class TestDescriptiveReturnsEmitNotImplemented:
+    """Tests that descriptive RETURNS generate NotImplementedError"""
+
+    def test_descriptive_returns_emits_not_implemented(self):
+        source = """\
+@module test
+@target python
+
+[func]
+PURPOSE: Test function with descriptive return
+INPUTS:
+  - x: number
+RETURNS: calculated result based on input
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        assert "NotImplementedError" in code
+        assert "TODO:" in code
+
+    def test_valid_returns_emits_return_statement(self):
+        source = """\
+@module test
+@target python
+
+[func]
+PURPOSE: Test function with valid return expression
+INPUTS:
+  - x: number
+RETURNS: x * 2
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        assert "return x * 2" in code
+        assert "NotImplementedError" not in code
+
+    def test_descriptive_returns_has_any_return_type(self):
+        source = """\
+@module test
+@target python
+
+[func]
+PURPOSE: Test function
+INPUTS:
+  - x: number
+RETURNS: weight based on priority value
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        # Should use Any as return type, not the descriptive text
+        assert "-> Any:" in code
+        assert "-> weight based on priority value:" not in code
