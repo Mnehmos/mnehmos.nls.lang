@@ -327,32 +327,69 @@
       "value": "[^\\n]+"
     },
     "inputs_section": {
-      "type": "SEQ",
+      "type": "CHOICE",
       "members": [
         {
-          "type": "FIELD",
-          "name": "header",
-          "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "PATTERN",
-              "value": "INPUTS:",
-              "flags": "i"
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "header",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "PATTERN",
+                  "value": "INPUTS:",
+                  "flags": "i"
+                },
+                "named": true,
+                "value": "section_keyword"
+              }
             },
-            "named": true,
-            "value": "section_keyword"
-          }
+            {
+              "type": "ALIAS",
+              "content": {
+                "type": "STRING",
+                "value": "none"
+              },
+              "named": true,
+              "value": "none_marker"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "_newline"
+            }
+          ]
         },
         {
-          "type": "SYMBOL",
-          "name": "_newline"
-        },
-        {
-          "type": "REPEAT1",
-          "content": {
-            "type": "SYMBOL",
-            "name": "input_item"
-          }
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "header",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "PATTERN",
+                  "value": "INPUTS:",
+                  "flags": "i"
+                },
+                "named": true,
+                "value": "section_keyword"
+              }
+            },
+            {
+              "type": "SYMBOL",
+              "name": "_newline"
+            },
+            {
+              "type": "REPEAT1",
+              "content": {
+                "type": "SYMBOL",
+                "name": "input_item"
+              }
+            }
+          ]
         }
       ]
     },
@@ -671,7 +708,7 @@
     },
     "step_number": {
       "type": "PATTERN",
-      "value": "\\d+"
+      "value": "\\d+|[a-z]"
     },
     "logic_step": {
       "type": "SEQ",

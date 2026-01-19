@@ -625,6 +625,10 @@
         {
           "type": "input_item",
           "named": true
+        },
+        {
+          "type": "none_marker",
+          "named": true
         }
       ]
     }
@@ -1566,16 +1570,20 @@
     "named": false
   },
   {
+    "type": "none_marker",
+    "named": true
+  },
+  {
     "type": "not",
     "named": false
   },
   {
     "type": "number",
-    "named": true
+    "named": false
   },
   {
     "type": "number",
-    "named": false
+    "named": true
   },
   {
     "type": "of",

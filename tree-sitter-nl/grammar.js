@@ -100,12 +100,21 @@ module.exports = grammar({
 
     description_text: ($) => /[^\n]+/,
 
-    // INPUTS: bulleted list of parameters
+    // INPUTS: bulleted list of parameters, or "INPUTS: none" for no parameters
     inputs_section: ($) =>
-      seq(
-        field("header", alias(/INPUTS:/i, $.section_keyword)),
-        $._newline,
-        repeat1($.input_item)
+      choice(
+        // INPUTS: none (no parameters)
+        seq(
+          field("header", alias(/INPUTS:/i, $.section_keyword)),
+          alias("none", $.none_marker),
+          $._newline
+        ),
+        // INPUTS: followed by bulleted items
+        seq(
+          field("header", alias(/INPUTS:/i, $.section_keyword)),
+          $._newline,
+          repeat1($.input_item)
+        )
       ),
 
     input_item: ($) =>
@@ -175,7 +184,8 @@ module.exports = grammar({
     logic_item: ($) =>
       seq(field("number", $.step_number), ".", $.logic_step, $._newline),
 
-    step_number: ($) => /\d+/,
+    // Support both numbered steps (1., 2.) and lettered sub-steps (a., b.)
+    step_number: ($) => /\d+|[a-z]/,
 
     logic_step: ($) =>
       seq(

@@ -43,6 +43,13 @@ class Input:
 
         type_str = self.type.strip()
 
+        # Handle Type? suffix syntax (nullable shorthand)
+        # Strip the ? and mark as optional
+        suffix_optional = False
+        if type_str.endswith("?"):
+            type_str = type_str[:-1]  # Remove trailing ?
+            suffix_optional = True
+
         # Handle "X or null" / "X or none" → Optional[X]
         if " or null" in type_str.lower() or " or none" in type_str.lower():
             # Extract the non-null type
@@ -63,8 +70,8 @@ class Input:
         else:
             base_type = type_map.get(type_str.lower(), type_str)
 
-        # Check if input is marked optional in constraints - wrap in Optional[]
-        is_optional = any(c.lower().strip() == "optional" for c in self.constraints)
+        # Check if input is marked optional in constraints OR had ? suffix
+        is_optional = suffix_optional or any(c.lower().strip() == "optional" for c in self.constraints)
         if is_optional:
             return f"Optional[{base_type}]"
 
@@ -350,16 +357,27 @@ class TypeField:
             "any": "Any",
         }
 
+        type_str = self.type.strip()
+
+        # Handle Type? suffix syntax (nullable shorthand)
+        suffix_optional = False
+        if type_str.endswith("?"):
+            type_str = type_str[:-1]  # Remove trailing ?
+            suffix_optional = True
+
         # Handle "list of X"
-        if self.type.startswith("list of "):
-            inner = self.type[8:]  # Remove "list of "
+        if type_str.startswith("list of "):
+            inner = type_str[8:]  # Remove "list of "
+            # Strip ? from inner type too
+            if inner.endswith("?"):
+                inner = inner[:-1]
             inner_py = type_map.get(inner, inner)
             base_type = f"list[{inner_py}]"
         else:
-            base_type = type_map.get(self.type, self.type)
+            base_type = type_map.get(type_str, type_str)
 
         # Check if field is optional - wrap in Optional[]
-        is_optional = any(c.lower().strip() == "optional" for c in self.constraints)
+        is_optional = suffix_optional or any(c.lower().strip() == "optional" for c in self.constraints)
         if is_optional:
             return f"Optional[{base_type}]"
 

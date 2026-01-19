@@ -653,10 +653,25 @@ def emit_python(nl_file: NLFile, mode: str = "mock") -> str:
             lines.append(imp)
         lines.append("")
 
-    # Add user-specified imports (use relative star import for cross-module type access)
+    # Add user-specified imports
+    # Standard library modules use regular import, custom modules use relative import
+    STDLIB_MODULES = {
+        "os", "sys", "re", "json", "math", "random", "time", "datetime",
+        "collections", "itertools", "functools", "typing", "pathlib",
+        "threading", "multiprocessing", "ctypes", "subprocess", "io",
+        "copy", "pickle", "hashlib", "base64", "urllib", "http",
+        "logging", "unittest", "dataclasses", "abc", "enum", "asyncio",
+        "socket", "struct", "array", "queue", "heapq", "bisect",
+        "statistics", "decimal", "fractions", "operator", "contextlib",
+    }
     if nl_file.module.imports:
         for imp in nl_file.module.imports:
-            lines.append(f"from .{imp.strip()} import *")
+            imp_name = imp.strip()
+            if imp_name in STDLIB_MODULES:
+                lines.append(f"import {imp_name}")
+            else:
+                # Custom module - use relative import for cross-module type access
+                lines.append(f"from .{imp_name} import *")
         lines.append("")
 
     # Emit types first (before functions)

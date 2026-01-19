@@ -707,6 +707,54 @@ def _check_semantic_issues(nl_file: NLFile) -> list[lsp.Diagnostic]:
     """Check for semantic issues in parsed NLFile."""
     diagnostics: list[lsp.Diagnostic] = []
 
+    # Standard library modules that should use regular import
+    STDLIB_MODULES = {
+        "os", "sys", "re", "json", "math", "random", "time", "datetime",
+        "collections", "itertools", "functools", "typing", "pathlib",
+        "threading", "multiprocessing", "ctypes", "subprocess", "io",
+        "copy", "pickle", "hashlib", "base64", "urllib", "http",
+        "logging", "unittest", "dataclasses", "abc", "enum", "asyncio",
+    }
+
+    # Check @imports for any issues
+    if nl_file.module.imports:
+        for imp in nl_file.module.imports:
+            imp_name = imp.strip()
+            if imp_name in STDLIB_MODULES:
+                # Info: stdlib modules will be imported correctly
+                pass
+            elif imp_name and not imp_name[0].islower():
+                # Custom module names should be lowercase
+                diagnostics.append(
+                    lsp.Diagnostic(
+                        range=lsp.Range(
+                            start=lsp.Position(line=0, character=0),
+                            end=lsp.Position(line=0, character=100),
+                        ),
+                        message=f"Import '{imp_name}' should be lowercase for custom modules",
+                        severity=lsp.DiagnosticSeverity.Hint,
+                        source="nlsc",
+                    )
+                )
+
+    # Check type definitions for invalid syntax
+    for type_def in nl_file.module.types:
+        type_line = max(0, type_def.line_number - 1) if type_def.line_number else 0
+        for field in type_def.fields:
+            # Check for type? syntax with redundant optional constraint
+            if field.type.endswith("?") and "optional" in [c.lower() for c in field.constraints]:
+                diagnostics.append(
+                    lsp.Diagnostic(
+                        range=lsp.Range(
+                            start=lsp.Position(line=type_line, character=0),
+                            end=lsp.Position(line=type_line + 5, character=100),
+                        ),
+                        message=f"Field '{field.name}' uses both '?' suffix and 'optional' constraint - redundant",
+                        severity=lsp.DiagnosticSeverity.Hint,
+                        source="nlsc",
+                    )
+                )
+
     # Build set of all defined ANLU names for validation
     defined_anlus = {a.identifier for a in nl_file.anlus}
 
