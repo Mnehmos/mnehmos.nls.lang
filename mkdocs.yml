@@ -69,12 +69,23 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - Tutorials:
+    - Overview: tutorials/index.md
+    - Your First Module: tutorials/first-module.md
+    - Working with Types: tutorials/working-with-types.md
+    - Testing Guide: tutorials/testing-guide.md
+    - Real-World Patterns: tutorials/patterns.md
   - Language:
     - Specification: language-spec.md
+    - Type System: type-system.md
     - Core Semantics: core-semantics.md
+    - Examples: examples.md
   - Reference:
     - CLI Commands: cli-reference.md
+    - LLM Reference: llm-reference.md
+    - Error Reference: error-reference.md
     - Architecture: architecture.md
+    - Formal Grammar: nl-grammar.ebnf
 
 extra:
   social:

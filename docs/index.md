@@ -86,20 +86,42 @@ def divide(numerator: float, divisor: float) -> float:
 
 <div class="grid cards" markdown>
 
+- :material-rocket-launch: **[Tutorials](tutorials/index.md)**
+
+    Step-by-step learning path from first module to advanced patterns
+
+- :material-book-open: **[Language Spec](language-spec.md)**
+
+    Complete syntax reference for all NLS constructs
+
+- :material-code-braces: **[Examples](examples.md)**
+
+    Real-world examples: calculators, e-commerce, banking, auth
+
+- :material-robot: **[LLM Reference](llm-reference.md)**
+
+    AI-optimized documentation for training and inference
+
+</div>
+
+## Quick Links
+
+<div class="grid cards" markdown>
+
 - :material-download: **[Installation](getting-started.md#installation)**
 
     Install nlsc with pip or VS Code
 
 - :material-console: **[CLI Reference](cli-reference.md)**
 
-    All commands documented
+    All 11 commands documented
 
-- :material-book-open: **[Language Spec](language-spec.md)**
+- :material-cube-outline: **[Type System](type-system.md)**
 
-    Full syntax reference
+    Primitives, composites, and custom types
 
-- :material-cog: **[Architecture](architecture.md)**
+- :material-alert-circle: **[Error Reference](error-reference.md)**
 
-    How the compiler works
+    Troubleshooting guide for all error types
 
 </div>
