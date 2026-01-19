@@ -826,7 +826,7 @@
     },
     "step_text": {
       "type": "PATTERN",
-      "value": "[^\\n→-]+"
+      "value": "[^\\n→]*[^\\n→ \\t-]"
     },
     "output_binding": {
       "type": "SEQ",
