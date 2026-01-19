@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nlsc"
-version = "0.2.3"
+version = "0.2.4"
 description = "Natural Language Source Compiler - Compile .nl specs to executable code"
 readme = "README.md"
 license = {text = "MIT"}
@@ -64,6 +64,7 @@ include = ["nlsc*"]
 
 [tool.setuptools.package-data]
 nlsc = ["resources/*.ico"]
+"nlsc.grammars" = ["*.dll", "*.so", "*.dylib"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
