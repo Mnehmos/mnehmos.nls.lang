@@ -143,16 +143,25 @@ def _parse_main_block(source: str) -> list[str]:
     return main_buffer
 
 
-# Path to the tree-sitter-nl grammar
-GRAMMAR_PATH = Path(__file__).parent.parent / "tree-sitter-nl"
-
-# Platform-specific library extension
+# Determine platform-specific library name
 if sys.platform == "win32":
-    LANGUAGE_LIB_PATH = GRAMMAR_PATH / "build" / "nl.dll"
+    _LIB_NAME = "nl.dll"
 elif sys.platform == "darwin":
-    LANGUAGE_LIB_PATH = GRAMMAR_PATH / "build" / "nl.dylib"
+    _LIB_NAME = "nl.dylib"
 else:
-    LANGUAGE_LIB_PATH = GRAMMAR_PATH / "build" / "nl.so"
+    _LIB_NAME = "nl.so"
+
+# Path to bundled grammar (installed via pip)
+BUNDLED_GRAMMAR_PATH = Path(__file__).parent / "grammars" / _LIB_NAME
+
+# Path to development grammar (when running from source)
+DEV_GRAMMAR_PATH = Path(__file__).parent.parent / "tree-sitter-nl" / "build" / _LIB_NAME
+
+# Use bundled grammar if available, otherwise fall back to dev location
+if BUNDLED_GRAMMAR_PATH.exists():
+    LANGUAGE_LIB_PATH = BUNDLED_GRAMMAR_PATH
+else:
+    LANGUAGE_LIB_PATH = DEV_GRAMMAR_PATH
 
 
 _nl_language = None
@@ -189,8 +198,9 @@ def _get_parser() -> "Parser":
     # Check if the language library exists
     if not LANGUAGE_LIB_PATH.exists():
         raise FileNotFoundError(
-            f"Tree-sitter NL language library not found at {LANGUAGE_LIB_PATH}. "
-            f"Build it with: cd tree-sitter-nl && npx tree-sitter build -o build/nl.dll"
+            f"Tree-sitter NL language library not found. "
+            f"Checked: {BUNDLED_GRAMMAR_PATH} and {DEV_GRAMMAR_PATH}. "
+            f"Reinstall with: pip install --force-reinstall nlsc"
         )
 
     # Load the language from compiled library
