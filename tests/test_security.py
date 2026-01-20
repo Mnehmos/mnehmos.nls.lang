@@ -215,15 +215,14 @@ class TestInputValidation:
         assert result is not None
 
     def test_null_bytes_rejected(self):
-        """Null bytes in source should be rejected or handled"""
+        """Null bytes in source should be rejected by the emitter"""
+        from nlsc.emitter import EmitterError
         source = "@module test\x00\n@target python\n\n[test]\nPURPOSE: Test\nRETURNS: void"
-        # Note: Currently null bytes pass through to output
-        # This documents current behavior - ideally would strip or reject
         nl_file = parse_nl_file(source)
-        code = emit_python(nl_file)
-        # Document that this is a known limitation
-        # TODO: Strip null bytes from input (see Issue #78)
-        assert code is not None
+        # Emitter validation now correctly rejects null bytes
+        with pytest.raises(EmitterError) as exc_info:
+            emit_python(nl_file)
+        assert "null bytes" in str(exc_info.value).lower()
 
     def test_very_long_identifiers_handled(self):
         """Very long identifiers should not cause issues"""
