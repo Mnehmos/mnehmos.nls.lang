@@ -89,9 +89,10 @@ ParseError: ANLU 'calculate-tax' missing required PURPOSE section
 **Fix:**
 ```nl
 [calculate-tax]
-PURPOSE: Calculate tax amount from income and rate   # Add this
+PURPOSE: Calculate tax amount from income and rate
 INPUTS:
   - income: number
+  - rate: number
 RETURNS: income * rate
 ```
 

@@ -12,7 +12,7 @@ Learn NLS through practical, hands-on examples. Each tutorial builds on concepts
 
     Build a calculator module from scratch. Learn directives, ANLUs, and basic compilation.
 
-    [:octicons-arrow-right-24: Start here](#)
+    [:octicons-arrow-right-24: Start here](first-module.md)
 
 -   :material-numeric-2-circle: **[Working with Types](working-with-types.md)**
 
@@ -20,7 +20,7 @@ Learn NLS through practical, hands-on examples. Each tutorial builds on concepts
 
     Define custom types, use constraints, and model domain objects.
 
-    [:octicons-arrow-right-24: Types tutorial](#)
+    [:octicons-arrow-right-24: Types tutorial](working-with-types.md)
 
 -   :material-numeric-3-circle: **[Testing Your Code](testing-guide.md)**
 
@@ -28,7 +28,7 @@ Learn NLS through practical, hands-on examples. Each tutorial builds on concepts
 
     Write `@test` blocks, property-based tests, and type invariants.
 
-    [:octicons-arrow-right-24: Testing tutorial](#)
+    [:octicons-arrow-right-24: Testing tutorial](testing-guide.md)
 
 -   :material-numeric-4-circle: **[Real-World Patterns](patterns.md)**
 
@@ -36,7 +36,7 @@ Learn NLS through practical, hands-on examples. Each tutorial builds on concepts
 
     Validation, factories, state machines, and common idioms.
 
-    [:octicons-arrow-right-24: Patterns tutorial](#)
+    [:octicons-arrow-right-24: Patterns tutorial](patterns.md)
 
 </div>
 
