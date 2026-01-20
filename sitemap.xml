@@ -2,34 +2,70 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://mnehmos.github.io/mnehmos.nls.lang/</loc>
-         <lastmod>2026-01-18</lastmod>
+         <lastmod>2026-01-20</lastmod>
     </url>
     <url>
          <loc>https://mnehmos.github.io/mnehmos.nls.lang/antigravity_prompt/</loc>
-         <lastmod>2026-01-18</lastmod>
+         <lastmod>2026-01-20</lastmod>
     </url>
     <url>
          <loc>https://mnehmos.github.io/mnehmos.nls.lang/architecture/</loc>
-         <lastmod>2026-01-18</lastmod>
+         <lastmod>2026-01-20</lastmod>
     </url>
     <url>
          <loc>https://mnehmos.github.io/mnehmos.nls.lang/cli-reference/</loc>
-         <lastmod>2026-01-18</lastmod>
+         <lastmod>2026-01-20</lastmod>
     </url>
     <url>
          <loc>https://mnehmos.github.io/mnehmos.nls.lang/core-semantics/</loc>
-         <lastmod>2026-01-18</lastmod>
+         <lastmod>2026-01-20</lastmod>
+    </url>
+    <url>
+         <loc>https://mnehmos.github.io/mnehmos.nls.lang/error-reference/</loc>
+         <lastmod>2026-01-20</lastmod>
+    </url>
+    <url>
+         <loc>https://mnehmos.github.io/mnehmos.nls.lang/examples/</loc>
+         <lastmod>2026-01-20</lastmod>
     </url>
     <url>
          <loc>https://mnehmos.github.io/mnehmos.nls.lang/getting-started/</loc>
-         <lastmod>2026-01-18</lastmod>
+         <lastmod>2026-01-20</lastmod>
     </url>
     <url>
          <loc>https://mnehmos.github.io/mnehmos.nls.lang/language-spec/</loc>
-         <lastmod>2026-01-18</lastmod>
+         <lastmod>2026-01-20</lastmod>
+    </url>
+    <url>
+         <loc>https://mnehmos.github.io/mnehmos.nls.lang/llm-reference/</loc>
+         <lastmod>2026-01-20</lastmod>
     </url>
     <url>
          <loc>https://mnehmos.github.io/mnehmos.nls.lang/parser-performance/</loc>
-         <lastmod>2026-01-18</lastmod>
+         <lastmod>2026-01-20</lastmod>
+    </url>
+    <url>
+         <loc>https://mnehmos.github.io/mnehmos.nls.lang/type-system/</loc>
+         <lastmod>2026-01-20</lastmod>
+    </url>
+    <url>
+         <loc>https://mnehmos.github.io/mnehmos.nls.lang/tutorials/</loc>
+         <lastmod>2026-01-20</lastmod>
+    </url>
+    <url>
+         <loc>https://mnehmos.github.io/mnehmos.nls.lang/tutorials/first-module/</loc>
+         <lastmod>2026-01-20</lastmod>
+    </url>
+    <url>
+         <loc>https://mnehmos.github.io/mnehmos.nls.lang/tutorials/patterns/</loc>
+         <lastmod>2026-01-20</lastmod>
+    </url>
+    <url>
+         <loc>https://mnehmos.github.io/mnehmos.nls.lang/tutorials/testing-guide/</loc>
+         <lastmod>2026-01-20</lastmod>
+    </url>
+    <url>
+         <loc>https://mnehmos.github.io/mnehmos.nls.lang/tutorials/working-with-types/</loc>
+         <lastmod>2026-01-20</lastmod>
     </url>
 </urlset>
