@@ -43,6 +43,19 @@ PATTERNS = {
 }
 
 
+SAFE_IMPORT_TOKEN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$")
+
+
+def _validate_import_token(token: str, line_num: int) -> str:
+    """Validate a single @imports token and raise ParseError when unsafe."""
+    candidate = token.strip()
+    if not candidate:
+        raise ParseError("Invalid import token in @imports directive", line_num, token)
+    if not SAFE_IMPORT_TOKEN.match(candidate):
+        raise ParseError(f"Unsafe import token in @imports: {candidate}", line_num, token)
+    return candidate
+
+
 def parse_input(text: str) -> Input:
     """
     Parse an input line like:
@@ -374,7 +387,10 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             elif directive_type == "target":
                 module.target = directive_value
             elif directive_type == "imports":
-                module.imports = [i.strip() for i in directive_value.split(",")]
+                module.imports = [
+                    _validate_import_token(i, line_num)
+                    for i in directive_value.split(",")
+                ]
             elif directive_type == "main":
                 # Start main block
                 in_main_block = True

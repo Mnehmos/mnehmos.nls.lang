@@ -191,59 +191,61 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
     """Read an existing lockfile (enhanced YAML-like parser with generated_code support)"""
     if not path.exists():
         return None
+    try:
+        content = path.read_text(encoding="utf-8")
+        lockfile = Lockfile()
 
-    content = path.read_text(encoding="utf-8")
-    lockfile = Lockfile()
+        current_module_name = None
+        current_section = None
+        current_anlu_id = None
+        current_anlu_data: dict = {}
+        in_generated_code = False
+        generated_code_lines: list[str] = []
 
-    current_module_name = None
-    current_anlu_id = None
-    current_anlu_data: dict = {}
-    in_generated_code = False
-    generated_code_lines: list[str] = []
+        lines = content.split("\n")
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            line_stripped = line.rstrip()
 
-    lines = content.split("\n")
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        line_stripped = line.rstrip()
+            # Handle generated_code multiline block continuation FIRST
+            # (must check before skipping empty lines - code blocks can have empty lines)
+            if in_generated_code:
+                # Check if still in generated_code block by looking at raw indentation
+                raw_indent = len(line) - len(line.lstrip()) if line.strip() else len(line)
+                if raw_indent >= 10 or (not line.strip() and raw_indent >= 10):
+                    # Still in generated_code block (indented at least 10 spaces)
+                    # Remove the 10-space prefix
+                    code_line = line[10:].rstrip() if len(line) > 10 else ""
+                    generated_code_lines.append(code_line)
+                    i += 1
+                    continue
+                elif not line.strip():
+                    # Empty line at lower indent - end of block
+                    if current_anlu_id and current_anlu_data:
+                        current_anlu_data["generated_code"] = "\n".join(generated_code_lines)
+                    in_generated_code = False
+                    generated_code_lines = []
+                    i += 1
+                    continue
+                else:
+                    # End of generated_code block (non-empty line at lower indent)
+                    if current_anlu_id and current_anlu_data:
+                        current_anlu_data["generated_code"] = "\n".join(generated_code_lines)
+                    in_generated_code = False
+                    generated_code_lines = []
 
-        # Handle generated_code multiline block continuation FIRST
-        # (must check before skipping empty lines - code blocks can have empty lines)
-        if in_generated_code:
-            # Check if still in generated_code block by looking at raw indentation
-            raw_indent = len(line) - len(line.lstrip()) if line.strip() else len(line)
-            if raw_indent >= 10 or (not line.strip() and raw_indent >= 10):
-                # Still in generated_code block (indented at least 10 spaces)
-                # Remove the 10-space prefix
-                code_line = line[10:].rstrip() if len(line) > 10 else ""
-                generated_code_lines.append(code_line)
+            # Skip comments and empty lines
+            if line_stripped.startswith("#") or not line_stripped.strip():
                 i += 1
                 continue
-            elif not line.strip():
-                # Empty line at lower indent - end of block
-                if current_anlu_id and current_anlu_data:
-                    current_anlu_data["generated_code"] = "\n".join(generated_code_lines)
-                in_generated_code = False
-                generated_code_lines = []
-                i += 1
-                continue
-            else:
-                # End of generated_code block (non-empty line at lower indent)
-                if current_anlu_id and current_anlu_data:
-                    current_anlu_data["generated_code"] = "\n".join(generated_code_lines)
-                in_generated_code = False
-                generated_code_lines = []
 
-        # Skip comments and empty lines
-        if line_stripped.startswith("#") or not line_stripped.strip():
-            i += 1
-            continue
+            # Parse key-value pairs
+            if ":" not in line_stripped:
+                return None
 
-        # Count indentation
-        indent = len(line_stripped) - len(line_stripped.lstrip())
-
-        # Parse key-value pairs
-        if ":" in line_stripped:
+            # Count indentation
+            indent = len(line_stripped) - len(line_stripped.lstrip())
             key, _, value = line_stripped.strip().partition(":")
             value = value.strip()
 
@@ -258,18 +260,24 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
                 elif key == "llm_backend":
                     lockfile.llm_backend = value
                 elif key == "modules":
+                    current_section = "modules"
                     pass  # Section header
                 elif key == "targets":
+                    current_section = "targets"
                     # Save current module before switching to targets
                     if current_module_name and current_anlu_id and current_anlu_data:
                         _save_anlu_to_lockfile(lockfile, current_module_name, current_anlu_id, current_anlu_data)
                     current_module_name = None
                     current_anlu_id = None
                     current_anlu_data = {}
+                else:
+                    return None
 
             elif indent == 2:
-                # Module name (under modules:) or target entry
-                if key not in ("source_hash", "anlus", "file", "hash", "lines"):
+                if current_section == "modules":
+                    # Module name under modules:
+                    if key in ("source_hash", "anlus", "file", "hash", "lines"):
+                        return None
                     # Save previous ANLU if exists
                     if current_module_name and current_anlu_id and current_anlu_data:
                         _save_anlu_to_lockfile(lockfile, current_module_name, current_anlu_id, current_anlu_data)
@@ -279,22 +287,41 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
                     # Initialize module if not exists
                     if current_module_name not in lockfile.modules:
                         lockfile.modules[current_module_name] = ModuleLock(source_hash="")
+                elif current_section == "targets":
+                    lockfile.targets[key] = TargetLock(file="", hash="", lines=0)
+                    current_module_name = key
+                else:
+                    return None
 
             elif indent == 4:
                 # Module properties: source_hash, anlus
-                if key == "source_hash" and current_module_name:
-                    lockfile.modules[current_module_name].source_hash = value
-                elif key == "anlus":
-                    pass  # ANLUs section header
+                if current_section == "modules":
+                    if key == "source_hash" and current_module_name:
+                        lockfile.modules[current_module_name].source_hash = value
+                    elif key == "anlus":
+                        pass  # ANLUs section header
+                    else:
+                        return None
+                elif current_section == "targets" and current_module_name:
+                    if key == "file":
+                        lockfile.targets[current_module_name].file = value
+                    elif key == "hash":
+                        lockfile.targets[current_module_name].hash = value
+                    elif key == "lines":
+                        lockfile.targets[current_module_name].lines = int(value) if value else 0
+                    else:
+                        return None
+                else:
+                    return None
 
-            elif indent == 6 and current_module_name:
+            elif indent == 6 and current_module_name and current_section == "modules":
                 # ANLU ID - save previous ANLU first
                 if current_anlu_id and current_anlu_data:
                     _save_anlu_to_lockfile(lockfile, current_module_name, current_anlu_id, current_anlu_data)
                 current_anlu_id = key
                 current_anlu_data = {}
 
-            elif indent == 8 and current_anlu_id:
+            elif indent == 8 and current_anlu_id and current_section == "modules":
                 # ANLU property
                 if key == "generated_code" and value == "|":
                     # Start of multiline block
@@ -302,14 +329,18 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
                     generated_code_lines = []
                 else:
                     current_anlu_data[key] = value
+            else:
+                return None
 
-        i += 1
+            i += 1
 
-    # Save last ANLU
-    if current_module_name and current_anlu_id and current_anlu_data:
-        _save_anlu_to_lockfile(lockfile, current_module_name, current_anlu_id, current_anlu_data)
+        # Save last ANLU
+        if current_module_name and current_anlu_id and current_anlu_data:
+            _save_anlu_to_lockfile(lockfile, current_module_name, current_anlu_id, current_anlu_data)
 
-    return lockfile
+        return lockfile
+    except (OSError, UnicodeDecodeError, ValueError, TypeError):
+        return None
 
 
 def _save_anlu_to_lockfile(lockfile: Lockfile, module_name: str, anlu_id: str, data: dict) -> None:
