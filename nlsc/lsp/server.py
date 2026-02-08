@@ -16,6 +16,8 @@ import re
 from lsprotocol import types as lsp
 from pygls.lsp.server import LanguageServer
 
+# Keep the server's advertised version single-sourced from the package version.
+from nlsc import __version__ as NLSC_VERSION
 from nlsc.lsp.analysis import (
     SymbolLocation,
     find_all_references,
@@ -40,7 +42,7 @@ class NLSLanguageServer(LanguageServer):
     def __init__(self) -> None:
         super().__init__(
             name="nls-language-server",
-            version="0.2.3",
+            version=NLSC_VERSION,
             text_document_sync_kind=lsp.TextDocumentSyncKind.Full,
         )
         # Cache of parsed files: uri -> NLFile
@@ -699,10 +701,6 @@ def _parse_and_publish_diagnostics(
         lsp.PublishDiagnosticsParams(uri=uri, diagnostics=diagnostics)
     )
 
-
-
-
-
 def _check_semantic_issues(nl_file: NLFile) -> list[lsp.Diagnostic]:
     """Check for semantic issues in parsed NLFile."""
     diagnostics: list[lsp.Diagnostic] = []
@@ -807,7 +805,6 @@ def _check_semantic_issues(nl_file: NLFile) -> list[lsp.Diagnostic]:
         for step in anlu.logic_steps:
             # Check for undefined ANLU references in logic
             # Regex to find [anlu-name] in description
-            import re
             for m in re.finditer(r'\[([a-zA-Z][a-zA-Z0-9_-]*)\]', step.description):
                 ref_name = m.group(1)
                 if ref_name not in defined_anlus:
