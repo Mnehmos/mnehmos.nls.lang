@@ -17,6 +17,7 @@ Commands:
 
 import argparse
 import os
+import py_compile
 import subprocess
 import sys
 import tempfile
@@ -211,6 +212,16 @@ def cmd_compile(args: argparse.Namespace) -> int:
     output_path.write_text(python_code, encoding="utf-8")
     line_count = python_code.count("\n") + 1
     print(f"  {_check()} Generated {output_path.name} ({line_count} lines)")
+
+    # Validate generated Python syntax before proceeding
+    try:
+        py_compile.compile(str(output_path), doraise=True)
+    except py_compile.PyCompileError as e:
+        print(
+            f"  {_cross()} py_compile validation failed for {output_path}: {e}",
+            file=sys.stderr,
+        )
+        return 1
 
     # Generate tests if present
     test_code = emit_tests(nl_file)
