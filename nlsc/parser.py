@@ -543,6 +543,18 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                         line_num,
                         line,
                     )
+                if current_section == "guards":
+                    raise ParseError(
+                        "Invalid GUARDS bullet marker; expected one of: •, -, *",
+                        line_num,
+                        line,
+                    )
+                if current_section == "logic":
+                    raise ParseError(
+                        "Invalid LOGIC step format; expected numbered step like '1. ...'",
+                        line_num,
+                        line,
+                    )
 
         # Parse type fields
         if current_type:
