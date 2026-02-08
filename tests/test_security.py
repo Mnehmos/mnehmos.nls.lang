@@ -145,6 +145,46 @@ RETURNS: void
             pass
 
 
+class TestImportDirectiveHardening:
+    """Regression tests for unsafe @imports token rejection (Issue #78)."""
+
+    @pytest.mark.parametrize(
+        "unsafe_import_token",
+        [
+            "..",
+            "../secrets",
+            "subdir/module",
+            "subdir\\module",
+            "/etc/passwd",
+            "C:\\Windows\\System32",
+            "__import__('os')",
+            "os.system('calc')",
+        ],
+    )
+    def test_should_raise_parse_error_when_imports_contains_unsafe_token(self, unsafe_import_token):
+        """Parser should reject traversal, absolute-like, and code-like @imports tokens with explicit ParseError."""
+        source = f"""\
+@module security_test
+@target python
+@imports safe_module, {unsafe_import_token}
+
+[hello]
+PURPOSE: Validate import tokens
+RETURNS: void
+"""
+
+        with pytest.raises(ParseError) as exc_info:
+            parse_nl_file(source)
+
+        error_text = str(exc_info.value).lower()
+        assert "import" in error_text, (
+            "ParseError must explicitly mention import directive validation for unsafe @imports tokens."
+        )
+        assert "unsafe" in error_text or "invalid" in error_text or "path" in error_text, (
+            "ParseError must describe why the token is rejected (unsafe/invalid/path-like)."
+        )
+
+
 class TestOutputSanitization:
     """Tests for output code sanitization"""
 

@@ -399,3 +399,61 @@ RETURNS: a + b + c
         args = Namespace(file=str(nl_file))
         result = cmd_lock_check(args)
         assert result == 1
+
+
+class TestMalformedLockfileHardening:
+    """Regression tests for deterministic malformed lockfile handling (Issue #78)."""
+
+    @pytest.mark.parametrize(
+        "malformed_content",
+        [
+            "schema_version: not_an_int\nmodules:\n",
+            "schema_version: 1\nmodules:\n  m:\n    anlus:\n      a:\n        output_lines: NaN\n",
+            "schema_version: 1\nmodules:\n  m:\n    anlus:\n      a:\n        output_lines:\n",
+            "schema_version: 1\nmodules\n  broken: true\n",
+            "\x00\x01\x02not-yaml-like\n",
+        ],
+    )
+    def test_should_return_none_when_lockfile_content_is_malformed(self, tmp_path, malformed_content):
+        """read_lockfile should return None for malformed/fuzzed lockfile data instead of raising uncaught exceptions."""
+        lock_path = tmp_path / "malformed.nl.lock"
+        lock_path.write_text(malformed_content, encoding="utf-8", errors="ignore")
+
+        result = read_lockfile(lock_path)
+
+        assert result is None, (
+            "Malformed lockfile input must be treated as invalid and return None deterministically."
+        )
+
+    def test_should_return_none_when_lockfile_has_truncated_generated_code_block(self, tmp_path):
+        """read_lockfile should deterministically return None for truncated generated_code blocks."""
+        truncated = """\
+schema_version: 1
+generated_at: 2026-02-08T00:00:00+00:00
+compiler_version: 0.0.0
+llm_backend: mock
+modules:
+  test:
+    source_hash: sha256:abc
+    anlus:
+      add:
+        source_hash: sha256:def
+        output_hash: sha256:ghi
+        output_lines: 3
+        generated_code: |
+          def add(a, b):
+            return a + b
+     targets:
+  python:
+    file: test.py
+    hash: sha256:zzz
+    lines: 1
+"""
+        lock_path = tmp_path / "truncated.nl.lock"
+        lock_path.write_text(truncated, encoding="utf-8")
+
+        result = read_lockfile(lock_path)
+
+        assert result is None, (
+            "Malformed indentation/truncated multiline blocks must not be parsed into partial lockfile objects."
+        )
