@@ -585,6 +585,10 @@ def emit_body_mock(anlu: ANLU) -> str:
 
     # Check if it's a simple expression with known operators
     if re.match(r"^[a-z_][a-z0-9_]*\s*[\+\-\*\/]\s*[a-z_][a-z0-9_]*$", expr, re.IGNORECASE):
+        if anlu.guards:
+            lines = emit_guards(anlu)
+            lines.append(f"    return {expr}")
+            return "\n".join(lines)
         return f"    return {expr}"
 
     # Check for function-like returns: "result with field1, field2"
