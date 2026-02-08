@@ -56,14 +56,21 @@ def resolve_dependencies(nl_file: NLFile) -> ResolverResult:
     # Build lookup map
     anlu_map = {anlu.identifier: anlu for anlu in nl_file.anlus}
 
-    # Check for missing dependencies
-    for anlu in nl_file.anlus:
+    def dependency_ids(anlu: ANLU, *, allow_self: bool) -> list[str]:
+        """Return normalized dependency IDs, excluding placeholder dependencies."""
+        deps: list[str] = []
         for dep in anlu.depends:
-            # Strip brackets if present [dep-name] -> dep-name
             dep_id = dep.strip("[]")
-            # Skip "none" as it's a placeholder meaning no dependencies
             if dep_id.lower() == "none":
                 continue
+            if allow_self and dep_id == anlu.identifier:
+                continue
+            deps.append(dep_id)
+        return deps
+
+    # Check for missing dependencies
+    for anlu in nl_file.anlus:
+        for dep_id in dependency_ids(anlu, allow_self=False):
             if dep_id not in anlu_map:
                 result.errors.append(ResolutionError(
                     anlu_id=anlu.identifier,
@@ -74,26 +81,15 @@ def resolve_dependencies(nl_file: NLFile) -> ResolverResult:
     if result.errors:
         return result
 
-    # Topological sort using Kahn's algorithm
-    # Count incoming edges (dependencies pointing to each node)
-    {anlu.identifier: 0 for anlu in nl_file.anlus}
-
-    for anlu in nl_file.anlus:
-        for dep in anlu.depends:
-            dep_id = dep.strip("[]")
-            # The current ANLU depends on dep_id, so current has in_degree from dep
-            # But we want to track: who depends on me?
-            pass
-
-    # Helper to filter out "none" placeholder from dependencies
-    def real_deps(anlu: ANLU) -> list[str]:
-        return [d for d in anlu.depends if d.strip("[]").lower() != "none"]
-
-    # Actually, let's track: for each ANLU, how many unresolved deps does it have?
-    unresolved = {anlu.identifier: len(real_deps(anlu)) for anlu in nl_file.anlus}
+    # Topological sort using unresolved dependency counts per ANLU.
+    # Self-recursive dependencies are treated as valid declarations, not cycles.
+    unresolved = {
+        anlu.identifier: len(dependency_ids(anlu, allow_self=True))
+        for anlu in nl_file.anlus
+    }
 
     # Start with ANLUs that have no dependencies
-    ready = [anlu for anlu in nl_file.anlus if not real_deps(anlu)]
+    ready = [anlu for anlu in nl_file.anlus if not dependency_ids(anlu, allow_self=True)]
     resolved = set()
 
     while ready:
@@ -108,8 +104,7 @@ def resolve_dependencies(nl_file: NLFile) -> ResolverResult:
                 continue
 
             # Check if this ANLU depends on current
-            for dep in anlu.depends:
-                dep_id = dep.strip("[]")
+            for dep_id in dependency_ids(anlu, allow_self=True):
                 if dep_id == current.identifier:
                     unresolved[anlu.identifier] -= 1
 
