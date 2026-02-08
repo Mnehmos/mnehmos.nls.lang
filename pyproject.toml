@@ -78,8 +78,8 @@ warn_return_any = true
 warn_unused_ignores = true
 ignore_missing_imports = true
 # Start with relaxed settings, tighten over time
-check_untyped_defs = false
-disallow_untyped_defs = false
+check_untyped_defs = true
+disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
 module = "nlsc.parser_treesitter"
