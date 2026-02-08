@@ -464,16 +464,29 @@ def extract_anlu_from_function(func: ast.FunctionDef | ast.AsyncFunctionDef) -> 
         purpose = f"{words} operation"
 
     # Extract inputs
-    inputs = []
-    for arg in func.args.args:
-        if arg.arg == "self":
-            continue
+    # Include positional, keyword-only, *args, and **kwargs to preserve callable contract.
+    inputs: list[dict[str, Any]] = []
 
-        input_def = {
-            "name": arg.arg,
-            "type": python_type_to_nl(arg.annotation),
-        }
-        inputs.append(input_def)
+    def _add_arg(arg_node: ast.arg | None) -> None:
+        if arg_node is None:
+            return
+        if arg_node.arg == "self":
+            return
+        inputs.append({
+            "name": arg_node.arg,
+            "type": python_type_to_nl(arg_node.annotation),
+        })
+
+    for arg in func.args.args:
+        _add_arg(arg)
+
+    # keyword-only args: def f(*, x, y=...)
+    for arg in func.args.kwonlyargs:
+        _add_arg(arg)
+
+    # variadics
+    _add_arg(func.args.vararg)
+    _add_arg(func.args.kwarg)
 
     # Extract GUARDS (if/raise patterns)
     guards = extract_guards(func)

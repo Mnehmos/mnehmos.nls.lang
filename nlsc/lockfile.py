@@ -221,7 +221,11 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
                     i += 1
                     continue
                 elif not line.strip():
-                    # Empty line at lower indent - end of block
+                    # Empty line at lower indent.
+                    # If no content lines were ever seen, treat as unterminated/invalid.
+                    if not generated_code_lines:
+                        return None
+                    # Otherwise end the block.
                     if current_anlu_id and current_anlu_data:
                         current_anlu_data["generated_code"] = "\n".join(generated_code_lines)
                     in_generated_code = False
@@ -230,6 +234,8 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
                     continue
                 else:
                     # End of generated_code block (non-empty line at lower indent)
+                    if not generated_code_lines:
+                        return None
                     if current_anlu_id and current_anlu_data:
                         current_anlu_data["generated_code"] = "\n".join(generated_code_lines)
                     in_generated_code = False
@@ -333,6 +339,12 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
                 return None
 
             i += 1
+
+        # Unterminated generated_code literal at EOF => reject deterministically.
+        # This occurs when we see `generated_code: |` but no subsequent
+        # indented content lines to terminate the block.
+        if in_generated_code:
+            return None
 
         # Save last ANLU
         if current_module_name and current_anlu_id and current_anlu_data:
