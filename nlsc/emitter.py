@@ -273,6 +273,13 @@ def emit_guards(anlu: ANLU) -> list[str]:
 
     for guard in anlu.guards:
         condition = guard.condition.strip()
+        try:
+            ast.parse(condition, mode="eval")
+        except SyntaxError as e:
+            raise EmitterError(
+                f"invalid guard expression: '{condition}'. Guards must use an explicit Python guard expression and not natural language",
+                details=str(e),
+            ) from e
         error_type = guard.error_type or "ValueError"
         error_message = guard.error_message or "Guard condition failed"
 
@@ -570,6 +577,12 @@ def emit_body_mock(anlu: ANLU) -> str:
         safe_desc = e.replace("'", "\\'")
         return f"    raise NotImplementedError('TODO: {safe_desc}')"
 
+    # If guards are provided, generate guard validation code first
+    if anlu.guards:
+        lines = emit_guards(anlu)
+        lines.append(make_return(expr))
+        return "\n".join(lines)
+
     # Check if it's a simple expression with known operators
     if re.match(r"^[a-z_][a-z0-9_]*\s*[\+\-\*\/]\s*[a-z_][a-z0-9_]*$", expr, re.IGNORECASE):
         return f"    return {expr}"
@@ -585,12 +598,6 @@ def emit_body_mock(anlu: ANLU) -> str:
         lines = ["    # Generated from LOGIC steps:"]
         for i, step in enumerate(anlu.logic, 1):
             lines.append(f"    # {i}. {step}")
-        lines.append(make_return(expr))
-        return "\n".join(lines)
-
-    # If guards are provided, generate guard validation code
-    if anlu.guards:
-        lines = emit_guards(anlu)
         lines.append(make_return(expr))
         return "\n".join(lines)
 
