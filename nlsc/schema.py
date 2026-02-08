@@ -437,6 +437,8 @@ class Module:
     version: str = "0.1.0"
     target: str = "python"
     imports: list[str] = field(default_factory=list)
+    # Issue #90: stdlib domain dependencies declared via @use
+    uses: list[str] = field(default_factory=list)
     types: list[TypeDefinition] = field(default_factory=list)
 
 

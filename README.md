@@ -298,6 +298,7 @@ DEPENDS: [other-function], [another]
 @version 1.0.0         # Semantic version
 @target python         # Target language
 @imports other_module  # Import dependencies
+@use math.core         # Stdlib domain dependency (Issue #90)
 ```
 
 ## The Philosophy

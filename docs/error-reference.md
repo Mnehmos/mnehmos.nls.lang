@@ -257,6 +257,45 @@ DEPENDS: [common]
 DEPENDS: [common]
 ```
 
+---
+
+## Stdlib `@use` Errors (Issue #90)
+
+Errors in this section are raised when resolving `@use <domain>` directives against stdlib roots.
+
+### `EUSE001` — Missing stdlib domain
+
+Compilation failed because a referenced stdlib **domain** could not be resolved.
+
+Typical output includes stable fields suitable for assertions:
+
+* `code=EUSE001`
+* `domain=<domain>`
+* `major=<major>`
+* `candidate_relpath=v{major}/.../.nl`
+* `attempted_roots=[...]`
+
+**Example** (`@use math.missing`):
+
+```text
+Error: EUSE001 domain=math.missing major=1 candidate_relpath=v1/math/missing.nl attempted_roots=[...]
+```
+
+**Common causes**
+
+1. The domain is misspelled.
+2. The stdlib root you expected is not in the search path.
+3. You forgot to include a project-local override in `.nls/stdlib/`.
+
+**Fix**
+
+* Ensure the module exists at the expected path (example for default major 1):
+  * `v1/math/core.nl` for `@use math.core`
+* Provide an override root:
+  * CLI: `nlsc compile src/main.nl --stdlib-path ./vendor/stdlib`
+  * Env: set `NLS_STDLIB_PATH` to a path-list of stdlib roots
+  * Project: create `.nls/stdlib/v1/...`
+
 ### Self Dependency
 
 ```

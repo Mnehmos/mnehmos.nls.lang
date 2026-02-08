@@ -45,6 +45,14 @@ from .watch import NLWatcher, format_timestamp
 import platform
 import shutil
 
+from .stdlib_resolver import (
+    bundled_default_major,
+    bundled_stdlib_root,
+    resolve_use,
+    stdlib_search_roots,
+    StdlibUseError,
+)
+
 # Unicode symbols with ASCII fallbacks for Windows console
 def _check() -> str:
     """Return checkmark, falling back to ASCII if needed."""
@@ -187,6 +195,34 @@ def cmd_compile(args: argparse.Namespace) -> int:
     except ParseError as e:
         print(f"  {_cross()} Parse error: {e}", file=sys.stderr)
         return 1
+
+    # Resolve stdlib @use directives (Issue #90)
+    if getattr(nl_file.module, "uses", None):
+        bundled_root = bundled_stdlib_root()
+        default_major = bundled_default_major(root=bundled_root)
+        cli_roots = []
+        if getattr(args, "stdlib_path", None):
+            cli_roots = [Path(p) for p in args.stdlib_path]
+        roots = stdlib_search_roots(
+            cwd=source_path.parent,
+            cli_roots=cli_roots,
+            bundled_root=bundled_root,
+        )
+
+        for spec in nl_file.module.uses:
+            try:
+                resolved = resolve_use(domain_spec=spec, roots=roots, default_major=default_major)
+            except StdlibUseError as e:
+                # EUSE001: deterministic diagnostics for tests
+                attempted = [str(p) for p in e.attempted_roots]
+                print(
+                    f"Error: {e.code} domain={e.domain} major={e.major} candidate_relpath={e.candidate_relpath} attempted_roots={attempted}",
+                    file=sys.stderr,
+                )
+                return 1
+
+            # Include resolved path in output for contract tests
+            print(f"  {_check()} @use {resolved.domain} -> {resolved.path}")
 
     # Resolve dependencies
     result = resolve_dependencies(nl_file)
@@ -948,6 +984,12 @@ The conversation is the programming. The .nl file is the receipt.
     compile_parser.add_argument(
         "-o", "--output",
         help="Output file path"
+    )
+    compile_parser.add_argument(
+        "--stdlib-path",
+        action="append",
+        default=[],
+        help="Additional stdlib root directory (repeatable; highest precedence).",
     )
 
     # run command

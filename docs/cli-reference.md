@@ -62,6 +62,7 @@ nlsc compile <file> [-t TARGET] [-o OUTPUT]
 | `file`         | Path to `.nl` file                  |
 | `-t, --target` | Target language (default: `python`) |
 | `-o, --output` | Output file path                    |
+| `--stdlib-path` | Additional stdlib root (repeatable; higher precedence than env + bundled) |
 
 **Examples:**
 
@@ -74,7 +75,24 @@ nlsc --parser treesitter compile src/auth.nl
 
 # Specify output file
 nlsc compile src/auth.nl -o lib/auth.py
+
+# Provide an additional stdlib root (repeatable)
+nlsc compile src/main.nl --stdlib-path ./vendor/stdlib
 ```
+
+#### Stdlib overrides for `@use` (Issue #90)
+
+If your `.nl` file contains `@use <domain>` directives, `nlsc compile` resolves domains by searching stdlib roots in this order:
+
+1. Project-local override: `.nls/stdlib/`
+2. CLI override roots: `--stdlib-path <dir>` (repeatable; earlier flags win)
+3. Environment override roots: `NLS_STDLIB_PATH` (path list; left-to-right)
+4. Bundled stdlib shipped with `nlsc`: `nlsc/stdlib/`
+
+Domain-to-path mapping is deterministic:
+
+* `@use math.core` → `v{major}/math/core.nl`
+* `@use v1.math.core` pins `major=1`
 
 **Generated files:**
 
