@@ -370,6 +370,12 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
 
         # Skip comments and empty lines (unless in a section)
         if PATTERNS["comment"].match(line):
+            if current_section == "inputs":
+                raise ParseError(
+                    "Invalid INPUTS bullet marker; expected one of: •, -, *",
+                    line_num,
+                    line,
+                )
             continue
         if PATTERNS["empty"].match(line) and current_section is None:
             continue
@@ -500,6 +506,9 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
 
             # Parse section content
             if current_section:
+                if PATTERNS["empty"].match(line):
+                    continue
+
                 # Bullet point
                 bullet_match = PATTERNS["bullet"].match(line)
                 if bullet_match:
@@ -527,6 +536,13 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                         for var in logic_step.assigns:
                             logic_assigns[var] = step_num
                     continue
+
+                if current_section == "inputs":
+                    raise ParseError(
+                        "Invalid INPUTS bullet marker; expected one of: •, -, *",
+                        line_num,
+                        line,
+                    )
 
         # Parse type fields
         if current_type:

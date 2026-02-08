@@ -329,6 +329,36 @@ RETURNS: void
         assert positions == sorted(positions)
 
 
+class TestGrammarInvariantProperties:
+    """Property-based regression tests for grammar invariants from docs/nl-grammar.ebnf."""
+
+    @given(
+        invalid_bullet=st.characters(
+            blacklist_characters="•-* \t\n\r",
+            blacklist_categories=("Cs",)
+        )
+    )
+    @settings(max_examples=50)
+    def test_should_reject_inputs_item_when_bullet_marker_is_not_in_grammar(self, invalid_bullet):
+        """Parser should reject INPUTS items whose bullet is not one of: •, -, * (EBNF bullet invariant)."""
+        source = f"""\
+@module test
+@target python
+
+[parse-bullet-invariant]
+PURPOSE: validate INPUTS bullet grammar
+INPUTS:
+  {invalid_bullet} value: number
+RETURNS: value
+"""
+
+        with pytest.raises(
+            ParseError,
+            match=r"(?i)(bullet|inputs|invalid|line)",
+        ):
+            parse_nl_file(source)
+
+
 class TestSecurityProperties:
     """Property-based tests for security validation"""
 
