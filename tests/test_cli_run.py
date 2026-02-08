@@ -38,7 +38,7 @@ class TestRunCommand:
         )
         # Error message should be printed
         assert "not found" in result.stderr.lower()
-        # Note: Exit code propagation depends on CLI wrapper
+        assert result.returncode == 1
 
     def test_run_simple_file(self):
         """Run should execute a simple .nl file"""
@@ -145,6 +145,34 @@ RETURNS: void
             )
             # Success case
             assert result.returncode == 0
+
+    def test_run_emitter_error_is_reported_cleanly(self):
+        """Run should report emitter errors without traceback spam."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            nl_file = Path(tmpdir) / "bad_guard.nl"
+            nl_file.write_text("""\
+@module bad_guard
+@target python
+
+[divide]
+PURPOSE: Divide safely
+INPUTS:
+  - numerator: number
+  - divisor: number
+GUARDS:
+  - divisor must not be zero -> ValueError("Cannot divide by zero")
+LOGIC:
+  1. result = numerator / divisor
+RETURNS: result
+""")
+            result = subprocess.run(
+                [sys.executable, "-m", "nlsc", "run", str(nl_file)],
+                capture_output=True,
+                text=True,
+            )
+            # Note: python -m nlsc currently does not propagate main() return code.
+            assert "Traceback" not in result.stderr
+            assert "Generated Python has syntax errors" in result.stderr
 
 
 class TestSourceMap:
@@ -298,7 +326,7 @@ class TestRunIntegration:
 PURPOSE: Return greeting
 INPUTS:
   - name: string
-RETURNS: greeting message
+RETURNS: "Hello, " + name
 
 @main {
   result = greet("World")

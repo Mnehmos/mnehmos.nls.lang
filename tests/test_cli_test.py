@@ -94,6 +94,33 @@ RETURNS: a + b
 
         assert result == 1
 
+    def test_cmd_test_handles_emitter_error(self, tmp_path):
+        """nlsc test should return an error code on emitter failures."""
+        nl_file = tmp_path / "bad_guard.nl"
+        nl_file.write_text("""\
+@module bad_guard
+@target python
+
+[divide]
+PURPOSE: Divide safely
+INPUTS:
+  - numerator: number
+  - divisor: number
+GUARDS:
+  - divisor must not be zero -> ValueError("Cannot divide by zero")
+LOGIC:
+  1. result = numerator / divisor
+RETURNS: result
+
+@test [divide] {
+  divide(4, 2) == 2
+}
+""")
+
+        args = Namespace(file=str(nl_file), verbose=False)
+        result = cmd_test(args)
+        assert result == 1
+
 
 class TestTestBlockParsing:
     """Tests for @test block parsing"""

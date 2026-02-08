@@ -1,5 +1,7 @@
 """Tests for nlsc diff command - Issue #15"""
 
+import subprocess
+import sys
 import pytest
 from pathlib import Path
 from argparse import Namespace
@@ -38,6 +40,27 @@ RETURNS: a + b
         result = cmd_diff(args)
         # Should succeed but show everything as new
         assert result == 0
+
+    def test_diff_command_name_works_from_cli(self, tmp_path):
+        """`nlsc diff` should be recognized by argparse."""
+        nl_file = tmp_path / "test.nl"
+        nl_file.write_text("""\
+@module test
+@target python
+
+[add]
+PURPOSE: Add two numbers
+INPUTS:
+  - a: number
+  - b: number
+RETURNS: a + b
+""")
+        result = subprocess.run(
+            [sys.executable, "-m", "nlsc", "diff", str(nl_file), "--stat"],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0
 
 
 class TestDiffDetection:

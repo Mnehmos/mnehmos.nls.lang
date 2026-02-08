@@ -56,38 +56,43 @@ def resolve_dependencies(nl_file: NLFile) -> ResolverResult:
     # Build lookup map
     anlu_map = {anlu.identifier: anlu for anlu in nl_file.anlus}
 
+    # Helper to normalize a dependency token "[name]" -> "name"
+    def dep_id(dep: str) -> str:
+        return dep.strip("[]")
+
     # Check for missing dependencies
     for anlu in nl_file.anlus:
         for dep in anlu.depends:
-            # Strip brackets if present [dep-name] -> dep-name
-            dep_id = dep.strip("[]")
+            dep_name = dep_id(dep)
             # Skip "none" as it's a placeholder meaning no dependencies
-            if dep_id.lower() == "none":
+            if dep_name.lower() == "none":
                 continue
-            if dep_id not in anlu_map:
+            # Allow explicit self-dependency for recursion support
+            if dep_name == anlu.identifier:
+                continue
+            if dep_name not in anlu_map:
                 result.errors.append(ResolutionError(
                     anlu_id=anlu.identifier,
-                    message=f"Missing dependency: {dep_id}",
-                    missing_dep=dep_id
+                    message=f"Missing dependency: {dep_name}",
+                    missing_dep=dep_name
                 ))
 
     if result.errors:
         return result
 
     # Topological sort using Kahn's algorithm
-    # Count incoming edges (dependencies pointing to each node)
-    {anlu.identifier: 0 for anlu in nl_file.anlus}
-
-    for anlu in nl_file.anlus:
-        for dep in anlu.depends:
-            dep_id = dep.strip("[]")
-            # The current ANLU depends on dep_id, so current has in_degree from dep
-            # But we want to track: who depends on me?
-            pass
-
-    # Helper to filter out "none" placeholder from dependencies
-    def real_deps(anlu):
-        return [d for d in anlu.depends if d.strip("[]").lower() != "none"]
+    # Helper to filter out placeholders and self-dependencies (recursion)
+    def real_deps(anlu: ANLU) -> list[str]:
+        deps = []
+        for d in anlu.depends:
+            name = dep_id(d)
+            if name.lower() == "none":
+                continue
+            if name == anlu.identifier:
+                # Self-reference is legal recursion, not a scheduling edge.
+                continue
+            deps.append(name)
+        return deps
 
     # Actually, let's track: for each ANLU, how many unresolved deps does it have?
     unresolved = {anlu.identifier: len(real_deps(anlu)) for anlu in nl_file.anlus}
@@ -108,9 +113,8 @@ def resolve_dependencies(nl_file: NLFile) -> ResolverResult:
                 continue
 
             # Check if this ANLU depends on current
-            for dep in anlu.depends:
-                dep_id = dep.strip("[]")
-                if dep_id == current.identifier:
+            for dep_name in real_deps(anlu):
+                if dep_name == current.identifier:
                     unresolved[anlu.identifier] -= 1
 
             # If all deps resolved, add to ready

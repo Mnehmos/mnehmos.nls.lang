@@ -3,7 +3,7 @@
 import pytest
 from pathlib import Path
 
-from nlsc.parser import parse_nl_file, parse_nl_path
+from nlsc.parser import parse_nl_file, parse_nl_path, ParseError
 from nlsc.schema import ANLU, Input
 
 
@@ -181,3 +181,22 @@ RETURNS: void
         result = parse_nl_file(source)
         derived = next(a for a in result.anlus if a.identifier == "derived")
         assert "[base]" in derived.depends
+
+
+class TestParseErrors:
+    """Parser error handling tests."""
+
+    def test_unknown_anlu_section_raises(self):
+        source = """\
+@module test
+@target python
+
+[add]
+PURPOSE: Add two numbers
+PRECONDITIONS:
+  - a > 0
+RETURNS: a
+"""
+        with pytest.raises(ParseError) as exc:
+            parse_nl_file(source)
+        assert "Expected INPUTS, GUARDS, LOGIC, RETURNS, EDGE CASES, or DEPENDS section" in str(exc.value)

@@ -482,6 +482,19 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                 current_section = None
                 continue
 
+            # Unknown section header inside ANLU should fail loudly.
+            header_match = re.match(r"^\s*([A-Z][A-Z _-]*):\s*$", line)
+            if header_match:
+                header = header_match.group(1).strip()
+                raise ParseError(
+                    (
+                        f"Expected INPUTS, GUARDS, LOGIC, RETURNS, EDGE CASES, or DEPENDS "
+                        f"section, but got '{header}:'"
+                    ),
+                    line_number=line_num,
+                    line_content=line,
+                )
+
             # Parse section content
             if current_section:
                 # Bullet point

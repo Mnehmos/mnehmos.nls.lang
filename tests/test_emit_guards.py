@@ -131,6 +131,30 @@ RETURNS: result
         logic_pos = python.find("result = x * 2")
         assert guard_pos < logic_pos
 
+    def test_guards_preserved_with_simple_return_no_logic(self):
+        """Guards should not be dropped for direct RETURNS expressions."""
+        source = """\
+@module test
+@target python
+
+[divide]
+PURPOSE: Divide safely
+INPUTS:
+  - numerator: number
+  - divisor: number
+GUARDS:
+  - divisor != 0 -> ValueError(Cannot divide by zero)
+RETURNS: numerator / divisor
+"""
+        result = parse_nl_file(source)
+        python = emit_python(result)
+
+        assert "if not (divisor != 0):" in python
+        assert "raise ValueError('Cannot divide by zero')" in python
+        guard_pos = python.find("if not (divisor != 0):")
+        return_pos = python.find("return numerator / divisor")
+        assert guard_pos < return_pos
+
 
 class TestCustomErrorTypes:
     """Tests for custom error type handling"""

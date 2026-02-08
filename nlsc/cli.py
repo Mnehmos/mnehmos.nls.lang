@@ -26,7 +26,7 @@ from . import __version__
 from .parser import parse_nl_path, ParseError
 from .schema import NLFile
 from .resolver import resolve_dependencies
-from .emitter import emit_python, emit_tests
+from .emitter import emit_python, emit_tests, EmitterError
 from .lockfile import generate_lockfile, write_lockfile, verify_lockfile
 from .sourcemap import generate_source_map
 from .graph import (
@@ -201,7 +201,11 @@ def cmd_compile(args: argparse.Namespace) -> int:
         print(f"  {_cross()} Target '{target}' not yet supported", file=sys.stderr)
         return 1
 
-    python_code = emit_python(nl_file, mode="mock")
+    try:
+        python_code = emit_python(nl_file, mode="mock")
+    except EmitterError as e:
+        print(f"  {_cross()} Emitter error: {e}", file=sys.stderr)
+        return 1
 
     # Determine output path
     output_path = source_path.with_suffix(".py")
@@ -369,7 +373,11 @@ def cmd_test(args: argparse.Namespace) -> int:
         temp_path = Path(temp_dir)
 
         # Generate the module code
-        python_code = emit_python(nl_file, mode="mock")
+        try:
+            python_code = emit_python(nl_file, mode="mock")
+        except EmitterError as e:
+            print(f"Emitter error: {e}", file=sys.stderr)
+            return 1
         module_name = nl_file.module.name.replace("-", "_")
         module_path = temp_path / f"{module_name}.py"
         module_path.write_text(python_code, encoding="utf-8")
@@ -495,7 +503,11 @@ def cmd_diff(args: argparse.Namespace) -> int:
         # Generate Python code for diff
         from .emitter import emit_python
 
-        py_code_new = emit_python(nl_file)
+        try:
+            py_code_new = emit_python(nl_file)
+        except EmitterError as e:
+            print(f"Emitter error: {e}", file=sys.stderr)
+            return 1
 
         # Get original Python code from lockfile target
         py_path = source_path.with_suffix(".py")
@@ -614,7 +626,11 @@ def cmd_lock_update(args: argparse.Namespace) -> int:
     py_path = source_path.with_suffix(".py")
     if not py_path.exists():
         print(f"Warning: Compiled file not found, generating fresh: {py_path}")
-        python_code = emit_python(nl_file, mode="mock")
+        try:
+            python_code = emit_python(nl_file, mode="mock")
+        except EmitterError as e:
+            print(f"Emitter error: {e}", file=sys.stderr)
+            return 1
     else:
         python_code = py_path.read_text(encoding="utf-8")
 
@@ -662,7 +678,11 @@ def cmd_run(args: argparse.Namespace) -> int:
         print(f"Error: Target '{target}' not yet supported", file=sys.stderr)
         return 1
 
-    python_code = emit_python(nl_file, mode="mock")
+    try:
+        python_code = emit_python(nl_file, mode="mock")
+    except EmitterError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
 
     # Create temp directory or use --keep location
     if args.keep:
@@ -1032,7 +1052,8 @@ The conversation is the programming. The .nl file is the receipt.
 
     # diff command
     diff_parser = subparsers.add_parser(
-        "dif",
+        "diff",
+        aliases=["dif"],
         help="Show changes since last compile"
     )
     diff_parser.add_argument(
@@ -1047,7 +1068,7 @@ The conversation is the programming. The .nl file is the receipt.
     diff_parser.add_argument(
         "--full",
         action="store_true",
-        help="Show full unified dif"
+        help="Show full unified diff"
     )
 
     # watch command
@@ -1161,7 +1182,7 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_test(args)
     elif args.command == "atomize":
         return cmd_atomize(args)
-    elif args.command == "dif":
+    elif args.command in ("diff", "dif"):
         return cmd_diff(args)
     elif args.command == "watch":
         return cmd_watch(args)

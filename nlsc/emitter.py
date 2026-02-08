@@ -334,6 +334,11 @@ def emit_body_from_logic(anlu: ANLU) -> str:
     returns = anlu.returns.strip()
     returns_expr = returns.replace("×", "*").replace("÷", "/")
 
+    # Normalize void/none returns to Python None even when LOGIC exists.
+    if returns_expr.lower() in ("void", "none"):
+        lines.append("    return None")
+        return "\n".join(lines)
+
     # Check if returns_expr is a type name that needs conversion
     returns_expr = _convert_type_return(returns_expr, anlu)
 
@@ -551,13 +556,15 @@ def emit_body_mock(anlu: ANLU) -> str:
 
     returns = anlu.returns.strip()
 
+    def with_guards(body_lines: list[str]) -> str:
+        """Prepend emitted guard checks when present."""
+        if anlu.guards:
+            return "\n".join(emit_guards(anlu) + body_lines)
+        return "\n".join(body_lines)
+
     # Handle void return - no return statement or just pass
     if returns.lower() == "void" or returns.lower() == "none":
-        if anlu.guards:
-            lines = emit_guards(anlu)
-            lines.append("    return None")
-            return "\n".join(lines)
-        return "    return None"
+        return with_guards(["    return None"])
 
     # Direct expression returns (a + b, a × b, etc.)
     # Replace math symbols
@@ -572,13 +579,13 @@ def emit_body_mock(anlu: ANLU) -> str:
 
     # Check if it's a simple expression with known operators
     if re.match(r"^[a-z_][a-z0-9_]*\s*[\+\-\*\/]\s*[a-z_][a-z0-9_]*$", expr, re.IGNORECASE):
-        return f"    return {expr}"
+        return with_guards([f"    return {expr}"])
 
     # Check for function-like returns: "result with field1, field2"
     if " with " in returns.lower():
         # Descriptive return - emit NotImplementedError
         safe_desc = returns.replace("'", "\\'")
-        return f"    raise NotImplementedError('TODO: {safe_desc}')"
+        return with_guards([f"    raise NotImplementedError('TODO: {safe_desc}')"])
 
     # If raw logic is provided but no logic_steps, generate comments
     if anlu.logic:
@@ -586,16 +593,10 @@ def emit_body_mock(anlu: ANLU) -> str:
         for i, step in enumerate(anlu.logic, 1):
             lines.append(f"    # {i}. {step}")
         lines.append(make_return(expr))
-        return "\n".join(lines)
-
-    # If guards are provided, generate guard validation code
-    if anlu.guards:
-        lines = emit_guards(anlu)
-        lines.append(make_return(expr))
-        return "\n".join(lines)
+        return with_guards(lines)
 
     # Fallback: validate and return
-    return make_return(expr)
+    return with_guards([make_return(expr)])
 
 
 def emit_anlu(anlu: ANLU, mode: str = "mock") -> str:

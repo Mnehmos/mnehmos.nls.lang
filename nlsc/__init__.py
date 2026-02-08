@@ -4,7 +4,13 @@ Natural Language Source Compiler (nlsc)
 The conversation is the programming. The .nl file is the receipt. The code is the artifact.
 """
 
-__version__ = "0.2.5"
+from importlib.metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("nlsc")
+except PackageNotFoundError:
+    # Fallback for source-tree execution when package metadata is unavailable.
+    __version__ = "0.2.5"
 __author__ = "Vario (Mnehmos)"
 
 from .schema import ANLU, Module, NLFile
