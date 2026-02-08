@@ -682,6 +682,38 @@ def parse_nl_file_treesitter(source: str, source_path: Optional[str] = None) -> 
     Returns:
         NLFile with parsed module info and ANLUs
     """
+    # Pre-check for a known edge case: malformed INPUTS bullets.
+    # Tree-sitter may recover by dropping the malformed line, but we want
+    # deterministic parity with the regex parser.
+    in_inputs = False
+    for raw in source.split("\n"):
+        stripped = raw.strip()
+        upper = stripped.upper()
+
+        if not in_inputs:
+            # Allow explicit none marker: "INPUTS: none"
+            if upper == "INPUTS: NONE":
+                continue
+            if upper == "INPUTS:":
+                in_inputs = True
+            continue
+
+        # Inside INPUTS section: stop at next section header
+        if upper.startswith("PURPOSE:") or upper == "GUARDS:" or upper == "LOGIC:" or upper.startswith("RETURNS:"):
+            in_inputs = False
+            continue
+        if upper == "EDGE CASES:" or upper.startswith("DEPENDS:"):
+            in_inputs = False
+            continue
+
+        # Skip empty/comment lines within section
+        if not stripped or stripped.startswith("#"):
+            continue
+
+        # First non-empty line must be a bullet
+        if not re.match(r"^\s*[•\-\*]\s+", raw):
+            raise ParseError("Invalid INPUTS bullet marker; expected one of: •, -, *")
+
     parser = _get_parser()
     source_bytes = source.encode("utf-8")
     tree = parser.parse(source_bytes)

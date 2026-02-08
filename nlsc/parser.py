@@ -339,6 +339,11 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
     logic_assigns: dict[str, int] = {}
 
     for line_num, line in enumerate(lines, start=1):
+        # Normalize matching to allow leading indentation in embedded strings.
+        # We keep the original `line` for error reporting and for parsing
+        # indentation-sensitive constructs (bullets, generated blocks, etc.).
+        line_match = line.lstrip()
+
         # Handle main blocks
         if in_main_block:
             if "{" in line:
@@ -381,7 +386,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             continue
 
         # Check for directives
-        directive_match = PATTERNS["directive"].match(line)
+        directive_match = PATTERNS["directive"].match(line_match)
         if directive_match:
             directive_type = directive_match.group(1)
             directive_value = directive_match.group(2).strip()
@@ -442,7 +447,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             continue
 
         # Check for ANLU header
-        anlu_match = PATTERNS["anlu_header"].match(line)
+        anlu_match = PATTERNS["anlu_header"].match(line_match)
         if anlu_match:
             # Save previous ANLU
             if current_anlu:
@@ -463,41 +468,41 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
         # Parse ANLU fields
         if current_anlu:
             # PURPOSE:
-            purpose_match = PATTERNS["purpose"].match(line)
+            purpose_match = PATTERNS["purpose"].match(line_match)
             if purpose_match:
                 current_anlu.purpose = purpose_match.group(1).strip()
                 current_section = None
                 continue
 
             # INPUTS:
-            if PATTERNS["inputs"].match(line):
+            if PATTERNS["inputs"].match(line_match):
                 current_section = "inputs"
                 continue
 
             # GUARDS:
-            if PATTERNS["guards"].match(line):
+            if PATTERNS["guards"].match(line_match):
                 current_section = "guards"
                 continue
 
             # LOGIC:
-            if PATTERNS["logic"].match(line):
+            if PATTERNS["logic"].match(line_match):
                 current_section = "logic"
                 continue
 
             # EDGE CASES:
-            if PATTERNS["edge_cases"].match(line):
+            if PATTERNS["edge_cases"].match(line_match):
                 current_section = "edge_cases"
                 continue
 
             # RETURNS:
-            returns_match = PATTERNS["returns"].match(line)
+            returns_match = PATTERNS["returns"].match(line_match)
             if returns_match:
                 current_anlu.returns = returns_match.group(1).strip()
                 current_section = None
                 continue
 
             # DEPENDS:
-            depends_match = PATTERNS["depends"].match(line)
+            depends_match = PATTERNS["depends"].match(line_match)
             if depends_match:
                 deps = depends_match.group(1).strip()
                 current_anlu.depends = [d.strip() for d in deps.split(",")]
