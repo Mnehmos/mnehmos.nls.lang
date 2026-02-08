@@ -174,6 +174,7 @@ def cmd_compile(args: argparse.Namespace) -> int:
 
     if not source_path.exists():
         print(f"Error: File not found: {source_path}", file=sys.stderr)
+        print("Error: Check that the path exists and try again.", file=sys.stderr)
         return 1
 
     parser_name = "tree-sitter" if _use_treesitter else "regex"
@@ -650,19 +651,23 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     if not source_path.exists():
         print(f"Error: File not found: {source_path}", file=sys.stderr)
+        print("Error: Check that the path exists and try again.", file=sys.stderr)
         return 1
 
     # Parse
     try:
         nl_file = parse_nl_file_auto(source_path)
     except ParseError as e:
-        print(f"Parse error: {e}", file=sys.stderr)
+        print(f"Error: Parse error: {e}", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"Error: Unexpected run error [E_RUN]: {e}", file=sys.stderr)
         return 1
 
     # Resolve dependencies
     result = resolve_dependencies(nl_file)
     if not result.success:
-        print("Resolution errors:", file=sys.stderr)
+        print("Error: [E_RESOLUTION] Resolution errors:", file=sys.stderr)
         for err in result.errors:
             print(f"  - {err.anlu_id}: {err.message}", file=sys.stderr)
         return 1
