@@ -51,6 +51,33 @@ Optional comma-separated import list.
 @imports jwt, datetime, typing
 ```
 
+### `@use`
+
+Declare a dependency on a **stdlib domain module**.
+
+```nl
+@use math.core
+```
+
+`@use` supports an optional major-version prefix:
+
+```nl
+@use v1.math.core
+```
+
+Resolution (Issue #90, Slice C):
+
+1. Project-local override: `.nls/stdlib/`
+2. CLI override roots: `nlsc compile ... --stdlib-path <dir>` (repeatable; earlier flags win)
+3. Environment override roots: `NLS_STDLIB_PATH` (path-list; left-to-right)
+4. Bundled stdlib: `nlsc/stdlib/`
+
+Domain-to-path mapping is deterministic:
+
+* `math.core` → `v{major}/math/core.nl`
+
+If the domain cannot be resolved, compilation fails with a stable error code (see [`docs/error-reference.md`](docs/error-reference.md)).
+
 ---
 
 ## ANLU Blocks

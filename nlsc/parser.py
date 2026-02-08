@@ -27,7 +27,7 @@ class ParseError(Exception):
 # Regex patterns for parsing
 PATTERNS = {
     "anlu_header": re.compile(r"^\[([A-Za-z][A-Za-z0-9.-]*)\]\s*$"),
-    "directive": re.compile(r"^@(module|version|target|imports|types|type|test|property|invariant|literal|main)\s*(.*)$"),
+    "directive": re.compile(r"^@(module|version|target|imports|use|types|type|test|property|invariant|literal|main)\s*(.*)$"),
     "purpose": re.compile(r"^PURPOSE:\s*(.+)$", re.IGNORECASE),
     "inputs": re.compile(r"^INPUTS:\s*$", re.IGNORECASE),
     "guards": re.compile(r"^GUARDS:\s*$", re.IGNORECASE),
@@ -402,6 +402,10 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                     _validate_import_token(i, line_num)
                     for i in directive_value.split(",")
                 ]
+            elif directive_type == "use":
+                # Issue #90: record raw @use domain spec; resolver handles version/roots.
+                if directive_value:
+                    module.uses.append(directive_value)
             elif directive_type == "main":
                 # Start main block
                 in_main_block = True

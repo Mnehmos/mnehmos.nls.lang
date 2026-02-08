@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "default_major": 1,
+  "versions": {
+    "v1": {
+      "semver": "1.0.0"
+    }
+  }
+}
+
