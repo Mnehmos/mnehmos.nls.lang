@@ -49,7 +49,7 @@ class Lockfile:
     modules: dict[str, ModuleLock] = field(default_factory=dict)
     targets: dict[str, TargetLock] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.generated_at:
             self.generated_at = datetime.now(timezone.utc).isoformat()
 

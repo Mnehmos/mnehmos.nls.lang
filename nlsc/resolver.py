@@ -21,7 +21,7 @@ class ResolutionError:
 class ResolverResult:
     """Result of dependency resolution"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.order: list[ANLU] = []
         self.errors: list[ResolutionError] = []
 
@@ -86,7 +86,7 @@ def resolve_dependencies(nl_file: NLFile) -> ResolverResult:
             pass
 
     # Helper to filter out "none" placeholder from dependencies
-    def real_deps(anlu):
+    def real_deps(anlu: ANLU) -> list[str]:
         return [d for d in anlu.depends if d.strip("[]").lower() != "none"]
 
     # Actually, let's track: for each ANLU, how many unresolved deps does it have?

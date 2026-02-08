@@ -355,7 +355,7 @@ def emit_body_from_logic(anlu: ANLU) -> str:
     return "\n".join(lines)
 
 
-def _convert_type_return(returns_expr: str, anlu) -> str:
+def _convert_type_return(returns_expr: str, anlu: ANLU) -> str:
     """
     Convert type name returns to valid Python expressions.
 
