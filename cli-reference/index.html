@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -846,6 +846,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="nlsc compile">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stdlib-overrides-for-use-issue-90" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stdlib overrides for @use (Issue #90)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -1024,6 +1041,207 @@
   
   
     <li class="md-nav__item">
+      <a href="../os-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OS File Association Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../parser-performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parser Performance Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../antigravity_prompt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Antigravity Prompt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/issue-90-use-directives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issue #90 — @use Directives
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/issue-93-edit-provenance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issue #93 — Edit Provenance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../architecture/" class="md-nav__link">
         
   
@@ -1148,6 +1366,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="nlsc compile">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stdlib-overrides-for-use-issue-90" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stdlib overrides for @use (Issue #90)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1358,6 +1593,10 @@
 <td><code>-o, --output</code></td>
 <td>Output file path</td>
 </tr>
+<tr>
+<td><code>--stdlib-path</code></td>
+<td>Additional stdlib root (repeatable; higher precedence than env + bundled)</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
@@ -1369,7 +1608,23 @@
 </span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
 </span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Specify output file</span>
 </span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>nlsc<span class="w"> </span>compile<span class="w"> </span>src/auth.nl<span class="w"> </span>-o<span class="w"> </span>lib/auth.py
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># Provide an additional stdlib root (repeatable)</span>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>nlsc<span class="w"> </span>compile<span class="w"> </span>src/main.nl<span class="w"> </span>--stdlib-path<span class="w"> </span>./vendor/stdlib
 </span></code></pre></div>
+<h4 id="stdlib-overrides-for-use-issue-90">Stdlib overrides for <code>@use</code> (Issue #90)<a class="headerlink" href="#stdlib-overrides-for-use-issue-90" title="Permanent link">&para;</a></h4>
+<p>If your <code>.nl</code> file contains <code>@use &lt;domain&gt;</code> directives, <code>nlsc compile</code> resolves domains by searching stdlib roots in this order:</p>
+<ol>
+<li>Project-local override: <code>.nls/stdlib/</code></li>
+<li>CLI override roots: <code>--stdlib-path &lt;dir&gt;</code> (repeatable; earlier flags win)</li>
+<li>Environment override roots: <code>NLS_STDLIB_PATH</code> (path list; left-to-right)</li>
+<li>Bundled stdlib shipped with <code>nlsc</code>: <code>nlsc/stdlib/</code></li>
+</ol>
+<p>Domain-to-path mapping is deterministic:</p>
+<ul>
+<li><code>@use math.core</code> → <code>v{major}/math/core.nl</code></li>
+<li><code>@use v1.math.core</code> pins <code>major=1</code></li>
+</ul>
 <p><strong>Generated files:</strong></p>
 <ul>
 <li><code>&lt;name&gt;.py</code> — Python module</li>

@@ -1,0 +1,2385 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Natural Language Source - Write specs in English, compile to Python">
+      
+      
+      
+        <link rel="canonical" href="https://mnehmos.github.io/mnehmos.nls.lang/design/issue-90-use-directives/">
+      
+      
+        <link rel="prev" href="../../antigravity_prompt/">
+      
+      
+        <link rel="next" href="../issue-93-edit-provenance/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+    
+    
+      
+        <title>Issue #90 — @use Directives - NLS Compiler</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/custom.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#issue-90-use-directives-slice-c-contract-design" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="NLS Compiler" class="md-header__button md-logo" aria-label="NLS Compiler" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            NLS Compiler
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Issue #90 — @use Directives
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Mnehmos/mnehmos.nls.lang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mnehmos.nls.lang
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="NLS Compiler" class="md-nav__button md-logo" aria-label="NLS Compiler" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    NLS Compiler
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Mnehmos/mnehmos.nls.lang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mnehmos.nls.lang
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/first-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/working-with-types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Working with Types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/testing-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Real-World Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Language
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Language
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../language-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../type-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core-semantics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Semantics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../llm-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../error-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Error Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../os-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OS File Association Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../parser-performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parser Performance Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../antigravity_prompt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Antigravity Prompt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issue #90 — @use Directives
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issue #90 — @use Directives
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0-goals-non-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0) Goals / non-goals
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0) Goals / non-goals">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-goals
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-stdlib-layout-proposal-bundled-nl-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Stdlib layout proposal (bundled .nl files)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1) Stdlib layout proposal (bundled .nl files)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-bundled-stdlib-root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Bundled stdlib root
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-versioned-layout-major-version-directories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Versioned layout (major-version directories)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-recommended-project-local-override-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Recommended project-local override layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-domain-resolution-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Domain resolution algorithm
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2) Domain resolution algorithm">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-directive-syntax-slice-c-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Directive syntax (Slice C scope)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-resolution-roots-search-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Resolution roots (search order)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-major-version-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Major-version selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-candidate-path-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Candidate path generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-conflict-error-behavior-testable-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Conflict &amp; error behavior (testable contract)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-deterministic-resolution-flow-reference-pseudocode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 Deterministic resolution flow (reference pseudocode)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-override-precedence-clienvproject-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) User override precedence (CLI/env/project-local)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3) User override precedence (CLI/env/project-local)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-precedence-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Precedence summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-contract-for-override-vs-conflict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Contract for “override” vs “conflict”
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-versioning-strategy-notes-stdlib-domains" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Versioning strategy notes (stdlib domains)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4) Versioning strategy notes (stdlib domains)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-why-version-at-the-domain-root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Why version at the domain root
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-proposed-invariants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Proposed invariants
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-pinning-reproducibility-lockfile-facing-slice-c-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Pinning &amp; reproducibility (lockfile-facing, Slice C notes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-test-plan-red-phase-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5) Test plan (Red-phase cases)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5) Test plan (Red-phase cases)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-happy-path-bundled-stdlib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Happy path — bundled stdlib
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-missing-domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Missing domain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-project-local-override-wins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Project-local override wins
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-cli-override-wins-over-env-and-bundled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 CLI override wins over env and bundled
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-conflict-ambiguity-at-same-precedence-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 Conflict / ambiguity at same precedence step
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-acceptance-criteria-exact-testable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6) Acceptance criteria (exact, testable)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6) Acceptance criteria (exact, testable)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-resolution-correctness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Resolution correctness
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-version-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Version behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-security-sandboxing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Security / sandboxing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64-determinism-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 Determinism &amp; diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-a-mermaid-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix A — Mermaid overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../issue-93-edit-provenance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issue #93 — Edit Provenance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../nl-grammar.ebnf" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formal Grammar
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0-goals-non-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0) Goals / non-goals
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0) Goals / non-goals">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-goals
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-stdlib-layout-proposal-bundled-nl-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Stdlib layout proposal (bundled .nl files)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1) Stdlib layout proposal (bundled .nl files)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-bundled-stdlib-root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Bundled stdlib root
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-versioned-layout-major-version-directories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Versioned layout (major-version directories)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-recommended-project-local-override-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Recommended project-local override layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-domain-resolution-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Domain resolution algorithm
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2) Domain resolution algorithm">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-directive-syntax-slice-c-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Directive syntax (Slice C scope)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-resolution-roots-search-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Resolution roots (search order)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-major-version-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Major-version selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-candidate-path-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Candidate path generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-conflict-error-behavior-testable-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Conflict &amp; error behavior (testable contract)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-deterministic-resolution-flow-reference-pseudocode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 Deterministic resolution flow (reference pseudocode)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-override-precedence-clienvproject-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) User override precedence (CLI/env/project-local)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3) User override precedence (CLI/env/project-local)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-precedence-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Precedence summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-contract-for-override-vs-conflict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Contract for “override” vs “conflict”
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-versioning-strategy-notes-stdlib-domains" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Versioning strategy notes (stdlib domains)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4) Versioning strategy notes (stdlib domains)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-why-version-at-the-domain-root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Why version at the domain root
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-proposed-invariants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Proposed invariants
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-pinning-reproducibility-lockfile-facing-slice-c-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Pinning &amp; reproducibility (lockfile-facing, Slice C notes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-test-plan-red-phase-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5) Test plan (Red-phase cases)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5) Test plan (Red-phase cases)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-happy-path-bundled-stdlib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Happy path — bundled stdlib
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-missing-domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Missing domain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-project-local-override-wins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Project-local override wins
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-cli-override-wins-over-env-and-bundled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 CLI override wins over env and bundled
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-conflict-ambiguity-at-same-precedence-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 Conflict / ambiguity at same precedence step
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-acceptance-criteria-exact-testable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6) Acceptance criteria (exact, testable)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6) Acceptance criteria (exact, testable)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-resolution-correctness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Resolution correctness
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-version-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Version behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-security-sandboxing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Security / sandboxing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64-determinism-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 Determinism &amp; diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-a-mermaid-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix A — Mermaid overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="issue-90-use-directives-slice-c-contract-design">Issue #90 — <code>@use</code> Directives (Slice C) — Contract / Design<a class="headerlink" href="#issue-90-use-directives-slice-c-contract-design" title="Permanent link">&para;</a></h1>
+<p>Run: phase2-milestones-2026-02-08<br />
+Task: issue-90-arch</p>
+<p>This document defines the <em>end-to-end</em> contract for resolving <code>@use</code> directives against a bundled stdlib plus user overrides.</p>
+<hr />
+<h2 id="0-goals-non-goals">0) Goals / non-goals<a class="headerlink" href="#0-goals-non-goals" title="Permanent link">&para;</a></h2>
+<h3 id="goals">Goals<a class="headerlink" href="#goals" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Deterministic mapping from <code>@use &lt;domain&gt;</code> → a single <code>.nl</code> source file.</li>
+<li>Explicit, testable override precedence (project-local first, then user/CLI, then bundled).</li>
+<li>Versionable stdlib domains without breaking existing projects.</li>
+<li>Errors are structured enough to be asserted in tests (code + message + attempted search roots).</li>
+</ol>
+<h3 id="non-goals">Non-goals<a class="headerlink" href="#non-goals" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Defining new language semantics of imported symbols (type checking / export syntax is out of Slice C).</li>
+<li>Network resolution or package registry.</li>
+</ul>
+<hr />
+<h2 id="1-stdlib-layout-proposal-bundled-nl-files">1) Stdlib layout proposal (bundled <code>.nl</code> files)<a class="headerlink" href="#1-stdlib-layout-proposal-bundled-nl-files" title="Permanent link">&para;</a></h2>
+<h3 id="11-bundled-stdlib-root">1.1 Bundled stdlib root<a class="headerlink" href="#11-bundled-stdlib-root" title="Permanent link">&para;</a></h3>
+<p>Bundled stdlib ships <em>inside the <code>nlsc</code> distribution</em> as plain <code>.nl</code> sources (not generated artifacts):</p>
+<ul>
+<li>Root directory: <a href="nlsc/stdlib/"><code>nlsc/stdlib/</code></a></li>
+</ul>
+<h3 id="12-versioned-layout-major-version-directories">1.2 Versioned layout (major-version directories)<a class="headerlink" href="#12-versioned-layout-major-version-directories" title="Permanent link">&para;</a></h3>
+<p>Stdlib modules are organized by <strong>major version</strong> at the top level, then by <strong>domain path</strong>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>nlsc/
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  stdlib/
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    MANIFEST.json
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    v1/
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>      math/
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        core.nl
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        stats.nl
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>      text/
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        core.nl
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    v2/
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>      ...
+</span></code></pre></div>
+<p><strong>Rules</strong></p>
+<ul>
+<li>A <strong>domain</strong> is the dotted path in <code>@use</code>, e.g. <code>math.core</code>.</li>
+<li>Domain maps to a relative path under a version root by replacing <code>.</code> with <code>/</code> and appending <code>.nl</code>.</li>
+<li>Example: <code>math.core</code> → <code>math/core.nl</code></li>
+<li>Version roots are named <code>v{MAJOR}</code> (e.g. <code>v1</code>, <code>v2</code>).</li>
+<li><a href="nlsc/stdlib/MANIFEST.json"><code>nlsc/stdlib/MANIFEST.json</code></a> declares the <em>default major</em> used when a directive does not specify a major.</li>
+</ul>
+<h3 id="13-recommended-project-local-override-layout">1.3 Recommended project-local override layout<a class="headerlink" href="#13-recommended-project-local-override-layout" title="Permanent link">&para;</a></h3>
+<p>Project-local overrides are <strong>in-repo</strong> sources under a hidden config directory:</p>
+<ul>
+<li>Root directory: <a href=".nls/stdlib/"><code>.nls/stdlib/</code></a></li>
+<li>Same layout as bundled stdlib, including major version roots.</li>
+</ul>
+<p>Example:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>.nls/
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  stdlib/
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    v1/
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>      math/
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        core.nl   # project override
+</span></code></pre></div>
+<p>Rationale:</p>
+<ul>
+<li>Keeps overrides out of the normal source tree.</li>
+<li>Allows pinning/parallel majors the same way as bundled stdlib.</li>
+</ul>
+<hr />
+<h2 id="2-domain-resolution-algorithm">2) Domain resolution algorithm<a class="headerlink" href="#2-domain-resolution-algorithm" title="Permanent link">&para;</a></h2>
+<h3 id="21-directive-syntax-slice-c-scope">2.1 Directive syntax (Slice C scope)<a class="headerlink" href="#21-directive-syntax-slice-c-scope" title="Permanent link">&para;</a></h3>
+<p>This contract assumes the parser produces a normalized directive object:</p>
+<ul>
+<li><code>raw</code>: original text</li>
+<li><code>domain</code>: dotted identifier, e.g. <code>math.core</code></li>
+<li>optional <code>major</code>: integer major version (see §2.3)</li>
+</ul>
+<p>Concrete surface forms are intentionally limited for Slice C:</p>
+<ul>
+<li><code>@use math.core</code></li>
+<li>Optional version prefix: <code>@use v1.math.core</code></li>
+</ul>
+<h3 id="22-resolution-roots-search-order">2.2 Resolution roots (search order)<a class="headerlink" href="#22-resolution-roots-search-order" title="Permanent link">&para;</a></h3>
+<p>Resolution searches a list of <strong>roots</strong>, in priority order (first match wins):</p>
+<ol>
+<li><strong>Project-local override root</strong>: <a href=".nls/stdlib/"><code>.nls/stdlib/</code></a></li>
+<li><strong>User-provided roots</strong> (highest to lowest):</li>
+<li>CLI: <code>--stdlib-path &lt;dir&gt;</code> (repeatable; earlier flags have higher precedence)</li>
+<li>Env: <code>NLS_STDLIB_PATH</code> (path-list; left-to-right precedence)</li>
+<li><strong>Bundled root</strong>: <a href="nlsc/stdlib/"><code>nlsc/stdlib/</code></a></li>
+</ol>
+<p>Notes:</p>
+<ul>
+<li>Each root is treated as a <em>filesystem sandbox</em>. Resolution MUST NOT traverse outside roots.</li>
+<li>Roots that do not exist are ignored <strong>except</strong>: if provided explicitly via CLI, non-existent paths SHOULD fail fast with a CLI error (outside <code>@use</code> resolution).</li>
+</ul>
+<h3 id="23-major-version-selection">2.3 Major-version selection<a class="headerlink" href="#23-major-version-selection" title="Permanent link">&para;</a></h3>
+<p>Given <code>@use &lt;spec&gt;</code>:</p>
+<ul>
+<li>If <code>&lt;spec&gt;</code> begins with <code>v{N}.</code> (e.g. <code>v1.math.core</code>), then <code>major=N</code> and the domain is the remainder (<code>math.core</code>).</li>
+<li>Otherwise <code>major</code> is taken from the bundled manifest default (and may be overridden by a future CLI option such as <code>--stdlib-major</code>, not required for Slice C).</li>
+</ul>
+<p>Bundled manifest minimum fields:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">&quot;schema&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">&quot;default_major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nt">&quot;versions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">&quot;v1&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;semver&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.2.0&quot;</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nt">&quot;v2&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;semver&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2.0.0&quot;</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="p">}</span>
+</span></code></pre></div>
+<h3 id="24-candidate-path-generation">2.4 Candidate path generation<a class="headerlink" href="#24-candidate-path-generation" title="Permanent link">&para;</a></h3>
+<p>For a resolved <code>(major, domain)</code> pair, generate candidates <strong>in this exact order</strong>:</p>
+<ol>
+<li><code>v{major}/{domain_as_path}.nl</code></li>
+</ol>
+<p>Where:</p>
+<ul>
+<li><code>domain_as_path = domain.replace('.', '/')</code></li>
+</ul>
+<p>Example:</p>
+<ul>
+<li><code>@use math.core</code> with default major 1 → candidate: <code>v1/math/core.nl</code></li>
+</ul>
+<p>Future-compatible extension (explicitly <strong>out-of-scope</strong> for Slice C but reserved):</p>
+<ul>
+<li>secondary candidate: <code>v{major}/{domain_as_path}/index.nl</code></li>
+</ul>
+<h3 id="25-conflict-error-behavior-testable-contract">2.5 Conflict &amp; error behavior (testable contract)<a class="headerlink" href="#25-conflict-error-behavior-testable-contract" title="Permanent link">&para;</a></h3>
+<p>Resolution outcome is exactly one of:</p>
+<ul>
+<li><strong>Resolved</strong>: a single filesystem path.</li>
+<li><strong>Missing domain</strong>: no root contained the candidate module.</li>
+<li><strong>Ambiguous</strong>: multiple roots at the <em>same precedence tier</em> contain the candidate.</li>
+</ul>
+<p>Define precedence tiers:</p>
+<ul>
+<li>Tier 0: project-local override root</li>
+<li>Tier 1: CLI <code>--stdlib-path</code> roots (each flag is its own tier level; earlier flags higher)</li>
+<li>Tier 2: env roots (each entry is its own tier level; earlier entries higher)</li>
+<li>Tier 3: bundled root</li>
+</ul>
+<p><strong>Ambiguity rule</strong></p>
+<ul>
+<li>If <em>two different roots</em> at the same tier level both contain the candidate path, raise an <strong>Ambiguous</strong> error.</li>
+<li>Example: two <code>--stdlib-path</code> flags with the same precedence level is impossible if each flag is a level; ambiguity can still occur within env roots if you treat the entire env list as one level—this spec avoids that by defining each entry as a level.</li>
+<li>Therefore, ambiguity most commonly occurs when the implementation allows multiple values within one “level” (e.g., a single CLI flag that accepts a list). If the implementation chooses list semantics, it MUST then implement ambiguity detection within that level.</li>
+</ul>
+<p><strong>Error codes</strong> (required for tests)</p>
+<ul>
+<li><code>EUSE001</code> Missing domain</li>
+<li>Include: <code>domain</code>, <code>major</code>, <code>attempted_roots[]</code>, <code>candidate_relpath</code></li>
+<li><code>EUSE002</code> Ambiguous domain</li>
+<li>Include: <code>domain</code>, <code>major</code>, <code>candidate_relpath</code>, <code>matches[]</code> (absolute or normalized paths)</li>
+</ul>
+<h3 id="26-deterministic-resolution-flow-reference-pseudocode">2.6 Deterministic resolution flow (reference pseudocode)<a class="headerlink" href="#26-deterministic-resolution-flow-reference-pseudocode" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">resolve_use</span><span class="p">(</span><span class="n">domain_spec</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Root</span><span class="p">],</span> <span class="n">default_major</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResolvedUse</span><span class="p">:</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">major</span><span class="p">,</span> <span class="n">domain</span> <span class="o">=</span> <span class="n">parse_major_prefix</span><span class="p">(</span><span class="n">domain_spec</span><span class="p">,</span> <span class="n">default_major</span><span class="p">)</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">rel</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;v</span><span class="si">{</span><span class="n">major</span><span class="si">}</span><span class="s2">/&quot;</span> <span class="o">+</span> <span class="n">domain</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.nl&quot;</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">tried</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">matches</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">:</span>  <span class="c1"># already expanded into strict precedence order</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        <span class="n">tried</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="n">candidate</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">rel</span><span class="p">)</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>        <span class="k">if</span> <span class="n">exists</span><span class="p">(</span><span class="n">candidate</span><span class="p">):</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>            <span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>            <span class="k">return</span> <span class="n">ResolvedUse</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span> <span class="n">major</span><span class="o">=</span><span class="n">major</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">candidate</span><span class="p">)</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    <span class="k">raise</span> <span class="n">MissingDomain</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="s2">&quot;EUSE001&quot;</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span> <span class="n">major</span><span class="o">=</span><span class="n">major</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span> <span class="n">tried</span><span class="o">=</span><span class="n">tried</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Implementation note: if an implementation permits multiple candidates per precedence step, replace the “return first match” with “collect matches within a step and error if &gt;1”.</p>
+<hr />
+<h2 id="3-user-override-precedence-clienvproject-local">3) User override precedence (CLI/env/project-local)<a class="headerlink" href="#3-user-override-precedence-clienvproject-local" title="Permanent link">&para;</a></h2>
+<h3 id="31-precedence-summary">3.1 Precedence summary<a class="headerlink" href="#31-precedence-summary" title="Permanent link">&para;</a></h3>
+<p>Highest to lowest:</p>
+<ol>
+<li><a href=".nls/stdlib/"><code>.nls/stdlib/</code></a> (project-local override)</li>
+<li>CLI <code>--stdlib-path</code> (repeatable; left-to-right)</li>
+<li>Env <code>NLS_STDLIB_PATH</code> (left-to-right)</li>
+<li>Bundled <a href="nlsc/stdlib/"><code>nlsc/stdlib/</code></a></li>
+</ol>
+<h3 id="32-contract-for-override-vs-conflict">3.2 Contract for “override” vs “conflict”<a class="headerlink" href="#32-contract-for-override-vs-conflict" title="Permanent link">&para;</a></h3>
+<ul>
+<li>If a higher-precedence root contains the module, it <strong>overrides</strong> all lower-precedence matches (no warning required for Slice C).</li>
+<li>If two matches are present at the <em>same</em> precedence step (implementation-defined; see §2.5), it is a hard error <code>EUSE002</code>.</li>
+</ul>
+<hr />
+<h2 id="4-versioning-strategy-notes-stdlib-domains">4) Versioning strategy notes (stdlib domains)<a class="headerlink" href="#4-versioning-strategy-notes-stdlib-domains" title="Permanent link">&para;</a></h2>
+<h3 id="41-why-version-at-the-domain-root">4.1 Why version at the domain root<a class="headerlink" href="#41-why-version-at-the-domain-root" title="Permanent link">&para;</a></h3>
+<p>Stdlib changes will happen; without versioning, <code>@use math.core</code> is inherently unstable across compiler releases.</p>
+<h3 id="42-proposed-invariants">4.2 Proposed invariants<a class="headerlink" href="#42-proposed-invariants" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Stdlib is semver-versioned <strong>per major root</strong>: <code>v1</code>, <code>v2</code>, …</li>
+<li>Within the same major root:</li>
+<li>backward-compatible additions are allowed (new helpers, new domains)</li>
+<li>breaking changes are not allowed</li>
+<li>Breaking changes require a new <code>v{major+1}</code> root.</li>
+</ul>
+<h3 id="43-pinning-reproducibility-lockfile-facing-slice-c-notes">4.3 Pinning &amp; reproducibility (lockfile-facing, Slice C notes)<a class="headerlink" href="#43-pinning-reproducibility-lockfile-facing-slice-c-notes" title="Permanent link">&para;</a></h3>
+<p>To support reproducible builds:</p>
+<ul>
+<li>The lockfile SHOULD record:</li>
+<li>which stdlib major is in use when <code>@use</code> omits explicit major</li>
+<li>the bundled stdlib semver for that major (from <code>MANIFEST.json</code>)</li>
+<li>hashes for each resolved stdlib module file (content hash)</li>
+</ul>
+<p>This allows:</p>
+<ul>
+<li>Detecting “stdlib drift” when upgrading <code>nlsc</code>.</li>
+<li>Keeping projects stable even as bundled stdlib evolves.</li>
+</ul>
+<hr />
+<h2 id="5-test-plan-red-phase-cases">5) Test plan (Red-phase cases)<a class="headerlink" href="#5-test-plan-red-phase-cases" title="Permanent link">&para;</a></h2>
+<p>All tests below are stated as <em>black-box</em> scenarios that can be implemented against the resolver + CLI, without requiring semantic analysis.</p>
+<h3 id="51-happy-path-bundled-stdlib">5.1 Happy path — bundled stdlib<a class="headerlink" href="#51-happy-path-bundled-stdlib" title="Permanent link">&para;</a></h3>
+<p>Given:</p>
+<ul>
+<li>Bundled root contains <code>v1/math/core.nl</code>.</li>
+<li>Program contains <code>@use math.core</code>.</li>
+</ul>
+<p>Expect:</p>
+<ul>
+<li>Resolution selects bundled <code>.../nlsc/stdlib/v1/math/core.nl</code>.</li>
+<li>Dependency graph includes that file as an input (or equivalent representation).</li>
+</ul>
+<h3 id="52-missing-domain">5.2 Missing domain<a class="headerlink" href="#52-missing-domain" title="Permanent link">&para;</a></h3>
+<p>Given:</p>
+<ul>
+<li>No roots contain <code>v1/math/missing.nl</code>.</li>
+<li>Program contains <code>@use math.missing</code>.</li>
+</ul>
+<p>Expect:</p>
+<ul>
+<li>Compile fails with <code>EUSE001</code>.</li>
+<li>Error includes <code>domain=math.missing</code>, <code>major=1</code>, <code>candidate_relpath=v1/math/missing.nl</code>.</li>
+<li>Error includes <code>attempted_roots</code> in the exact precedence order used.</li>
+</ul>
+<h3 id="53-project-local-override-wins">5.3 Project-local override wins<a class="headerlink" href="#53-project-local-override-wins" title="Permanent link">&para;</a></h3>
+<p>Given:</p>
+<ul>
+<li>Bundled root contains <code>v1/math/core.nl</code>.</li>
+<li>Project-local override root contains <code>.nls/stdlib/v1/math/core.nl</code>.</li>
+<li>Program contains <code>@use math.core</code>.</li>
+</ul>
+<p>Expect:</p>
+<ul>
+<li>Resolution selects project-local <code>.nls/stdlib/v1/math/core.nl</code>.</li>
+<li>No error.</li>
+</ul>
+<h3 id="54-cli-override-wins-over-env-and-bundled">5.4 CLI override wins over env and bundled<a class="headerlink" href="#54-cli-override-wins-over-env-and-bundled" title="Permanent link">&para;</a></h3>
+<p>Given:</p>
+<ul>
+<li>CLI provides <code>--stdlib-path &lt;X&gt;</code>.</li>
+<li><code>&lt;X&gt;/v1/math/core.nl</code> exists.</li>
+<li>Env root also has a different copy.</li>
+<li>Bundled exists.</li>
+</ul>
+<p>Expect:</p>
+<ul>
+<li>Resolution selects <code>&lt;X&gt;/v1/math/core.nl</code>.</li>
+</ul>
+<h3 id="55-conflict-ambiguity-at-same-precedence-step">5.5 Conflict / ambiguity at same precedence step<a class="headerlink" href="#55-conflict-ambiguity-at-same-precedence-step" title="Permanent link">&para;</a></h3>
+<p>This is an <em>implementation choice test</em>: it becomes relevant if <code>--stdlib-path</code> accepts a list in one flag or if env list entries are treated as a single precedence step.</p>
+<p>Given:</p>
+<ul>
+<li>Two stdlib roots considered the same precedence step both contain <code>v1/math/core.nl</code>.</li>
+</ul>
+<p>Expect:</p>
+<ul>
+<li>Compile fails with <code>EUSE002</code>.</li>
+<li>Error includes <code>matches[]</code> listing both candidates.</li>
+</ul>
+<hr />
+<h2 id="6-acceptance-criteria-exact-testable">6) Acceptance criteria (exact, testable)<a class="headerlink" href="#6-acceptance-criteria-exact-testable" title="Permanent link">&para;</a></h2>
+<h3 id="61-resolution-correctness">6.1 Resolution correctness<a class="headerlink" href="#61-resolution-correctness" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>@use math.core</code> resolves to <strong>exactly one</strong> file path or fails with a structured error.</li>
+<li>Domain-to-path mapping is deterministic: <code>math.core</code> → <code>math/core.nl</code> (with <code>.nl</code> suffix and version prefix).</li>
+<li>If project-local override exists at <a href=".nls/stdlib/"><code>.nls/stdlib/</code></a>, it is selected over any CLI/env/bundled match.</li>
+<li>If CLI <code>--stdlib-path</code> is provided, it is selected over env and bundled.</li>
+<li>If no roots contain the candidate file, compilation fails with error code <code>EUSE001</code> and includes the <code>candidate_relpath</code> and <code>attempted_roots</code>.</li>
+</ol>
+<h3 id="62-version-behavior">6.2 Version behavior<a class="headerlink" href="#62-version-behavior" title="Permanent link">&para;</a></h3>
+<ol>
+<li>If <code>@use v1.math.core</code> is used, resolution MUST use major=1 regardless of bundled default.</li>
+<li>If <code>@use math.core</code> omits explicit major, resolution MUST use bundled manifest <code>default_major</code> (until an explicit <code>--stdlib-major</code> is introduced).</li>
+</ol>
+<h3 id="63-security-sandboxing">6.3 Security / sandboxing<a class="headerlink" href="#63-security-sandboxing" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Resolver MUST NOT allow <code>@use</code> to escape roots (no <code>..</code>, no absolute paths, no path separators in domain segments).</li>
+<li>When resolution fails, error output MUST NOT reveal unrelated filesystem paths beyond the declared roots.</li>
+</ol>
+<h3 id="64-determinism-diagnostics">6.4 Determinism &amp; diagnostics<a class="headerlink" href="#64-determinism-diagnostics" title="Permanent link">&para;</a></h3>
+<ol>
+<li>For a fixed set of roots and filesystem contents, resolution results are deterministic across runs.</li>
+<li>Errors include a stable code (<code>EUSE001</code>/<code>EUSE002</code>) suitable for assertions.</li>
+</ol>
+<hr />
+<h2 id="appendix-a-mermaid-overview">Appendix A — Mermaid overview<a class="headerlink" href="#appendix-a-mermaid-overview" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart TD
+  A[@use domain] --&gt; B[Parse optional vN. prefix]
+  B --&gt; C[major + domain]
+  C --&gt; D[relpath = v{major}/domain_as_path.nl]
+  D --&gt; E{Search roots in order}
+  E --&gt;|found| F[Resolved path]
+  E --&gt;|not found| G[EUSE001 MissingDomain]</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2024-2025 Mnehmos
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/Mnehmos/mnehmos.nls.lang" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://pypi.org/project/nlsc/" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 444.7a20.4 20.4 0 1 1 0-40.7 20.4 20.4 0 1 1 0 40.7M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.6-183.4a20.4 20.4 0 1 1 0 40.8 20.4 20.4 0 1 1 0-40.8"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "navigation.instant", "content.code.copy", "content.code.annotate", "search.highlight", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
