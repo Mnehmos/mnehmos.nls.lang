@@ -78,6 +78,18 @@ Domain-to-path mapping is deterministic:
 
 If the domain cannot be resolved, compilation fails with a stable error code (see [`docs/error-reference.md`](docs/error-reference.md)).
 
+### Edit Provenance (normative reference)
+
+All systems that emit or persist `.nl` edit metadata SHOULD use the canonical Edit Provenance schema and validation contract defined in [`Issue #93 — Standardized Edit Provenance for .nl Changes`](design/issue-93-edit-provenance.md).
+
+Normative requirements for provenance producers/consumers:
+
+1. Records MUST include `schema_version`, `record_id`, `timestamp`, `target`, `edit`, and `source`.
+2. `schema_version` MUST be semver and MUST use a supported major.
+3. `source.kind` MUST be one of `human`, `llm`, or `tool`.
+4. `edit.operation` MUST be one of `create`, `update`, `delete`, `rename`, or `move`.
+5. Hash fields in `target` MUST follow the nullability and SHA-256 rules defined by Issue #93.
+
 ---
 
 ## ANLU Blocks

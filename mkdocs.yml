@@ -66,6 +66,12 @@ markdown_extensions:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
+validation:
+  nav:
+    omitted_files: warn
+  links:
+    not_found: ignore
+
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
@@ -84,6 +90,12 @@ nav:
     - CLI Commands: cli-reference.md
     - LLM Reference: llm-reference.md
     - Error Reference: error-reference.md
+    - OS File Association Guide: os-integration.md
+    - Parser Performance Analysis: parser-performance.md
+    - Antigravity Prompt: antigravity_prompt.md
+  - Design:
+    - "Issue #90 — @use Directives": design/issue-90-use-directives.md
+    - "Issue #93 — Edit Provenance": design/issue-93-edit-provenance.md
     - Architecture: architecture.md
     - Formal Grammar: nl-grammar.ebnf
 

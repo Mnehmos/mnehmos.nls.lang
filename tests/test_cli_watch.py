@@ -144,6 +144,35 @@ RETURNS: a
         assert compiled_files[0][1] is False  # Failed
         assert "nonexistent_function" in compiled_files[0][2]  # Error message
 
+    def test_compile_reports_stdlib_use_errors(self, tmp_path):
+        """Watcher should surface @use resolution failures from shared validation."""
+        from nlsc.watch import NLWatcher
+
+        compiled_files = []
+
+        def on_compile(path, success, error=None):
+            compiled_files.append((path, success, error))
+
+        watcher = NLWatcher(tmp_path, on_compile=on_compile)
+
+        nl_file = tmp_path / "missing_use.nl"
+        nl_file.write_text("""\
+@module missing-use
+@target python
+@use math.missing
+
+[calc]
+PURPOSE: Return zero
+RETURNS: 0
+""")
+
+        watcher.compile_file(nl_file)
+
+        assert len(compiled_files) == 1
+        assert compiled_files[0][1] is False
+        assert "EUSE001" in compiled_files[0][2]
+        assert "math" in compiled_files[0][2]
+
 
 class TestQuietMode:
     """Tests for quiet mode"""

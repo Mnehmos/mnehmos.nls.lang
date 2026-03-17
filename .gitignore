@@ -38,6 +38,8 @@ ENV/
 .coverage
 htmlcov/
 .hypothesis/
+.mypy_cache/
+.approval_tests_temp/
 
 # NLS generated files (optional - you may want to commit these)
 # *.nl.lock
@@ -52,6 +54,10 @@ Thumbs.db
 
 # Ruff cache
 .ruff_cache/
+
+# Local NLS temp workdirs
+.nlsc_tmp/
+_nlsc_tmp/
 
 # Test projects created during development
 examples/testproject/
@@ -77,3 +83,6 @@ windows/build/
 windows/dist/
 windows/installer_output/
 windows/*.spec
+
+# MkDocs generated site
+site/

@@ -239,6 +239,24 @@ def compare_main_block(regex_file: NLFile, ts_file: NLFile) -> list[str]:
     return errors
 
 
+def compare_module(regex_file: NLFile, ts_file: NLFile) -> list[str]:
+    """Compare module-level metadata from both parsers."""
+    errors = []
+
+    if regex_file.module.name != ts_file.module.name:
+        errors.append(f"module.name mismatch: {regex_file.module.name} vs {ts_file.module.name}")
+    if regex_file.module.version != ts_file.module.version:
+        errors.append(f"module.version mismatch: {regex_file.module.version} vs {ts_file.module.version}")
+    if regex_file.module.target != ts_file.module.target:
+        errors.append(f"module.target mismatch: {regex_file.module.target} vs {ts_file.module.target}")
+    if regex_file.module.imports != ts_file.module.imports:
+        errors.append(f"module.imports mismatch: {regex_file.module.imports} vs {ts_file.module.imports}")
+    if regex_file.module.uses != ts_file.module.uses:
+        errors.append(f"module.uses mismatch: {regex_file.module.uses} vs {ts_file.module.uses}")
+
+    return errors
+
+
 class TestParserParity:
     """Test that regex and tree-sitter parsers produce identical output."""
 
@@ -297,6 +315,8 @@ RETURNS: total
         source = """@module math
 @version 1.0.0
 @target python
+@imports datetime, helper.module
+@use math.core
 
 [add]
 PURPOSE: Add
@@ -307,9 +327,8 @@ RETURNS: a
         regex_result = parse_nl_file(source)
         ts_result = parse_nl_file_treesitter(source)
 
-        assert regex_result.module.name == ts_result.module.name
-        assert regex_result.module.version == ts_result.module.version
-        assert regex_result.module.target == ts_result.module.target
+        errors = compare_module(regex_result, ts_result)
+        assert not errors, "\n".join(errors)
 
     def test_type_definitions(self):
         """Test type block parsing."""

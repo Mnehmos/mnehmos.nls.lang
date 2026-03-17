@@ -56,6 +56,40 @@ def _validate_import_token(token: str, line_num: int) -> str:
     return candidate
 
 
+def apply_module_directive(module: Module, directive_type: str, directive_value: str, line_num: int) -> None:
+    """Apply a module-level directive to a Module object."""
+    if directive_type == "module":
+        module.name = directive_value
+    elif directive_type == "version":
+        module.version = directive_value
+    elif directive_type == "target":
+        module.target = directive_value
+    elif directive_type == "imports":
+        module.imports = [
+            _validate_import_token(i, line_num)
+            for i in directive_value.split(",")
+        ]
+    elif directive_type == "use":
+        if directive_value:
+            module.uses.append(directive_value)
+
+
+def parse_module_directives(source: str) -> Module:
+    """Parse top-level module directives from source using shared regex rules."""
+    module = Module(name="unnamed")
+
+    for line_num, line in enumerate(source.split("\n"), start=1):
+        directive_match = PATTERNS["directive"].match(line.lstrip())
+        if not directive_match:
+            continue
+
+        directive_type = directive_match.group(1)
+        directive_value = directive_match.group(2).strip()
+        apply_module_directive(module, directive_type, directive_value, line_num)
+
+    return module
+
+
 def parse_input(text: str) -> Input:
     """
     Parse an input line like:
@@ -391,21 +425,8 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             directive_type = directive_match.group(1)
             directive_value = directive_match.group(2).strip()
 
-            if directive_type == "module":
-                module.name = directive_value
-            elif directive_type == "version":
-                module.version = directive_value
-            elif directive_type == "target":
-                module.target = directive_value
-            elif directive_type == "imports":
-                module.imports = [
-                    _validate_import_token(i, line_num)
-                    for i in directive_value.split(",")
-                ]
-            elif directive_type == "use":
-                # Issue #90: record raw @use domain spec; resolver handles version/roots.
-                if directive_value:
-                    module.uses.append(directive_value)
+            if directive_type in {"module", "version", "target", "imports", "use"}:
+                apply_module_directive(module, directive_type, directive_value, line_num)
             elif directive_type == "main":
                 # Start main block
                 in_main_block = True

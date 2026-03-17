@@ -1,8 +1,5 @@
 """Tests for nlsc test command - Issue #13"""
 
-import pytest
-import tempfile
-from pathlib import Path
 from nlsc.cli import cmd_test
 from argparse import Namespace
 
@@ -85,6 +82,34 @@ RETURNS: a + b
         result = cmd_test(args)
 
         # No tests = success with message
+        assert result == 0
+
+    def test_cmd_test_with_custom_imports(self, tmp_path):
+        """nlsc test should resolve sibling Python helper modules."""
+        (tmp_path / "helper.py").write_text(
+            "def offset(value):\n    return value + 1\n",
+            encoding="utf-8",
+        )
+        nl_file = tmp_path / "calculator.nl"
+        nl_file.write_text("""\
+@module calculator
+@target python
+@imports helper
+
+[add-one]
+PURPOSE: Add one with helper
+INPUTS:
+  - value: number
+RETURNS: helper.offset(value)
+
+@test [add-one] {
+  add_one(2) == 3
+}
+""")
+
+        args = Namespace(file=str(nl_file), verbose=False)
+        result = cmd_test(args)
+
         assert result == 0
 
     def test_cmd_test_file_not_found(self):

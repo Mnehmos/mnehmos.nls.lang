@@ -5,12 +5,21 @@ Tests for input sanitization, path traversal prevention, and code injection defe
 
 import os
 import pytest
-import tempfile
 from pathlib import Path
 
 from nlsc.parser import parse_nl_file, ParseError
 from nlsc.emitter import emit_python, _is_safe_numeric
 from nlsc.cli import main as cli_main
+
+try:
+    from nlsc.parser_treesitter import (
+        parse_nl_file_treesitter,
+        is_available as treesitter_available,
+    )
+    TREESITTER_AVAILABLE = treesitter_available()
+except ImportError:
+    TREESITTER_AVAILABLE = False
+    parse_nl_file_treesitter = None
 
 
 class TestNumericSanitization:
@@ -102,12 +111,11 @@ class TestConstraintInjection:
 class TestPathTraversal:
     """Tests for path traversal prevention"""
 
-    def test_source_path_normalized(self):
+    def test_source_path_normalized(self, tmp_path):
         """Source paths should be normalized to prevent traversal"""
         # Create a temp directory with a .nl file
-        with tempfile.TemporaryDirectory() as tmpdir:
-            nl_file = Path(tmpdir) / "test.nl"
-            nl_file.write_text("""\
+        nl_file = tmp_path / "test.nl"
+        nl_file.write_text("""\
 @module test
 @target python
 
@@ -115,11 +123,11 @@ class TestPathTraversal:
 PURPOSE: Say hello
 RETURNS: void
 """)
-            # Parse with a path containing traversal attempts
-            nl_file_obj = parse_nl_file(nl_file.read_text(), source_path=str(nl_file))
+        # Parse with a path containing traversal attempts
+        nl_file_obj = parse_nl_file(nl_file.read_text(), source_path=str(nl_file))
 
-            # The source path in the result should be clean
-            assert ".." not in str(nl_file_obj.source_path)
+        # The source path in the result should be clean
+        assert ".." not in str(nl_file_obj.source_path)
 
     def test_import_paths_validated(self):
         """@import paths should not allow traversal"""
@@ -183,6 +191,22 @@ RETURNS: void
         assert "unsafe" in error_text or "invalid" in error_text or "path" in error_text, (
             "ParseError must describe why the token is rejected (unsafe/invalid/path-like)."
         )
+
+    @pytest.mark.skipif(not TREESITTER_AVAILABLE, reason="tree-sitter not available")
+    def test_treesitter_should_raise_parse_error_when_imports_contains_unsafe_token(self):
+        """Tree-sitter parser must enforce the same @imports validation contract."""
+        source = """\
+@module security_test
+@target python
+@imports safe_module, ../secrets
+
+[hello]
+PURPOSE: Validate import tokens
+RETURNS: void
+"""
+
+        with pytest.raises(ParseError):
+            parse_nl_file_treesitter(source)
 
 
 class TestOutputSanitization:

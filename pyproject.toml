@@ -70,7 +70,8 @@ nlsc = ["resources/*.ico"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
-addopts = "-v --tb=short"
+addopts = "-v --tb=short --basetemp=f:/tmp/pytest-nls"
+tmp_path_retention_policy = "failed"
 
 [tool.mypy]
 python_version = "3.11"

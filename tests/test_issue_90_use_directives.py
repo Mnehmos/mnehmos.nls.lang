@@ -172,6 +172,41 @@ RETURNS: 1
         sandbox.cleanup()
 
 
+def test_should_resolve_bundled_stdlib_in_auto_parser_mode(tmp_path: Path):
+    """Auto parser mode must not silently drop `@use` files."""
+
+    sandbox = _BundledStdlibSandbox.ensure_minimal_math_core()
+    try:
+        program = """\
+@module main
+@target python
+@use math.core
+
+[noop]
+PURPOSE: No-op
+RETURNS: 1
+"""
+        src = tmp_path / "main.nl"
+        src.write_text(program, encoding="utf-8")
+
+        result = _run_nlsc(
+            ["compile", str(src)],
+            cwd=tmp_path,
+            env_overrides=_pythonpath_env(extra_paths=[sandbox.repo_root]),
+        )
+
+        assert result.returncode == 0, (
+            "Expected auto parser mode to compile `@use` files successfully instead of silently dropping ANLUs. "
+            f"Got exit {result.returncode}.\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}\n"
+        )
+        assert "Parsed 1 ANLUs" in result.stdout, (
+            "Expected auto parser mode to preserve the ANLU count for `@use` files. "
+            f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}\n"
+        )
+    finally:
+        sandbox.cleanup()
+
+
 def test_should_fail_with_EUSE001_when_domain_is_missing(tmp_path: Path):
     """Error path: missing domain must raise deterministic `EUSE001` with diagnostics."""
 
@@ -222,6 +257,41 @@ RETURNS: 1
         )
         assert "attempted_roots" in combined, (
             "Expected missing domain error to include `attempted_roots` diagnostics. "
+            f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}\n"
+        )
+    finally:
+        sandbox.cleanup()
+
+
+def test_verify_should_fail_with_EUSE001_when_domain_is_missing(tmp_path: Path):
+    """`verify` must enforce the same `@use` resolution contract as `compile`."""
+
+    sandbox = _BundledStdlibSandbox.ensure_minimal_math_core()
+    try:
+        program = """\
+@module main
+@target python
+@use math.missing
+
+[noop]
+PURPOSE: No-op
+RETURNS: 1
+"""
+        src = tmp_path / "main.nl"
+        src.write_text(program, encoding="utf-8")
+
+        result = _run_nlsc(
+            ["verify", str(src)],
+            cwd=tmp_path,
+            env_overrides=_pythonpath_env(extra_paths=[sandbox.repo_root]),
+        )
+
+        assert result.returncode != 0, (
+            "Expected verify to fail when an `@use` domain is missing. "
+            f"Got exit {result.returncode}.\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}\n"
+        )
+        assert "EUSE001" in (result.stdout + result.stderr), (
+            "Expected verify to surface the same deterministic stdlib resolution error as compile. "
             f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}\n"
         )
     finally:

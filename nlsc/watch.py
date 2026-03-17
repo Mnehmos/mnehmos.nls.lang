@@ -5,6 +5,7 @@ Watches .nl files and recompiles on save.
 """
 
 import time
+import py_compile
 from datetime import datetime
 from pathlib import Path
 from typing import Callable, Optional
@@ -58,22 +59,22 @@ class NLWatcher:
         Returns:
             True if compilation succeeded, False otherwise
         """
-        from .parser import parse_nl_path, ParseError
-        from .resolver import resolve_dependencies
+        from .parser import ParseError
         from .emitter import emit_python, emit_tests
         from .lockfile import generate_lockfile, write_lockfile
+        from .pipeline import parse_nl_path_auto, validate_semantics
+        from .stdlib_resolver import StdlibUseError
 
         error_msg = None
         success = False
 
         try:
             # Parse
-            nl_file = parse_nl_path(path)
+            nl_file = parse_nl_path_auto(path)
 
-            # Resolve
-            result = resolve_dependencies(nl_file)
-            if not result.success:
-                error_msg = "; ".join(f"{e.anlu_id}: {e.message}" for e in result.errors)
+            validation = validate_semantics(nl_file, path)
+            if validation.dependency_errors:
+                error_msg = "; ".join(validation.dependency_errors)
                 if self.on_compile:
                     self.on_compile(path, False, error_msg)
                 return False
@@ -82,6 +83,7 @@ class NLWatcher:
             python_code = emit_python(nl_file, mode="mock")
             output_path = path.with_suffix(".py")
             output_path.write_text(python_code, encoding="utf-8")
+            py_compile.compile(str(output_path), doraise=True)
 
             # Generate tests if present
             if nl_file.tests:
@@ -104,6 +106,12 @@ class NLWatcher:
 
         except ParseError as e:
             error_msg = f"Parse error: {e}"
+        except StdlibUseError as e:
+            attempted = [str(p) for p in e.attempted_roots]
+            error_msg = (
+                f"{e.code} domain={e.domain} major={e.major} "
+                f"candidate_relpath={e.candidate_relpath} attempted_roots={attempted}"
+            )
         except Exception as e:
             error_msg = f"Error: {e}"
 

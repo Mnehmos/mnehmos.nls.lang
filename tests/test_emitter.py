@@ -145,9 +145,24 @@ RETURNS: void
 """
         nl_file = parse_nl_file(source)
         code = emit_python(nl_file)
-        # @imports uses regular imports for stdlib, relative for custom modules
+        # @imports uses regular imports for stdlib modules
         assert "import datetime" in code
         assert "import json" in code
+
+    def test_custom_imports_support_module_and_symbol_access(self):
+        source = """\
+@module test
+@target python
+@imports helper
+
+[func]
+PURPOSE: Test
+RETURNS: helper.value()
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        assert "import helper" in code
+        assert "from helper import *" in code
 
 
 class TestSecurityValidation:
@@ -285,3 +300,43 @@ RETURNS: weight based on priority value
         # Should use Any as return type, not the descriptive text
         assert "-> Any:" in code
         assert "-> weight based on priority value:" not in code
+
+
+class TestRegressionFixes:
+    """Regression tests for Phase 1 emitter fixes."""
+
+    def test_guard_messages_with_apostrophes_are_escaped(self):
+        source = """\
+@module test
+@target python
+
+[check]
+PURPOSE: Test quoted guard messages
+INPUTS:
+  - x: number
+GUARDS:
+  - x > 0 -> ValueError("can't be zero")
+RETURNS: x
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        compile(code, "<string>", "exec")
+        assert "raise ValueError(\"can't be zero\")" in code or 'raise ValueError("can\\\'t be zero")' in code
+
+    def test_main_block_preserves_subtraction(self):
+        source = """\
+@module test
+@target python
+
+[noop]
+PURPOSE: No-op
+RETURNS: void
+
+@main {
+  print(a-b)
+}
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        assert "print(a-b)" in code
+        assert "print(a_b)" not in code

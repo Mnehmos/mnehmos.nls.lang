@@ -1,5 +1,7 @@
 """Tests for nlsc diff command - Issue #15"""
 
+import subprocess
+import sys
 import pytest
 from pathlib import Path
 from argparse import Namespace
@@ -13,6 +15,16 @@ class TestDiffCommand:
     def test_cmd_diff_exists(self):
         """cmd_diff function should exist"""
         assert callable(cmd_diff)
+
+    def test_diff_cli_name_is_available(self):
+        """Public CLI should expose `diff`, with `dif` kept as compatibility alias."""
+        result = subprocess.run(
+            [sys.executable, "-m", "nlsc", "diff", "--help"],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0
+        assert "usage: nlsc diff" in result.stdout.lower()
 
     def test_diff_file_not_found(self):
         """nlsc diff should error on missing file"""

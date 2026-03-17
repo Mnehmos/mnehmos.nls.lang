@@ -72,10 +72,11 @@ def test_should_include_stable_automation_error_token_when_run_dependency_resolu
     monkeypatch.setattr(cli, "parse_nl_file_auto", lambda _source_path: SimpleNamespace(anlus=[]))
     monkeypatch.setattr(
         cli,
-        "resolve_dependencies",
-        lambda _nl_file: SimpleNamespace(
-            success=False,
-            errors=[SimpleNamespace(anlu_id="main", message="cycle detected")],
+        "validate_semantics",
+        lambda _nl_file, _source_path, **_kw: SimpleNamespace(
+            dependency_errors=["main: cycle detected"],
+            contract_errors=[],
+            resolved_uses={},
         ),
     )
 

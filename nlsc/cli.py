@@ -20,13 +20,11 @@ import os
 import py_compile
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 from . import __version__
-from .parser import parse_nl_path, ParseError
+from .parser import ParseError
 from .schema import NLFile
-from .resolver import resolve_dependencies
 from .emitter import emit_python, emit_tests
 from .lockfile import generate_lockfile, write_lockfile, verify_lockfile
 from .sourcemap import generate_source_map
@@ -45,11 +43,13 @@ from .watch import NLWatcher, format_timestamp
 import platform
 import shutil
 
+from .pipeline import (
+    create_temp_workdir,
+    detect_treesitter,
+    parse_nl_path_auto,
+    validate_semantics,
+)
 from .stdlib_resolver import (
-    bundled_default_major,
-    bundled_stdlib_root,
-    resolve_use,
-    stdlib_search_roots,
     StdlibUseError,
 )
 
@@ -71,23 +71,14 @@ def _cross() -> str:
         return "[X]"
 
 # Parser selection - default to tree-sitter if available
-def _detect_treesitter() -> bool:
-    """Check if tree-sitter parser is available."""
-    try:
-        from . import parser_treesitter
-        return parser_treesitter.is_available()
-    except ImportError:
-        return False
-
-
-_use_treesitter = _detect_treesitter()
+_use_treesitter = detect_treesitter()
 
 
 def set_parser_backend(backend: str) -> None:
     """Set the parser backend to use: 'regex', 'treesitter', or 'auto'."""
     global _use_treesitter
     if backend == "auto":
-        _use_treesitter = _detect_treesitter()
+        _use_treesitter = detect_treesitter()
     elif backend == "treesitter":
         # Check if tree-sitter is available
         try:
@@ -105,11 +96,17 @@ def set_parser_backend(backend: str) -> None:
 
 def parse_nl_file_auto(source_path: Path) -> NLFile:
     """Parse a .nl file using the selected parser backend."""
-    if _use_treesitter:
-        from .parser_treesitter import parse_nl_path_treesitter
-        return parse_nl_path_treesitter(source_path)
-    else:
-        return parse_nl_path(source_path)
+    return parse_nl_path_auto(source_path, use_treesitter=_use_treesitter)
+
+
+def _print_stdlib_use_error(error: StdlibUseError) -> None:
+    """Emit a stable stdlib resolution diagnostic."""
+    attempted = [str(p) for p in error.attempted_roots]
+    print(
+        f"Error: {error.code} domain={error.domain} major={error.major} "
+        f"candidate_relpath={error.candidate_relpath} attempted_roots={attempted}",
+        file=sys.stderr,
+    )
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -196,40 +193,23 @@ def cmd_compile(args: argparse.Namespace) -> int:
         print(f"  {_cross()} Parse error: {e}", file=sys.stderr)
         return 1
 
-    # Resolve stdlib @use directives (Issue #90)
-    if getattr(nl_file.module, "uses", None):
-        bundled_root = bundled_stdlib_root()
-        default_major = bundled_default_major(root=bundled_root)
-        cli_roots = []
-        if getattr(args, "stdlib_path", None):
-            cli_roots = [Path(p) for p in args.stdlib_path]
-        roots = stdlib_search_roots(
-            cwd=source_path.parent,
-            cli_roots=cli_roots,
-            bundled_root=bundled_root,
+    try:
+        validation = validate_semantics(
+            nl_file,
+            source_path,
+            cli_stdlib_paths=getattr(args, "stdlib_path", None),
         )
+    except StdlibUseError as e:
+        _print_stdlib_use_error(e)
+        return 1
 
-        for spec in nl_file.module.uses:
-            try:
-                resolved = resolve_use(domain_spec=spec, roots=roots, default_major=default_major)
-            except StdlibUseError as e:
-                # EUSE001: deterministic diagnostics for tests
-                attempted = [str(p) for p in e.attempted_roots]
-                print(
-                    f"Error: {e.code} domain={e.domain} major={e.major} candidate_relpath={e.candidate_relpath} attempted_roots={attempted}",
-                    file=sys.stderr,
-                )
-                return 1
+    for resolved in validation.resolved_uses:
+        print(f"  {_check()} @use {resolved.domain} -> {resolved.path}")
 
-            # Include resolved path in output for contract tests
-            print(f"  {_check()} @use {resolved.domain} -> {resolved.path}")
-
-    # Resolve dependencies
-    result = resolve_dependencies(nl_file)
-    if not result.success:
+    if validation.dependency_errors:
         print(f"  {_cross()} Resolution errors:", file=sys.stderr)
-        for err in result.errors:
-            print(f"    - {err.anlu_id}: {err.message}", file=sys.stderr)
+        for err in validation.dependency_errors:
+            print(f"    - {err}", file=sys.stderr)
         return 1
     print(f"  {_check()} Resolved dependencies")
 
@@ -301,26 +281,28 @@ def cmd_verify(args: argparse.Namespace) -> int:
         print(f"  {_cross()} Parse error: {e}", file=sys.stderr)
         return 1
 
-    # Resolve
-    result = resolve_dependencies(nl_file)
-    if not result.success:
+    try:
+        validation = validate_semantics(
+            nl_file,
+            source_path,
+            require_contract_fields=True,
+        )
+    except StdlibUseError as e:
+        _print_stdlib_use_error(e)
+        return 1
+    if validation.resolved_uses:
+        print(f"  {_check()} Resolved {len(validation.resolved_uses)} @use directive(s)")
+
+    if validation.dependency_errors:
         print(f"  {_cross()} Resolution errors:")
-        for err in result.errors:
-            print(f"    - {err.anlu_id}: {err.message}")
+        for err in validation.dependency_errors:
+            print(f"    - {err}")
         return 1
     print(f"  {_check()} Dependencies valid")
 
-    # Validate each ANLU
-    errors = []
-    for anlu in nl_file.anlus:
-        if not anlu.purpose:
-            errors.append(f"{anlu.identifier}: Missing PURPOSE")
-        if not anlu.returns:
-            errors.append(f"{anlu.identifier}: Missing RETURNS")
-
-    if errors:
+    if validation.contract_errors:
         print(f"  {_cross()} Validation errors:")
-        for validation_err in errors:
+        for validation_err in validation.contract_errors:
             print(f"    - {validation_err}")
         return 1
 
@@ -412,10 +394,8 @@ def cmd_test(args: argparse.Namespace) -> int:
         print(f"No @test blocks found in {source_path}")
         return 0
 
-    # Create temp directory for generated code
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_path = Path(temp_dir)
-
+    temp_path = create_temp_workdir("nlsc_test_", preferred_root=source_path.parent)
+    try:
         # Generate the module code
         python_code = emit_python(nl_file, mode="mock")
         module_name = nl_file.module.name.replace("-", "_")
@@ -451,25 +431,34 @@ def cmd_test(args: argparse.Namespace) -> int:
         if getattr(args, "case", None):
             pytest_args.extend(["-k", args.case])
 
+        env = os.environ.copy()
+        existing_pythonpath = env.get("PYTHONPATH", "")
+        pythonpath_parts = [str(temp_path), str(source_path.parent.resolve())]
+        if existing_pythonpath:
+            pythonpath_parts.append(existing_pythonpath)
+        env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
+
         result = subprocess.run(
             pytest_args,
             cwd=str(temp_path),
             capture_output=not getattr(args, "verbose", False),
             text=True,
-            env={**__import__("os").environ, "PYTHONPATH": str(temp_path)}
+            env=env,
         )
 
         # Report results
         if result.returncode == 0:
             print(f"{_check()} All {total_cases} tests passed!")
             return 0
-        else:
-            print(f"{_cross()} Tests failed")
-            if result.stdout:
-                print(result.stdout)
-            if result.stderr:
-                print(result.stderr, file=sys.stderr)
-            return 1
+
+        print(f"{_cross()} Tests failed")
+        if result.stdout:
+            print(result.stdout)
+        if result.stderr:
+            print(result.stderr, file=sys.stderr)
+        return 1
+    finally:
+        shutil.rmtree(temp_path, ignore_errors=True)
 
 
 def cmd_atomize(args: argparse.Namespace) -> int:
@@ -683,6 +672,7 @@ def cmd_lock_update(args: argparse.Namespace) -> int:
 def cmd_run(args: argparse.Namespace) -> int:
     """Compile and execute a .nl file in one step"""
     source_path = Path(args.file)
+    source_root = source_path.parent.resolve()
     verbose = getattr(args, "verbose", False)
 
     if not source_path.exists():
@@ -700,12 +690,16 @@ def cmd_run(args: argparse.Namespace) -> int:
         print(f"Error: Unexpected run error [E_RUN]: {e}", file=sys.stderr)
         return 1
 
-    # Resolve dependencies
-    result = resolve_dependencies(nl_file)
-    if not result.success:
+    try:
+        validation = validate_semantics(nl_file, source_path)
+    except StdlibUseError as e:
+        _print_stdlib_use_error(e)
+        return 1
+
+    if validation.dependency_errors:
         print("Error: [E_RESOLUTION] Resolution errors:", file=sys.stderr)
-        for err in result.errors:
-            print(f"  - {err.anlu_id}: {err.message}", file=sys.stderr)
+        for err in validation.dependency_errors:
+            print(f"  - {err}", file=sys.stderr)
         return 1
 
     # Emit Python (target flag for future multi-target support)
@@ -718,11 +712,11 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     # Create temp directory or use --keep location
     if args.keep:
-        temp_dir = Path(args.keep)
+        temp_dir = Path(args.keep).resolve()
         temp_dir.mkdir(parents=True, exist_ok=True)
         cleanup = False
     else:
-        temp_dir = Path(tempfile.mkdtemp(prefix="nlsc_run_"))
+        temp_dir = create_temp_workdir("nlsc_run_", preferred_root=source_path.parent)
         cleanup = True
 
     # Write generated Python
@@ -752,9 +746,12 @@ def cmd_run(args: argparse.Namespace) -> int:
             if anlu.identifier == candidate or anlu.identifier == candidate_normalized:
                 # Add -c to call the function - use repr() for safe path escaping on all platforms
                 safe_path = repr(str(temp_dir))
+                safe_source_root = repr(str(source_root))
                 run_args = [
                     sys.executable, "-c",
-                    f"import sys; sys.path.insert(0, {safe_path}); from {module_name} import {candidate_normalized}; {candidate_normalized}()"
+                    f"import sys; sys.path.insert(0, {safe_source_root}); "
+                    f"sys.path.insert(0, {safe_path}); "
+                    f"from {module_name} import {candidate_normalized}; {candidate_normalized}()"
                 ]
                 if verbose:
                     print(f"Found entry point: {candidate}")
@@ -768,10 +765,10 @@ def cmd_run(args: argparse.Namespace) -> int:
         # Preserve existing PYTHONPATH if present
         env = os.environ.copy()
         existing_pythonpath = env.get("PYTHONPATH", "")
+        pythonpath_parts = [str(temp_dir), str(source_root)]
         if existing_pythonpath:
-            env["PYTHONPATH"] = f"{temp_dir}{os.pathsep}{existing_pythonpath}"
-        else:
-            env["PYTHONPATH"] = str(temp_dir)
+            pythonpath_parts.append(existing_pythonpath)
+        env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
 
         proc = subprocess.run(
             run_args,
@@ -1090,7 +1087,8 @@ The conversation is the programming. The .nl file is the receipt.
 
     # diff command
     diff_parser = subparsers.add_parser(
-        "dif",
+        "diff",
+        aliases=["dif"],
         help="Show changes since last compile"
     )
     diff_parser.add_argument(
@@ -1219,7 +1217,7 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_test(args)
     elif args.command == "atomize":
         return cmd_atomize(args)
-    elif args.command == "dif":
+    elif args.command in {"diff", "dif"}:
         return cmd_diff(args)
     elif args.command == "watch":
         return cmd_watch(args)

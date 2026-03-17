@@ -23,11 +23,11 @@ except ImportError:
     Node = None
 
 from .schema import (
-    ANLU, Module, NLFile, Input, Guard, EdgeCase,
+    ANLU, NLFile, Input, Guard, EdgeCase,
     TestSuite, TestCase, TypeDefinition, TypeField, LogicStep,
     PropertyTest, PropertyAssertion, Invariant
 )
-from .parser import ParseError
+from .parser import ParseError, parse_module_directives
 
 
 # =============================================================================
@@ -141,6 +141,19 @@ def _parse_main_block(source: str) -> list[str]:
                 main_buffer.append(stripped)
 
     return main_buffer
+
+
+def _sanitize_source_for_treesitter(source: str) -> str:
+    """Blank unsupported simple directives while preserving line numbers."""
+    sanitized_lines = []
+
+    for line in source.split("\n"):
+        if re.match(r"^\s*@use\b", line):
+            sanitized_lines.append("")
+        else:
+            sanitized_lines.append(line)
+
+    return "\n".join(sanitized_lines)
 
 
 # Determine platform-specific library name
@@ -715,47 +728,21 @@ def parse_nl_file_treesitter(source: str, source_path: Optional[str] = None) -> 
             raise ParseError("Invalid INPUTS bullet marker; expected one of: •, -, *")
 
     parser = _get_parser()
-    source_bytes = source.encode("utf-8")
+    source_bytes = _sanitize_source_for_treesitter(source).encode("utf-8")
     tree = parser.parse(source_bytes)
 
     root = tree.root_node
 
-    # Initialize module with defaults
-    module = Module(name="unnamed")
+    # Parse module directives using the shared regex path for parity with the
+    # regex parser, including validation for @imports and support for @use.
+    module = parse_module_directives(source)
     anlus = []
     tests = []
     literals = []
 
     # Process top-level nodes
     for child in root.children:
-        if child.type == "directive":
-            # Process directives
-            for directive_child in child.children:
-                if directive_child.type == "module_directive":
-                    name_node = _get_child_by_field(directive_child, "name")
-                    if name_node:
-                        module.name = _get_text(name_node, source_bytes)
-
-                elif directive_child.type == "version_directive":
-                    version_node = _get_child_by_field(directive_child, "version")
-                    if version_node:
-                        module.version = _get_text(version_node, source_bytes)
-
-                elif directive_child.type == "target_directive":
-                    target_node = _get_child_by_field(directive_child, "target")
-                    if target_node:
-                        module.target = _get_text(target_node, source_bytes)
-
-                elif directive_child.type == "imports_directive":
-                    imports_node = _get_child_by_field(directive_child, "imports")
-                    if imports_node:
-                        imports = []
-                        for import_child in imports_node.children:
-                            if import_child.type == "identifier":
-                                imports.append(_get_text(import_child, source_bytes))
-                        module.imports = imports
-
-        elif child.type == "anlu_block":
+        if child.type == "anlu_block":
             anlus.append(_parse_anlu_block(child, source_bytes))
 
         elif child.type == "type_block":

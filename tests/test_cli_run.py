@@ -2,7 +2,6 @@
 
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -40,11 +39,10 @@ class TestRunCommand:
         assert "not found" in result.stderr.lower()
         # Note: Exit code propagation depends on CLI wrapper
 
-    def test_run_simple_file(self):
+    def test_run_simple_file(self, tmp_path):
         """Run should execute a simple .nl file"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            nl_file = Path(tmpdir) / "hello.nl"
-            nl_file.write_text("""\
+        nl_file = tmp_path / "hello.nl"
+        nl_file.write_text("""\
 @module hello
 @target python
 
@@ -54,20 +52,19 @@ LOGIC:
   1. Print "Hello from NLS"
 RETURNS: void
 """)
-            result = subprocess.run(
-                [sys.executable, "-m", "nlsc", "run", str(nl_file)],
-                capture_output=True,
-                text=True
-            )
-            # Main function with print should produce output
-            # (Mock mode may not actually print, but should not error)
-            assert result.returncode == 0
+        result = subprocess.run(
+            [sys.executable, "-m", "nlsc", "run", str(nl_file), "--keep", str(tmp_path / "build")],
+            capture_output=True,
+            text=True
+        )
+        # Main function with print should produce output
+        # (Mock mode may not actually print, but should not error)
+        assert result.returncode == 0
 
-    def test_run_with_keep_flag(self):
+    def test_run_with_keep_flag(self, tmp_path):
         """Run --keep should preserve generated files"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            nl_file = Path(tmpdir) / "test.nl"
-            nl_file.write_text("""\
+        nl_file = tmp_path / "test.nl"
+        nl_file.write_text("""\
 @module test
 @target python
 
@@ -77,22 +74,21 @@ INPUTS:
   - name: string
 RETURNS: greeting
 """)
-            keep_dir = Path(tmpdir) / "keep"
+        keep_dir = tmp_path / "keep"
 
-            result = subprocess.run(
-                [sys.executable, "-m", "nlsc", "run", str(nl_file), "--keep", str(keep_dir)],
-                capture_output=True,
-                text=True
-            )
+        result = subprocess.run(
+            [sys.executable, "-m", "nlsc", "run", str(nl_file), "--keep", str(keep_dir)],
+            capture_output=True,
+            text=True
+        )
 
-            # Check generated file exists
-            assert (keep_dir / "test.py").exists()
+        # Check generated file exists
+        assert (keep_dir / "test.py").exists()
 
-    def test_run_with_target_flag(self):
+    def test_run_with_target_flag(self, tmp_path):
         """Run --target should accept python"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            nl_file = Path(tmpdir) / "test.nl"
-            nl_file.write_text("""\
+        nl_file = tmp_path / "test.nl"
+        nl_file.write_text("""\
 @module test
 @target python
 
@@ -100,18 +96,17 @@ RETURNS: greeting
 PURPOSE: Say hello
 RETURNS: void
 """)
-            result = subprocess.run(
-                [sys.executable, "-m", "nlsc", "run", str(nl_file), "--target", "python"],
-                capture_output=True,
-                text=True
-            )
-            assert result.returncode == 0
+        result = subprocess.run(
+            [sys.executable, "-m", "nlsc", "run", str(nl_file), "--target", "python", "--keep", str(tmp_path / "build")],
+            capture_output=True,
+            text=True
+        )
+        assert result.returncode == 0
 
-    def test_run_with_verbose_flag(self):
+    def test_run_with_verbose_flag(self, tmp_path):
         """Run --verbose should show compilation details"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            nl_file = Path(tmpdir) / "test.nl"
-            nl_file.write_text("""\
+        nl_file = tmp_path / "test.nl"
+        nl_file.write_text("""\
 @module test
 @target python
 
@@ -119,18 +114,17 @@ RETURNS: void
 PURPOSE: Say hello
 RETURNS: void
 """)
-            result = subprocess.run(
-                [sys.executable, "-m", "nlsc", "run", str(nl_file), "-v"],
-                capture_output=True,
-                text=True
-            )
-            assert "Compiled" in result.stdout or "Source mappings" in result.stdout
+        result = subprocess.run(
+            [sys.executable, "-m", "nlsc", "run", str(nl_file), "-v", "--keep", str(tmp_path / "build")],
+            capture_output=True,
+            text=True
+        )
+        assert "Compiled" in result.stdout or "Source mappings" in result.stdout
 
-    def test_run_returns_exit_code(self):
+    def test_run_returns_exit_code(self, tmp_path):
         """Run should propagate subprocess exit code"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            nl_file = Path(tmpdir) / "test.nl"
-            nl_file.write_text("""\
+        nl_file = tmp_path / "test.nl"
+        nl_file.write_text("""\
 @module test
 @target python
 
@@ -138,13 +132,13 @@ RETURNS: void
 PURPOSE: Do nothing
 RETURNS: void
 """)
-            result = subprocess.run(
-                [sys.executable, "-m", "nlsc", "run", str(nl_file)],
-                capture_output=True,
-                text=True
-            )
-            # Success case
-            assert result.returncode == 0
+        result = subprocess.run(
+            [sys.executable, "-m", "nlsc", "run", str(nl_file), "--keep", str(tmp_path / "build")],
+            capture_output=True,
+            text=True
+        )
+        # Success case
+        assert result.returncode == 0
 
 
 class TestSourceMap:
@@ -243,12 +237,11 @@ class TestSourceMap:
         start, end = _find_function_range(py_lines, "multiply")
         assert start == 7
 
-    def test_generate_source_map_basic(self):
+    def test_generate_source_map_basic(self, tmp_path):
         """Should generate source map from NLFile"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # Create actual file so source map can read it
-            nl_path = Path(tmpdir) / "test.nl"
-            source = """\
+        # Create actual file so source map can read it
+        nl_path = tmp_path / "test.nl"
+        source = """\
 @module test
 @target python
 
@@ -266,31 +259,30 @@ INPUTS:
   - y: number
 RETURNS: x * y
 """
-            nl_path.write_text(source)
-            nl_file = parse_nl_file(source, source_path=str(nl_path))
+        nl_path.write_text(source)
+        nl_file = parse_nl_file(source, source_path=str(nl_path))
 
-            # Generate some Python code
-            from nlsc.emitter import emit_python
-            python_code = emit_python(nl_file)
+        # Generate some Python code
+        from nlsc.emitter import emit_python
+        python_code = emit_python(nl_file)
 
-            source_map = generate_source_map(nl_file, python_code)
+        source_map = generate_source_map(nl_file, python_code)
 
-            # Should have mappings for both functions
-            assert len(source_map.mappings) >= 2
+        # Should have mappings for both functions
+        assert len(source_map.mappings) >= 2
 
-            # Check that we can look up lines
-            for mapping in source_map.mappings:
-                assert mapping.anlu_id in ["add", "multiply"] or mapping.context.startswith("type")
+        # Check that we can look up lines
+        for mapping in source_map.mappings:
+            assert mapping.anlu_id in ["add", "multiply"] or mapping.context.startswith("type")
 
 
 class TestRunIntegration:
     """Integration tests for run command"""
 
-    def test_run_with_main_block(self):
+    def test_run_with_main_block(self, tmp_path):
         """Run should execute @main block if present"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            nl_file = Path(tmpdir) / "script.nl"
-            nl_file.write_text("""\
+        nl_file = tmp_path / "script.nl"
+        nl_file.write_text("""\
 @module script
 @target python
 
@@ -305,20 +297,19 @@ RETURNS: greeting message
   print(result)
 }
 """)
-            result = subprocess.run(
-                [sys.executable, "-m", "nlsc", "run", str(nl_file)],
-                capture_output=True,
-                text=True
-            )
-            # Should execute without error
-            # (actual output depends on mock mode behavior)
-            assert result.returncode == 0
+        result = subprocess.run(
+            [sys.executable, "-m", "nlsc", "run", str(nl_file), "--keep", str(tmp_path / "build")],
+            capture_output=True,
+            text=True
+        )
+        # Should execute without error
+        # (actual output depends on mock mode behavior)
+        assert result.returncode == 0
 
-    def test_run_hyphenated_module(self):
+    def test_run_hyphenated_module(self, tmp_path):
         """Run should handle hyphenated module names"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            nl_file = Path(tmpdir) / "my-module.nl"
-            nl_file.write_text("""\
+        nl_file = tmp_path / "my-module.nl"
+        nl_file.write_text("""\
 @module my-module
 @target python
 
@@ -326,10 +317,39 @@ RETURNS: greeting message
 PURPOSE: Say hello
 RETURNS: void
 """)
-            result = subprocess.run(
-                [sys.executable, "-m", "nlsc", "run", str(nl_file)],
-                capture_output=True,
-                text=True
-            )
-            # Hyphens should be normalized to underscores
-            assert result.returncode == 0
+        result = subprocess.run(
+            [sys.executable, "-m", "nlsc", "run", str(nl_file), "--keep", str(tmp_path / "build")],
+            capture_output=True,
+            text=True
+        )
+        # Hyphens should be normalized to underscores
+        assert result.returncode == 0
+
+    def test_run_with_custom_imports(self, tmp_path):
+        """Run should execute generated code that imports sibling Python modules."""
+        root = tmp_path
+        (root / "helper.py").write_text(
+            "def value():\n    return 7\n",
+            encoding="utf-8",
+        )
+        nl_file = root / "script.nl"
+        nl_file.write_text("""\
+@module script
+@target python
+@imports helper
+
+[get-value]
+PURPOSE: Return helper value
+RETURNS: helper.value()
+
+@main {
+  print(get_value())
+}
+""")
+        result = subprocess.run(
+            [sys.executable, "-m", "nlsc", "run", str(nl_file), "--keep", str(root / "build")],
+            capture_output=True,
+            text=True
+        )
+        assert result.returncode == 0
+        assert "7" in result.stdout
