@@ -14,7 +14,6 @@ from .resolver import resolve_dependencies
 from .schema import NLFile
 from .stdlib_resolver import (
     ResolvedUse,
-    StdlibUseError,
     bundled_default_major,
     bundled_stdlib_root,
     resolve_use,
@@ -26,6 +25,7 @@ def detect_treesitter() -> bool:
     """Check if tree-sitter parser is available."""
     try:
         from . import parser_treesitter
+
         return parser_treesitter.is_available()
     except ImportError:
         return False
@@ -36,7 +36,9 @@ def _source_contains_anlu_header(source: str) -> bool:
     return bool(re.search(r"^\s*\[[A-Za-z][A-Za-z0-9.-]*\]\s*$", source, re.MULTILINE))
 
 
-def parse_nl_path_auto(source_path: Path, *, use_treesitter: bool | None = None) -> NLFile:
+def parse_nl_path_auto(
+    source_path: Path, *, use_treesitter: bool | None = None
+) -> NLFile:
     """Parse an .nl file using tree-sitter when available, with safe fallback."""
     if not source_path.exists():
         raise ParseError(f"File not found: {source_path}")
@@ -45,7 +47,9 @@ def parse_nl_path_auto(source_path: Path, *, use_treesitter: bool | None = None)
 
     source = source_path.read_text(encoding="utf-8")
     source_path_str = str(source_path)
-    should_use_treesitter = detect_treesitter() if use_treesitter is None else use_treesitter
+    should_use_treesitter = (
+        detect_treesitter() if use_treesitter is None else use_treesitter
+    )
 
     if not should_use_treesitter:
         return parse_nl_file(source, source_path=source_path_str)
@@ -117,10 +121,11 @@ def validate_semantics(
     resolved_uses = resolve_stdlib_uses(nl_file, source_path, cli_stdlib_paths)
     dependency_result = resolve_dependencies(nl_file)
     dependency_errors = [
-        f"{err.anlu_id}: {err.message}"
-        for err in dependency_result.errors
+        f"{err.anlu_id}: {err.message}" for err in dependency_result.errors
     ]
-    contract_errors = validate_contract_fields(nl_file) if require_contract_fields else []
+    contract_errors = (
+        validate_contract_fields(nl_file) if require_contract_fields else []
+    )
 
     return SemanticValidationResult(
         resolved_uses=resolved_uses,
