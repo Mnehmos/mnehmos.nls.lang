@@ -9,6 +9,7 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
+from .localization import ANLU_IDENTIFIER_PATTERN, normalize_localized_source
 from .parser import parse_nl_file, ParseError
 from .resolver import resolve_dependencies
 from .schema import NLFile
@@ -33,7 +34,10 @@ def detect_treesitter() -> bool:
 
 def _source_contains_anlu_header(source: str) -> bool:
     """Return True when the source appears to define at least one ANLU."""
-    return bool(re.search(r"^\s*\[[A-Za-z][A-Za-z0-9.-]*\]\s*$", source, re.MULTILINE))
+    normalized = normalize_localized_source(source)
+    return bool(
+        re.search(rf"^\s*\[({ANLU_IDENTIFIER_PATTERN})\]\s*$", normalized, re.MULTILINE)
+    )
 
 
 def parse_nl_path_auto(

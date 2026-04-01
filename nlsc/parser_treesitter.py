@@ -15,6 +15,7 @@ from typing import Optional
 
 try:
     from tree_sitter import Language, Parser, Node
+
     TREE_SITTER_AVAILABLE = True
 except ImportError:
     TREE_SITTER_AVAILABLE = False
@@ -22,12 +23,27 @@ except ImportError:
     Parser = None
     Node = None
 
-from .schema import (
-    ANLU, NLFile, Input, Guard, EdgeCase,
-    TestSuite, TestCase, TypeDefinition, TypeField, LogicStep,
-    PropertyTest, PropertyAssertion, Invariant
+from .localization import (
+    IDENTIFIER_PATTERN,
+    extract_expression_identifiers,
+    normalize_localized_source,
 )
-from .parser import ParseError, parse_module_directives
+from .schema import (
+    ANLU,
+    NLFile,
+    Input,
+    Guard,
+    EdgeCase,
+    TestSuite,
+    TestCase,
+    TypeDefinition,
+    TypeField,
+    LogicStep,
+    PropertyTest,
+    PropertyAssertion,
+    Invariant,
+)
+from .parser import ParseError, parse_module_directives, parse_nl_file
 
 
 # =============================================================================
@@ -35,6 +51,7 @@ from .parser import ParseError, parse_module_directives
 # =============================================================================
 # Tree-sitter grammar doesn't support @property, @invariant, @main blocks yet.
 # These are parsed using simple regex patterns for feature parity with regex parser.
+
 
 def _parse_property_blocks(source: str) -> list[PropertyTest]:
     """Parse @property blocks using regex fallback."""
@@ -62,19 +79,23 @@ def _parse_property_blocks(source: str) -> list[PropertyTest]:
                     stripped = stripped.split("#")[0].strip()
                 if stripped:
                     # Check for forall quantifier: forall x: type -> assertion
-                    forall_match = re.match(r"forall\s+(\w+):\s*(\w+)\s*->\s*(.+)", stripped)
+                    forall_match = re.match(
+                        r"forall\s+(\w+):\s*(\w+)\s*->\s*(.+)", stripped
+                    )
                     if forall_match:
-                        current_property.assertions.append(PropertyAssertion(
-                            expression=forall_match.group(3).strip(),
-                            quantifier="forall",
-                            variable=forall_match.group(1),
-                            variable_type=forall_match.group(2)
-                        ))
+                        current_property.assertions.append(
+                            PropertyAssertion(
+                                expression=forall_match.group(3).strip(),
+                                quantifier="forall",
+                                variable=forall_match.group(1),
+                                variable_type=forall_match.group(2),
+                            )
+                        )
                     else:
                         # Simple property assertion
-                        current_property.assertions.append(PropertyAssertion(
-                            expression=stripped
-                        ))
+                        current_property.assertions.append(
+                            PropertyAssertion(expression=stripped)
+                        )
 
     return properties
 
@@ -201,8 +222,7 @@ def _get_parser() -> "Parser":
 
     if not TREE_SITTER_AVAILABLE:
         raise ImportError(
-            "tree-sitter is not installed. "
-            "Install with: pip install nlsc[treesitter]"
+            "tree-sitter is not installed. Install with: pip install nlsc[treesitter]"
         )
 
     if _parser is not None:
@@ -236,7 +256,7 @@ def _get_children_by_type(node: "Node", type_name: str) -> list["Node"]:
 
 def _get_text(node: "Node", source: bytes) -> str:
     """Extract text content from a node."""
-    return source[node.start_byte:node.end_byte].decode("utf-8")
+    return source[node.start_byte : node.end_byte].decode("utf-8")
 
 
 def _parse_type_spec(node: "Node", source: bytes) -> str:
@@ -305,10 +325,7 @@ def _parse_input_item(node: "Node", source: bytes) -> Input:
                     constraints.append(text)
 
     return Input(
-        name=name,
-        type=type_str,
-        constraints=constraints,
-        description=description
+        name=name, type=type_str, constraints=constraints, description=description
     )
 
 
@@ -341,11 +358,11 @@ def _parse_guard_item(node: "Node", source: bytes) -> Guard:
 
                         if len(args) >= 2:
                             error_code = args[0]
-                            error_message = args[1].strip('"\'')
+                            error_message = args[1].strip("\"'")
                         elif len(args) == 1:
                             msg = args[0]
                             if msg.startswith('"') or msg.startswith("'"):
-                                error_message = msg.strip('"\'')
+                                error_message = msg.strip("\"'")
                             else:
                                 error_message = msg
 
@@ -370,30 +387,18 @@ def _parse_guard_item(node: "Node", source: bytes) -> Guard:
         condition=condition,
         error_type=error_type,
         error_code=error_code,
-        error_message=error_message
+        error_message=error_message,
     )
 
 
 def _extract_variables(expression: str) -> list[str]:
     """Extract variable names from an expression."""
-    # Remove string literals
-    expression = re.sub(r'"[^"]*"', '', expression)
-    expression = re.sub(r"'[^']*'", '', expression)
-
-    tokens = re.findall(r'\b([a-zA-Z_][a-zA-Z0-9_]*)\b', expression)
-
-    keywords = {
-        'True', 'False', 'None', 'and', 'or', 'not', 'in', 'is',
-        'if', 'else', 'for', 'while', 'return', 'def', 'class',
-        'sum', 'len', 'min', 'max', 'abs', 'round', 'int', 'float', 'str',
-        'list', 'dict', 'set', 'tuple', 'range', 'enumerate', 'zip',
-        'IF', 'THEN', 'ELSE', 'AND', 'OR', 'NOT'
-    }
-
-    return [t for t in tokens if t not in keywords]
+    return extract_expression_identifiers(expression)
 
 
-def _parse_logic_item(node: "Node", source: bytes, previous_assigns: dict[str, int]) -> LogicStep:
+def _parse_logic_item(
+    node: "Node", source: bytes, previous_assigns: dict[str, int]
+) -> LogicStep:
     """Parse a logic_item node into a LogicStep object."""
     number_node = _get_child_by_field(node, "number")
     number = int(_get_text(number_node, source)) if number_node else 0
@@ -445,7 +450,7 @@ def _parse_logic_item(node: "Node", source: bytes, previous_assigns: dict[str, i
         assigns.append(output_binding)
 
     # Check for inline assignment (var = expr)
-    assignment_match = re.match(r'^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$', description)
+    assignment_match = re.match(rf"^({IDENTIFIER_PATTERN})\s*=\s*(.+)$", description)
     if assignment_match:
         var_name = assignment_match.group(1)
         expr = assignment_match.group(2)
@@ -485,7 +490,7 @@ def _parse_logic_item(node: "Node", source: bytes, previous_assigns: dict[str, i
         depends_on=depends_on,
         state_name=state_name,
         output_binding=output_binding,
-        condition=condition
+        condition=condition,
     )
 
 
@@ -523,10 +528,7 @@ def _parse_type_field(node: "Node", source: bytes) -> TypeField:
                     constraints.append(text)
 
     return TypeField(
-        name=name,
-        type=type_str,
-        constraints=constraints,
-        description=description
+        name=name, type=type_str, constraints=constraints, description=description
     )
 
 
@@ -624,7 +626,7 @@ def _parse_anlu_block(node: "Node", source: bytes) -> ANLU:
         logic_steps=logic_steps,
         edge_cases=edge_cases,
         depends=depends,
-        line_number=line_number
+        line_number=line_number,
     )
 
 
@@ -651,12 +653,7 @@ def _parse_type_block(node: "Node", source: bytes) -> TypeDefinition:
     for field_node in _get_children_by_type(node, "type_field"):
         fields.append(_parse_type_field(field_node, source))
 
-    return TypeDefinition(
-        name=name,
-        fields=fields,
-        base=base,
-        line_number=line_number
-    )
+    return TypeDefinition(name=name, fields=fields, base=base, line_number=line_number)
 
 
 def _parse_test_block(node: "Node", source: bytes) -> TestSuite:
@@ -695,11 +692,16 @@ def parse_nl_file_treesitter(source: str, source_path: Optional[str] = None) -> 
     Returns:
         NLFile with parsed module info and ANLUs
     """
+    normalized_source = normalize_localized_source(source)
+
+    if not normalized_source.isascii():
+        return parse_nl_file(source, source_path=source_path)
+
     # Pre-check for a known edge case: malformed INPUTS bullets.
     # Tree-sitter may recover by dropping the malformed line, but we want
     # deterministic parity with the regex parser.
     in_inputs = False
-    for raw in source.split("\n"):
+    for raw in normalized_source.split("\n"):
         stripped = raw.strip()
         upper = stripped.upper()
 
@@ -712,7 +714,12 @@ def parse_nl_file_treesitter(source: str, source_path: Optional[str] = None) -> 
             continue
 
         # Inside INPUTS section: stop at next section header
-        if upper.startswith("PURPOSE:") or upper == "GUARDS:" or upper == "LOGIC:" or upper.startswith("RETURNS:"):
+        if (
+            upper.startswith("PURPOSE:")
+            or upper == "GUARDS:"
+            or upper == "LOGIC:"
+            or upper.startswith("RETURNS:")
+        ):
             in_inputs = False
             continue
         if upper == "EDGE CASES:" or upper.startswith("DEPENDS:"):
@@ -728,14 +735,14 @@ def parse_nl_file_treesitter(source: str, source_path: Optional[str] = None) -> 
             raise ParseError("Invalid INPUTS bullet marker; expected one of: •, -, *")
 
     parser = _get_parser()
-    source_bytes = _sanitize_source_for_treesitter(source).encode("utf-8")
+    source_bytes = _sanitize_source_for_treesitter(normalized_source).encode("utf-8")
     tree = parser.parse(source_bytes)
 
     root = tree.root_node
 
     # Parse module directives using the shared regex path for parity with the
     # regex parser, including validation for @imports and support for @use.
-    module = parse_module_directives(source)
+    module = parse_module_directives(normalized_source)
     anlus = []
     tests = []
     literals = []
@@ -755,9 +762,9 @@ def parse_nl_file_treesitter(source: str, source_path: Optional[str] = None) -> 
             literals.append(_parse_literal_block(child, source_bytes))
 
     # Parse blocks not supported by tree-sitter grammar using regex fallback
-    properties = _parse_property_blocks(source)
-    invariants = _parse_invariant_blocks(source)
-    main_block = _parse_main_block(source)
+    properties = _parse_property_blocks(normalized_source)
+    invariants = _parse_invariant_blocks(normalized_source)
+    main_block = _parse_main_block(normalized_source)
 
     return NLFile(
         module=module,
@@ -767,7 +774,7 @@ def parse_nl_file_treesitter(source: str, source_path: Optional[str] = None) -> 
         invariants=invariants,
         literals=literals,
         main_block=main_block,
-        source_path=source_path
+        source_path=source_path,
     )
 
 

@@ -17,6 +17,7 @@ from .schema import NLFile, ANLU
 @dataclass
 class ANLULock:
     """Lock entry for a single ANLU"""
+
     source_hash: str
     output_hash: str
     output_lines: int
@@ -26,6 +27,7 @@ class ANLULock:
 @dataclass
 class ModuleLock:
     """Lock entry for a module"""
+
     source_hash: str
     anlus: dict[str, ANLULock] = field(default_factory=dict)
 
@@ -33,6 +35,7 @@ class ModuleLock:
 @dataclass
 class TargetLock:
     """Lock entry for a generated target file"""
+
     file: str
     hash: str
     lines: int
@@ -41,6 +44,7 @@ class TargetLock:
 @dataclass
 class Lockfile:
     """Complete lockfile structure"""
+
     schema_version: int = 1
     generated_at: str = ""
     compiler_version: str = __version__
@@ -83,7 +87,7 @@ def extract_function_code(generated_code: str, func_name: str) -> str:
 
     # Pattern to match function definition including decorators
     # Matches: optional decorators, def line, docstring, body until next def or end
-    pattern = rf'((?:@\w+.*\n)*def {func_name}\([^)]*\)[^:]*:.*?)(?=\n(?:@|\ndef |\Z))'
+    pattern = rf"((?:@\w+.*\n)*def {func_name}\([^)]*\)[^:]*:.*?)(?=\n(?:@|\ndef |\Z))"
 
     match = re.search(pattern, generated_code, re.DOTALL)
     if match:
@@ -93,10 +97,7 @@ def extract_function_code(generated_code: str, func_name: str) -> str:
 
 
 def generate_lockfile(
-    nl_file: NLFile,
-    generated_code: str,
-    output_path: str,
-    llm_backend: str = "mock"
+    nl_file: NLFile, generated_code: str, output_path: str, llm_backend: str = "mock"
 ) -> Lockfile:
     """
     Generate a lockfile for a compilation.
@@ -116,8 +117,8 @@ def generate_lockfile(
     source_content = ""
     if nl_file.source_path:
         try:
-            source_content = Path(nl_file.source_path).read_text()
-        except (FileNotFoundError, OSError):
+            source_content = Path(nl_file.source_path).read_text(encoding="utf-8")
+        except (FileNotFoundError, OSError, UnicodeDecodeError):
             pass
 
     module_lock = ModuleLock(source_hash=hash_content(source_content))
@@ -129,7 +130,9 @@ def generate_lockfile(
 
         module_lock.anlus[anlu.identifier] = ANLULock(
             source_hash=hash_anlu(anlu),
-            output_hash=hash_content(anlu_code) if anlu_code else hash_content(func_name),
+            output_hash=hash_content(anlu_code)
+            if anlu_code
+            else hash_content(func_name),
             output_lines=anlu_code.count("\n") + 1 if anlu_code else 0,
             generated_code=anlu_code,
         )
@@ -139,9 +142,7 @@ def generate_lockfile(
     # Lock target
     output_lines = generated_code.count("\n") + 1
     lockfile.targets["python"] = TargetLock(
-        file=output_path,
-        hash=hash_content(generated_code),
-        lines=output_lines
+        file=output_path, hash=hash_content(generated_code), lines=output_lines
     )
 
     return lockfile
@@ -158,7 +159,7 @@ def write_lockfile(lockfile: Lockfile, path: Path) -> None:
         f"compiler_version: {lockfile.compiler_version}",
         f"llm_backend: {lockfile.llm_backend}",
         "",
-        "modules:"
+        "modules:",
     ]
 
     for mod_name, mod_lock in lockfile.modules.items():
@@ -212,7 +213,9 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
             # (must check before skipping empty lines - code blocks can have empty lines)
             if in_generated_code:
                 # Check if still in generated_code block by looking at raw indentation
-                raw_indent = len(line) - len(line.lstrip()) if line.strip() else len(line)
+                raw_indent = (
+                    len(line) - len(line.lstrip()) if line.strip() else len(line)
+                )
                 if raw_indent >= 10 or (not line.strip() and raw_indent >= 10):
                     # Still in generated_code block (indented at least 10 spaces)
                     # Remove the 10-space prefix
@@ -227,7 +230,9 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
                         return None
                     # Otherwise end the block.
                     if current_anlu_id and current_anlu_data:
-                        current_anlu_data["generated_code"] = "\n".join(generated_code_lines)
+                        current_anlu_data["generated_code"] = "\n".join(
+                            generated_code_lines
+                        )
                     in_generated_code = False
                     generated_code_lines = []
                     i += 1
@@ -237,7 +242,9 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
                     if not generated_code_lines:
                         return None
                     if current_anlu_id and current_anlu_data:
-                        current_anlu_data["generated_code"] = "\n".join(generated_code_lines)
+                        current_anlu_data["generated_code"] = "\n".join(
+                            generated_code_lines
+                        )
                     in_generated_code = False
                     generated_code_lines = []
 
@@ -272,7 +279,12 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
                     current_section = "targets"
                     # Save current module before switching to targets
                     if current_module_name and current_anlu_id and current_anlu_data:
-                        _save_anlu_to_lockfile(lockfile, current_module_name, current_anlu_id, current_anlu_data)
+                        _save_anlu_to_lockfile(
+                            lockfile,
+                            current_module_name,
+                            current_anlu_id,
+                            current_anlu_data,
+                        )
                     current_module_name = None
                     current_anlu_id = None
                     current_anlu_data = {}
@@ -286,13 +298,20 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
                         return None
                     # Save previous ANLU if exists
                     if current_module_name and current_anlu_id and current_anlu_data:
-                        _save_anlu_to_lockfile(lockfile, current_module_name, current_anlu_id, current_anlu_data)
+                        _save_anlu_to_lockfile(
+                            lockfile,
+                            current_module_name,
+                            current_anlu_id,
+                            current_anlu_data,
+                        )
                         current_anlu_id = None
                         current_anlu_data = {}
                     current_module_name = key
                     # Initialize module if not exists
                     if current_module_name not in lockfile.modules:
-                        lockfile.modules[current_module_name] = ModuleLock(source_hash="")
+                        lockfile.modules[current_module_name] = ModuleLock(
+                            source_hash=""
+                        )
                 elif current_section == "targets":
                     lockfile.targets[key] = TargetLock(file="", hash="", lines=0)
                     current_module_name = key
@@ -314,7 +333,9 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
                     elif key == "hash":
                         lockfile.targets[current_module_name].hash = value
                     elif key == "lines":
-                        lockfile.targets[current_module_name].lines = int(value) if value else 0
+                        lockfile.targets[current_module_name].lines = (
+                            int(value) if value else 0
+                        )
                     else:
                         return None
                 else:
@@ -323,7 +344,12 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
             elif indent == 6 and current_module_name and current_section == "modules":
                 # ANLU ID - save previous ANLU first
                 if current_anlu_id and current_anlu_data:
-                    _save_anlu_to_lockfile(lockfile, current_module_name, current_anlu_id, current_anlu_data)
+                    _save_anlu_to_lockfile(
+                        lockfile,
+                        current_module_name,
+                        current_anlu_id,
+                        current_anlu_data,
+                    )
                 current_anlu_id = key
                 current_anlu_data = {}
 
@@ -348,14 +374,18 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
 
         # Save last ANLU
         if current_module_name and current_anlu_id and current_anlu_data:
-            _save_anlu_to_lockfile(lockfile, current_module_name, current_anlu_id, current_anlu_data)
+            _save_anlu_to_lockfile(
+                lockfile, current_module_name, current_anlu_id, current_anlu_data
+            )
 
         return lockfile
     except (OSError, UnicodeDecodeError, ValueError, TypeError):
         return None
 
 
-def _save_anlu_to_lockfile(lockfile: Lockfile, module_name: str, anlu_id: str, data: dict) -> None:
+def _save_anlu_to_lockfile(
+    lockfile: Lockfile, module_name: str, anlu_id: str, data: dict
+) -> None:
     """Helper to save an ANLU lock entry to the lockfile"""
     if module_name not in lockfile.modules:
         lockfile.modules[module_name] = ModuleLock(source_hash="")
@@ -398,6 +428,7 @@ def verify_lockfile(lockfile: Lockfile, nl_file: NLFile) -> list[str]:
 @dataclass
 class RebuildResult:
     """Result of rebuilding from lockfile"""
+
     code: str
     used_cache: bool
     llm_calls: int
@@ -405,7 +436,9 @@ class RebuildResult:
     regenerated_anlus: list[str]
 
 
-def rebuild_from_lockfile(nl_file: NLFile, lockfile: Lockfile) -> Optional[RebuildResult]:
+def rebuild_from_lockfile(
+    nl_file: NLFile, lockfile: Lockfile
+) -> Optional[RebuildResult]:
     """
     Rebuild generated code from lockfile, using cached code where possible.
 
@@ -431,7 +464,11 @@ def rebuild_from_lockfile(nl_file: NLFile, lockfile: Lockfile) -> Optional[Rebui
         anlu_lock = mod_lock.anlus.get(anlu.identifier)
         current_hash = hash_anlu(anlu)
 
-        if anlu_lock and anlu_lock.source_hash == current_hash and anlu_lock.generated_code:
+        if (
+            anlu_lock
+            and anlu_lock.source_hash == current_hash
+            and anlu_lock.generated_code
+        ):
             # Use cached code
             cached_anlus.append(anlu.identifier)
             all_code_pieces.append(anlu_lock.generated_code)

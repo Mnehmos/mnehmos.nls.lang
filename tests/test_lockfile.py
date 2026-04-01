@@ -100,6 +100,31 @@ def add(a: float, b: float) -> float:
         assert anlu_lock.generated_code is not None
         assert "def add" in anlu_lock.generated_code
 
+    def test_generate_lockfile_reads_utf8_source_files(self, tmp_path):
+        """generate_lockfile should read UTF-8 source files without locale issues"""
+        nl_content = """\
+@モジュール sorting-ja
+@ターゲット python
+
+[クイックソート]
+目的: 数値のリストを並べ替える
+入力:
+  - 項目: list of number
+返り値: 項目
+"""
+        source_path = tmp_path / "sorting_ja.nl"
+        source_path.write_text(nl_content, encoding="utf-8")
+
+        nl_file = parse_nl_file(nl_content, source_path=str(source_path))
+        lockfile = generate_lockfile(
+            nl_file,
+            "def クイックソート(項目):\n    return 項目\n",
+            "sorting_ja.py",
+        )
+
+        assert "sorting-ja" in lockfile.modules
+        assert lockfile.modules["sorting-ja"].source_hash.startswith("sha256:")
+
 
 class TestIncrementalCompilation:
     """Tests for detecting which ANLUs need recompilation"""
@@ -225,7 +250,7 @@ class TestLockfileReadWrite:
                     output_lines=4,
                     generated_code=generated,
                 )
-            }
+            },
         )
 
         lock_path = tmp_path / "test.nl.lock"
@@ -251,7 +276,7 @@ class TestLockfileReadWrite:
                     output_lines=4,
                     generated_code=generated,
                 )
-            }
+            },
         )
 
         lock_path = tmp_path / "test.nl.lock"
@@ -304,7 +329,7 @@ RETURNS: a + b
                     output_lines=4,
                     generated_code=cached_code,
                 )
-            }
+            },
         )
 
         # Rebuild should return cached code, not call LLM
@@ -322,11 +347,13 @@ class TestLockCommands:
     def test_cmd_lock_check_exists(self):
         """cmd_lock_check function should exist"""
         from nlsc.cli import cmd_lock_check
+
         assert callable(cmd_lock_check)
 
     def test_cmd_lock_update_exists(self):
         """cmd_lock_update function should exist"""
         from nlsc.cli import cmd_lock_update
+
         assert callable(cmd_lock_update)
 
     def test_lock_check_valid(self, tmp_path):
@@ -414,7 +441,9 @@ class TestMalformedLockfileHardening:
             "\x00\x01\x02not-yaml-like\n",
         ],
     )
-    def test_should_return_none_when_lockfile_content_is_malformed(self, tmp_path, malformed_content):
+    def test_should_return_none_when_lockfile_content_is_malformed(
+        self, tmp_path, malformed_content
+    ):
         """read_lockfile should return None for malformed/fuzzed lockfile data instead of raising uncaught exceptions."""
         lock_path = tmp_path / "malformed.nl.lock"
         lock_path.write_text(malformed_content, encoding="utf-8", errors="ignore")
@@ -425,7 +454,9 @@ class TestMalformedLockfileHardening:
             "Malformed lockfile input must be treated as invalid and return None deterministically."
         )
 
-    def test_should_return_none_when_lockfile_has_truncated_generated_code_block(self, tmp_path):
+    def test_should_return_none_when_lockfile_has_truncated_generated_code_block(
+        self, tmp_path
+    ):
         """read_lockfile should deterministically return None for truncated generated_code blocks."""
         truncated = """\
 schema_version: 1

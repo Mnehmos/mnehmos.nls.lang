@@ -9,15 +9,34 @@ import re
 from pathlib import Path
 from typing import Optional
 
+from .localization import (
+    ANLU_IDENTIFIER_PATTERN,
+    IDENTIFIER_PATTERN,
+    extract_expression_identifiers,
+    normalize_localized_source,
+    normalize_type_text,
+)
 from .schema import (
-    ANLU, Module, NLFile, Input, Guard, EdgeCase,
-    TestSuite, TestCase, TypeDefinition, TypeField, LogicStep,
-    PropertyTest, PropertyAssertion, Invariant
+    ANLU,
+    Module,
+    NLFile,
+    Input,
+    Guard,
+    EdgeCase,
+    TestSuite,
+    TestCase,
+    TypeDefinition,
+    TypeField,
+    LogicStep,
+    PropertyTest,
+    PropertyAssertion,
+    Invariant,
 )
 
 
 class ParseError(Exception):
     """Error during .nl file parsing"""
+
     def __init__(self, message: str, line_number: int = 0, line_content: str = ""):
         self.line_number = line_number
         self.line_content = line_content
@@ -26,8 +45,10 @@ class ParseError(Exception):
 
 # Regex patterns for parsing
 PATTERNS = {
-    "anlu_header": re.compile(r"^\[([A-Za-z][A-Za-z0-9.-]*)\]\s*$"),
-    "directive": re.compile(r"^@(module|version|target|imports|use|types|type|test|property|invariant|literal|main)\s*(.*)$"),
+    "anlu_header": re.compile(rf"^\[({ANLU_IDENTIFIER_PATTERN})\]\s*$"),
+    "directive": re.compile(
+        r"^@(module|version|target|imports|use|types|type|test|property|invariant|literal|main)\s*(.*)$"
+    ),
     "purpose": re.compile(r"^PURPOSE:\s*(.+)$", re.IGNORECASE),
     "inputs": re.compile(r"^INPUTS:\s*$", re.IGNORECASE),
     "guards": re.compile(r"^GUARDS:\s*$", re.IGNORECASE),
@@ -52,11 +73,15 @@ def _validate_import_token(token: str, line_num: int) -> str:
     if not candidate:
         raise ParseError("Invalid import token in @imports directive", line_num, token)
     if not SAFE_IMPORT_TOKEN.match(candidate):
-        raise ParseError(f"Unsafe import token in @imports: {candidate}", line_num, token)
+        raise ParseError(
+            f"Unsafe import token in @imports: {candidate}", line_num, token
+        )
     return candidate
 
 
-def apply_module_directive(module: Module, directive_type: str, directive_value: str, line_num: int) -> None:
+def apply_module_directive(
+    module: Module, directive_type: str, directive_value: str, line_num: int
+) -> None:
     """Apply a module-level directive to a Module object."""
     if directive_type == "module":
         module.name = directive_value
@@ -66,8 +91,7 @@ def apply_module_directive(module: Module, directive_type: str, directive_value:
         module.target = directive_value
     elif directive_type == "imports":
         module.imports = [
-            _validate_import_token(i, line_num)
-            for i in directive_value.split(",")
+            _validate_import_token(i, line_num) for i in directive_value.split(",")
         ]
     elif directive_type == "use":
         if directive_value:
@@ -76,6 +100,7 @@ def apply_module_directive(module: Module, directive_type: str, directive_value:
 
 def parse_module_directives(source: str) -> Module:
     """Parse top-level module directives from source using shared regex rules."""
+    source = normalize_localized_source(source)
     module = Module(name="unnamed")
 
     for line_num, line in enumerate(source.split("\n"), start=1):
@@ -106,7 +131,7 @@ def parse_input(text: str) -> Input:
 
     # Parse type and optional constraints/description
     parts = [p.strip() for p in rest.split(",")]
-    type_spec = parts[0] if parts else "any"
+    type_spec = normalize_type_text(parts[0] if parts else "any")
     constraints = []
     description = None
 
@@ -117,10 +142,7 @@ def parse_input(text: str) -> Input:
             constraints.append(part)
 
     return Input(
-        name=name,
-        type=type_spec,
-        constraints=constraints,
-        description=description
+        name=name, type=type_spec, constraints=constraints, description=description
     )
 
 
@@ -148,7 +170,7 @@ def parse_guard(text: str) -> Guard:
             condition=condition,
             error_type=error_match.group(1),
             error_code=error_match.group(2),
-            error_message=error_match.group(3)
+            error_message=error_match.group(3),
         )
 
     # Parse error specification like ValueError("Division by zero") - quoted message
@@ -157,7 +179,7 @@ def parse_guard(text: str) -> Guard:
         return Guard(
             condition=condition,
             error_type=quoted_error_match.group(1),
-            error_message=quoted_error_match.group(2)
+            error_message=quoted_error_match.group(2),
         )
 
     # Parse error specification like ValueError(Amount must be positive) - unquoted
@@ -166,7 +188,7 @@ def parse_guard(text: str) -> Guard:
         return Guard(
             condition=condition,
             error_type=simple_error_match.group(1),
-            error_message=simple_error_match.group(2).strip()
+            error_message=simple_error_match.group(2).strip(),
         )
 
     return Guard(condition=condition, error_message=error_part)
@@ -189,7 +211,7 @@ def parse_type_field(text: str) -> TypeField:
 
     # Parse type and optional constraints/description
     parts = [p.strip() for p in rest.split(",")]
-    type_spec = parts[0] if parts else "any"
+    type_spec = normalize_type_text(parts[0] if parts else "any")
     constraints = []
     description = None
 
@@ -200,10 +222,7 @@ def parse_type_field(text: str) -> TypeField:
             constraints.append(part)
 
     return TypeField(
-        name=name,
-        type=type_spec,
-        constraints=constraints,
-        description=description
+        name=name, type=type_spec, constraints=constraints, description=description
     )
 
 
@@ -212,26 +231,12 @@ def extract_variables(expression: str) -> list[str]:
     Extract variable names from an expression.
     Excludes literals, operators, and function names.
     """
-    # Remove string literals
-    expression = re.sub(r'"[^"]*"', '', expression)
-    expression = re.sub(r"'[^']*'", '', expression)
-
-    # Find all word tokens
-    tokens = re.findall(r'\b([a-zA-Z_][a-zA-Z0-9_]*)\b', expression)
-
-    # Filter out common keywords, functions, and literals
-    keywords = {
-        'True', 'False', 'None', 'and', 'or', 'not', 'in', 'is',
-        'if', 'else', 'for', 'while', 'return', 'def', 'class',
-        'sum', 'len', 'min', 'max', 'abs', 'round', 'int', 'float', 'str',
-        'list', 'dict', 'set', 'tuple', 'range', 'enumerate', 'zip',
-        'IF', 'THEN', 'ELSE', 'AND', 'OR', 'NOT'
-    }
-
-    return [t for t in tokens if t not in keywords]
+    return extract_expression_identifiers(expression)
 
 
-def parse_logic_step(number: int, text: str, previous_assigns: dict[str, int]) -> LogicStep:
+def parse_logic_step(
+    number: int, text: str, previous_assigns: dict[str, int]
+) -> LogicStep:
     """
     Parse a LOGIC step line, extracting assignment, variable usage, and FSM features.
 
@@ -253,21 +258,21 @@ def parse_logic_step(number: int, text: str, previous_assigns: dict[str, int]) -
     working_text = text.strip()
 
     # 1. Parse [state_name] prefix
-    state_match = re.match(r'^\[([a-zA-Z_][a-zA-Z0-9_-]*)\]\s*(.+)$', working_text)
+    state_match = re.match(rf"^\[({ANLU_IDENTIFIER_PATTERN})\]\s*(.+)$", working_text)
     if state_match:
         state_name = state_match.group(1)
         working_text = state_match.group(2)
 
     # 2. Parse → variable or -> variable output binding (at end)
-    output_match = re.search(r'\s*(?:→|->)\s*([a-zA-Z_][a-zA-Z0-9_]*)$', working_text)
+    output_match = re.search(rf"\s*(?:→|->)\s*({IDENTIFIER_PATTERN})$", working_text)
     if output_match:
         output_binding = output_match.group(1)
-        working_text = working_text[:output_match.start()].strip()
+        working_text = working_text[: output_match.start()].strip()
         # Output binding is also an assignment
         assigns.append(output_binding)
 
     # 3. Parse IF condition THEN syntax
-    if_match = re.match(r'^IF\s+(.+?)\s+THEN\s+(.+)$', working_text, re.IGNORECASE)
+    if_match = re.match(r"^IF\s+(.+?)\s+THEN\s+(.+)$", working_text, re.IGNORECASE)
     if if_match:
         condition = if_match.group(1).strip()
         working_text = if_match.group(2).strip()
@@ -275,7 +280,7 @@ def parse_logic_step(number: int, text: str, previous_assigns: dict[str, int]) -
         uses.extend(extract_variables(condition))
 
     # 4. Check for assignment pattern: var = expression
-    assignment_match = re.match(r'^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$', working_text)
+    assignment_match = re.match(rf"^({IDENTIFIER_PATTERN})\s*=\s*(.+)$", working_text)
 
     if assignment_match:
         var_name = assignment_match.group(1)
@@ -313,7 +318,7 @@ def parse_logic_step(number: int, text: str, previous_assigns: dict[str, int]) -
         depends_on=depends_on,
         state_name=state_name,
         output_binding=output_binding,
-        condition=condition
+        condition=condition,
     )
 
 
@@ -329,10 +334,7 @@ def parse_edge_case(text: str) -> EdgeCase:
     else:
         return EdgeCase(condition=text.strip(), behavior="")
 
-    return EdgeCase(
-        condition=condition.strip(),
-        behavior=behavior.strip()
-    )
+    return EdgeCase(condition=condition.strip(), behavior=behavior.strip())
 
 
 def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
@@ -346,6 +348,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
     Returns:
         NLFile with parsed module info and ANLUs
     """
+    source = normalize_localized_source(source)
     lines = source.split("\n")
 
     # Initialize module with defaults
@@ -426,7 +429,9 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             directive_value = directive_match.group(2).strip()
 
             if directive_type in {"module", "version", "target", "imports", "use"}:
-                apply_module_directive(module, directive_type, directive_value, line_num)
+                apply_module_directive(
+                    module, directive_type, directive_value, line_num
+                )
             elif directive_type == "main":
                 # Start main block
                 in_main_block = True
@@ -438,36 +443,50 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                 directive_value.split("{")[0].strip()
             elif directive_type == "test":
                 # Parse test header like: @test [add] {
-                test_match = re.match(r"\[([a-z][a-z0-9-]*)\]\s*\{?", directive_value)
+                test_match = re.match(
+                    rf"\[({ANLU_IDENTIFIER_PATTERN})\]\s*\{{?", directive_value
+                )
                 if test_match:
                     current_test = TestSuite(anlu_id=test_match.group(1))
                     tests.append(current_test)
             elif directive_type == "type":
                 # Parse type header like: @type Person {
                 # or @type Person extends Entity {
-                type_match = re.match(r"([A-Z][a-zA-Z0-9]*)\s*(?:extends\s+([A-Z][a-zA-Z0-9]*))?\s*\{?", directive_value)
+                type_match = re.match(
+                    rf"({IDENTIFIER_PATTERN})\s*(?:extends\s+({IDENTIFIER_PATTERN}))?\s*\{{?",
+                    directive_value,
+                )
                 if type_match:
                     current_type = TypeDefinition(
                         name=type_match.group(1),
                         base=type_match.group(2),
-                        line_number=line_num
+                        line_number=line_num,
                     )
                     module.types.append(current_type)
             elif directive_type == "property":
                 # Parse property header like: @property [add] {
-                prop_match = re.match(r"\[([a-z][a-z0-9-]*)\]\s*\{?", directive_value)
+                prop_match = re.match(
+                    rf"\[({ANLU_IDENTIFIER_PATTERN})\]\s*\{{?", directive_value
+                )
                 if prop_match:
                     current_property = PropertyTest(anlu_id=prop_match.group(1))
                     properties.append(current_property)
             elif directive_type == "invariant":
                 # Parse invariant header like: @invariant Account {
-                inv_match = re.match(r"([A-Z][a-zA-Z0-9]*)\s*\{?", directive_value)
+                inv_match = re.match(rf"({IDENTIFIER_PATTERN})\s*\{{?", directive_value)
                 if inv_match:
                     current_invariant = Invariant(type_name=inv_match.group(1))
                     invariants.append(current_invariant)
 
             # Save current ANLU if switching context
-            if current_anlu and directive_type in ("module", "literal", "test", "type", "property", "invariant"):
+            if current_anlu and directive_type in (
+                "module",
+                "literal",
+                "test",
+                "type",
+                "property",
+                "invariant",
+            ):
                 current_section = None
             continue
 
@@ -483,7 +502,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                 identifier=anlu_match.group(1),
                 purpose="",
                 returns="",
-                line_number=line_num
+                line_number=line_num,
             )
             # Reset dataflow tracking for new ANLU
             logic_assigns = {}
@@ -560,7 +579,9 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                         # Keep raw logic for backwards compatibility
                         current_anlu.logic.append(step_text)
                         # Parse with dataflow extraction
-                        logic_step = parse_logic_step(step_num, step_text, logic_assigns)
+                        logic_step = parse_logic_step(
+                            step_num, step_text, logic_assigns
+                        )
                         current_anlu.logic_steps.append(logic_step)
                         # Update assigns tracker
                         for var in logic_step.assigns:
@@ -614,10 +635,9 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             # Simple assertion like: add(2, 3) == 5
             if "==" in line:
                 expr, expected = line.split("==", 1)
-                current_test.cases.append(TestCase(
-                    expression=expr.strip(),
-                    expected=expected.strip()
-                ))
+                current_test.cases.append(
+                    TestCase(expression=expr.strip(), expected=expected.strip())
+                )
             elif line.strip() == "}":
                 current_test = None
 
@@ -632,19 +652,24 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                     stripped = stripped.split("#")[0].strip()
                 if stripped:
                     # Check for forall quantifier: forall x: type -> assertion
-                    forall_match = re.match(r"forall\s+(\w+):\s*(\w+)\s*->\s*(.+)", stripped)
+                    forall_match = re.match(
+                        rf"forall\s+({IDENTIFIER_PATTERN}):\s*({IDENTIFIER_PATTERN})\s*->\s*(.+)",
+                        stripped,
+                    )
                     if forall_match:
-                        current_property.assertions.append(PropertyAssertion(
-                            expression=forall_match.group(3).strip(),
-                            quantifier="forall",
-                            variable=forall_match.group(1),
-                            variable_type=forall_match.group(2)
-                        ))
+                        current_property.assertions.append(
+                            PropertyAssertion(
+                                expression=forall_match.group(3).strip(),
+                                quantifier="forall",
+                                variable=forall_match.group(1),
+                                variable_type=forall_match.group(2),
+                            )
+                        )
                     else:
                         # Simple property assertion
-                        current_property.assertions.append(PropertyAssertion(
-                            expression=stripped
-                        ))
+                        current_property.assertions.append(
+                            PropertyAssertion(expression=stripped)
+                        )
 
         # Parse invariant conditions
         if current_invariant:
@@ -666,7 +691,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
         invariants=invariants,
         literals=literals,
         main_block=main_buffer,
-        source_path=source_path
+        source_path=source_path,
     )
 
 

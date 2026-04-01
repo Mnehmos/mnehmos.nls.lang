@@ -10,13 +10,16 @@ import math
 import re
 from typing import Optional
 
+from .localization import ANLU_IDENTIFIER_PATTERN, IDENTIFIER_PATTERN
 from .schema import ANLU, NLFile, TypeDefinition, Invariant, LogicStep
 
 
 class EmitterError(Exception):
     """Raised when emitted code fails validation."""
 
-    def __init__(self, message: str, line: int | None = None, details: str | None = None):
+    def __init__(
+        self, message: str, line: int | None = None, details: str | None = None
+    ):
         self.line = line
         self.details = details
         super().__init__(message)
@@ -37,12 +40,14 @@ def validate_python(code: str) -> list[dict]:
     try:
         ast.parse(code)
     except SyntaxError as e:
-        errors.append({
-            "line": e.lineno,
-            "column": e.offset,
-            "message": e.msg,
-            "text": e.text.strip() if e.text else None
-        })
+        errors.append(
+            {
+                "line": e.lineno,
+                "column": e.offset,
+                "message": e.msg,
+                "text": e.text.strip() if e.text else None,
+            }
+        )
     return errors
 
 
@@ -90,7 +95,7 @@ def _is_valid_return_expr(expr: str) -> bool:
 
     # Use ast.parse to validate - it handles undefined variables correctly
     try:
-        ast.parse(expr, mode='eval')
+        ast.parse(expr, mode="eval")
         return True
     except SyntaxError:
         return False
@@ -98,10 +103,13 @@ def _is_valid_return_expr(expr: str) -> bool:
 
 class EmitError(Exception):
     """Error during code emission"""
+
     pass
 
 
-def emit_type_definition(type_def: TypeDefinition, invariant: Optional[Invariant] = None) -> str:
+def emit_type_definition(
+    type_def: TypeDefinition, invariant: Optional[Invariant] = None
+) -> str:
     """
     Generate Python dataclass from TypeDefinition.
 
@@ -126,8 +134,16 @@ def emit_type_definition(type_def: TypeDefinition, invariant: Optional[Invariant
         lines.append("    pass")
     else:
         # Sort fields: required fields first, then optional fields (with defaults)
-        required_fields = [f for f in type_def.fields if not any(c.lower().strip() == "optional" for c in f.constraints)]
-        optional_fields = [f for f in type_def.fields if any(c.lower().strip() == "optional" for c in f.constraints)]
+        required_fields = [
+            f
+            for f in type_def.fields
+            if not any(c.lower().strip() == "optional" for c in f.constraints)
+        ]
+        optional_fields = [
+            f
+            for f in type_def.fields
+            if any(c.lower().strip() == "optional" for c in f.constraints)
+        ]
 
         for field in required_fields:
             py_type = field.to_python_type()
@@ -140,7 +156,9 @@ def emit_type_definition(type_def: TypeDefinition, invariant: Optional[Invariant
         # Emit __post_init__ for constraints and invariants
         constraint_checks = _emit_constraint_checks(type_def)
         field_names = [f.name for f in type_def.fields]
-        invariant_checks = _emit_invariant_checks(invariant, field_names) if invariant else []
+        invariant_checks = (
+            _emit_invariant_checks(invariant, field_names) if invariant else []
+        )
 
         if constraint_checks or invariant_checks:
             lines.append("")
@@ -165,28 +183,38 @@ def _emit_constraint_checks(type_def: TypeDefinition) -> list[str]:
 
             if constraint_lower == "non-negative":
                 checks.append(f"        if self.{field.name} < 0:")
-                checks.append(f"            raise ValueError('{field.name} must be non-negative')")
+                checks.append(
+                    f"            raise ValueError('{field.name} must be non-negative')"
+                )
 
             elif constraint_lower == "required":
                 checks.append(f"        if not self.{field.name}:")
-                checks.append(f"            raise ValueError('{field.name} is required')")
+                checks.append(
+                    f"            raise ValueError('{field.name} is required')"
+                )
 
             elif constraint_lower == "positive":
                 checks.append(f"        if self.{field.name} <= 0:")
-                checks.append(f"            raise ValueError('{field.name} must be positive')")
+                checks.append(
+                    f"            raise ValueError('{field.name} must be positive')"
+                )
 
             elif constraint_lower.startswith("min:"):
                 min_val = constraint_lower.split(":", 1)[1].strip()
                 if _is_safe_numeric(min_val):
                     checks.append(f"        if self.{field.name} < {min_val}:")
-                    checks.append(f"            raise ValueError('{field.name} must be at least {min_val}')")
+                    checks.append(
+                        f"            raise ValueError('{field.name} must be at least {min_val}')"
+                    )
                 # Skip non-numeric min constraints to prevent code injection
 
             elif constraint_lower.startswith("max:"):
                 max_val = constraint_lower.split(":", 1)[1].strip()
                 if _is_safe_numeric(max_val):
                     checks.append(f"        if self.{field.name} > {max_val}:")
-                    checks.append(f"            raise ValueError('{field.name} must be at most {max_val}')")
+                    checks.append(
+                        f"            raise ValueError('{field.name} must be at most {max_val}')"
+                    )
                 # Skip non-numeric max constraints to prevent code injection
 
     return checks
@@ -211,11 +239,13 @@ def _emit_invariant_checks(invariant: Invariant, field_names: list[str]) -> list
         # Use word boundaries to avoid partial matches (e.g., 'low' in 'allow')
         for field_name in field_names:
             # Match field name as a whole word, not already prefixed with self.
-            pattern = rf'\b(?<!self\.)({re.escape(field_name)})\b'
-            normalized = re.sub(pattern, r'self.\1', normalized)
+            pattern = rf"\b(?<!self\.)({re.escape(field_name)})\b"
+            normalized = re.sub(pattern, r"self.\1", normalized)
 
         checks.append(f"        if not ({normalized}):")
-        checks.append(f'            raise ValueError("Invariant violated: {condition}")')
+        checks.append(
+            f'            raise ValueError("Invariant violated: {condition}")'
+        )
 
     return checks
 
@@ -223,8 +253,16 @@ def _emit_invariant_checks(invariant: Invariant, field_names: list[str]) -> list
 def emit_function_signature(anlu: ANLU) -> str:
     """Generate Python function signature from ANLU"""
     # Separate required and optional parameters
-    required_inputs = [inp for inp in anlu.inputs if not any(c.lower().strip() == "optional" for c in inp.constraints)]
-    optional_inputs = [inp for inp in anlu.inputs if any(c.lower().strip() == "optional" for c in inp.constraints)]
+    required_inputs = [
+        inp
+        for inp in anlu.inputs
+        if not any(c.lower().strip() == "optional" for c in inp.constraints)
+    ]
+    optional_inputs = [
+        inp
+        for inp in anlu.inputs
+        if any(c.lower().strip() == "optional" for c in inp.constraints)
+    ]
 
     # Build parameter list: required first, then optional with defaults
     params = []
@@ -288,7 +326,9 @@ def emit_guards(anlu: ANLU) -> list[str]:
 
         # Generate the raise statement
         if guard.error_code:
-            lines.append(f"        raise {error_type}({guard.error_code!r}, {error_message!r})")
+            lines.append(
+                f"        raise {error_type}({guard.error_code!r}, {error_message!r})"
+            )
         else:
             lines.append(f"        raise {error_type}({error_message!r})")
 
@@ -307,7 +347,7 @@ def _emit_edge_cases(anlu: ANLU) -> list[str]:
         condition = ec.condition.strip()
         behavior = ec.behavior.strip()
         try:
-            ast.parse(condition, mode='eval')
+            ast.parse(condition, mode="eval")
             # Condition is valid Python
             if behavior.lower().startswith("return "):
                 return_expr = behavior[7:].strip()
@@ -463,11 +503,13 @@ def _extract_action(step: LogicStep) -> Optional[str]:
         bracket_end = desc.find("]")
         if bracket_end > 0:
             bracket_content = desc[1:bracket_end]
-            remainder = desc[bracket_end + 1:].strip()
+            remainder = desc[bracket_end + 1 :].strip()
             # State names are simple identifiers: [my-state] or [state_name]
             # List comprehensions contain spaces: [x for x in items]
             # ANLU calls are followed by (args): [quick-sort](lesser)
-            if re.match(r'^[a-zA-Z][a-zA-Z0-9_-]*$', bracket_content) and not remainder.startswith("("):
+            if re.match(
+                rf"^{ANLU_IDENTIFIER_PATTERN}$", bracket_content
+            ) and not remainder.startswith("("):
                 desc = remainder
 
     # Remove output binding suffix
@@ -478,13 +520,13 @@ def _extract_action(step: LogicStep) -> Optional[str]:
     # Remove IF...THEN wrapper if present
     if desc.upper().startswith("IF ") and " THEN " in desc.upper():
         then_pos = desc.upper().find(" THEN ")
-        desc = desc[then_pos + 6:].strip()
+        desc = desc[then_pos + 6 :].strip()
 
     # Check for assignment pattern
     if "=" in desc and not desc.startswith("=") and "==" not in desc:
         # Validate this is actually valid Python before returning
         # Check: must start with a valid identifier, then =
-        if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*\s*=', desc):
+        if re.match(rf"^{IDENTIFIER_PATTERN}\s*=", desc):
             # Try to parse as Python to validate
             try:
                 ast.parse(desc)
@@ -519,7 +561,7 @@ def _desc_to_expr(desc: str) -> Optional[str]:
     desc = desc.strip()
 
     # Check for explicit ANLU reference: [anlu-name](args)
-    anlu_call = re.match(r'\[([a-zA-Z][a-zA-Z0-9_-]*)\]\s*\(([^)]*)\)', desc)
+    anlu_call = re.match(rf"\[({ANLU_IDENTIFIER_PATTERN})\]\s*\(([^)]*)\)", desc)
     if anlu_call:
         # Convert kebab-case to snake_case for Python
         func_name = anlu_call.group(1).replace("-", "_")
@@ -527,11 +569,11 @@ def _desc_to_expr(desc: str) -> Optional[str]:
         return f"{func_name}({args})"
 
     # Check for ANLU reference without args: [anlu-name]
-    anlu_ref = re.match(r'\[([a-zA-Z][a-zA-Z0-9_-]*)\]', desc)
+    anlu_ref = re.match(rf"\[({ANLU_IDENTIFIER_PATTERN})\]", desc)
     if anlu_ref:
         func_name = anlu_ref.group(1).replace("-", "_")
         # Extract any following text as potential args
-        remaining = desc[anlu_ref.end():].strip()
+        remaining = desc[anlu_ref.end() :].strip()
         if remaining.startswith("(") and remaining.endswith(")"):
             # Has args
             args = remaining[1:-1].strip()
@@ -540,17 +582,17 @@ def _desc_to_expr(desc: str) -> Optional[str]:
 
     # Check if strictly looks like a Python assignment: identifier = expr
     # Must start with identifier, have =, and not be ==
-    if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*\s*=(?!=)', desc):
+    if re.match(rf"^{IDENTIFIER_PATTERN}\s*=(?!=)", desc):
         return desc
 
     # Check if strictly looks like a Python function call: identifier(args)
     # Must start with identifier, have (, end with ), and nothing else
-    if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*\s*\(.*\)$', desc):
+    if re.match(rf"^{IDENTIFIER_PATTERN}\s*\(.*\)$", desc):
         return desc
 
     # Try to parse as a Python expression (indexing, list comprehensions, etc.)
     try:
-        ast.parse(desc, mode='eval')
+        ast.parse(desc, mode="eval")
         return desc
     except SyntaxError:
         pass
@@ -593,14 +635,14 @@ def _convert_main_line(line: str) -> Optional[str]:
         )
 
     # WHILE condition {
-    while_match = re.match(r'^WHILE\s+(.+?)\s*\{?\s*$', line, re.IGNORECASE)
+    while_match = re.match(r"^WHILE\s+(.+?)\s*\{?\s*$", line, re.IGNORECASE)
     if while_match:
         condition = while_match.group(1)
         condition = normalize_callable_names(condition)
         return f"while {condition}:"
 
     # PRINT statement
-    print_match = re.match(r'^PRINT\s+(.+)$', line, re.IGNORECASE)
+    print_match = re.match(r"^PRINT\s+(.+)$", line, re.IGNORECASE)
     if print_match:
         expr = print_match.group(1)
         expr = normalize_callable_names(expr)
@@ -649,10 +691,12 @@ def emit_body_mock(anlu: ANLU) -> str:
             return f"    return {e}"
         safe_desc = e.replace("'", "\\'")
         # Keep code runnable (Issue #90): don't raise at runtime for descriptive RETURNS.
-        return "\n".join([
-            f"    # NotImplementedError('TODO: {safe_desc}')",
-            f"    return None  # TODO: {safe_desc}",
-        ])
+        return "\n".join(
+            [
+                f"    # NotImplementedError('TODO: {safe_desc}')",
+                f"    return None  # TODO: {safe_desc}",
+            ]
+        )
 
     # Build up lines: edge cases first, then guards, then return
     lines = []
@@ -693,11 +737,7 @@ def emit_anlu(anlu: ANLU, mode: str = "mock") -> str:
     Returns:
         Python function as a string
     """
-    parts = [
-        emit_function_signature(anlu),
-        emit_docstring(anlu),
-        emit_body_mock(anlu)
-    ]
+    parts = [emit_function_signature(anlu), emit_docstring(anlu), emit_body_mock(anlu)]
 
     return "\n".join(parts)
 
@@ -718,7 +758,11 @@ def emit_python(nl_file: NLFile, mode: str = "mock", validate: bool = True) -> s
         EmitterError: If validate=True and the generated code has syntax errors
     """
     # Normalize path for cross-platform docstrings
-    source_display = str(nl_file.source_path).replace("\\", "/") if nl_file.source_path else "unknown"
+    source_display = (
+        str(nl_file.source_path).replace("\\", "/")
+        if nl_file.source_path
+        else "unknown"
+    )
     lines = [
         '"""',
         f"Generated by nlsc from {source_display}",
@@ -726,7 +770,7 @@ def emit_python(nl_file: NLFile, mode: str = "mock", validate: bool = True) -> s
         '"""',
         "",
         "from __future__ import annotations",  # Enable forward references in type hints
-        ""
+        "",
     ]
 
     # Track imports to add
@@ -738,7 +782,8 @@ def emit_python(nl_file: NLFile, mode: str = "mock", validate: bool = True) -> s
 
     # Add type imports if needed
     has_any = any(
-        "any" in (inp.type for inp in anlu.inputs) or anlu.to_python_return_type() == "Any"
+        "any" in (inp.type for inp in anlu.inputs)
+        or anlu.to_python_return_type() == "Any"
         for anlu in nl_file.anlus
     )
 
@@ -761,10 +806,7 @@ def emit_python(nl_file: NLFile, mode: str = "mock", validate: bool = True) -> s
                 break
 
     # Check for cast() usage in RETURNS expressions
-    has_cast = any(
-        anlu.returns and "cast(" in anlu.returns
-        for anlu in nl_file.anlus
-    )
+    has_cast = any(anlu.returns and "cast(" in anlu.returns for anlu in nl_file.anlus)
 
     # Build typing imports
     typing_imports = []
@@ -789,13 +831,47 @@ def emit_python(nl_file: NLFile, mode: str = "mock", validate: bool = True) -> s
     # way that supports both module-qualified access (`helper.func()`) and
     # wildcard symbol access (`Thing`) when running generated files standalone.
     STDLIB_MODULES = {
-        "os", "sys", "re", "json", "math", "random", "time", "datetime",
-        "collections", "itertools", "functools", "typing", "pathlib",
-        "threading", "multiprocessing", "ctypes", "subprocess", "io",
-        "copy", "pickle", "hashlib", "base64", "urllib", "http",
-        "logging", "unittest", "dataclasses", "abc", "enum", "asyncio",
-        "socket", "struct", "array", "queue", "heapq", "bisect",
-        "statistics", "decimal", "fractions", "operator", "contextlib",
+        "os",
+        "sys",
+        "re",
+        "json",
+        "math",
+        "random",
+        "time",
+        "datetime",
+        "collections",
+        "itertools",
+        "functools",
+        "typing",
+        "pathlib",
+        "threading",
+        "multiprocessing",
+        "ctypes",
+        "subprocess",
+        "io",
+        "copy",
+        "pickle",
+        "hashlib",
+        "base64",
+        "urllib",
+        "http",
+        "logging",
+        "unittest",
+        "dataclasses",
+        "abc",
+        "enum",
+        "asyncio",
+        "socket",
+        "struct",
+        "array",
+        "queue",
+        "heapq",
+        "bisect",
+        "statistics",
+        "decimal",
+        "fractions",
+        "operator",
+        "contextlib",
     }
     if nl_file.module.imports:
         for imp in nl_file.module.imports:
@@ -826,7 +902,9 @@ def emit_python(nl_file: NLFile, mode: str = "mock", validate: bool = True) -> s
     if nl_file.literals:
         for literal in nl_file.literals:
             # Find all "def funcname(" patterns
-            for match in re.finditer(r'^def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(', literal, re.MULTILINE):
+            for match in re.finditer(
+                rf"^def\s+({IDENTIFIER_PATTERN})\s*\(", literal, re.MULTILINE
+            ):
                 literal_functions.add(match.group(1))
 
     # Emit each ANLU in dependency order, skipping those overridden by literal blocks
@@ -889,7 +967,7 @@ def emit_python(nl_file: NLFile, mode: str = "mock", validate: bool = True) -> s
             raise EmitterError(
                 f"Generated Python has syntax errors. {details}",
                 line=err.get("line"),
-                details=error_text
+                details=error_text,
             )
 
     return code
@@ -935,7 +1013,11 @@ def emit_tests(nl_file: NLFile) -> Optional[str]:
     module_name = nl_file.module.name.replace("-", "_")
 
     # Normalize path for cross-platform docstrings
-    source_display = str(nl_file.source_path).replace("\\", "/") if nl_file.source_path else "unknown"
+    source_display = (
+        str(nl_file.source_path).replace("\\", "/")
+        if nl_file.source_path
+        else "unknown"
+    )
     lines = [
         '"""',
         f"Tests generated by nlsc from {source_display}",
@@ -943,7 +1025,7 @@ def emit_tests(nl_file: NLFile) -> Optional[str]:
         "",
         "import pytest",
         f"from .{module_name} import *",
-        ""
+        "",
     ]
 
     for test_suite in nl_file.tests:
@@ -977,7 +1059,7 @@ def emit_property_tests(nl_file: NLFile) -> Optional[str]:
         "",
         "from hypothesis import given, strategies as st",
         f"from .{module_name} import *",
-        ""
+        "",
     ]
 
     for prop_test in nl_file.properties:
@@ -1000,7 +1082,9 @@ def emit_property_tests(nl_file: NLFile) -> Optional[str]:
                 lines.append("")
             else:
                 # Simple property assertion
-                lines.append("    @given(a=st.floats(allow_nan=False), b=st.floats(allow_nan=False))")
+                lines.append(
+                    "    @given(a=st.floats(allow_nan=False), b=st.floats(allow_nan=False))"
+                )
                 lines.append(f"    def test_property_{i + 1}(self, a, b):")
                 lines.append(f"        assert {assertion.expression}")
                 lines.append("")
