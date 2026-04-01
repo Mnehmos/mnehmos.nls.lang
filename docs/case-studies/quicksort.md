@@ -143,7 +143,7 @@ modules:
     anlus:
       quick-sort:
         source_hash: sha256:80bff93288c5
-        output_hash: sha256:8c24669d90e9
+        output_hash: sha256:6d0caab51da3
         output_lines: 19
 ```
 

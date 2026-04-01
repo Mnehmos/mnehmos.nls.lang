@@ -29,7 +29,7 @@ This document defines the *end-to-end* contract for resolving `@use` directives 
 
 Bundled stdlib ships *inside the `nlsc` distribution* as plain `.nl` sources (not generated artifacts):
 
-* Root directory: [`nlsc/stdlib/`](nlsc/stdlib/)
+* Root directory: `nlsc/stdlib/`
 
 ### 1.2 Versioned layout (major-version directories)
 
@@ -55,13 +55,13 @@ nlsc/
 * Domain maps to a relative path under a version root by replacing `.` with `/` and appending `.nl`.
   * Example: `math.core` → `math/core.nl`
 * Version roots are named `v{MAJOR}` (e.g. `v1`, `v2`).
-* [`nlsc/stdlib/MANIFEST.json`](nlsc/stdlib/MANIFEST.json) declares the *default major* used when a directive does not specify a major.
+* `nlsc/stdlib/MANIFEST.json` declares the *default major* used when a directive does not specify a major.
 
 ### 1.3 Recommended project-local override layout
 
 Project-local overrides are **in-repo** sources under a hidden config directory:
 
-* Root directory: [`.nls/stdlib/`](.nls/stdlib/)
+* Root directory: `.nls/stdlib/`
 * Same layout as bundled stdlib, including major version roots.
 
 Example:
@@ -100,11 +100,11 @@ Concrete surface forms are intentionally limited for Slice C:
 
 Resolution searches a list of **roots**, in priority order (first match wins):
 
-1. **Project-local override root**: [`.nls/stdlib/`](.nls/stdlib/)
+1. **Project-local override root**: `.nls/stdlib/`
 2. **User-provided roots** (highest to lowest):
    * CLI: `--stdlib-path <dir>` (repeatable; earlier flags have higher precedence)
    * Env: `NLS_STDLIB_PATH` (path-list; left-to-right precedence)
-3. **Bundled root**: [`nlsc/stdlib/`](nlsc/stdlib/)
+3. **Bundled root**: `nlsc/stdlib/`
 
 Notes:
 
@@ -207,10 +207,10 @@ Implementation note: if an implementation permits multiple candidates per preced
 
 Highest to lowest:
 
-1. [`.nls/stdlib/`](.nls/stdlib/) (project-local override)
+1. `.nls/stdlib/` (project-local override)
 2. CLI `--stdlib-path` (repeatable; left-to-right)
 3. Env `NLS_STDLIB_PATH` (left-to-right)
-4. Bundled [`nlsc/stdlib/`](nlsc/stdlib/)
+4. Bundled `nlsc/stdlib/`
 
 ### 3.2 Contract for “override” vs “conflict”
 
@@ -325,7 +325,7 @@ Expect:
 
 1. `@use math.core` resolves to **exactly one** file path or fails with a structured error.
 2. Domain-to-path mapping is deterministic: `math.core` → `math/core.nl` (with `.nl` suffix and version prefix).
-3. If project-local override exists at [`.nls/stdlib/`](.nls/stdlib/), it is selected over any CLI/env/bundled match.
+3. If project-local override exists at `.nls/stdlib/`, it is selected over any CLI/env/bundled match.
 4. If CLI `--stdlib-path` is provided, it is selected over env and bundled.
 5. If no roots contain the candidate file, compilation fails with error code `EUSE001` and includes the `candidate_relpath` and `attempted_roots`.
 
