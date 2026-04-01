@@ -39,13 +39,46 @@ RETURNS: sorted_lesser + equal + sorted_greater
 }
 ```
 
-**24 lines.** Each LOGIC step reads as English — *"Collect elements less than pivot"* — while being precise enough for the compiler to emit real code. The `[quick-sort](lesser)` syntax is an ANLU reference: it tells the compiler "call this function recursively."
+**24 lines.** Each LOGIC step is precise enough for the compiler to emit real code. The `[quick-sort](lesser)` syntax is an ANLU reference: it tells the compiler "call this function recursively."
+
+## The Same Structure in Japanese
+
+The point of NLS is not "English, but with nicer comments." The point is that the structure is universal while the surface language is yours.
+
+```nl
+@モジュール sorting_ja
+@ターゲット パイソン
+
+[クイックソート]
+目的: 数値のリストをクイックソートで並べ替える
+入力:
+  - 項目: 数値のリスト
+エッジケース:
+  - len(項目) < 2 -> 返す 項目
+ロジック:
+  1. 項目[0] -> ピボット
+  2. [要素 for 要素 in 項目 if 要素 < ピボット] -> 小さい項目
+  3. [要素 for 要素 in 項目 if 要素 == ピボット] -> 等しい項目
+  4. [要素 for 要素 in 項目 if 要素 > ピボット] -> 大きい項目
+  5. [クイックソート](小さい項目) -> 整列済みの小さい項目
+  6. [クイックソート](大きい項目) -> 整列済みの大きい項目
+返り値: 整列済みの小さい項目 + 等しい項目 + 整列済みの大きい項目
+
+@テスト [クイックソート] {
+  クイックソート([3, 1, 4, 1, 5]) == [1, 1, 3, 4, 5]
+  クイックソート([]) == []
+  クイックソート([1]) == [1]
+  クイックソート([5, 4, 3, 2, 1]) == [1, 2, 3, 4, 5]
+}
+```
+
+Same algorithm. Same dependency structure. Same target language. Only the surface syntax changes.
 
 ## What the Compiler Produces
 
 ```bash
 $ nlsc compile examples/sorting.nl
-Compiling examples/sorting.nl (parser: regex)...
+Compiling examples/sorting.nl (parser: tree-sitter)...
   [OK] Parsed 1 ANLUs
   [OK] Resolved dependencies
   [OK] Generated sorting.py (28 lines)
@@ -130,6 +163,35 @@ class TestQuick_Sort:
 
 The `@test` block compiles directly to pytest. Four acceptance tests, written in the spec, executable immediately.
 
+## Japanese Source, Same Python Artifact
+
+```bash
+$ nlsc compile examples/sorting_ja.nl
+Compiling examples/sorting_ja.nl (parser: tree-sitter)...
+  [OK] Parsed 1 ANLUs
+  [OK] Resolved dependencies
+  [OK] Generated sorting_ja.py (28 lines)
+  [OK] Generated test_sorting_ja.py
+  [OK] Updated sorting_ja.nl.lock
+
+Compilation complete!
+```
+
+```python
+def クイックソート(項目: list[float]) -> list[float]:
+    if len(項目) < 2:
+        return 項目
+    ピボット = 項目[0]
+    小さい項目 = [要素 for 要素 in 項目 if 要素 < ピボット]
+    等しい項目 = [要素 for 要素 in 項目 if 要素 == ピボット]
+    大きい項目 = [要素 for 要素 in 項目 if 要素 > ピボット]
+    整列済みの小さい項目 = クイックソート(小さい項目)
+    整列済みの大きい項目 = クイックソート(大きい項目)
+    return 整列済みの小さい項目 + 等しい項目 + 整列済みの大きい項目
+```
+
+This is the same compiler pipeline, not a separate feature demo. NLS localizes the section keywords and preserves Japanese identifiers, then emits standard Python that runs exactly the same way.
+
 ### sorting.nl.lock
 
 ```yaml
@@ -151,7 +213,7 @@ SHA-256 hashes on source and output. If the spec changes, the hash changes. If t
 
 ```bash
 $ nlsc verify examples/sorting.nl
-Verifying examples/sorting.nl (parser: regex)...
+Verifying examples/sorting.nl (parser: tree-sitter)...
   [OK] Syntax valid: 1 ANLUs
   [OK] Dependencies valid
   [OK] All ANLUs valid
@@ -226,7 +288,7 @@ We ran into real issues during this experiment. Here they are.
 
 Here's the honest comparison.
 
-**24 lines of NLS spec** that anyone on the team can read — product managers, QA, new hires — versus **12 lines of Python** that only programmers can read.
+**24 lines of NLS spec** that anyone on the team can read — product managers, QA, new hires — and now read in their own language — versus **12 lines of Python** that still inherits English-only syntax.
 
 From those 24 lines, the compiler gives you:
 
@@ -236,7 +298,7 @@ From those 24 lines, the compiler gives you:
 - 4 executable pytest tests
 - A lockfile with cryptographic hashes for provenance
 
-From the 12 lines of Python, you get: a working sort function. Tests, docs, and type annotations are your problem.
+From the 12 lines of Python, you get: a working sort function. Tests, docs, type annotations, and localization are your problem.
 
 The spec is the contract. The generated code is the artifact. Change the spec, recompile, and everything stays in sync.
 
