@@ -2100,7 +2100,7 @@ Task: issue-90-arch</p>
 <h3 id="11-bundled-stdlib-root">1.1 Bundled stdlib root<a class="headerlink" href="#11-bundled-stdlib-root" title="Permanent link">&para;</a></h3>
 <p>Bundled stdlib ships <em>inside the <code>nlsc</code> distribution</em> as plain <code>.nl</code> sources (not generated artifacts):</p>
 <ul>
-<li>Root directory: <a href="nlsc/stdlib/"><code>nlsc/stdlib/</code></a></li>
+<li>Root directory: <code>nlsc/stdlib/</code></li>
 </ul>
 <h3 id="12-versioned-layout-major-version-directories">1.2 Versioned layout (major-version directories)<a class="headerlink" href="#12-versioned-layout-major-version-directories" title="Permanent link">&para;</a></h3>
 <p>Stdlib modules are organized by <strong>major version</strong> at the top level, then by <strong>domain path</strong>:</p>
@@ -2122,12 +2122,12 @@ Task: issue-90-arch</p>
 <li>Domain maps to a relative path under a version root by replacing <code>.</code> with <code>/</code> and appending <code>.nl</code>.</li>
 <li>Example: <code>math.core</code> → <code>math/core.nl</code></li>
 <li>Version roots are named <code>v{MAJOR}</code> (e.g. <code>v1</code>, <code>v2</code>).</li>
-<li><a href="nlsc/stdlib/MANIFEST.json"><code>nlsc/stdlib/MANIFEST.json</code></a> declares the <em>default major</em> used when a directive does not specify a major.</li>
+<li><code>nlsc/stdlib/MANIFEST.json</code> declares the <em>default major</em> used when a directive does not specify a major.</li>
 </ul>
 <h3 id="13-recommended-project-local-override-layout">1.3 Recommended project-local override layout<a class="headerlink" href="#13-recommended-project-local-override-layout" title="Permanent link">&para;</a></h3>
 <p>Project-local overrides are <strong>in-repo</strong> sources under a hidden config directory:</p>
 <ul>
-<li>Root directory: <a href=".nls/stdlib/"><code>.nls/stdlib/</code></a></li>
+<li>Root directory: <code>.nls/stdlib/</code></li>
 <li>Same layout as bundled stdlib, including major version roots.</li>
 </ul>
 <p>Example:</p>
@@ -2159,11 +2159,11 @@ Task: issue-90-arch</p>
 <h3 id="22-resolution-roots-search-order">2.2 Resolution roots (search order)<a class="headerlink" href="#22-resolution-roots-search-order" title="Permanent link">&para;</a></h3>
 <p>Resolution searches a list of <strong>roots</strong>, in priority order (first match wins):</p>
 <ol>
-<li><strong>Project-local override root</strong>: <a href=".nls/stdlib/"><code>.nls/stdlib/</code></a></li>
+<li><strong>Project-local override root</strong>: <code>.nls/stdlib/</code></li>
 <li><strong>User-provided roots</strong> (highest to lowest):</li>
 <li>CLI: <code>--stdlib-path &lt;dir&gt;</code> (repeatable; earlier flags have higher precedence)</li>
 <li>Env: <code>NLS_STDLIB_PATH</code> (path-list; left-to-right precedence)</li>
-<li><strong>Bundled root</strong>: <a href="nlsc/stdlib/"><code>nlsc/stdlib/</code></a></li>
+<li><strong>Bundled root</strong>: <code>nlsc/stdlib/</code></li>
 </ol>
 <p>Notes:</p>
 <ul>
@@ -2253,10 +2253,10 @@ Task: issue-90-arch</p>
 <h3 id="31-precedence-summary">3.1 Precedence summary<a class="headerlink" href="#31-precedence-summary" title="Permanent link">&para;</a></h3>
 <p>Highest to lowest:</p>
 <ol>
-<li><a href=".nls/stdlib/"><code>.nls/stdlib/</code></a> (project-local override)</li>
+<li><code>.nls/stdlib/</code> (project-local override)</li>
 <li>CLI <code>--stdlib-path</code> (repeatable; left-to-right)</li>
 <li>Env <code>NLS_STDLIB_PATH</code> (left-to-right)</li>
-<li>Bundled <a href="nlsc/stdlib/"><code>nlsc/stdlib/</code></a></li>
+<li>Bundled <code>nlsc/stdlib/</code></li>
 </ol>
 <h3 id="32-contract-for-override-vs-conflict">3.2 Contract for “override” vs “conflict”<a class="headerlink" href="#32-contract-for-override-vs-conflict" title="Permanent link">&para;</a></h3>
 <ul>
@@ -2355,7 +2355,7 @@ Task: issue-90-arch</p>
 <ol>
 <li><code>@use math.core</code> resolves to <strong>exactly one</strong> file path or fails with a structured error.</li>
 <li>Domain-to-path mapping is deterministic: <code>math.core</code> → <code>math/core.nl</code> (with <code>.nl</code> suffix and version prefix).</li>
-<li>If project-local override exists at <a href=".nls/stdlib/"><code>.nls/stdlib/</code></a>, it is selected over any CLI/env/bundled match.</li>
+<li>If project-local override exists at <code>.nls/stdlib/</code>, it is selected over any CLI/env/bundled match.</li>
 <li>If CLI <code>--stdlib-path</code> is provided, it is selected over env and bundled.</li>
 <li>If no roots contain the candidate file, compilation fails with error code <code>EUSE001</code> and includes the <code>candidate_relpath</code> and <code>attempted_roots</code>.</li>
 </ol>
