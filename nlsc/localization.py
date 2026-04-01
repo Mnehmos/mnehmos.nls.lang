@@ -6,7 +6,7 @@ import re
 
 
 IDENTIFIER_PATTERN = r"(?:[^\W\d]|_)\w*"
-ANLU_IDENTIFIER_PATTERN = rf"(?:[^\W\d]|_)[\w.-]*"
+ANLU_IDENTIFIER_PATTERN = r"(?:[^\W\d]|_)[\w.-]*"
 
 
 _DIRECTIVE_ALIASES = {
@@ -228,6 +228,9 @@ def normalize_expression_text(text: str) -> str:
         indent, expr = return_match.groups()
         normalized = f"{indent}return {expr}"
 
+    normalized = re.sub(r"(?<![\w.])長さ\s*\(", "len(", normalized)
+    normalized = _normalize_japanese_list_comprehensions(normalized)
+
     for alias, canonical in _EXPRESSION_ALIASES.items():
         normalized = re.sub(
             rf"(?<![\w.]){re.escape(alias)}(?![\w.])",
@@ -258,3 +261,27 @@ def _normalize_target_rest(rest: str) -> str:
 
     leading = rest[: len(rest) - len(rest.lstrip())]
     return f"{leading}{normalized}"
+
+
+def _normalize_japanese_list_comprehensions(text: str) -> str:
+    pattern = re.compile(
+        r"\[\s*(?P<item>[^\]\s]+)\s+を\s+(?P<iter>.+?)\s+から(?:\s+もし\s+(?P<cond>.+?))?\s*\]"
+    )
+
+    normalized = text
+    while True:
+        updated = pattern.sub(_replace_japanese_list_comprehension, normalized)
+        if updated == normalized:
+            return updated
+        normalized = updated
+
+
+def _replace_japanese_list_comprehension(match: re.Match[str]) -> str:
+    item = normalize_expression_text(match.group("item").strip())
+    iterable = normalize_expression_text(match.group("iter").strip())
+    condition = match.group("cond")
+
+    parts = [f"[{item}", f"for {item} in {iterable}"]
+    if condition:
+        parts.append(f"if {normalize_expression_text(condition.strip())}")
+    return " ".join(parts) + "]"

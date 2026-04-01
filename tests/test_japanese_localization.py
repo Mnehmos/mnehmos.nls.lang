@@ -53,6 +53,27 @@ JAPANESE_QUICKSORT_NATURAL = """\
 """
 
 
+JAPANESE_QUICKSORT_FULLY_LOCALIZED = """\
+@モジュール sorting-ja
+@ターゲット パイソン
+
+[クイックソート]
+目的: 数値のリストをクイックソートで並べ替える
+入力:
+  - 項目: 数値のリスト
+エッジケース:
+  - 長さ(項目) < 2 -> 返す 項目
+ロジック:
+  1. 項目[0] -> ピボット
+  2. [要素 を 項目 から もし 要素 < ピボット] -> 小さい項目
+  3. [要素 を 項目 から もし 要素 == ピボット] -> 等しい項目
+  4. [要素 を 項目 から もし 要素 > ピボット] -> 大きい項目
+  5. [クイックソート](小さい項目) -> 整列済みの小さい項目
+  6. [クイックソート](大きい項目) -> 整列済みの大きい項目
+返り値: 整列済みの小さい項目 + 等しい項目 + 整列済みの大きい項目
+"""
+
+
 def test_parse_japanese_keywords_and_identifiers():
     result = parse_nl_file(JAPANESE_QUICKSORT)
 
@@ -115,3 +136,20 @@ def test_emit_localized_return_type_defaults():
 
     assert "def 空の一覧() -> list[float]:" in code
     assert "return []" in code
+
+
+def test_emit_japanese_quicksort_supports_fully_localized_expressions():
+    nl_file = parse_nl_file(
+        JAPANESE_QUICKSORT_FULLY_LOCALIZED,
+        source_path="sorting_ja.nl",
+    )
+
+    code = emit_python(nl_file)
+
+    assert "if len(項目) < 2:" in code
+    assert "小さい項目 = [要素 for 要素 in 項目 if 要素 < ピボット]" in code
+
+    namespace = {}
+    exec(code, namespace)
+
+    assert namespace["クイックソート"]([3, 1, 4, 1, 5]) == [1, 1, 3, 4, 5]
