@@ -32,6 +32,27 @@ JAPANESE_QUICKSORT = """\
 """
 
 
+JAPANESE_QUICKSORT_NATURAL = """\
+@モジュール sorting-ja
+@ターゲット パイソン
+
+[クイックソート]
+目的: 数値のリストをクイックソートで並べ替える
+入力:
+  - 項目: 数値のリスト
+エッジケース:
+  - len(項目) < 2 -> 返す 項目
+ロジック:
+  1. 項目[0] -> ピボット
+  2. [要素 for 要素 in 項目 if 要素 < ピボット] -> 小さい項目
+  3. [要素 for 要素 in 項目 if 要素 == ピボット] -> 等しい項目
+  4. [要素 for 要素 in 項目 if 要素 > ピボット] -> 大きい項目
+  5. [クイックソート](小さい項目) -> 整列済みの小さい項目
+  6. [クイックソート](大きい項目) -> 整列済みの大きい項目
+返り値: 整列済みの小さい項目 + 等しい項目 + 整列済みの大きい項目
+"""
+
+
 def test_parse_japanese_keywords_and_identifiers():
     result = parse_nl_file(JAPANESE_QUICKSORT)
 
@@ -64,3 +85,33 @@ def test_parse_nl_path_auto_supports_japanese_source(tmp_path: Path):
     result = parse_nl_path_auto(source_path)
 
     assert result.anlus[0].identifier == "クイックソート"
+
+
+def test_emit_japanese_quicksort_supports_more_natural_type_and_return_phrases():
+    nl_file = parse_nl_file(JAPANESE_QUICKSORT_NATURAL, source_path="sorting_ja.nl")
+
+    code = emit_python(nl_file)
+
+    assert "def クイックソート(項目: list[float]) -> list[float]:" in code
+
+    namespace = {}
+    exec(code, namespace)
+
+    assert namespace["クイックソート"]([3, 1, 4, 1, 5]) == [1, 1, 3, 4, 5]
+
+
+def test_emit_localized_return_type_defaults():
+    source = """\
+@モジュール test-ja
+@ターゲット パイソン
+
+[空の一覧]
+目的: 空の数値リストを返す
+返り値: 数値のリスト
+"""
+
+    nl_file = parse_nl_file(source)
+    code = emit_python(nl_file)
+
+    assert "def 空の一覧() -> list[float]:" in code
+    assert "return []" in code

@@ -8,9 +8,12 @@ from dataclasses import dataclass, field
 from typing import Optional
 from enum import Enum
 
+from .localization import normalize_expression_text, normalize_type_text
+
 
 class InputType(Enum):
     """Primitive types supported in NLS"""
+
     NUMBER = "number"
     STRING = "string"
     BOOLEAN = "boolean"
@@ -23,6 +26,7 @@ class InputType(Enum):
 @dataclass
 class Input:
     """A single input parameter for an ANLU"""
+
     name: str
     type: str
     constraints: list[str] = field(default_factory=list)
@@ -71,7 +75,9 @@ class Input:
             base_type = type_map.get(type_str.lower(), type_str)
 
         # Check if input is marked optional in constraints OR had ? suffix
-        is_optional = suffix_optional or any(c.lower().strip() == "optional" for c in self.constraints)
+        is_optional = suffix_optional or any(
+            c.lower().strip() == "optional" for c in self.constraints
+        )
         if is_optional:
             return f"Optional[{base_type}]"
 
@@ -81,6 +87,7 @@ class Input:
 @dataclass
 class Guard:
     """A precondition check for an ANLU"""
+
     condition: str
     error_type: Optional[str] = None
     error_code: Optional[str] = None
@@ -90,6 +97,7 @@ class Guard:
 @dataclass
 class EdgeCase:
     """An explicit edge case handling"""
+
     condition: str
     behavior: str
 
@@ -97,6 +105,7 @@ class EdgeCase:
 @dataclass
 class LogicStep:
     """A parsed LOGIC step with dataflow and FSM information"""
+
     number: int
     description: str
     assigns: list[str] = field(default_factory=list)
@@ -127,6 +136,7 @@ class ANLU:
     The fundamental building block of NLS - describes one logical operation
     in human-readable terms that can be compiled to executable code.
     """
+
     identifier: str
     purpose: str
     returns: str
@@ -178,9 +188,7 @@ class ANLU:
     def fsm_states(self) -> list[str]:
         """Return list of state names from LOGIC steps (FSM nodes)"""
         return [
-            step.state_name
-            for step in self.logic_steps
-            if step.state_name is not None
+            step.state_name for step in self.logic_steps if step.state_name is not None
         ]
 
     def fsm_transitions(self) -> list[tuple[str, str]]:
@@ -226,7 +234,8 @@ class ANLU:
 
     def to_python_return_type(self) -> str:
         """Convert RETURNS to Python type hint"""
-        returns = self.returns.strip()
+        returns = normalize_expression_text(self.returns.strip())
+        normalized_type = normalize_type_text(returns)
 
         # Handle boolean literals
         if returns == "True" or returns == "False":
@@ -241,8 +250,12 @@ class ANLU:
             return "Any"
 
         # Handle dictionary keyword
-        if returns.lower() == "dictionary":
+        if normalized_type.lower() == "dictionary":
             return "dict"
+
+        if normalized_type.startswith("list of "):
+            inner = normalized_type[8:]
+            return Input(name="_", type=f"list of {inner}").to_python_type()
 
         # Handle function calls with arguments (e.g., json.loads(text), max(a, b))
         # These are expressions, not types
@@ -300,8 +313,8 @@ class ANLU:
         }
 
         # Check if it's a known type name
-        if returns.lower() in type_map:
-            return type_map[returns.lower()]
+        if normalized_type.lower() in type_map:
+            return type_map[normalized_type.lower()]
 
         # Check if it's a custom type name (capitalized, no spaces)
         if returns and returns[0].isupper() and " " not in returns:
@@ -322,14 +335,33 @@ class ANLU:
                         if any(op in expr for op in ["+", "-", "*", "/", "×", "÷"]):
                             return "float"
                         # Check if it's a function call that might return a number
-                        if "sum(" in expr or "len(" in expr or "max(" in expr or "min(" in expr:
+                        if (
+                            "sum(" in expr
+                            or "len(" in expr
+                            or "max(" in expr
+                            or "min(" in expr
+                        ):
                             return "float"
                         # Check if it looks like a boolean expression
-                        if any(op in expr for op in [">", "<", "==", "!=", ">=", "<=", " and ", " or ", " not "]):
+                        if any(
+                            op in expr
+                            for op in [
+                                ">",
+                                "<",
+                                "==",
+                                "!=",
+                                ">=",
+                                "<=",
+                                " and ",
+                                " or ",
+                                " not ",
+                            ]
+                        ):
                             return "bool"
                         # Check if it's a constructor call (Type(...))
                         import re
-                        ctor_match = re.match(r'([A-Z][a-zA-Z0-9_]*)\s*\(', expr)
+
+                        ctor_match = re.match(r"([A-Z][a-zA-Z0-9_]*)\s*\(", expr)
                         if ctor_match:
                             return ctor_match.group(1)
                         # Check if it's an empty list []
@@ -355,7 +387,7 @@ class ANLU:
 
         # If RETURNS contains spaces and isn't a recognized type/pattern,
         # it's likely descriptive text or an expression - use Any
-        return type_map.get(returns, "Any")
+        return type_map.get(normalized_type, "Any")
 
     @property
     def python_name(self) -> str:
@@ -366,6 +398,7 @@ class ANLU:
 @dataclass
 class TypeField:
     """A single field in a type definition"""
+
     name: str
     type: str
     constraints: list[str] = field(default_factory=list)
@@ -401,7 +434,9 @@ class TypeField:
             base_type = type_map.get(type_str, type_str)
 
         # Check if field is optional - wrap in Optional[]
-        is_optional = suffix_optional or any(c.lower().strip() == "optional" for c in self.constraints)
+        is_optional = suffix_optional or any(
+            c.lower().strip() == "optional" for c in self.constraints
+        )
         if is_optional:
             return f"Optional[{base_type}]"
 
@@ -411,6 +446,7 @@ class TypeField:
 @dataclass
 class TypeDefinition:
     """A custom type definition from @type block"""
+
     name: str
     fields: list[TypeField] = field(default_factory=list)
     base: Optional[str] = None
@@ -420,6 +456,7 @@ class TypeDefinition:
 @dataclass
 class TestCase:
     """A test assertion for an ANLU"""
+
     expression: str
     expected: str
 
@@ -427,6 +464,7 @@ class TestCase:
 @dataclass
 class TestSuite:
     """Test specifications from @test block"""
+
     anlu_id: str
     cases: list[TestCase] = field(default_factory=list)
 
@@ -434,6 +472,7 @@ class TestSuite:
 @dataclass
 class PropertyAssertion:
     """A single property assertion with optional quantifier"""
+
     expression: str
     quantifier: Optional[str] = None  # "forall" or None
     variable: Optional[str] = None  # variable name for forall
@@ -443,6 +482,7 @@ class PropertyAssertion:
 @dataclass
 class PropertyTest:
     """Property-based test specifications from @property block"""
+
     anlu_id: str
     assertions: list[PropertyAssertion] = field(default_factory=list)
 
@@ -450,6 +490,7 @@ class PropertyTest:
 @dataclass
 class Invariant:
     """Type invariant specifications from @invariant block"""
+
     type_name: str
     conditions: list[str] = field(default_factory=list)
 
@@ -457,6 +498,7 @@ class Invariant:
 @dataclass
 class Module:
     """Module-level metadata from directives"""
+
     name: str
     version: str = "0.1.0"
     target: str = "python"
@@ -471,6 +513,7 @@ class NLFile:
     """
     Complete parsed representation of a .nl file
     """
+
     module: Module
     anlus: list[ANLU] = field(default_factory=list)
     tests: list[TestSuite] = field(default_factory=list)

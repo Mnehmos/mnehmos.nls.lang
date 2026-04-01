@@ -40,6 +40,32 @@ def _source_contains_anlu_header(source: str) -> bool:
     )
 
 
+def _source_contains_test_blocks(source: str) -> bool:
+    normalized = normalize_localized_source(source)
+    return bool(re.search(r"^\s*@test\b", normalized, re.MULTILINE))
+
+
+def _source_contains_logic_output_bindings(source: str) -> bool:
+    normalized = normalize_localized_source(source)
+    return bool(re.search(r"^\s*\d+\.\s+.+(?:->|→)\s+.+$", normalized, re.MULTILINE))
+
+
+def _tree_sitter_parse_needs_fallback(source: str, nl_file: NLFile) -> bool:
+    if not nl_file.anlus and _source_contains_anlu_header(source):
+        return True
+    if _source_contains_test_blocks(source) and not nl_file.tests:
+        return True
+    if _source_contains_logic_output_bindings(source):
+        has_output_binding = any(
+            step.output_binding or step.assigns
+            for anlu in nl_file.anlus
+            for step in anlu.logic_steps
+        )
+        if not has_output_binding:
+            return True
+    return False
+
+
 def parse_nl_path_auto(
     source_path: Path, *, use_treesitter: bool | None = None
 ) -> NLFile:
@@ -61,7 +87,7 @@ def parse_nl_path_auto(
     from .parser_treesitter import parse_nl_file_treesitter
 
     nl_file = parse_nl_file_treesitter(source, source_path=source_path_str)
-    if not nl_file.anlus and _source_contains_anlu_header(source):
+    if _tree_sitter_parse_needs_fallback(source, nl_file):
         return parse_nl_file(source, source_path=source_path_str)
     return nl_file
 

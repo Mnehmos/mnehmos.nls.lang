@@ -10,7 +10,12 @@ import math
 import re
 from typing import Optional
 
-from .localization import ANLU_IDENTIFIER_PATTERN, IDENTIFIER_PATTERN
+from .localization import (
+    ANLU_IDENTIFIER_PATTERN,
+    IDENTIFIER_PATTERN,
+    normalize_expression_text,
+    normalize_type_text,
+)
 from .schema import ANLU, NLFile, TypeDefinition, Invariant, LogicStep
 
 
@@ -83,7 +88,7 @@ def _is_valid_return_expr(expr: str) -> bool:
     """
     import ast
 
-    expr = expr.strip()
+    expr = normalize_expression_text(expr.strip())
 
     # Empty is not valid
     if not expr:
@@ -310,7 +315,7 @@ def emit_guards(anlu: ANLU) -> list[str]:
     lines = []
 
     for guard in anlu.guards:
-        condition = guard.condition.strip()
+        condition = normalize_expression_text(guard.condition.strip())
         try:
             ast.parse(condition, mode="eval")
         except SyntaxError as e:
@@ -345,7 +350,7 @@ def _emit_edge_cases(anlu: ANLU) -> list[str]:
     lines = []
     for ec in anlu.edge_cases:
         condition = ec.condition.strip()
-        behavior = ec.behavior.strip()
+        behavior = normalize_expression_text(ec.behavior.strip())
         try:
             ast.parse(condition, mode="eval")
             # Condition is valid Python
@@ -414,7 +419,7 @@ def emit_body_from_logic(anlu: ANLU) -> str:
                 lines.append(f"    # {step.description}")
 
     # Generate return statement
-    returns = anlu.returns.strip()
+    returns = normalize_expression_text(anlu.returns.strip())
     returns_expr = returns.replace("×", "*").replace("÷", "/")
 
     # Normalize void/none semantics.
@@ -450,6 +455,8 @@ def _convert_type_return(returns_expr: str, anlu: ANLU) -> str:
     If RETURNS is a type name like "dictionary" that wasn't assigned
     in LOGIC steps, convert to an appropriate empty value or placeholder.
     """
+    returns_expr = normalize_expression_text(returns_expr.strip())
+
     # Check if returns_expr was assigned in logic steps
     assigned_vars = set()
     for step in anlu.logic_steps:
@@ -463,6 +470,10 @@ def _convert_type_return(returns_expr: str, anlu: ANLU) -> str:
     input_names = {inp.name for inp in anlu.inputs}
     if returns_expr in input_names:
         return returns_expr
+
+    normalized_type = normalize_type_text(returns_expr)
+    if normalized_type.startswith("list of "):
+        return "[]"
 
     # Type name mappings to empty values
     type_defaults = {
@@ -479,7 +490,7 @@ def _convert_type_return(returns_expr: str, anlu: ANLU) -> str:
     }
 
     # Check if it's a type name
-    returns_lower = returns_expr.lower()
+    returns_lower = normalized_type.lower()
     if returns_lower in type_defaults:
         return type_defaults[returns_lower]
 
@@ -493,7 +504,7 @@ def _extract_action(step: LogicStep) -> Optional[str]:
 
     Returns the action string, or None if it's purely descriptive.
     """
-    desc: str = step.description.strip()
+    desc: str = normalize_expression_text(step.description.strip())
 
     # Remove state name prefix if present (e.g., [state-name] action)
     # But don't strip:
@@ -558,7 +569,7 @@ def _desc_to_expr(desc: str) -> Optional[str]:
         - None if it's purely descriptive text (no valid code to emit)
     """
     # Clean up the description
-    desc = desc.strip()
+    desc = normalize_expression_text(desc.strip())
 
     # Check for explicit ANLU reference: [anlu-name](args)
     anlu_call = re.match(rf"\[({ANLU_IDENTIFIER_PATTERN})\]\s*\(([^)]*)\)", desc)
@@ -667,7 +678,7 @@ def emit_body_mock(anlu: ANLU) -> str:
     if anlu.logic_steps:
         return emit_body_from_logic(anlu)
 
-    returns = anlu.returns.strip()
+    returns = normalize_expression_text(anlu.returns.strip())
 
     # Handle void return - no return statement or just pass
     if returns.lower() == "void" or returns.lower() == "none":
@@ -684,6 +695,7 @@ def emit_body_mock(anlu: ANLU) -> str:
     # Direct expression returns (a + b, a × b, etc.)
     # Replace math symbols
     expr = returns.replace("×", "*").replace("÷", "/")
+    expr = _convert_type_return(expr, anlu)
 
     # Helper to generate the return line (or non-throwing placeholder for invalid)
     def make_return(e: str) -> str:

@@ -84,6 +84,15 @@ _TYPE_ALIASES = {
     "辞書": "dictionary",
 }
 
+_EXPRESSION_ALIASES = {
+    "かつ": "and",
+    "または": "or",
+    "真": "True",
+    "偽": "False",
+    "なし": "None",
+    "無し": "None",
+}
+
 _KEYWORDS = {
     "True",
     "False",
@@ -210,8 +219,28 @@ def normalize_localized_line(line: str) -> str:
     return line
 
 
+def normalize_expression_text(text: str) -> str:
+    """Normalize localized expression fragments to Python-compatible syntax."""
+    normalized = text
+
+    return_match = re.match(r"^(\s*)返す\s+(.+)$", normalized)
+    if return_match:
+        indent, expr = return_match.groups()
+        normalized = f"{indent}return {expr}"
+
+    for alias, canonical in _EXPRESSION_ALIASES.items():
+        normalized = re.sub(
+            rf"(?<![\w.]){re.escape(alias)}(?![\w.])",
+            canonical,
+            normalized,
+        )
+
+    return normalized
+
+
 def extract_expression_identifiers(expression: str) -> list[str]:
     """Extract identifiers from an expression, including Unicode names."""
+    expression = normalize_expression_text(expression)
     stripped = re.sub(r'"[^"\\]*(?:\\.[^"\\]*)*"', "", expression)
     stripped = re.sub(r"'[^'\\]*(?:\\.[^'\\]*)*'", "", stripped)
     tokens = re.findall(IDENTIFIER_PATTERN, stripped)

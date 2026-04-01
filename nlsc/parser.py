@@ -13,6 +13,7 @@ from .localization import (
     ANLU_IDENTIFIER_PATTERN,
     IDENTIFIER_PATTERN,
     extract_expression_identifiers,
+    normalize_expression_text,
     normalize_localized_source,
     normalize_type_text,
 )
@@ -158,9 +159,9 @@ def parse_guard(text: str) -> Guard:
     elif "->" in text:
         condition, error_part = text.split("->", 1)
     else:
-        return Guard(condition=text.strip())
+        return Guard(condition=normalize_expression_text(text.strip()))
 
-    condition = condition.strip()
+    condition = normalize_expression_text(condition.strip())
     error_part = error_part.strip()
 
     # Parse error specification like AuthError(MISSING, "Token required")
@@ -255,13 +256,16 @@ def parse_logic_step(
     output_binding = None
     condition = None
 
-    working_text = text.strip()
+    working_text = normalize_expression_text(text.strip())
 
     # 1. Parse [state_name] prefix
     state_match = re.match(rf"^\[({ANLU_IDENTIFIER_PATTERN})\]\s*(.+)$", working_text)
     if state_match:
-        state_name = state_match.group(1)
-        working_text = state_match.group(2)
+        candidate_state = state_match.group(1)
+        remainder = state_match.group(2)
+        if not remainder.startswith("("):
+            state_name = candidate_state
+            working_text = remainder
 
     # 2. Parse → variable or -> variable output binding (at end)
     output_match = re.search(rf"\s*(?:→|->)\s*({IDENTIFIER_PATTERN})$", working_text)
@@ -312,7 +316,7 @@ def parse_logic_step(
 
     return LogicStep(
         number=number,
-        description=text.strip(),
+        description=working_text.strip(),
         assigns=assigns,
         uses=uses,
         depends_on=depends_on,
@@ -332,9 +336,12 @@ def parse_edge_case(text: str) -> EdgeCase:
     elif "->" in text:
         condition, behavior = text.split("->", 1)
     else:
-        return EdgeCase(condition=text.strip(), behavior="")
+        return EdgeCase(condition=normalize_expression_text(text.strip()), behavior="")
 
-    return EdgeCase(condition=condition.strip(), behavior=behavior.strip())
+    return EdgeCase(
+        condition=normalize_expression_text(condition.strip()),
+        behavior=normalize_expression_text(behavior.strip()),
+    )
 
 
 def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
@@ -541,7 +548,9 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             # RETURNS:
             returns_match = PATTERNS["returns"].match(line_match)
             if returns_match:
-                current_anlu.returns = returns_match.group(1).strip()
+                current_anlu.returns = normalize_expression_text(
+                    returns_match.group(1).strip()
+                )
                 current_section = None
                 continue
 
