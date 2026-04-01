@@ -45,6 +45,8 @@ RETURNS: sorted_lesser + equal + sorted_greater
 
 The point of NLS is not "English, but with nicer comments." The point is that the structure is universal while the surface language is yours.
 
+In this version, the NLS source removes the English control words from the surface syntax too: no `for`, no `if`, no `return`, and no `len`.
+
 ```nl
 @モジュール sorting_ja
 @ターゲット パイソン
@@ -54,12 +56,12 @@ The point of NLS is not "English, but with nicer comments." The point is that th
 入力:
   - 項目: 数値のリスト
 エッジケース:
-  - len(項目) < 2 -> 返す 項目
+  - 長さ(項目) < 2 -> 返す 項目
 ロジック:
   1. 項目[0] -> ピボット
-  2. [要素 for 要素 in 項目 if 要素 < ピボット] -> 小さい項目
-  3. [要素 for 要素 in 項目 if 要素 == ピボット] -> 等しい項目
-  4. [要素 for 要素 in 項目 if 要素 > ピボット] -> 大きい項目
+  2. [要素 を 項目 から もし 要素 < ピボット] -> 小さい項目
+  3. [要素 を 項目 から もし 要素 == ピボット] -> 等しい項目
+  4. [要素 を 項目 から もし 要素 > ピボット] -> 大きい項目
   5. [クイックソート](小さい項目) -> 整列済みの小さい項目
   6. [クイックソート](大きい項目) -> 整列済みの大きい項目
 返り値: 整列済みの小さい項目 + 等しい項目 + 整列済みの大きい項目
@@ -191,6 +193,8 @@ def クイックソート(項目: list[float]) -> list[float]:
 ```
 
 This is the same compiler pipeline, not a separate feature demo. NLS localizes the section keywords and preserves Japanese identifiers, then emits standard Python that runs exactly the same way.
+
+The important point is not that Python can contain Japanese identifiers. The important point is that the source spec no longer forces English control words at all.
 
 ### sorting.nl.lock
 
