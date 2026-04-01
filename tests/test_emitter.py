@@ -323,6 +323,148 @@ RETURNS: x
         compile(code, "<string>", "exec")
         assert "raise ValueError(\"can't be zero\")" in code or 'raise ValueError("can\\\'t be zero")' in code
 
+    def test_edge_cases_emit_early_returns(self):
+        """Edge cases with Python conditions should emit as early returns."""
+        source = """\
+@module test
+@target python
+
+[safe-divide]
+PURPOSE: Divide safely
+INPUTS:
+  - a: number
+  - b: number
+EDGE CASES:
+  - b == 0 -> return 0
+RETURNS: a / b
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        assert "if b == 0:" in code
+        assert "return 0" in code
+        # Should produce valid, runnable Python
+        ns = {}
+        exec(code, ns)
+        assert ns["safe_divide"](10, 0) == 0
+        assert ns["safe_divide"](10, 2) == 5.0
+
+    def test_edge_cases_with_logic_steps(self):
+        """Edge cases should emit before LOGIC steps."""
+        source = """\
+@module test
+@target python
+
+[func]
+PURPOSE: Test edge cases with logic
+INPUTS:
+  - items: list of number
+EDGE CASES:
+  - len(items) < 2 -> return items
+LOGIC:
+  1. items[0] -> pivot
+RETURNS: pivot
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        # Edge case should appear before logic
+        edge_pos = code.index("if len(items) < 2:")
+        pivot_pos = code.index("pivot = items[0]")
+        assert edge_pos < pivot_pos
+
+    def test_python_expr_in_logic_binding(self):
+        """LOGIC steps with Python expressions and -> binding should compile."""
+        source = """\
+@module test
+@target python
+
+[func]
+PURPOSE: Test expression bindings
+INPUTS:
+  - items: list of number
+LOGIC:
+  1. items[0] -> first
+  2. len(items) -> count
+RETURNS: first + count
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        assert "first = items[0]" in code
+        assert "count = len(items)" in code
+        # Should be runnable
+        ns = {}
+        exec(code, ns)
+        assert ns["func"]([10, 20, 30]) == 13.0  # 10 + 3
+
+    def test_list_comprehension_in_logic_binding(self):
+        """List comprehensions in LOGIC -> binding should not be mangled."""
+        source = """\
+@module test
+@target python
+
+[func]
+PURPOSE: Filter a list
+INPUTS:
+  - items: list of number
+LOGIC:
+  1. [x for x in items if x > 0] -> positive
+RETURNS: positive
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        assert "positive = [x for x in items if x > 0]" in code
+        ns = {}
+        exec(code, ns)
+        assert ns["func"]([-1, 2, -3, 4]) == [2, 4]
+
+    def test_return_type_list_concatenation(self):
+        """RETURNS with list-typed variable concatenation should infer list type."""
+        source = """\
+@module test
+@target python
+
+[func]
+PURPOSE: Partition items
+INPUTS:
+  - items: list of number
+LOGIC:
+  1. [x for x in items if x < 0] -> negatives
+  2. [x for x in items if x >= 0] -> positives
+RETURNS: negatives + positives
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        assert "-> list[float]:" in code
+
+    def test_quicksort_compiles_to_working_code(self):
+        """Full quicksort spec should compile to executable Python."""
+        source = """\
+@module sorting
+@target python
+
+[quick-sort]
+PURPOSE: Sort a list of numbers using the quicksort algorithm
+INPUTS:
+  - items: list of number
+EDGE CASES:
+  - len(items) < 2 -> return items
+LOGIC:
+  1. items[0] -> pivot
+  2. [x for x in items if x < pivot] -> lesser
+  3. [x for x in items if x == pivot] -> equal
+  4. [x for x in items if x > pivot] -> greater
+  5. [quick-sort](lesser) -> sorted_lesser
+  6. [quick-sort](greater) -> sorted_greater
+RETURNS: sorted_lesser + equal + sorted_greater
+"""
+        nl_file = parse_nl_file(source)
+        code = emit_python(nl_file)
+        ns = {}
+        exec(code, ns)
+        assert ns["quick_sort"]([3, 1, 4, 1, 5]) == [1, 1, 3, 4, 5]
+        assert ns["quick_sort"]([]) == []
+        assert ns["quick_sort"]([1]) == [1]
+        assert ns["quick_sort"]([5, 4, 3, 2, 1]) == [1, 2, 3, 4, 5]
+
     def test_main_block_preserves_subtraction(self):
         source = """\
 @module test

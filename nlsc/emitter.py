@@ -295,6 +295,38 @@ def emit_guards(anlu: ANLU) -> list[str]:
     return lines
 
 
+def _emit_edge_cases(anlu: ANLU) -> list[str]:
+    """
+    Generate early-return code from EDGE CASES.
+
+    Edge cases with Python-evaluable conditions become if/return blocks.
+    Natural language conditions are emitted as comments.
+    """
+    lines = []
+    for ec in anlu.edge_cases:
+        condition = ec.condition.strip()
+        behavior = ec.behavior.strip()
+        try:
+            ast.parse(condition, mode='eval')
+            # Condition is valid Python
+            if behavior.lower().startswith("return "):
+                return_expr = behavior[7:].strip()
+                lines.append(f"    if {condition}:")
+                lines.append(f"        return {return_expr}")
+            elif behavior:
+                lines.append(f"    if {condition}:")
+                lines.append(f"        {behavior}")
+            else:
+                lines.append(f"    # Edge case: {condition}")
+        except SyntaxError:
+            # Natural language condition — emit as comment
+            if behavior:
+                lines.append(f"    # Edge case: {condition} -> {behavior}")
+            else:
+                lines.append(f"    # Edge case: {condition}")
+    return lines
+
+
 def emit_body_from_logic(anlu: ANLU) -> str:
     """
     Generate function body deterministically from LOGIC steps.
@@ -307,7 +339,11 @@ def emit_body_from_logic(anlu: ANLU) -> str:
     """
     lines = []
 
-    # Emit guards first
+    # Emit edge cases as early returns first
+    edge_lines = _emit_edge_cases(anlu)
+    lines.extend(edge_lines)
+
+    # Emit guards
     guard_lines = emit_guards(anlu)
     lines.extend(guard_lines)
 
@@ -419,11 +455,20 @@ def _extract_action(step: LogicStep) -> Optional[str]:
     """
     desc: str = step.description.strip()
 
-    # Remove state name prefix if present
+    # Remove state name prefix if present (e.g., [state-name] action)
+    # But don't strip:
+    #   - List comprehensions: [x for x in ...]
+    #   - ANLU calls: [anlu-name](args)
     if desc.startswith("["):
         bracket_end = desc.find("]")
         if bracket_end > 0:
-            desc = desc[bracket_end + 1:].strip()
+            bracket_content = desc[1:bracket_end]
+            remainder = desc[bracket_end + 1:].strip()
+            # State names are simple identifiers: [my-state] or [state_name]
+            # List comprehensions contain spaces: [x for x in items]
+            # ANLU calls are followed by (args): [quick-sort](lesser)
+            if re.match(r'^[a-zA-Z][a-zA-Z0-9_-]*$', bracket_content) and not remainder.startswith("("):
+                desc = remainder
 
     # Remove output binding suffix
     for arrow in ["→", "->"]:
@@ -503,6 +548,13 @@ def _desc_to_expr(desc: str) -> Optional[str]:
     if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*\s*\(.*\)$', desc):
         return desc
 
+    # Try to parse as a Python expression (indexing, list comprehensions, etc.)
+    try:
+        ast.parse(desc, mode='eval')
+        return desc
+    except SyntaxError:
+        pass
+
     # Purely descriptive text - return None, caller should emit as comment
     return None
 
@@ -577,11 +629,15 @@ def emit_body_mock(anlu: ANLU) -> str:
 
     # Handle void return - no return statement or just pass
     if returns.lower() == "void" or returns.lower() == "none":
+        lines = []
+        edge_lines = _emit_edge_cases(anlu)
+        lines.extend(edge_lines)
         if anlu.guards:
-            lines = emit_guards(anlu)
-            lines.append("    return None")
-            return "\n".join(lines)
-        return "    return None"
+            lines.extend(emit_guards(anlu))
+        lines.append("    return None")
+        if not edge_lines and not anlu.guards:
+            return "    return None"
+        return "\n".join(lines)
 
     # Direct expression returns (a + b, a × b, etc.)
     # Replace math symbols
@@ -598,39 +654,32 @@ def emit_body_mock(anlu: ANLU) -> str:
             f"    return None  # TODO: {safe_desc}",
         ])
 
-    # If guards are provided, generate guard validation code first
+    # Build up lines: edge cases first, then guards, then return
+    lines = []
+
+    # Edge cases as early returns
+    edge_lines = _emit_edge_cases(anlu)
+    lines.extend(edge_lines)
+
+    # Guards
     if anlu.guards:
-        lines = emit_guards(anlu)
-        lines.append(make_return(expr))
-        return "\n".join(lines)
-
-    # Check if it's a simple expression with known operators
-    if re.match(r"^[a-z_][a-z0-9_]*\s*[\+\-\*\/]\s*[a-z_][a-z0-9_]*$", expr, re.IGNORECASE):
-        if anlu.guards:
-            lines = emit_guards(anlu)
-            lines.append(f"    return {expr}")
-            return "\n".join(lines)
-        return f"    return {expr}"
-
-    # Check for function-like returns: "result with field1, field2"
-    if " with " in returns.lower():
-        # Descriptive return - emit non-throwing placeholder
-        safe_desc = returns.replace("'", "\\'")
-        return "\n".join([
-            f"    # NotImplementedError('TODO: {safe_desc}')",
-            f"    return None  # TODO: {safe_desc}",
-        ])
+        lines.extend(emit_guards(anlu))
 
     # If raw logic is provided but no logic_steps, generate comments
     if anlu.logic:
-        lines = ["    # Generated from LOGIC steps:"]
+        lines.append("    # Generated from LOGIC steps:")
         for i, step in enumerate(anlu.logic, 1):
             lines.append(f"    # {i}. {step}")
-        lines.append(make_return(expr))
-        return "\n".join(lines)
 
-    # Fallback: validate and return
-    return make_return(expr)
+    # Check for function-like returns: "result with field1, field2"
+    if " with " in returns.lower():
+        safe_desc = returns.replace("'", "\\'")
+        lines.append(f"    # NotImplementedError('TODO: {safe_desc}')")
+        lines.append(f"    return None  # TODO: {safe_desc}")
+    else:
+        lines.append(make_return(expr))
+
+    return "\n".join(lines)
 
 
 def emit_anlu(anlu: ANLU, mode: str = "mock") -> str:

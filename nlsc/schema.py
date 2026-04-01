@@ -259,6 +259,30 @@ class ANLU:
         # But not if they contain string literals (string concatenation)
         has_string_literal = "'" in returns or '"' in returns
         if not has_string_literal:
+            # Before assuming + is arithmetic, check if it's list concatenation.
+            # If any variable in the expression is assigned from a list comprehension
+            # in LOGIC steps, then + is list concatenation.
+            if "+" in returns and self.logic_steps:
+                parts = [p.strip() for p in returns.split("+")]
+                list_vars = set()
+                for step in self.logic_steps:
+                    desc = step.description.strip()
+                    # Strip output binding arrow to get the expression
+                    for arrow in ["→", "->"]:
+                        if arrow in desc:
+                            desc = desc.split(arrow)[0].strip()
+                            break
+                    # List comprehension: starts with [ and contains "for"
+                    if desc.startswith("[") and " for " in desc:
+                        for var in step.assigns:
+                            list_vars.add(var)
+                if list_vars and any(p in list_vars for p in parts):
+                    # It's list concatenation — return the list input type
+                    for inp in self.inputs:
+                        if inp.type.strip().startswith("list of "):
+                            return inp.to_python_type()
+                    return "list"
+
             if "+" in returns or "-" in returns:
                 return "float"
             if "×" in returns or "*" in returns or "/" in returns or "÷" in returns:

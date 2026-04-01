@@ -86,6 +86,8 @@ nav:
     - Type System: type-system.md
     - Core Semantics: core-semantics.md
     - Examples: examples.md
+  - Case Studies:
+    - "Quicksort — An Honest Review": case-studies/quicksort.md
   - Reference:
     - CLI Commands: cli-reference.md
     - LLM Reference: llm-reference.md
