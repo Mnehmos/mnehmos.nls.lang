@@ -1670,7 +1670,7 @@
 </tr>
 </tbody>
 </table>
-<p>If <code>--parser treesitter</code> is selected but the backend is unavailable, JSON-capable commands emit the stable diagnostic code <code>EPARSE002</code> when run with <code>--json</code>.</p>
+<p>If <code>--json</code> is present, JSON-capable commands now return structured bootstrap diagnostics even when argparse fails before command dispatch. Use <code>ECLI001</code> for CLI usage errors such as missing required args, invalid choice values, or unknown subcommands, and <code>EPARSE002</code> for parser-backend bootstrap failures such as <code>--parser treesitter</code> without tree-sitter installed.</p>
 <hr />
 <h2 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">&para;</a></h2>
 <h3 id="nlsc-init"><code>nlsc init</code><a class="headerlink" href="#nlsc-init" title="Permanent link">&para;</a></h3>
