@@ -23,6 +23,7 @@ import py_compile
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any, NoReturn
 
 from . import __version__
 from .parser import ParseError
@@ -49,6 +50,7 @@ from .diff import (
 from .diagnostics import (
     atomize_failure_diagnostic,
     atomize_syntax_error_diagnostic,
+    cli_parse_error_diagnostic,
     Diagnostic,
     contract_error_diagnostics,
     dependency_error_diagnostics,
@@ -64,6 +66,7 @@ from .diagnostics import (
     watch_not_directory_diagnostic,
 )
 from .error_catalog import (
+    ECLI001,
     EEXEC001,
     ETARGET001,
     EVALIDATE001,
@@ -120,6 +123,66 @@ _JSON_PARSER_BOOTSTRAP_COMMANDS = {
     "lock:check",
     "lock:update",
 }
+
+
+class CLIParseError(RuntimeError):
+    """Raised when argparse fails after a JSON request is detected."""
+
+    def __init__(self, command: str, message: str, usage: str) -> None:
+        super().__init__(message)
+        self.command = command
+        self.message = message
+        self.usage = usage
+
+
+def _normalize_command_name(command: str | None) -> str:
+    if command == "dif":
+        return "diff"
+    return command or "nlsc"
+
+
+def _infer_cli_context(argv: list[str]) -> tuple[str, bool]:
+    command: str | None = None
+    json_requested = False
+    skip_next = False
+
+    for token in argv:
+        if skip_next:
+            skip_next = False
+            continue
+
+        if token == "--parser":
+            skip_next = True
+            continue
+
+        if token.startswith("--parser="):
+            continue
+
+        if token == "--json":
+            json_requested = True
+            continue
+
+        if token.startswith("-"):
+            continue
+
+        if command is None:
+            command = token
+
+    return _normalize_command_name(command), json_requested
+
+
+class NLSArgumentParser(argparse.ArgumentParser):
+    """ArgumentParser that can switch parse failures to JSON diagnostics."""
+
+    def __init__(self, *, argv: list[str] | None = None, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self._argv = list(sys.argv[1:] if argv is None else argv)
+
+    def error(self, message: str) -> NoReturn:
+        command, json_requested = _infer_cli_context(self._argv)
+        if json_requested:
+            raise CLIParseError(command, message, self.format_usage().strip())
+        super().error(message)
 
 
 class ParserBootstrapError(RuntimeError):
@@ -220,6 +283,16 @@ def _emit_json(command: str, diagnostics: list[Diagnostic], **extra: object) -> 
     payload.update(extra)
     print(json.dumps(payload, indent=2))
     return 0 if not diagnostics else 1
+
+
+def _emit_cli_parse_failure(error: CLIParseError) -> int:
+    diagnostic = cli_parse_error_diagnostic(error.message)
+    return _emit_json(
+        error.command,
+        [diagnostic],
+        usage=error.usage,
+        error_type=ECLI001,
+    )
 
 
 def _format_dependency_error(error: object) -> str:
@@ -1433,10 +1506,17 @@ def cmd_lsp(args: argparse.Namespace) -> int:
     return 0
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     """Main entry point for nlsc CLI"""
-    parser = argparse.ArgumentParser(
+    raw_argv = list(sys.argv[1:] if argv is None else argv)
+
+    class CLICommandParser(NLSArgumentParser):
+        def __init__(self, **kwargs: Any) -> None:
+            super().__init__(argv=raw_argv, **kwargs)
+
+    parser = NLSArgumentParser(
         prog="nlsc",
+        argv=raw_argv,
         description="Natural Language Source Compiler",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""\
@@ -1458,7 +1538,11 @@ The conversation is the programming. The .nl file is the receipt.
         help="Parser backend: 'auto' (default, uses tree-sitter if available), 'regex', or 'treesitter'",
     )
 
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+    subparsers = parser.add_subparsers(
+        dest="command",
+        help="Available commands",
+        parser_class=CLICommandParser,
+    )
 
     # init command
     init_parser = subparsers.add_parser("init", help="Initialize NLS project")
@@ -1685,7 +1769,10 @@ The conversation is the programming. The .nl file is the receipt.
         help="Install for current user only (no admin required)",
     )
 
-    args = parser.parse_args()
+    try:
+        args = parser.parse_args(raw_argv)
+    except CLIParseError as error:
+        return _emit_cli_parse_failure(error)
 
     if args.command is None:
         parser.print_help()
