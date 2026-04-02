@@ -1093,6 +1093,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#nlsc-assoc-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc assoc diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1558,6 +1569,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#nlsc-assoc-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc assoc diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1713,6 +1735,14 @@
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">ftype</span>
 </span></code></pre></div>
 <p>If you manage associations manually, validate command targets before rollout.</p>
+<h3 id="nlsc-assoc-diagnostics"><code>nlsc assoc</code> diagnostics<a class="headerlink" href="#nlsc-assoc-diagnostics" title="Permanent link">&para;</a></h3>
+<p><code>nlsc assoc</code> automates the Windows registry entries for <code>.nl</code> files. Add <code>--json</code> when the command is driven by scripts or installers and you need stable diagnostics instead of human-readable stderr.</p>
+<ul>
+<li><code>EASSOC001</code> - command invoked on a non-Windows host.</li>
+<li><code>EASSOC002</code> - packaged <code>nls-file.ico</code> asset is missing.</li>
+<li><code>EASSOC003</code> - registry write blocked by permissions; retry elevated or use <code>--user</code>.</li>
+<li><code>EASSOC004</code> - other registry or shell-notification failure.</li>
+</ul>
 <h2 id="linux">Linux<a class="headerlink" href="#linux" title="Permanent link">&para;</a></h2>
 <p>Linux behavior depends on desktop environment (GNOME, KDE, etc.) and <code>xdg</code> defaults.</p>
 <h3 id="set-default-app-for-nl-with-gui">Set default app for <code>.nl</code> with GUI<a class="headerlink" href="#set-default-app-for-nl-with-gui" title="Permanent link">&para;</a></h3>

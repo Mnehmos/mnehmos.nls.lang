@@ -1181,6 +1181,50 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#eassoc001-association-unsupported-on-this-platform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EASSOC001 - Association unsupported on this platform
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eassoc002-association-icon-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EASSOC002 - Association icon missing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eassoc003-association-permission-denied" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EASSOC003 - Association permission denied
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eassoc004-association-update-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EASSOC004 - Association update failed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ewatch001-watch-path-is-not-a-directory" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2227,6 +2271,50 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#eassoc001-association-unsupported-on-this-platform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EASSOC001 - Association unsupported on this platform
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eassoc002-association-icon-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EASSOC002 - Association icon missing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eassoc003-association-permission-denied" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EASSOC003 - Association permission denied
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eassoc004-association-update-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EASSOC004 - Association update failed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ewatch001-watch-path-is-not-a-directory" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2764,7 +2852,7 @@
 <h1 id="error-reference">Error Reference<a class="headerlink" href="#error-reference" title="Permanent link">&para;</a></h1>
 <p>Complete guide to NLS errors, their causes, and how to fix them.</p>
 <h2 id="active-cli-error-codes">Active CLI Error Codes<a class="headerlink" href="#active-cli-error-codes" title="Permanent link">&para;</a></h2>
-<p>These are the stable error codes currently emitted by <code>nlsc atomize</code>, <code>nlsc compile</code>, <code>nlsc verify</code>, <code>nlsc run</code>, <code>nlsc graph</code>, <code>nlsc diff</code>, <code>nlsc test</code>, <code>nlsc watch</code>, <code>nlsc lock:check</code>, <code>nlsc lock:update</code>, and <code>nlsc lsp</code>.</p>
+<p>These are the stable error codes currently emitted by <code>nlsc atomize</code>, <code>nlsc compile</code>, <code>nlsc verify</code>, <code>nlsc run</code>, <code>nlsc graph</code>, <code>nlsc diff</code>, <code>nlsc test</code>, <code>nlsc watch</code>, <code>nlsc lock:check</code>, <code>nlsc lock:update</code>, <code>nlsc lsp</code>, and <code>nlsc assoc</code>.</p>
 <p>Use the CLI to get the extended explanation for any code:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>nlsc<span class="w"> </span>explain<span class="w"> </span>EPARSE001
 </span></code></pre></div>
@@ -2779,7 +2867,7 @@
 <tbody>
 <tr>
 <td><code>ECLI001</code></td>
-<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>atomize</code>, <code>diff</code>, <code>watch</code>, <code>lock:check</code>, <code>lock:update</code>, <code>unknown-subcommand</code></td>
+<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>atomize</code>, <code>diff</code>, <code>lsp</code>, <code>assoc</code>, <code>watch</code>, <code>lock:check</code>, <code>lock:update</code>, <code>unknown-subcommand</code></td>
 <td>CLI argument parsing failed before command dispatch while <code>--json</code> was active.</td>
 </tr>
 <tr>
@@ -2878,6 +2966,26 @@
 <td><code>nlsc lsp</code> loaded but failed while starting the requested transport.</td>
 </tr>
 <tr>
+<td><code>EASSOC001</code></td>
+<td><code>assoc</code></td>
+<td><code>nlsc assoc</code> was run on a non-Windows platform.</td>
+</tr>
+<tr>
+<td><code>EASSOC002</code></td>
+<td><code>assoc</code></td>
+<td><code>nlsc assoc</code> could not find the packaged <code>nls-file.ico</code> asset.</td>
+</tr>
+<tr>
+<td><code>EASSOC003</code></td>
+<td><code>assoc</code></td>
+<td><code>nlsc assoc</code> could not write the required registry keys due to permissions.</td>
+</tr>
+<tr>
+<td><code>EASSOC004</code></td>
+<td><code>assoc</code></td>
+<td><code>nlsc assoc</code> hit an unexpected runtime failure while updating the association.</td>
+</tr>
+<tr>
 <td><code>EWATCH001</code></td>
 <td><code>watch</code></td>
 <td><code>nlsc watch</code> was given a path that exists but is not a directory.</td>
@@ -2945,6 +3053,18 @@
 <h3 id="elsp002-lsp-server-startup-failed"><code>ELSP002</code> - LSP server startup failed<a class="headerlink" href="#elsp002-lsp-server-startup-failed" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc lsp</code> imports successfully but the server fails while initializing the selected transport or binding the requested endpoint.</p>
 <p><strong>Fix:</strong> Check the selected transport, host, and port, inspect the startup message, and rerun <code>nlsc lsp</code>.</p>
+<h3 id="eassoc001-association-unsupported-on-this-platform"><code>EASSOC001</code> - Association unsupported on this platform<a class="headerlink" href="#eassoc001-association-unsupported-on-this-platform" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc assoc --json</code> is invoked anywhere other than Windows.</p>
+<p><strong>Fix:</strong> Run <code>nlsc assoc</code> on Windows, or use your OS-native file-association settings on macOS or Linux.</p>
+<h3 id="eassoc002-association-icon-missing"><code>EASSOC002</code> - Association icon missing<a class="headerlink" href="#eassoc002-association-icon-missing" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc assoc --json</code> cannot find <code>nlsc/resources/nls-file.ico</code> and therefore cannot install the Explorer icon metadata.</p>
+<p><strong>Fix:</strong> Regenerate the icon with <code>python windows/generate_ico.py</code>, then reinstall or rerun the command.</p>
+<h3 id="eassoc003-association-permission-denied"><code>EASSOC003</code> - Association permission denied<a class="headerlink" href="#eassoc003-association-permission-denied" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc assoc --json</code> reaches the registry write step but lacks permission to update the required keys.</p>
+<p><strong>Fix:</strong> Run from an elevated shell for system-wide installation, or rerun with <code>nlsc assoc --user</code> for a per-user association.</p>
+<h3 id="eassoc004-association-update-failed"><code>EASSOC004</code> - Association update failed<a class="headerlink" href="#eassoc004-association-update-failed" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc assoc --json</code> hits a registry or shell-notification failure that is not a simple permission error.</p>
+<p><strong>Fix:</strong> Inspect the reported runtime message, verify local registry state, and rerun <code>nlsc assoc</code> after correcting the underlying Windows issue.</p>
 <h3 id="ewatch001-watch-path-is-not-a-directory"><code>EWATCH001</code> - Watch path is not a directory<a class="headerlink" href="#ewatch001-watch-path-is-not-a-directory" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc watch --json</code> is given a path that exists but is not a directory.</p>
 <p><strong>Fix:</strong> Pass a directory path to <code>nlsc watch</code>, or use a file-oriented command such as <code>nlsc compile &lt;file&gt;</code> for a single source file.</p>
