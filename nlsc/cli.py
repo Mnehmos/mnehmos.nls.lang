@@ -58,6 +58,8 @@ from .diagnostics import (
     graph_format_diagnostic,
     lockfile_outdated_diagnostics,
     lockfile_unavailable_diagnostic,
+    lsp_dependencies_unavailable_diagnostic,
+    lsp_startup_failure_diagnostic,
     missing_file_diagnostic,
     parse_error_diagnostic,
     parser_backend_unavailable_diagnostic,
@@ -119,6 +121,7 @@ _JSON_PARSER_BOOTSTRAP_COMMANDS = {
     "test",
     "graph",
     "diff",
+    "lsp",
     "watch",
     "lock:check",
     "lock:update",
@@ -293,6 +296,26 @@ def _emit_cli_parse_failure(error: CLIParseError) -> int:
         usage=error.usage,
         error_type=ECLI001,
     )
+
+
+def _emit_lsp_startup_failure(args: argparse.Namespace, diagnostic: Diagnostic) -> int:
+    transport = getattr(args, "transport", "stdio")
+    host = getattr(args, "host", "127.0.0.1")
+    port = getattr(args, "port", 2087)
+
+    if getattr(args, "json", False):
+        return _emit_json(
+            "lsp",
+            [diagnostic],
+            transport=transport,
+            host=host,
+            port=port,
+        )
+
+    print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+    if diagnostic.hint:
+        print(diagnostic.hint, file=sys.stderr)
+    return 1
 
 
 def _format_dependency_error(error: object) -> str:
@@ -1489,20 +1512,30 @@ def cmd_lsp(args: argparse.Namespace) -> int:
     try:
         from nlsc.lsp import start_server
     except ImportError as e:
-        print(f"Error: LSP dependencies not installed: {e}", file=sys.stderr)
-        print("Install with: pip install nlsc[lsp]", file=sys.stderr)
-        return 1
+        diagnostic = lsp_dependencies_unavailable_diagnostic(str(e))
+        return _emit_lsp_startup_failure(args, diagnostic)
+    except Exception as e:
+        diagnostic = lsp_startup_failure_diagnostic(str(e))
+        return _emit_lsp_startup_failure(args, diagnostic)
 
     transport = getattr(args, "transport", "stdio")
     host = getattr(args, "host", "127.0.0.1")
     port = getattr(args, "port", 2087)
 
-    if transport == "stdio":
-        print("Starting NLS Language Server (stdio)...", file=sys.stderr)
-    else:
-        print(f"Starting NLS Language Server (tcp://{host}:{port})...", file=sys.stderr)
+    if not getattr(args, "json", False):
+        if transport == "stdio":
+            print("Starting NLS Language Server (stdio)...", file=sys.stderr)
+        else:
+            print(
+                f"Starting NLS Language Server (tcp://{host}:{port})...",
+                file=sys.stderr,
+            )
 
-    start_server(transport=transport, host=host, port=port)
+    try:
+        start_server(transport=transport, host=host, port=port)
+    except Exception as e:
+        diagnostic = lsp_startup_failure_diagnostic(str(e))
+        return _emit_lsp_startup_failure(args, diagnostic)
     return 0
 
 
@@ -1752,6 +1785,11 @@ The conversation is the programming. The .nl file is the receipt.
         type=int,
         default=2087,
         help="TCP port for tcp transport (default: 2087)",
+    )
+    lsp_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit structured JSON diagnostics for startup failures.",
     )
 
     # assoc command (Windows only)

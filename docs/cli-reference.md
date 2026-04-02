@@ -14,7 +14,7 @@ nlsc [--parser {regex,treesitter}] [--version] [--help] <command>
 | `--version` | Show version number                               |
 | `--help`    | Show help message                                 |
 
-If `--json` is present, JSON-capable commands now return structured bootstrap diagnostics even when argparse fails before command dispatch. Use `ECLI001` for CLI usage errors such as missing required args, invalid choice values, or unknown subcommands, and `EPARSE002` for parser-backend bootstrap failures such as `--parser treesitter` without tree-sitter installed.
+If `--json` is present, JSON-capable commands now return structured bootstrap diagnostics even when argparse fails before command dispatch. Use `ECLI001` for CLI usage errors such as missing required args, invalid choice values, or unknown subcommands, `EPARSE002` for parser-backend bootstrap failures such as `--parser treesitter` without tree-sitter installed, `ELSP001` for missing optional `nlsc[lsp]` dependencies, and `ELSP002` for LSP server startup failures after import succeeds.
 
 ---
 

@@ -150,6 +150,8 @@ def distance(p1: Point, p2: Point) -> float:
 | `nlsc assoc`             | Install Windows file association       |
 | `nlsc lsp`               | Start the NLS language server          |
 
+`nlsc lsp --json` emits structured startup diagnostics for missing optional LSP dependencies (`ELSP001`) and server-start failures (`ELSP002`).
+
 ### Global Options
 
 ```bash
