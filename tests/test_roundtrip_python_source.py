@@ -5,6 +5,7 @@ from pathlib import Path
 from nlsc.roundtrip import (
     roundtrip_python_file,
     roundtrip_python_repository,
+    validate_python_structure_roundtrip,
     validate_python_source_roundtrip,
 )
 
@@ -139,3 +140,45 @@ def square(n: float) -> float:
     assert result.all_match
     assert result.stage == "ok"
     assert not result.errors
+
+
+def test_validate_python_structure_roundtrip_classifies_unsupported_source():
+    py_source = "def broken(:\n    pass\n"
+
+    result = validate_python_structure_roundtrip(
+        py_source,
+        module_name="broken",
+        source_name="broken_fixture",
+    )
+
+    assert not result.success
+    assert not result.all_match
+    assert result.stage == "unsupported_source"
+    assert result.errors
+
+
+def test_roundtrip_python_repository_tracks_unsupported_files_separately(
+    tmp_path: Path,
+):
+    repo_root = tmp_path / "sample_repo"
+    repo_root.mkdir()
+    (repo_root / "good.py").write_text(
+        '''\
+def double(x: float) -> float:
+    """Double a number."""
+    return x * 2
+''',
+        encoding="utf-8",
+    )
+    (repo_root / "unsupported.py").write_text(
+        "def broken(:\n    pass\n",
+        encoding="utf-8",
+    )
+
+    output_root = tmp_path / "intent_repo"
+    report = roundtrip_python_repository(repo_root, output_root)
+
+    assert report.total_files == 2
+    assert report.succeeded_files == 1
+    assert report.unsupported_files == 1
+    assert report.failed_files == 0

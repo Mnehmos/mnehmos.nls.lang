@@ -15,6 +15,7 @@ def _serialize_report(report) -> dict:
         "output_root": report.output_root,
         "total_files": report.total_files,
         "succeeded_files": report.succeeded_files,
+        "unsupported_files": report.unsupported_files,
         "failed_files": report.failed_files,
         "file_results": [
             {
@@ -67,6 +68,7 @@ def main() -> int:
 
     print(f"Analyzed {report.total_files} file(s)")
     print(f"  Successful roundtrips: {report.succeeded_files}")
+    print(f"  Unsupported source files: {report.unsupported_files}")
     print(f"  Failed roundtrips: {report.failed_files}")
     print(f"  Report: {report_path}")
     return 0 if report.failed_files == 0 else 1
