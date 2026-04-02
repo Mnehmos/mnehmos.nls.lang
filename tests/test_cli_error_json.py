@@ -184,6 +184,29 @@ def test_explain_json_reports_unknown_error_code() -> None:
     assert "EWATCH002" in payload["known_codes"]
 
 
+def test_explain_json_reports_parser_backend_unavailable(tmp_path: Path) -> None:
+    result = _run_nlsc(
+        ["--parser", "treesitter", "explain", "EPARSE001", "--json"],
+        cwd=REPO_ROOT,
+        env=_treesitter_unavailable_env(tmp_path),
+    )
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "explain"
+    assert payload["parser"] == "treesitter"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EPARSE002",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "Parser backend 'treesitter' is unavailable: tree-sitter is not installed",
+            "hint": "Install with: pip install nlsc[treesitter], or rerun with --parser auto or --parser regex.",
+        }
+    ]
+
+
 def test_verify_json_reports_parse_error_location(tmp_path: Path) -> None:
     source_path = tmp_path / "broken.nl"
     source_path.write_text(

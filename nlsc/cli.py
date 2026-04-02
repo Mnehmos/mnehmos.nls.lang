@@ -124,6 +124,7 @@ _JSON_PARSER_BOOTSTRAP_COMMANDS = {
     "compile",
     "verify",
     "run",
+    "explain",
     "test",
     "graph",
     "diff",
