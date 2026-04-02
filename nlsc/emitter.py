@@ -665,7 +665,10 @@ def _desc_to_expr(desc: str) -> Optional[str]:
         return desc
 
     # Augmented assignments like total += value
-    if re.match(rf"^{IDENTIFIER_PATTERN}\s*(\+=|-=|\*=|/=|//=|%=)", desc):
+    if re.match(
+        rf"^{IDENTIFIER_PATTERN}\s*(\+=|-=|\*=|/=|//=|%=|\*\*=|&=|\|=|\^=|<<=|>>=|@=)",
+        desc,
+    ):
         try:
             ast.parse(desc)
             return desc

@@ -80,6 +80,20 @@ def flatten_list(nested: list[list[int]]) -> list[int]:
             True,
         ),
         (
+            "bitwise_accumulation",
+            '''\
+def all_true(flags: list[bool]) -> bool:
+    """Check whether all flags are true."""
+    result = True
+    for flag in flags:
+        result &= flag
+    return result
+''',
+            "all_true",
+            [([True, True, True],), ([True, False, True],)],
+            True,
+        ),
+        (
             "try_except_return",
             '''\
 def safe_parse(text: str) -> int:
