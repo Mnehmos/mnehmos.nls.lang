@@ -2012,7 +2012,7 @@
 </tr>
 <tr>
 <td><code>--json</code></td>
-<td>Emit structured diagnostics for startup path errors</td>
+<td>Emit structured diagnostics for startup failures and runtime compile errors</td>
 </tr>
 </tbody>
 </table>
@@ -2028,6 +2028,7 @@
 </span></code></pre></div>
 <p>Press <code>Ctrl+C</code> to stop watching.</p>
 <p>When <code>--json</code> is enabled, <code>nlsc watch</code> emits stable diagnostics for deterministic startup failures before the watcher begins, including missing directories and non-directory paths.</p>
+<p>After startup, watch-triggered compile failures also emit structured JSON payloads with <code>event: "compile"</code> and <code>phase: "runtime"</code>. These runtime diagnostics reuse the shared compile-oriented codes where possible: <code>EPARSE001</code> for parse failures, <code>EUSE001</code> for <code>@use</code> resolution failures, <code>E_RESOLUTION</code> for dependency errors, <code>ETARGET001</code> for unsupported targets, and <code>EVALIDATE001</code> for post-emit validation failures. <code>EWATCH002</code> is reserved for unexpected runtime compile failures that do not fit one of those shared categories.</p>
 <hr />
 <h3 id="nlsc-assoc"><code>nlsc assoc</code><a class="headerlink" href="#nlsc-assoc" title="Permanent link">&para;</a></h3>
 <p>Install or remove the Windows Explorer file association for <code>.nl</code> files.</p>

@@ -1235,6 +1235,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#ewatch002-watch-runtime-compile-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EWATCH002 - Watch runtime compile failed
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2325,6 +2336,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#ewatch002-watch-runtime-compile-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EWATCH002 - Watch runtime compile failed
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2887,7 +2909,7 @@
 </tr>
 <tr>
 <td><code>EPARSE001</code></td>
-<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>diff</code>, <code>lock:check</code>, <code>lock:update</code></td>
+<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>diff</code>, <code>watch</code>, <code>lock:check</code>, <code>lock:update</code></td>
 <td>The source file failed syntax parsing.</td>
 </tr>
 <tr>
@@ -2897,12 +2919,12 @@
 </tr>
 <tr>
 <td><code>EUSE001</code></td>
-<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code></td>
+<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>watch</code></td>
 <td>A referenced <code>@use</code> stdlib domain could not be resolved.</td>
 </tr>
 <tr>
 <td><code>E_RESOLUTION</code></td>
-<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code></td>
+<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>watch</code></td>
 <td>The ANLU dependency graph contains a missing or circular dependency.</td>
 </tr>
 <tr>
@@ -2917,12 +2939,12 @@
 </tr>
 <tr>
 <td><code>ETARGET001</code></td>
-<td><code>compile</code>, <code>run</code>, <code>lock:update</code></td>
+<td><code>compile</code>, <code>run</code>, <code>watch</code>, <code>lock:update</code></td>
 <td>The requested target is not supported by the command.</td>
 </tr>
 <tr>
 <td><code>EVALIDATE001</code></td>
-<td><code>compile</code></td>
+<td><code>compile</code>, <code>watch</code></td>
 <td>Generated output failed post-emit validation.</td>
 </tr>
 <tr>
@@ -2990,6 +3012,11 @@
 <td><code>watch</code></td>
 <td><code>nlsc watch</code> was given a path that exists but is not a directory.</td>
 </tr>
+<tr>
+<td><code>EWATCH002</code></td>
+<td><code>watch</code></td>
+<td><code>nlsc watch --json</code> hit an unexpected runtime compile failure after startup.</td>
+</tr>
 </tbody>
 </table>
 <h3 id="ecli001-cli-usage-error"><code>ECLI001</code> - CLI usage error<a class="headerlink" href="#ecli001-cli-usage-error" title="Permanent link">&para;</a></h3>
@@ -3006,16 +3033,16 @@
 <p>Raised when <code>nlsc atomize --json</code> hits an unexpected read/extract/write failure, such as an invalid output path.</p>
 <p><strong>Fix:</strong> Check the output path and filesystem permissions, then rerun <code>nlsc atomize &lt;file&gt;</code>.</p>
 <h3 id="eparse001-parse-error"><code>EPARSE001</code> - Parse error<a class="headerlink" href="#eparse001-parse-error" title="Permanent link">&para;</a></h3>
-<p>Raised when the parser rejects the <code>.nl</code> source.</p>
+<p>Raised when the parser rejects the <code>.nl</code> source, including watch-triggered recompiles after <code>nlsc watch</code> has already started.</p>
 <p><strong>Fix:</strong> Use the reported line number, correct the syntax, then rerun <code>nlsc verify &lt;file&gt;</code>.</p>
 <h3 id="eparse002-parser-backend-unavailable"><code>EPARSE002</code> - Parser backend unavailable<a class="headerlink" href="#eparse002-parser-backend-unavailable" title="Permanent link">&para;</a></h3>
 <p>Raised when a parser bootstrap step fails before the command can parse the source, starting with <code>--parser treesitter</code> when tree-sitter support is unavailable.</p>
 <p><strong>Fix:</strong> Install the optional backend with <code>pip install nlsc[treesitter]</code>, or rerun with <code>--parser auto</code> or <code>--parser regex</code>.</p>
 <h3 id="euse001-missing-stdlib-domain"><code>EUSE001</code> - Missing stdlib domain<a class="headerlink" href="#euse001-missing-stdlib-domain" title="Permanent link">&para;</a></h3>
-<p>Raised when a referenced <code>@use</code> module cannot be found in the stdlib search roots.</p>
+<p>Raised when a referenced <code>@use</code> module cannot be found in the stdlib search roots, including runtime recompiles under <code>nlsc watch --json</code>.</p>
 <p><strong>Fix:</strong> Verify the domain name and add the correct stdlib root with <code>--stdlib-path</code> or <code>NLS_STDLIB_PATH</code>.</p>
 <h3 id="e_resolution-dependency-resolution-error"><code>E_RESOLUTION</code> - Dependency resolution error<a class="headerlink" href="#e_resolution-dependency-resolution-error" title="Permanent link">&para;</a></h3>
-<p>Raised when an ANLU depends on a missing ANLU or participates in a dependency cycle.</p>
+<p>Raised when an ANLU depends on a missing ANLU or participates in a dependency cycle, including watch-triggered recompiles.</p>
 <p><strong>Fix:</strong> Define the missing dependency, rename the dependency reference, or break the cycle.</p>
 <h3 id="etest001-test-execution-failed"><code>ETEST001</code> - Test execution failed<a class="headerlink" href="#etest001-test-execution-failed" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc test --json</code> successfully generates tests but pytest exits non-zero or cannot be launched.</p>
@@ -3024,10 +3051,10 @@
 <p>Raised by <code>nlsc verify</code> when an ANLU is missing a required contract field.</p>
 <p><strong>Fix:</strong> Add the missing <code>PURPOSE:</code> or <code>RETURNS:</code> field and verify again.</p>
 <h3 id="etarget001-unsupported-target"><code>ETARGET001</code> - Unsupported target<a class="headerlink" href="#etarget001-unsupported-target" title="Permanent link">&para;</a></h3>
-<p>Raised when the requested target is not implemented for the current command.</p>
+<p>Raised when the requested target is not implemented for the current command, including unsupported <code>@target</code> values discovered by <code>nlsc watch</code> during a runtime recompile.</p>
 <p><strong>Fix:</strong> Use a supported target. For <code>nlsc run</code>, use <code>python</code>.</p>
 <h3 id="evalidate001-generated-output-validation-failed"><code>EVALIDATE001</code> - Generated output validation failed<a class="headerlink" href="#evalidate001-generated-output-validation-failed" title="Permanent link">&para;</a></h3>
-<p>Raised when emitted output is written successfully but fails validation, such as <code>py_compile</code>.</p>
+<p>Raised when emitted output is written successfully but fails validation, such as <code>py_compile</code>, including watch-triggered recompiles after startup.</p>
 <p><strong>Fix:</strong> Inspect the generated artifact and the validator error, then recompile after fixing the source or emitter issue.</p>
 <h3 id="e_run-unexpected-run-error"><code>E_RUN</code> - Unexpected run error<a class="headerlink" href="#e_run-unexpected-run-error" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc run</code> encounters an internal setup or parser-path failure before execution completes.</p>
@@ -3068,6 +3095,9 @@
 <h3 id="ewatch001-watch-path-is-not-a-directory"><code>EWATCH001</code> - Watch path is not a directory<a class="headerlink" href="#ewatch001-watch-path-is-not-a-directory" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc watch --json</code> is given a path that exists but is not a directory.</p>
 <p><strong>Fix:</strong> Pass a directory path to <code>nlsc watch</code>, or use a file-oriented command such as <code>nlsc compile &lt;file&gt;</code> for a single source file.</p>
+<h3 id="ewatch002-watch-runtime-compile-failed"><code>EWATCH002</code> - Watch runtime compile failed<a class="headerlink" href="#ewatch002-watch-runtime-compile-failed" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc watch --json</code> hits an unexpected runtime compile failure after startup and the failure does not map cleanly to a shared parse, <code>@use</code>, dependency-resolution, target, or validation diagnostic.</p>
+<p><strong>Fix:</strong> Inspect the runtime message and watched file path, correct the underlying environment or source issue, then save again to retrigger the compile.</p>
 <h2 id="parse-errors">Parse Errors<a class="headerlink" href="#parse-errors" title="Permanent link">&para;</a></h2>
 <p>Parse errors occur when the <code>.nl</code> file has invalid syntax.</p>
 <h3 id="missing-module-directive">Missing Module Directive<a class="headerlink" href="#missing-module-directive" title="Permanent link">&para;</a></h3>
