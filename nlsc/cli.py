@@ -1509,6 +1509,11 @@ def cmd_lsp(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     """Main entry point for nlsc CLI"""
     raw_argv = list(sys.argv[1:] if argv is None else argv)
+
+    class CLICommandParser(NLSArgumentParser):
+        def __init__(self, **kwargs: Any) -> None:
+            super().__init__(argv=raw_argv, **kwargs)
+
     parser = NLSArgumentParser(
         prog="nlsc",
         argv=raw_argv,
@@ -1533,7 +1538,11 @@ The conversation is the programming. The .nl file is the receipt.
         help="Parser backend: 'auto' (default, uses tree-sitter if available), 'regex', or 'treesitter'",
     )
 
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+    subparsers = parser.add_subparsers(
+        dest="command",
+        help="Available commands",
+        parser_class=CLICommandParser,
+    )
 
     # init command
     init_parser = subparsers.add_parser("init", help="Initialize NLS project")

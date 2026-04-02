@@ -7,6 +7,9 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
+
+from nlsc.cli import main
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -271,6 +274,27 @@ def test_unknown_subcommand_with_json_reports_structured_diagnostic() -> None:
         }
     ]
     assert payload["usage"].startswith("usage: nlsc")
+
+
+def test_main_argv_json_parse_errors_use_supplied_argv(capsys: Any) -> None:
+    exit_code = main(["verify", "--json"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["command"] == "verify"
+    assert payload["diagnostics"] == [
+        {
+            "code": "ECLI001",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "the following arguments are required: file",
+            "hint": "Rerun the command with --help to inspect the required arguments and valid options.",
+        }
+    ]
+    assert payload["usage"].startswith("usage: nlsc verify")
+    assert captured.err == ""
 
 
 def test_compile_json_reports_parser_backend_unavailable(tmp_path: Path) -> None:
