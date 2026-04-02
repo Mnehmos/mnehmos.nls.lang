@@ -10,6 +10,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable, Optional
 
+from .emitter import emit_python, emit_tests
+from .emitter_typescript import emit_tests_typescript, emit_typescript
+
 
 def is_nl_file(path: Path) -> bool:
     """Check if a path is an NL source file (not a lockfile)."""
@@ -60,7 +63,6 @@ class NLWatcher:
             True if compilation succeeded, False otherwise
         """
         from .parser import ParseError
-        from .emitter import emit_python, emit_tests
         from .lockfile import generate_lockfile, write_lockfile
         from .pipeline import parse_nl_path_auto, validate_semantics
         from .stdlib_resolver import StdlibUseError
@@ -79,26 +81,41 @@ class NLWatcher:
                     self.on_compile(path, False, error_msg)
                 return False
 
-            # Emit Python
-            python_code = emit_python(nl_file, mode="mock")
-            output_path = path.with_suffix(".py")
-            output_path.write_text(python_code, encoding="utf-8")
-            py_compile.compile(str(output_path), doraise=True)
+            target = nl_file.module.target or "python"
+            if target == "python":
+                generated_code = emit_python(nl_file, mode="mock")
+                output_path = path.with_suffix(".py")
+                test_code = emit_tests(nl_file)
+                test_path = path.parent / f"test_{path.stem}.py"
+                py_compile_required = True
+            elif target == "typescript":
+                generated_code = emit_typescript(nl_file)
+                output_path = path.with_suffix(".ts")
+                test_code = emit_tests_typescript(nl_file)
+                test_path = path.parent / f"test_{path.stem}.ts"
+                py_compile_required = False
+            else:
+                error_msg = f"Target '{target}' not yet supported"
+                if self.on_compile:
+                    self.on_compile(path, False, error_msg)
+                return False
+
+            output_path.write_text(generated_code, encoding="utf-8")
+            if py_compile_required:
+                py_compile.compile(str(output_path), doraise=True)
 
             # Generate tests if present
-            if nl_file.tests:
-                test_code = emit_tests(nl_file)
-                if test_code:
-                    test_path = path.parent / f"test_{path.stem}.py"
-                    test_path.write_text(test_code, encoding="utf-8")
+            if nl_file.tests and test_code:
+                test_path.write_text(test_code, encoding="utf-8")
 
             # Generate lockfile
             lock_path = path.with_suffix(".nl.lock")
             lockfile = generate_lockfile(
                 nl_file,
-                python_code,
+                generated_code,
                 str(output_path),
-                llm_backend="mock"
+                llm_backend="mock",
+                target=target,
             )
             write_lockfile(lockfile, lock_path)
 
@@ -158,13 +175,15 @@ class NLWatcher:
     def _start_watchdog(self) -> None:
         """Start watching using watchdog library."""
         from watchdog.observers import Observer
-        from watchdog.events import FileSystemEventHandler, FileModifiedEvent
+        from watchdog.events import FileSystemEvent, FileSystemEventHandler
 
         watcher = self
 
         class NLFileHandler(FileSystemEventHandler):
-            def on_modified(self, event: FileModifiedEvent) -> None:
+            def on_modified(self, event: FileSystemEvent) -> None:
                 if event.is_directory:
+                    return
+                if isinstance(event.src_path, bytes):
                     return
                 path = Path(event.src_path)
                 if is_nl_file(path):

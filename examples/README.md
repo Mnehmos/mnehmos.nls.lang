@@ -8,6 +8,9 @@ This directory contains working examples of `.nl` files demonstrating various NL
 # Compile any example
 nlsc compile math.nl
 
+# Or compile the same example to TypeScript
+nlsc compile math.nl -t typescript
+
 # Run tests
 nlsc test billing.nl
 
@@ -24,6 +27,14 @@ The simplest possible example. Two functions: `add` and `multiply`.
 - Basic ANLU structure
 - Simple inputs and returns
 - Test blocks
+
+### sorting_ts.nl - TypeScript Quicksort
+The quicksort example compiled to the TypeScript target.
+
+**Features demonstrated:**
+- `@target typescript`
+- Deterministic LOGIC emission to TypeScript
+- Generated Node assert tests
 
 ### strings.nl - String Operations
 Text manipulation utilities.
@@ -57,6 +68,9 @@ Comprehensive billing system with types, invariants, and property tests.
 ```bash
 # Compile to Python
 nlsc compile billing.nl
+
+# Compile to TypeScript
+nlsc compile billing.nl -t typescript
 
 # Verify syntax without generating
 nlsc verify billing.nl

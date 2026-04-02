@@ -26,6 +26,7 @@ from . import __version__
 from .parser import ParseError
 from .schema import NLFile
 from .emitter import emit_python, emit_tests
+from .emitter_typescript import emit_tests_typescript, emit_typescript
 from .lockfile import generate_lockfile, write_lockfile, verify_lockfile
 from .sourcemap import generate_source_map
 from .graph import (
@@ -37,7 +38,12 @@ from .graph import (
     emit_fsm_mermaid,
 )
 from .atomize import atomize_file
-from .diff import get_anlu_changes, format_changes_output, format_stat_output, generate_full_diff
+from .diff import (
+    get_anlu_changes,
+    format_changes_output,
+    format_stat_output,
+    generate_full_diff,
+)
 from .lockfile import read_lockfile
 from .watch import NLWatcher, format_timestamp
 import platform
@@ -53,25 +59,54 @@ from .stdlib_resolver import (
     StdlibUseError,
 )
 
+
 # Unicode symbols with ASCII fallbacks for Windows console
 def _check() -> str:
     """Return checkmark, falling back to ASCII if needed."""
     try:
-        "\u2713".encode(sys.stdout.encoding or 'utf-8')
+        "\u2713".encode(sys.stdout.encoding or "utf-8")
         return "\u2713"
     except (UnicodeEncodeError, LookupError):
         return "[OK]"
 
+
 def _cross() -> str:
     """Return cross mark, falling back to ASCII if needed."""
     try:
-        "\u2717".encode(sys.stdout.encoding or 'utf-8')
+        "\u2717".encode(sys.stdout.encoding or "utf-8")
         return "\u2717"
     except (UnicodeEncodeError, LookupError):
         return "[X]"
 
+
 # Parser selection - default to tree-sitter if available
 _use_treesitter = detect_treesitter()
+
+
+def _resolve_target(nl_file: NLFile, requested_target: str | None) -> str:
+    """Resolve target from CLI override or module metadata."""
+    return requested_target or nl_file.module.target or "python"
+
+
+def _emit_target_code(
+    nl_file: NLFile, target: str
+) -> tuple[str, str, str | None, str | None]:
+    """Emit module and optional tests for the selected target."""
+    if target == "python":
+        return emit_python(nl_file, mode="mock"), ".py", emit_tests(nl_file), ".py"
+    if target == "typescript":
+        return emit_typescript(nl_file), ".ts", emit_tests_typescript(nl_file), ".ts"
+    raise ValueError(f"Target '{target}' not yet supported")
+
+
+def _validate_target_output(target: str, output_path: Path) -> tuple[bool, str | None]:
+    """Validate emitted output when a validator is available."""
+    if target == "python":
+        try:
+            py_compile.compile(str(output_path), doraise=True)
+        except py_compile.PyCompileError as exc:
+            return False, str(exc)
+    return True, None
 
 
 def set_parser_backend(backend: str) -> None:
@@ -83,6 +118,7 @@ def set_parser_backend(backend: str) -> None:
         # Check if tree-sitter is available
         try:
             from . import parser_treesitter
+
             if not parser_treesitter.is_available():
                 raise ImportError("tree-sitter is not installed")
         except ImportError as e:
@@ -213,37 +249,34 @@ def cmd_compile(args: argparse.Namespace) -> int:
         return 1
     print(f"  {_check()} Resolved dependencies")
 
-    # Emit Python
-    target = args.target or "python"
-    if target != "python":
-        print(f"  {_cross()} Target '{target}' not yet supported", file=sys.stderr)
+    target = _resolve_target(nl_file, getattr(args, "target", None))
+    try:
+        generated_code, output_suffix, test_code, test_suffix = _emit_target_code(
+            nl_file, target
+        )
+    except ValueError as exc:
+        print(f"  {_cross()} {exc}", file=sys.stderr)
         return 1
 
-    python_code = emit_python(nl_file, mode="mock")
-
     # Determine output path
-    output_path = source_path.with_suffix(".py")
+    output_path = source_path.with_suffix(output_suffix)
     if args.output:
         output_path = Path(args.output)
 
-    output_path.write_text(python_code, encoding="utf-8")
-    line_count = python_code.count("\n") + 1
+    output_path.write_text(generated_code, encoding="utf-8")
+    line_count = generated_code.count("\n") + 1
     print(f"  {_check()} Generated {output_path.name} ({line_count} lines)")
 
-    # Validate generated Python syntax before proceeding
-    try:
-        py_compile.compile(str(output_path), doraise=True)
-    except py_compile.PyCompileError as e:
+    is_valid, validation_error = _validate_target_output(target, output_path)
+    if not is_valid:
         print(
-            f"  {_cross()} py_compile validation failed for {output_path}: {e}",
+            f"  {_cross()} py_compile validation failed for {output_path}: {validation_error}",
             file=sys.stderr,
         )
         return 1
 
-    # Generate tests if present
-    test_code = emit_tests(nl_file)
     if test_code and nl_file.tests:
-        test_path = source_path.parent / f"test_{source_path.stem}.py"
+        test_path = source_path.parent / f"test_{source_path.stem}{test_suffix}"
         test_path.write_text(test_code, encoding="utf-8")
         print(f"  {_check()} Generated {test_path.name}")
 
@@ -251,9 +284,10 @@ def cmd_compile(args: argparse.Namespace) -> int:
     lock_path = source_path.with_suffix(".nl.lock")
     lockfile = generate_lockfile(
         nl_file,
-        python_code,
+        generated_code,
         str(output_path),
-        llm_backend="mock"
+        llm_backend="mock",
+        target=target,
     )
     write_lockfile(lockfile, lock_path)
     print(f"  {_check()} Updated {lock_path.name}")
@@ -291,7 +325,9 @@ def cmd_verify(args: argparse.Namespace) -> int:
         _print_stdlib_use_error(e)
         return 1
     if validation.resolved_uses:
-        print(f"  {_check()} Resolved {len(validation.resolved_uses)} @use directive(s)")
+        print(
+            f"  {_check()} Resolved {len(validation.resolved_uses)} @use directive(s)"
+        )
 
     if validation.dependency_errors:
         print(f"  {_cross()} Resolution errors:")
@@ -349,7 +385,10 @@ def cmd_graph(args: argparse.Namespace) -> int:
         elif output_format == "ascii":
             output = emit_dataflow_ascii(anlu)
         else:
-            print(f"Error: Format '{output_format}' not supported for dataflow", file=sys.stderr)
+            print(
+                f"Error: Format '{output_format}' not supported for dataflow",
+                file=sys.stderr,
+            )
             return 1
     else:
         # Full file dependency graph
@@ -409,7 +448,9 @@ def cmd_test(args: argparse.Namespace) -> int:
             return 0
 
         # Fix import to be direct (not relative)
-        test_code = test_code.replace(f"from .{module_name} import *", f"from {module_name} import *")
+        test_code = test_code.replace(
+            f"from .{module_name} import *", f"from {module_name} import *"
+        )
         test_path = temp_path / f"test_{module_name}.py"
         test_path.write_text(test_code, encoding="utf-8")
 
@@ -426,7 +467,14 @@ def cmd_test(args: argparse.Namespace) -> int:
 
         # Run pytest
         verbose_flag = "-v" if getattr(args, "verbose", False) else "-q"
-        pytest_args = [sys.executable, "-m", "pytest", str(test_path), verbose_flag, "--tb=short"]
+        pytest_args = [
+            sys.executable,
+            "-m",
+            "pytest",
+            str(test_path),
+            verbose_flag,
+            "--tb=short",
+        ]
 
         if getattr(args, "case", None):
             pytest_args.extend(["-k", args.case])
@@ -571,7 +619,9 @@ def cmd_watch(args: argparse.Namespace) -> int:
             if not quiet:
                 print(f"{timestamp} " + _check() + "  Compiled {path.name}")
         else:
-            print(f"{timestamp} " + _cross() + "  {path.name}: {error}", file=sys.stderr)
+            print(
+                f"{timestamp} " + _cross() + "  {path.name}: {error}", file=sys.stderr
+            )
 
     print(f"Watching {watch_path.absolute()} for .nl changes...")
     print("Press Ctrl+C to stop.\n")
@@ -647,21 +697,27 @@ def cmd_lock_update(args: argparse.Namespace) -> int:
         print(f"Parse error: {e}", file=sys.stderr)
         return 1
 
-    # Find compiled Python file
-    py_path = source_path.with_suffix(".py")
-    if not py_path.exists():
-        print(f"Warning: Compiled file not found, generating fresh: {py_path}")
-        python_code = emit_python(nl_file, mode="mock")
+    target = _resolve_target(nl_file, None)
+    output_suffix = ".py" if target == "python" else ".ts"
+    output_path = source_path.with_suffix(output_suffix)
+    if not output_path.exists():
+        print(f"Warning: Compiled file not found, generating fresh: {output_path}")
+        try:
+            generated_code, _, _, _ = _emit_target_code(nl_file, target)
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
     else:
-        python_code = py_path.read_text(encoding="utf-8")
+        generated_code = output_path.read_text(encoding="utf-8")
 
     # Generate lockfile
     lock_path = source_path.with_suffix(".nl.lock")
     lockfile = generate_lockfile(
         nl_file,
-        python_code,
-        str(py_path),
-        llm_backend="mock"
+        generated_code,
+        str(output_path),
+        llm_backend="mock",
+        target=target,
     )
     write_lockfile(lockfile, lock_path)
 
@@ -748,10 +804,11 @@ def cmd_run(args: argparse.Namespace) -> int:
                 safe_path = repr(str(temp_dir))
                 safe_source_root = repr(str(source_root))
                 run_args = [
-                    sys.executable, "-c",
+                    sys.executable,
+                    "-c",
                     f"import sys; sys.path.insert(0, {safe_source_root}); "
                     f"sys.path.insert(0, {safe_path}); "
-                    f"from {module_name} import {candidate_normalized}; {candidate_normalized}()"
+                    f"from {module_name} import {candidate_normalized}; {candidate_normalized}()",
                 ]
                 if verbose:
                     print(f"Found entry point: {candidate}")
@@ -795,6 +852,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         # Cleanup temp directory unless --keep
         if cleanup:
             import shutil
+
             shutil.rmtree(temp_dir, ignore_errors=True)
 
     return exit_code
@@ -803,7 +861,10 @@ def cmd_run(args: argparse.Namespace) -> int:
 def cmd_assoc(args: argparse.Namespace) -> int:
     """Install Windows file association for .nl files"""
     if platform.system() != "Windows":
-        print("Error: File association command is only available on Windows", file=sys.stderr)
+        print(
+            "Error: File association command is only available on Windows",
+            file=sys.stderr,
+        )
         return 1
 
     import winreg
@@ -826,8 +887,13 @@ def cmd_assoc(args: argparse.Namespace) -> int:
         icon_path = dest_icon
 
     if not icon_path:
-        print("Error: Could not find nls-file.ico in package resources", file=sys.stderr)
-        print("Run 'python windows/generate_ico.py' from the project root first", file=sys.stderr)
+        print(
+            "Error: Could not find nls-file.ico in package resources", file=sys.stderr
+        )
+        print(
+            "Run 'python windows/generate_ico.py' from the project root first",
+            file=sys.stderr,
+        )
         return 1
 
     # Choose registry root
@@ -884,9 +950,12 @@ def cmd_assoc(args: argparse.Namespace) -> int:
         # Notify shell of changes
         try:
             import ctypes
+
             SHCNE_ASSOCCHANGED = 0x08000000
             SHCNF_IDLIST = 0
-            ctypes.windll.shell32.SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, None, None)
+            ctypes.windll.shell32.SHChangeNotify(
+                SHCNE_ASSOCCHANGED, SHCNF_IDLIST, None, None
+            )
             print(f"  {_check()} Notified shell of changes")
         except Exception:
             pass
@@ -898,7 +967,10 @@ def cmd_assoc(args: argparse.Namespace) -> int:
         return 0
 
     except PermissionError:
-        print("Error: Permission denied. Run as administrator or use --user flag.", file=sys.stderr)
+        print(
+            "Error: Permission denied. Run as administrator or use --user flag.",
+            file=sys.stderr,
+        )
         return 1
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
@@ -942,18 +1014,14 @@ Examples:
   nlsc graph src/order.nl -a process-order  Visualize ANLU dataflow
 
 The conversation is the programming. The .nl file is the receipt.
-"""
+""",
     )
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"nlsc {__version__}"
-    )
+    parser.add_argument("--version", action="version", version=f"nlsc {__version__}")
     parser.add_argument(
         "--parser",
         choices=["auto", "regex", "treesitter"],
         default="auto",
-        help="Parser backend: 'auto' (default, uses tree-sitter if available), 'regex', or 'treesitter'"
+        help="Parser backend: 'auto' (default, uses tree-sitter if available), 'regex', or 'treesitter'",
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -961,27 +1029,20 @@ The conversation is the programming. The .nl file is the receipt.
     # init command
     init_parser = subparsers.add_parser("init", help="Initialize NLS project")
     init_parser.add_argument(
-        "path",
-        nargs="?",
-        default=".",
-        help="Project directory (default: current)"
+        "path", nargs="?", default=".", help="Project directory (default: current)"
     )
 
     # compile command
     compile_parser = subparsers.add_parser("compile", help="Compile .nl file")
+    compile_parser.add_argument("file", help="Path to .nl file")
     compile_parser.add_argument(
-        "file",
-        help="Path to .nl file"
+        "-t",
+        "--target",
+        choices=["python", "typescript"],
+        default=None,
+        help="Target language (defaults to @target in source, or python if omitted)",
     )
-    compile_parser.add_argument(
-        "-t", "--target",
-        default="python",
-        help="Target language (default: python)"
-    )
-    compile_parser.add_argument(
-        "-o", "--output",
-        help="Output file path"
-    )
+    compile_parser.add_argument("-o", "--output", help="Output file path")
     compile_parser.add_argument(
         "--stdlib-path",
         action="append",
@@ -991,206 +1052,147 @@ The conversation is the programming. The .nl file is the receipt.
 
     # run command
     run_parser = subparsers.add_parser("run", help="Compile and execute .nl file")
+    run_parser.add_argument("file", help="Path to .nl file")
     run_parser.add_argument(
-        "file",
-        help="Path to .nl file"
-    )
-    run_parser.add_argument(
-        "-k", "--keep",
+        "-k",
+        "--keep",
         metavar="DIR",
-        help="Keep generated files in specified directory"
+        help="Keep generated files in specified directory",
     )
     run_parser.add_argument(
-        "-t", "--target",
+        "-t",
+        "--target",
         choices=["python"],
         default="python",
-        help="Target language for code generation (default: python)"
+        help="Target language for code generation (default: python)",
     )
     run_parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
-        help="Show detailed output including source mapping"
+        help="Show detailed output including source mapping",
     )
 
     # verify command
     verify_parser = subparsers.add_parser("verify", help="Verify .nl file")
-    verify_parser.add_argument(
-        "file",
-        help="Path to .nl file"
-    )
+    verify_parser.add_argument("file", help="Path to .nl file")
 
     # graph command
     graph_parser = subparsers.add_parser(
-        "graph",
-        help="Visualize dependencies and dataflow"
+        "graph", help="Visualize dependencies and dataflow"
     )
+    graph_parser.add_argument("file", help="Path to .nl file")
     graph_parser.add_argument(
-        "file",
-        help="Path to .nl file"
-    )
-    graph_parser.add_argument(
-        "-f", "--format",
+        "-f",
+        "--format",
         choices=["mermaid", "dot", "ascii"],
         default="mermaid",
-        help="Output format (default: mermaid)"
+        help="Output format (default: mermaid)",
     )
     graph_parser.add_argument(
-        "-a", "--anlu",
-        help="Specific ANLU for dataflow visualization"
+        "-a", "--anlu", help="Specific ANLU for dataflow visualization"
     )
     graph_parser.add_argument(
-        "--dataflow",
-        action="store_true",
-        help="Show dataflow instead of FSM states"
+        "--dataflow", action="store_true", help="Show dataflow instead of FSM states"
     )
     graph_parser.add_argument(
-        "-o", "--output",
-        help="Output file path (default: stdout)"
+        "-o", "--output", help="Output file path (default: stdout)"
     )
 
     # test command
-    test_parser = subparsers.add_parser(
-        "test",
-        help="Run @test specifications"
+    test_parser = subparsers.add_parser("test", help="Run @test specifications")
+    test_parser.add_argument("file", help="Path to .nl file")
+    test_parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Verbose output"
     )
     test_parser.add_argument(
-        "file",
-        help="Path to .nl file"
-    )
-    test_parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        help="Verbose output"
-    )
-    test_parser.add_argument(
-        "-k", "--case",
-        help="Run specific test case (regex pattern)"
+        "-k", "--case", help="Run specific test case (regex pattern)"
     )
 
     # atomize command
     atomize_parser = subparsers.add_parser(
-        "atomize",
-        help="Extract ANLUs from Python code"
+        "atomize", help="Extract ANLUs from Python code"
     )
-    atomize_parser.add_argument(
-        "file",
-        help="Path to Python file"
-    )
-    atomize_parser.add_argument(
-        "-o", "--output",
-        help="Output .nl file path"
-    )
-    atomize_parser.add_argument(
-        "-m", "--module",
-        help="Module name for generated .nl"
-    )
+    atomize_parser.add_argument("file", help="Path to Python file")
+    atomize_parser.add_argument("-o", "--output", help="Output .nl file path")
+    atomize_parser.add_argument("-m", "--module", help="Module name for generated .nl")
 
     # diff command
     diff_parser = subparsers.add_parser(
-        "diff",
-        aliases=["dif"],
-        help="Show changes since last compile"
+        "diff", aliases=["dif"], help="Show changes since last compile"
     )
+    diff_parser.add_argument("file", help="Path to .nl file")
+    diff_parser.add_argument("--stat", action="store_true", help="Show summary only")
     diff_parser.add_argument(
-        "file",
-        help="Path to .nl file"
-    )
-    diff_parser.add_argument(
-        "--stat",
-        action="store_true",
-        help="Show summary only"
-    )
-    diff_parser.add_argument(
-        "--full",
-        action="store_true",
-        help="Show full unified dif"
+        "--full", action="store_true", help="Show full unified dif"
     )
 
     # watch command
     watch_parser = subparsers.add_parser(
-        "watch",
-        help="Watch directory for .nl changes"
+        "watch", help="Watch directory for .nl changes"
     )
     watch_parser.add_argument(
-        "dir",
-        nargs="?",
-        default=".",
-        help="Directory to watch (default: current)"
+        "dir", nargs="?", default=".", help="Directory to watch (default: current)"
     )
     watch_parser.add_argument(
-        "-q", "--quiet",
-        action="store_true",
-        help="Suppress success messages"
+        "-q", "--quiet", action="store_true", help="Suppress success messages"
     )
     watch_parser.add_argument(
-        "-t", "--test",
-        action="store_true",
-        help="Run tests after successful compile"
+        "-t", "--test", action="store_true", help="Run tests after successful compile"
     )
     watch_parser.add_argument(
-        "-d", "--debounce",
+        "-d",
+        "--debounce",
         type=int,
         default=100,
-        help="Debounce interval in ms (default: 100)"
+        help="Debounce interval in ms (default: 100)",
     )
 
     # lock:check command
     lock_check_parser = subparsers.add_parser(
-        "lock:check",
-        help="Verify lockfile is current"
+        "lock:check", help="Verify lockfile is current"
     )
-    lock_check_parser.add_argument(
-        "file",
-        help="Path to .nl file"
-    )
+    lock_check_parser.add_argument("file", help="Path to .nl file")
 
     # lock:update command
     lock_update_parser = subparsers.add_parser(
-        "lock:update",
-        help="Regenerate lockfile"
+        "lock:update", help="Regenerate lockfile"
     )
-    lock_update_parser.add_argument(
-        "file",
-        help="Path to .nl file"
-    )
+    lock_update_parser.add_argument("file", help="Path to .nl file")
 
     # lsp command
-    lsp_parser = subparsers.add_parser(
-        "lsp",
-        help="Start NLS language server"
-    )
+    lsp_parser = subparsers.add_parser("lsp", help="Start NLS language server")
     lsp_parser.add_argument(
         "--transport",
         choices=["stdio", "tcp"],
         default="stdio",
-        help="Transport protocol (default: stdio)"
+        help="Transport protocol (default: stdio)",
     )
     lsp_parser.add_argument(
         "--host",
         default="127.0.0.1",
-        help="Host address for tcp transport (default: 127.0.0.1)"
+        help="Host address for tcp transport (default: 127.0.0.1)",
     )
     lsp_parser.add_argument(
         "--port",
         type=int,
         default=2087,
-        help="TCP port for tcp transport (default: 2087)"
+        help="TCP port for tcp transport (default: 2087)",
     )
 
     # assoc command (Windows only)
     assoc_parser = subparsers.add_parser(
-        "assoc",
-        help="Install Windows file association for .nl files"
+        "assoc", help="Install Windows file association for .nl files"
     )
     assoc_parser.add_argument(
         "--uninstall",
         action="store_true",
-        help="Remove file association instead of installing"
+        help="Remove file association instead of installing",
     )
     assoc_parser.add_argument(
         "--user",
         action="store_true",
-        help="Install for current user only (no admin required)"
+        help="Install for current user only (no admin required)",
     )
 
     args = parser.parse_args()

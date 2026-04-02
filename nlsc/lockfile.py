@@ -72,7 +72,9 @@ def hash_anlu(anlu: ANLU) -> str:
     return hash_content(canonical)
 
 
-def extract_function_code(generated_code: str, func_name: str) -> str:
+def extract_function_code(
+    generated_code: str, func_name: str, target: str = "python"
+) -> str:
     """
     Extract a single function's code from the generated output.
 
@@ -85,9 +87,10 @@ def extract_function_code(generated_code: str, func_name: str) -> str:
     """
     import re
 
-    # Pattern to match function definition including decorators
-    # Matches: optional decorators, def line, docstring, body until next def or end
-    pattern = rf"((?:@\w+.*\n)*def {func_name}\([^)]*\)[^:]*:.*?)(?=\n(?:@|\ndef |\Z))"
+    if target == "typescript":
+        pattern = rf"((?:export\s+)?function\s+{re.escape(func_name)}\([^)]*\)\s*:[^{{]+\{{.*?)(?=\n(?:export\s+(?:function|interface)\s|/\*\*|\Z))"
+    else:
+        pattern = rf"((?:@\w+.*\n)*def {re.escape(func_name)}\([^)]*\)[^:]*:.*?)(?=\n(?:@|\ndef |\Z))"
 
     match = re.search(pattern, generated_code, re.DOTALL)
     if match:
@@ -97,7 +100,11 @@ def extract_function_code(generated_code: str, func_name: str) -> str:
 
 
 def generate_lockfile(
-    nl_file: NLFile, generated_code: str, output_path: str, llm_backend: str = "mock"
+    nl_file: NLFile,
+    generated_code: str,
+    output_path: str,
+    llm_backend: str = "mock",
+    target: str = "python",
 ) -> Lockfile:
     """
     Generate a lockfile for a compilation.
@@ -126,7 +133,7 @@ def generate_lockfile(
     # Lock each ANLU with its generated code
     for anlu in nl_file.anlus:
         func_name = anlu.python_name
-        anlu_code = extract_function_code(generated_code, func_name)
+        anlu_code = extract_function_code(generated_code, func_name, target=target)
 
         module_lock.anlus[anlu.identifier] = ANLULock(
             source_hash=hash_anlu(anlu),
@@ -141,7 +148,7 @@ def generate_lockfile(
 
     # Lock target
     output_lines = generated_code.count("\n") + 1
-    lockfile.targets["python"] = TargetLock(
+    lockfile.targets[target] = TargetLock(
         file=output_path, hash=hash_content(generated_code), lines=output_lines
     )
 

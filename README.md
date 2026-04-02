@@ -7,9 +7,9 @@
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://mnehmos.github.io/mnehmos.nls.lang/)
 
-> **The source code is English. The compiled artifact is Python.**
+> **The source is natural language. The compiled artifact can be Python or TypeScript.**
 
-NLS is a programming language where specifications are written in plain English that anyone can read—managers, auditors, domain experts—not just programmers. The `nlsc` compiler translates `.nl` files into executable Python with full type hints, validation, and documentation.
+NLS is a programming language where specifications are written in natural language that anyone can read—managers, auditors, domain experts—not just programmers. The `nlsc` compiler translates `.nl` files into executable Python or TypeScript with type hints, validation, and documentation.
 
 ## Installation
 
@@ -75,6 +75,9 @@ EOF
 
 # Compile to Python
 nlsc compile src/calculator.nl
+
+# Compile the same spec to TypeScript
+nlsc compile src/calculator.nl -t typescript
 
 # Run the tests
 nlsc test src/calculator.nl
@@ -150,7 +153,7 @@ def distance(p1: Point, p2: Point) -> float:
 ### Global Options
 
 ```bash
---parser {regex,treesitter}  # Parser backend (default: regex)
+--parser {auto,regex,treesitter}  # Parser backend (default: auto)
 --version                     # Show version
 --help                        # Show help
 ```
@@ -160,6 +163,9 @@ def distance(p1: Point, p2: Point) -> float:
 ```bash
 # Compile with tree-sitter parser
 nlsc --parser treesitter compile src/auth.nl
+
+# Compile to TypeScript
+nlsc compile src/auth.nl -t typescript
 
 # Generate Mermaid dependency diagram
 nlsc graph src/order.nl --format mermaid
@@ -336,7 +342,7 @@ DEPENDS: [other-function], [another]
 | VS Code extension      | ✅ Complete |
 | LSP server             | ✅ Complete |
 | Windows installer      | ✅ Complete |
-| TypeScript target      | 🔜 Planned  |
+| TypeScript target      | ✅ Initial compile support |
 
 **239 tests passing** — Production-ready for Python target. See [GitHub Issues](https://github.com/Mnehmos/mnehmos.nls.lang/issues) for roadmap.
 

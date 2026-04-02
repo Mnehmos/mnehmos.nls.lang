@@ -1,8 +1,8 @@
 # NLS Compiler
 
-> **The source code is English. The compiled artifact is Python.**
+> **The source is natural language. The compiled artifact can be Python or TypeScript.**
 
-NLS is a programming language where specifications are written in plain English that anyone can read—managers, auditors, domain experts—not just programmers. The `nlsc` compiler translates `.nl` files into executable Python with full type hints, validation, and documentation.
+NLS is a programming language where specifications are written in natural language that anyone can read—managers, auditors, domain experts—not just programmers. The `nlsc` compiler translates `.nl` files into executable Python or TypeScript with type hints, validation, and documentation.
 
 ## Why NLS?
 
@@ -78,7 +78,7 @@ def divide(numerator: float, divisor: float) -> float:
 | VS Code extension      | ✅ Complete |
 | LSP server             | ✅ Complete |
 | Windows installer      | ✅ Complete |
-| TypeScript target      | 🔜 Planned  |
+| TypeScript target      | ✅ Initial compile support |
 
 **239 tests passing** — Production-ready for Python target.
 
