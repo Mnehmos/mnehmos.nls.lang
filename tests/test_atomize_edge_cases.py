@@ -587,6 +587,28 @@ def main(user: list[str] | None = None) -> list[str] | None:
 
         assert "def main(user: Optional[list[str]]) -> Optional[list[str]]:" in py_code
 
+    def test_nested_list_types_roundtrip_to_valid_python_annotations(self):
+        """Nested list field and return types should emit recursively valid Python."""
+        code = """\
+from dataclasses import dataclass
+
+@dataclass
+class Grid:
+    cells: list[list[str]]
+    weights: list[list[float]] | None = None
+
+def render(cells: list[list[str]]) -> list[list[str]]:
+    \"\"\"Return the provided grid.\"\"\"
+    return cells
+"""
+        nl_content = atomize_to_nl(code, module_name="grid")
+        nl_file = parse_nl_file(nl_content)
+        py_code = emit_python(nl_file)
+
+        assert "cells: list[list[str]]" in py_code
+        assert "weights: Optional[list[list[float]]]" in py_code
+        assert "def render(cells: list[list[str]]) -> list[list[str]]:" in py_code
+
     def test_atomize_python_file_strips_utf8_bom(self):
         """UTF-8 BOM prefixed files should still atomize successfully."""
         code = '\ufeffdef add(a: float, b: float) -> float:\n    """Add two numbers"""\n    return a + b\n'

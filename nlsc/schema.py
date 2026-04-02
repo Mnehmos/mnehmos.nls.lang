@@ -60,15 +60,9 @@ class Input:
             base_py = Input(name=self.name, type=base_type).to_python_type()
             return f"Optional[{base_py}]"
 
-        # Handle nested "list of list of X"
-        if type_str.startswith("list of list of "):
-            inner = type_str[16:]  # Remove "list of list of "
-            inner_py = type_map.get(inner.lower(), inner)
-            base_type = f"list[list[{inner_py}]]"
-        # Handle "list of X"
-        elif type_str.startswith("list of "):
-            inner = type_str[8:]  # Remove "list of "
-            inner_py = type_map.get(inner.lower(), inner)
+        if type_str.startswith("list of "):
+            inner = type_str[8:]
+            inner_py = Input(name=self.name, type=inner).to_python_type()
             base_type = f"list[{inner_py}]"
         else:
             base_type = type_map.get(type_str.lower(), type_str)
@@ -426,13 +420,9 @@ class TypeField:
             base_py = TypeField(name=self.name, type=base_type).to_python_type()
             return f"Optional[{base_py}]"
 
-        # Handle "list of X"
         if type_str.startswith("list of "):
-            inner = type_str[8:]  # Remove "list of "
-            # Strip ? from inner type too
-            if inner.endswith("?"):
-                inner = inner[:-1]
-            inner_py = type_map.get(inner, inner)
+            inner = type_str[8:]
+            inner_py = TypeField(name=self.name, type=inner).to_python_type()
             base_type = f"list[{inner_py}]"
         else:
             base_type = type_map.get(type_str, type_str)
