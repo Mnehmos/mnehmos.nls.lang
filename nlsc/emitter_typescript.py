@@ -10,7 +10,7 @@ from .localization import (
     IDENTIFIER_PATTERN,
     normalize_expression_text,
 )
-from .schema import ANLU, Invariant, LogicStep, NLFile, TypeDefinition
+from .schema import ANLU, Input, Invariant, LogicStep, NLFile, TypeDefinition
 
 
 def _python_type_to_typescript(py_type: str) -> str:
@@ -36,7 +36,7 @@ def _python_type_to_typescript(py_type: str) -> str:
     return mapping.get(py_type, py_type)
 
 
-def _input_type_to_typescript(inp) -> str:
+def _input_type_to_typescript(inp: Input) -> str:
     return _python_type_to_typescript(inp.to_python_type())
 
 
