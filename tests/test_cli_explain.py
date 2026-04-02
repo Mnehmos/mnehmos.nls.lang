@@ -18,6 +18,7 @@ def test_error_catalog_covers_active_cli_error_codes() -> None:
     from nlsc.error_catalog import ERROR_CATALOG
 
     expected_codes = {
+        "ECLI001",
         "EATOM001",
         "EATOM002",
         "EFILE001",
@@ -48,6 +49,16 @@ def test_explain_command_prints_known_error_details() -> None:
     assert "EPARSE001" in result.stdout
     assert "Parse error" in result.stdout
     assert "verify" in result.stdout
+    assert result.stderr == ""
+
+
+def test_explain_command_prints_cli_usage_error_details() -> None:
+    result = _run_nlsc("explain", "ECLI001")
+
+    assert result.returncode == 0
+    assert "ECLI001" in result.stdout
+    assert "CLI usage error" in result.stdout
+    assert "--json" in result.stdout
     assert result.stderr == ""
 
 

@@ -67,6 +67,26 @@ def test_verify_json_reports_missing_file(tmp_path: Path) -> None:
     ]
 
 
+def test_verify_json_reports_missing_required_file_argument() -> None:
+    result = _run_nlsc(["verify", "--json"], cwd=REPO_ROOT)
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["ok"] is False
+    assert payload["command"] == "verify"
+    assert payload["diagnostics"] == [
+        {
+            "code": "ECLI001",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "the following arguments are required: file",
+            "hint": "Rerun the command with --help to inspect the required arguments and valid options.",
+        }
+    ]
+    assert payload["usage"].startswith("usage: nlsc verify")
+
+
 def test_verify_json_reports_parse_error_location(tmp_path: Path) -> None:
     source_path = tmp_path / "broken.nl"
     source_path.write_text(
@@ -205,6 +225,52 @@ def test_compile_json_reports_missing_file(tmp_path: Path) -> None:
     payload = _load_json_output(result)
     assert payload["command"] == "compile"
     assert payload["diagnostics"][0]["code"] == "EFILE001"
+
+
+def test_compile_json_reports_invalid_target_choice(tmp_path: Path) -> None:
+    source_path = tmp_path / "compile_source.nl"
+    source_path.write_text(
+        "@module compile-source\n@target python\n\n[main]\nPURPOSE: Ok\nRETURNS: 1\n",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(
+        ["compile", str(source_path), "--target", "ruby", "--json"], cwd=REPO_ROOT
+    )
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "compile"
+    assert payload["diagnostics"] == [
+        {
+            "code": "ECLI001",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "argument -t/--target: invalid choice: 'ruby' (choose from python, typescript)",
+            "hint": "Rerun the command with --help to inspect the required arguments and valid options.",
+        }
+    ]
+    assert payload["usage"].startswith("usage: nlsc compile")
+
+
+def test_unknown_subcommand_with_json_reports_structured_diagnostic() -> None:
+    result = _run_nlsc(["frobnicate", "--json"], cwd=REPO_ROOT)
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "frobnicate"
+    assert payload["diagnostics"] == [
+        {
+            "code": "ECLI001",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "argument command: invalid choice: 'frobnicate' (choose from init, compile, run, verify, explain, graph, test, atomize, diff, dif, watch, lock:check, lock:update, lsp, assoc)",
+            "hint": "Rerun the command with --help to inspect the required arguments and valid options.",
+        }
+    ]
+    assert payload["usage"].startswith("usage: nlsc")
 
 
 def test_compile_json_reports_parser_backend_unavailable(tmp_path: Path) -> None:

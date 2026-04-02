@@ -11,6 +11,7 @@ from .resolver import ResolutionError
 from .schema import NLFile
 from .stdlib_resolver import StdlibUseError
 from .error_catalog import (
+    ECLI001,
     EATOM001,
     EATOM002,
     ECONTRACT001,
@@ -55,6 +56,17 @@ def missing_file_diagnostic(path: Path, *, subject: str = "File") -> Diagnostic:
         col=None,
         message=f"{subject} not found: {path}",
         hint="Check that the path exists and try again.",
+    )
+
+
+def cli_parse_error_diagnostic(message: str) -> Diagnostic:
+    return Diagnostic(
+        code=ECLI001,
+        file="<cli>",
+        line=None,
+        col=None,
+        message=message,
+        hint="Rerun the command with --help to inspect the required arguments and valid options.",
     )
 
 

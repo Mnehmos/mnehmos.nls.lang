@@ -14,6 +14,7 @@ nlsc explain EPARSE001
 
 | Code | Commands | Meaning |
 | --- | --- | --- |
+| `ECLI001` | `compile`, `verify`, `run`, `test`, `graph`, `atomize`, `diff`, `watch`, `lock:check`, `lock:update`, `unknown-subcommand` | CLI argument parsing failed before command dispatch while `--json` was active. |
 | `EFILE001` | `atomize`, `compile`, `verify`, `run`, `test`, `graph`, `diff`, `watch`, `lock:check`, `lock:update` | The requested input path does not exist. |
 | `EATOM001` | `atomize` | The input Python file failed syntax parsing during atomization. |
 | `EATOM002` | `atomize` | `nlsc atomize` hit an unexpected extraction or write failure. |
@@ -32,6 +33,14 @@ nlsc explain EPARSE001
 | `ELOCK001` | `lock:check` | `nlsc lock:check` could not load the `.nl.lock` file because it is missing or malformed. |
 | `ELOCK002` | `lock:check` | `nlsc lock:check` found source content that no longer matches the lockfile. |
 | `EWATCH001` | `watch` | `nlsc watch` was given a path that exists but is not a directory. |
+
+### `ECLI001` - CLI usage error
+
+Raised when argparse rejects the command line before `nlsc` can dispatch the requested command, and `--json` is present so automation receives structured diagnostics instead of raw stderr usage text.
+
+Covered cases include missing required positional arguments, invalid choice values such as an unsupported `--target`, and unknown subcommands.
+
+**Fix:** Rerun the command with `--help`, correct the argument list, and keep `--json` enabled if an automated caller expects structured diagnostics.
 
 ### `EFILE001` - File not found
 

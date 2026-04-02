@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+ECLI001 = "ECLI001"
 EATOM001 = "EATOM001"
 EATOM002 = "EATOM002"
 EFILE001 = "EFILE001"
@@ -35,6 +36,32 @@ class ErrorDefinition:
 
 
 ERROR_CATALOG: dict[str, ErrorDefinition] = {
+    ECLI001: ErrorDefinition(
+        code=ECLI001,
+        title="CLI usage error",
+        summary="Argument parsing failed before command dispatch, and `--json` requested a structured diagnostic instead of raw argparse stderr output.",
+        emitted_by=(
+            "compile",
+            "verify",
+            "run",
+            "test",
+            "graph",
+            "atomize",
+            "diff",
+            "watch",
+            "lock:check",
+            "lock:update",
+            "unknown-subcommand",
+        ),
+        common_causes=(
+            "A required CLI argument such as `file` was omitted.",
+            "An option received an invalid value or the subcommand name is not recognized.",
+        ),
+        next_steps=(
+            "Rerun the command with `--help` to inspect the required arguments and valid options.",
+            "If you are using JSON automation, keep `--json` on the command so parse failures continue to return structured diagnostics.",
+        ),
+    ),
     EFILE001: ErrorDefinition(
         code=EFILE001,
         title="File not found",
