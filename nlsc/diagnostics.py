@@ -13,6 +13,7 @@ from .schema import NLFile
 from .stdlib_resolver import StdlibUseError
 from .error_catalog import (
     ECLI001,
+    EEXPLAIN001,
     EATOM001,
     EATOM002,
     ECONTRACT001,
@@ -75,6 +76,17 @@ def cli_parse_error_diagnostic(message: str) -> Diagnostic:
         col=None,
         message=message,
         hint="Rerun the command with --help to inspect the required arguments and valid options.",
+    )
+
+
+def explain_unknown_code_diagnostic(code: str) -> Diagnostic:
+    return Diagnostic(
+        code=EEXPLAIN001,
+        file="<cli>",
+        line=None,
+        col=None,
+        message=f"Unknown error code: {code}",
+        hint="Run `nlsc explain --json ECLI001` or inspect `known_codes` to choose a cataloged error code.",
     )
 
 

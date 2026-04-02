@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 ECLI001 = "ECLI001"
+EEXPLAIN001 = "EEXPLAIN001"
 EATOM001 = "EATOM001"
 EATOM002 = "EATOM002"
 EFILE001 = "EFILE001"
@@ -69,6 +70,20 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Rerun the command with `--help` to inspect the required arguments and valid options.",
             "If you are using JSON automation, keep `--json` on the command so parse failures continue to return structured diagnostics.",
+        ),
+    ),
+    EEXPLAIN001: ErrorDefinition(
+        code=EEXPLAIN001,
+        title="Unknown explain error code",
+        summary="`nlsc explain` was asked to document an error code that is not present in the stable CLI error catalog.",
+        emitted_by=("explain",),
+        common_causes=(
+            "The requested code is misspelled or uses the wrong prefix/number.",
+            "The code refers to a diagnostic path that has not been cataloged yet in the current release.",
+        ),
+        next_steps=(
+            "Run `nlsc explain --json ECLI001` or inspect the reported known codes to choose a cataloged error code.",
+            "If you expected the code to exist, update the error catalog and reference docs before relying on it in automation.",
         ),
     ),
     EFILE001: ErrorDefinition(
