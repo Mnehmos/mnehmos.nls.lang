@@ -24,6 +24,10 @@ ELOCK001 = "ELOCK001"
 ELOCK002 = "ELOCK002"
 ELSP001 = "ELSP001"
 ELSP002 = "ELSP002"
+EASSOC001 = "EASSOC001"
+EASSOC002 = "EASSOC002"
+EASSOC003 = "EASSOC003"
+EASSOC004 = "EASSOC004"
 EWATCH001 = "EWATCH001"
 
 
@@ -51,6 +55,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
             "atomize",
             "diff",
             "lsp",
+            "assoc",
             "watch",
             "lock:check",
             "lock:update",
@@ -356,6 +361,62 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Check the selected transport, host, and port, then rerun `nlsc lsp`.",
             "Inspect the reported startup message to identify the failing runtime dependency or bind step.",
+        ),
+    ),
+    EASSOC001: ErrorDefinition(
+        code=EASSOC001,
+        title="Association unsupported on this platform",
+        summary="`nlsc assoc` was invoked on a non-Windows platform where the Explorer registry integration is unavailable.",
+        emitted_by=("assoc",),
+        common_causes=(
+            "The command was run on macOS, Linux, or another non-Windows environment.",
+            "Automation invoked `nlsc assoc` without checking the host platform first.",
+        ),
+        next_steps=(
+            "Run `nlsc assoc` on Windows if you need Explorer integration for `.nl` files.",
+            "Use your operating system's default-app tooling on non-Windows platforms.",
+        ),
+    ),
+    EASSOC002: ErrorDefinition(
+        code=EASSOC002,
+        title="Association icon missing",
+        summary="`nlsc assoc` could not find the packaged `nls-file.ico` asset required for the Explorer file type icon.",
+        emitted_by=("assoc",),
+        common_causes=(
+            "The installed package is missing `nlsc/resources/nls-file.ico`.",
+            "The icon asset was not generated or bundled before packaging.",
+        ),
+        next_steps=(
+            "Regenerate the icon asset with `python windows/generate_ico.py` from the project root.",
+            "Reinstall or rebuild the package so `nlsc/resources/nls-file.ico` is present.",
+        ),
+    ),
+    EASSOC003: ErrorDefinition(
+        code=EASSOC003,
+        title="Association permission denied",
+        summary="`nlsc assoc` reached the Windows registry update step, but the process lacked permission to write the required keys.",
+        emitted_by=("assoc",),
+        common_causes=(
+            "The command attempted a machine-wide install without administrator rights.",
+            "A group policy or endpoint security rule blocked registry writes for the association keys.",
+        ),
+        next_steps=(
+            "Rerun from an elevated shell for a machine-wide association.",
+            "Use `nlsc assoc --user` if a per-user association is sufficient.",
+        ),
+    ),
+    EASSOC004: ErrorDefinition(
+        code=EASSOC004,
+        title="Association update failed",
+        summary="`nlsc assoc` hit an unexpected runtime failure while creating, deleting, or finalizing the Windows file association.",
+        emitted_by=("assoc",),
+        common_causes=(
+            "A registry API call failed for a reason other than a basic permission error.",
+            "The local shell notification or registry state is inconsistent or temporarily unavailable.",
+        ),
+        next_steps=(
+            "Inspect the reported runtime error and local registry state, then rerun `nlsc assoc`.",
+            "If the failure persists, retry after repairing the local install or cleaning up partial association keys.",
         ),
     ),
     EWATCH001: ErrorDefinition(

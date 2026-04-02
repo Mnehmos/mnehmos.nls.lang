@@ -69,6 +69,15 @@ ftype
 
 If you manage associations manually, validate command targets before rollout.
 
+### `nlsc assoc` diagnostics
+
+`nlsc assoc` automates the Windows registry entries for `.nl` files. Add `--json` when the command is driven by scripts or installers and you need stable diagnostics instead of human-readable stderr.
+
+- `EASSOC001` - command invoked on a non-Windows host.
+- `EASSOC002` - packaged `nls-file.ico` asset is missing.
+- `EASSOC003` - registry write blocked by permissions; retry elevated or use `--user`.
+- `EASSOC004` - other registry or shell-notification failure.
+
 ## Linux
 
 Linux behavior depends on desktop environment (GNOME, KDE, etc.) and `xdg` defaults.
