@@ -10,6 +10,7 @@ from .parser import ParseError
 from .resolver import ResolutionError
 from .schema import NLFile
 from .stdlib_resolver import StdlibUseError
+from .error_catalog import ECONTRACT001, EFILE001, EPARSE001, E_RESOLUTION
 
 
 @dataclass(frozen=True)
@@ -34,7 +35,7 @@ class Diagnostic:
 
 def missing_file_diagnostic(path: Path) -> Diagnostic:
     return Diagnostic(
-        code="EFILE001",
+        code=EFILE001,
         file=str(path),
         line=None,
         col=None,
@@ -59,7 +60,7 @@ def parse_error_diagnostic(path: Path, error: ParseError) -> Diagnostic:
         hint = "Rewrite the line as a GUARDS bullet using -, *, or •."
 
     return Diagnostic(
-        code="EPARSE001",
+        code=EPARSE001,
         file=str(path),
         line=line,
         col=None,
@@ -91,7 +92,7 @@ def dependency_error_diagnostics(
             line = anlu_lines.get(anlu_id) if anlu_id is not None else None
             diagnostics.append(
                 Diagnostic(
-                    code="E_RESOLUTION",
+                    code=E_RESOLUTION,
                     file=str(path),
                     line=line,
                     col=1 if line is not None else None,
@@ -110,7 +111,7 @@ def dependency_error_diagnostics(
         line = anlu_lines.get(error.anlu_id)
         diagnostics.append(
             Diagnostic(
-                code="E_RESOLUTION",
+                code=E_RESOLUTION,
                 file=str(path),
                 line=line,
                 col=1 if line is not None else None,
@@ -124,7 +125,7 @@ def dependency_error_diagnostics(
 def contract_error_diagnostics(path: Path, errors: list[str]) -> list[Diagnostic]:
     return [
         Diagnostic(
-            code="ECONTRACT001",
+            code=ECONTRACT001,
             file=str(path),
             line=None,
             col=None,

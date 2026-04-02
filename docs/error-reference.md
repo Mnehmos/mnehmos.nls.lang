@@ -2,6 +2,82 @@
 
 Complete guide to NLS errors, their causes, and how to fix them.
 
+## Active CLI Error Codes
+
+These are the stable error codes currently emitted by `nlsc compile`, `nlsc verify`, and `nlsc run`.
+
+Use the CLI to get the extended explanation for any code:
+
+```bash
+nlsc explain EPARSE001
+```
+
+| Code | Commands | Meaning |
+| --- | --- | --- |
+| `EFILE001` | `compile`, `verify`, `run` | The requested `.nl` file does not exist. |
+| `EPARSE001` | `compile`, `verify`, `run` | The source file failed syntax parsing. |
+| `EUSE001` | `compile`, `verify`, `run` | A referenced `@use` stdlib domain could not be resolved. |
+| `E_RESOLUTION` | `compile`, `verify`, `run` | The ANLU dependency graph contains a missing or circular dependency. |
+| `ECONTRACT001` | `verify` | An ANLU is missing a required contract field such as `PURPOSE` or `RETURNS`. |
+| `ETARGET001` | `compile`, `run` | The requested target is not supported by the command. |
+| `EVALIDATE001` | `compile` | Generated output failed post-emit validation. |
+| `E_RUN` | `run` | `nlsc run` hit an unexpected internal error before execution completed. |
+| `EEXEC001` | `run` | `nlsc run` failed while setting up or launching the generated module. |
+
+### `EFILE001` - File not found
+
+Raised when the input path passed to `compile`, `verify`, or `run` does not exist.
+
+**Fix:** Check the path, ensure the file exists, and rerun the command.
+
+### `EPARSE001` - Parse error
+
+Raised when the parser rejects the `.nl` source.
+
+**Fix:** Use the reported line number, correct the syntax, then rerun `nlsc verify <file>`.
+
+### `EUSE001` - Missing stdlib domain
+
+Raised when a referenced `@use` module cannot be found in the stdlib search roots.
+
+**Fix:** Verify the domain name and add the correct stdlib root with `--stdlib-path` or `NLS_STDLIB_PATH`.
+
+### `E_RESOLUTION` - Dependency resolution error
+
+Raised when an ANLU depends on a missing ANLU or participates in a dependency cycle.
+
+**Fix:** Define the missing dependency, rename the dependency reference, or break the cycle.
+
+### `ECONTRACT001` - Contract validation error
+
+Raised by `nlsc verify` when an ANLU is missing a required contract field.
+
+**Fix:** Add the missing `PURPOSE:` or `RETURNS:` field and verify again.
+
+### `ETARGET001` - Unsupported target
+
+Raised when the requested target is not implemented for the current command.
+
+**Fix:** Use a supported target. For `nlsc run`, use `python`.
+
+### `EVALIDATE001` - Generated output validation failed
+
+Raised when emitted output is written successfully but fails validation, such as `py_compile`.
+
+**Fix:** Inspect the generated artifact and the validator error, then recompile after fixing the source or emitter issue.
+
+### `E_RUN` - Unexpected run error
+
+Raised when `nlsc run` encounters an internal setup or parser-path failure before execution completes.
+
+**Fix:** Retry with `--verbose` and inspect the parser/backend state.
+
+### `EEXEC001` - Execution setup error
+
+Raised when `nlsc run` fails while preparing or launching the generated Python module.
+
+**Fix:** Inspect the generated module path and local runtime environment, then rerun.
+
 ## Parse Errors
 
 Parse errors occur when the `.nl` file has invalid syntax.
