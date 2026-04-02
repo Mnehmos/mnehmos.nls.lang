@@ -43,6 +43,7 @@ def test_error_catalog_covers_active_cli_error_codes() -> None:
         "EASSOC003",
         "EASSOC004",
         "EWATCH001",
+        "EWATCH002",
     }
 
     assert expected_codes <= set(ERROR_CATALOG)
@@ -96,6 +97,16 @@ def test_explain_command_prints_assoc_permission_error_details() -> None:
     assert "EASSOC003" in result.stdout
     assert "Association permission denied" in result.stdout
     assert "--user" in result.stdout
+    assert result.stderr == ""
+
+
+def test_explain_command_prints_watch_runtime_error_details() -> None:
+    result = _run_nlsc("explain", "EWATCH002")
+
+    assert result.returncode == 0
+    assert "EWATCH002" in result.stdout
+    assert "Watch runtime compile failed" in result.stdout
+    assert "save the file again" in result.stdout
     assert result.stderr == ""
 
 
