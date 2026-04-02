@@ -48,6 +48,10 @@ from .diff import (
     generate_full_diff,
 )
 from .diagnostics import (
+    assoc_icon_missing_diagnostic,
+    assoc_permission_diagnostic,
+    assoc_platform_diagnostic,
+    assoc_runtime_failure_diagnostic,
     atomize_failure_diagnostic,
     atomize_syntax_error_diagnostic,
     cli_parse_error_diagnostic,
@@ -1390,7 +1394,11 @@ def cmd_run(args: argparse.Namespace) -> int:
 
 def cmd_assoc(args: argparse.Namespace) -> int:
     """Install Windows file association for .nl files"""
+    json_output = getattr(args, "json", False)
+
     if platform.system() != "Windows":
+        if json_output:
+            return _emit_json("assoc", [assoc_platform_diagnostic()])
         print(
             "Error: File association command is only available on Windows",
             file=sys.stderr,
@@ -1401,6 +1409,8 @@ def cmd_assoc(args: argparse.Namespace) -> int:
 
     uninstall = getattr(args, "uninstall", False)
     current_user = getattr(args, "user", False)
+    action = "uninstall" if uninstall else "install"
+    scope = "user" if current_user else "system"
 
     # Determine icon location
     icon_path = None
@@ -1417,6 +1427,8 @@ def cmd_assoc(args: argparse.Namespace) -> int:
         icon_path = dest_icon
 
     if not icon_path:
+        if json_output:
+            return _emit_json("assoc", [assoc_icon_missing_diagnostic()])
         print(
             "Error: Could not find nls-file.ico in package resources", file=sys.stderr
         )
@@ -1430,18 +1442,21 @@ def cmd_assoc(args: argparse.Namespace) -> int:
     if current_user:
         root_key = winreg.HKEY_CURRENT_USER
         base_path = r"SOFTWARE\Classes"
-        print("Installing for current user...")
+        if not json_output:
+            print("Installing for current user...")
     else:
         root_key = winreg.HKEY_CLASSES_ROOT
         base_path = ""
-        print("Installing system-wide (requires admin)...")
+        if not json_output:
+            print("Installing system-wide (requires admin)...")
 
     ext_path = f"{base_path}\\.nl" if base_path else ".nl"
     progid_path = f"{base_path}\\NLSFile" if base_path else "NLSFile"
 
     try:
         if uninstall:
-            print("Uninstalling NLS file association...")
+            if not json_output:
+                print("Uninstalling NLS file association...")
             # Delete keys
             try:
                 winreg.DeleteKey(root_key, f"{progid_path}\\DefaultIcon")
@@ -1455,27 +1470,32 @@ def cmd_assoc(args: argparse.Namespace) -> int:
                 winreg.DeleteKey(root_key, ext_path)
             except FileNotFoundError:
                 pass
-            print(f"  {_check()} Uninstalled file association")
+            if not json_output:
+                print(f"  {_check()} Uninstalled file association")
         else:
-            print("Installing NLS file association...")
-            print(f"  Icon: {icon_path}")
+            if not json_output:
+                print("Installing NLS file association...")
+                print(f"  Icon: {icon_path}")
 
             # Create .nl extension key
             with winreg.CreateKey(root_key, ext_path) as key:
                 winreg.SetValueEx(key, "", 0, winreg.REG_SZ, "NLSFile")
                 winreg.SetValueEx(key, "Content Type", 0, winreg.REG_SZ, "text/plain")
                 winreg.SetValueEx(key, "PerceivedType", 0, winreg.REG_SZ, "text")
-            print(f"  {_check()} Registered .nl extension")
+            if not json_output:
+                print(f"  {_check()} Registered .nl extension")
 
             # Create NLSFile ProgID
             with winreg.CreateKey(root_key, progid_path) as key:
                 winreg.SetValueEx(key, "", 0, winreg.REG_SZ, "NLS Specification File")
-            print(f"  {_check()} Created NLSFile ProgID")
+            if not json_output:
+                print(f"  {_check()} Created NLSFile ProgID")
 
             # Create DefaultIcon
             with winreg.CreateKey(root_key, f"{progid_path}\\DefaultIcon") as key:
                 winreg.SetValueEx(key, "", 0, winreg.REG_SZ, f'"{icon_path}"')
-            print(f"  {_check()} Set default icon")
+            if not json_output:
+                print(f"  {_check()} Set default icon")
 
         # Notify shell of changes
         try:
@@ -1486,9 +1506,19 @@ def cmd_assoc(args: argparse.Namespace) -> int:
             ctypes.windll.shell32.SHChangeNotify(
                 SHCNE_ASSOCCHANGED, SHCNF_IDLIST, None, None
             )
-            print(f"  {_check()} Notified shell of changes")
+            if not json_output:
+                print(f"  {_check()} Notified shell of changes")
         except Exception:
             pass
+
+        if json_output:
+            return _emit_json(
+                "assoc",
+                [],
+                action=action,
+                scope=scope,
+                icon=str(icon_path),
+            )
 
         print("\nDone! If icons don't appear immediately:")
         print("  1. Restart Windows Explorer")
@@ -1497,12 +1527,16 @@ def cmd_assoc(args: argparse.Namespace) -> int:
         return 0
 
     except PermissionError:
+        if json_output:
+            return _emit_json("assoc", [assoc_permission_diagnostic()])
         print(
             "Error: Permission denied. Run as administrator or use --user flag.",
             file=sys.stderr,
         )
         return 1
     except Exception as e:
+        if json_output:
+            return _emit_json("assoc", [assoc_runtime_failure_diagnostic(str(e))])
         print(f"Error: {e}", file=sys.stderr)
         return 1
 
@@ -1805,6 +1839,11 @@ The conversation is the programming. The .nl file is the receipt.
         "--user",
         action="store_true",
         help="Install for current user only (no admin required)",
+    )
+    assoc_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit structured JSON diagnostics for assoc failures.",
     )
 
     try:

@@ -4,7 +4,7 @@ Complete guide to NLS errors, their causes, and how to fix them.
 
 ## Active CLI Error Codes
 
-These are the stable error codes currently emitted by `nlsc atomize`, `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, `nlsc diff`, `nlsc test`, `nlsc watch`, `nlsc lock:check`, `nlsc lock:update`, and `nlsc lsp`.
+These are the stable error codes currently emitted by `nlsc atomize`, `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, `nlsc diff`, `nlsc test`, `nlsc watch`, `nlsc lock:check`, `nlsc lock:update`, `nlsc lsp`, and `nlsc assoc`.
 
 Use the CLI to get the extended explanation for any code:
 
@@ -14,7 +14,7 @@ nlsc explain EPARSE001
 
 | Code | Commands | Meaning |
 | --- | --- | --- |
-| `ECLI001` | `compile`, `verify`, `run`, `test`, `graph`, `atomize`, `diff`, `watch`, `lock:check`, `lock:update`, `unknown-subcommand` | CLI argument parsing failed before command dispatch while `--json` was active. |
+| `ECLI001` | `compile`, `verify`, `run`, `test`, `graph`, `atomize`, `diff`, `lsp`, `assoc`, `watch`, `lock:check`, `lock:update`, `unknown-subcommand` | CLI argument parsing failed before command dispatch while `--json` was active. |
 | `EFILE001` | `atomize`, `compile`, `verify`, `run`, `test`, `graph`, `diff`, `watch`, `lock:check`, `lock:update` | The requested input path does not exist. |
 | `EATOM001` | `atomize` | The input Python file failed syntax parsing during atomization. |
 | `EATOM002` | `atomize` | `nlsc atomize` hit an unexpected extraction or write failure. |
@@ -34,6 +34,10 @@ nlsc explain EPARSE001
 | `ELOCK002` | `lock:check` | `nlsc lock:check` found source content that no longer matches the lockfile. |
 | `ELSP001` | `lsp` | `nlsc lsp` could not import the optional language-server dependencies. |
 | `ELSP002` | `lsp` | `nlsc lsp` loaded but failed while starting the requested transport. |
+| `EASSOC001` | `assoc` | `nlsc assoc` was run on a non-Windows platform. |
+| `EASSOC002` | `assoc` | `nlsc assoc` could not find the packaged `nls-file.ico` asset. |
+| `EASSOC003` | `assoc` | `nlsc assoc` could not write the required registry keys due to permissions. |
+| `EASSOC004` | `assoc` | `nlsc assoc` hit an unexpected runtime failure while updating the association. |
 | `EWATCH001` | `watch` | `nlsc watch` was given a path that exists but is not a directory. |
 
 ### `ECLI001` - CLI usage error
@@ -157,6 +161,30 @@ Raised when `nlsc lsp` cannot import the optional dependencies that back the lan
 Raised when `nlsc lsp` imports successfully but the server fails while initializing the selected transport or binding the requested endpoint.
 
 **Fix:** Check the selected transport, host, and port, inspect the startup message, and rerun `nlsc lsp`.
+
+### `EASSOC001` - Association unsupported on this platform
+
+Raised when `nlsc assoc --json` is invoked anywhere other than Windows.
+
+**Fix:** Run `nlsc assoc` on Windows, or use your OS-native file-association settings on macOS or Linux.
+
+### `EASSOC002` - Association icon missing
+
+Raised when `nlsc assoc --json` cannot find `nlsc/resources/nls-file.ico` and therefore cannot install the Explorer icon metadata.
+
+**Fix:** Regenerate the icon with `python windows/generate_ico.py`, then reinstall or rerun the command.
+
+### `EASSOC003` - Association permission denied
+
+Raised when `nlsc assoc --json` reaches the registry write step but lacks permission to update the required keys.
+
+**Fix:** Run from an elevated shell for system-wide installation, or rerun with `nlsc assoc --user` for a per-user association.
+
+### `EASSOC004` - Association update failed
+
+Raised when `nlsc assoc --json` hits a registry or shell-notification failure that is not a simple permission error.
+
+**Fix:** Inspect the reported runtime message, verify local registry state, and rerun `nlsc assoc` after correcting the underlying Windows issue.
 
 ### `EWATCH001` - Watch path is not a directory
 

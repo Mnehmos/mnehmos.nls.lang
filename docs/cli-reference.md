@@ -14,7 +14,7 @@ nlsc [--parser {regex,treesitter}] [--version] [--help] <command>
 | `--version` | Show version number                               |
 | `--help`    | Show help message                                 |
 
-If `--json` is present, JSON-capable commands now return structured bootstrap diagnostics even when argparse fails before command dispatch. Use `ECLI001` for CLI usage errors such as missing required args, invalid choice values, or unknown subcommands, `EPARSE002` for parser-backend bootstrap failures such as `--parser treesitter` without tree-sitter installed, `ELSP001` for missing optional `nlsc[lsp]` dependencies, and `ELSP002` for LSP server startup failures after import succeeds.
+If `--json` is present, JSON-capable commands now return structured bootstrap diagnostics even when argparse fails before command dispatch. Use `ECLI001` for CLI usage errors such as missing required args, invalid choice values, or unknown subcommands, `EPARSE002` for parser-backend bootstrap failures such as `--parser treesitter` without tree-sitter installed, `ELSP001` for missing optional `nlsc[lsp]` dependencies, `ELSP002` for LSP server startup failures after import succeeds, and `EASSOC001` through `EASSOC004` for `nlsc assoc` platform, icon, permission, and runtime failures.
 
 ---
 
@@ -301,6 +301,24 @@ nlsc watch src/ -q -d 500
 Press `Ctrl+C` to stop watching.
 
 When `--json` is enabled, `nlsc watch` emits stable diagnostics for deterministic startup failures before the watcher begins, including missing directories and non-directory paths.
+
+---
+
+### `nlsc assoc`
+
+Install or remove the Windows Explorer file association for `.nl` files.
+
+```bash
+nlsc assoc [--user] [--uninstall] [--json]
+```
+
+| Option | Description |
+| ------ | ----------- |
+| `--user` | Install the association for the current user only. |
+| `--uninstall` | Remove the NLS association instead of installing it. |
+| `--json` | Emit structured JSON diagnostics for assoc-specific failures. |
+
+`nlsc assoc` only works on Windows. With `--json`, failures use stable catalog codes: `EASSOC001` for non-Windows hosts, `EASSOC002` when `nls-file.ico` is missing, `EASSOC003` for registry permission failures, and `EASSOC004` for other registry or shell-notification errors.
 
 ---
 

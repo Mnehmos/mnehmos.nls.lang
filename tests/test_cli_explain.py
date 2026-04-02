@@ -38,6 +38,10 @@ def test_error_catalog_covers_active_cli_error_codes() -> None:
         "ELOCK002",
         "ELSP001",
         "ELSP002",
+        "EASSOC001",
+        "EASSOC002",
+        "EASSOC003",
+        "EASSOC004",
         "EWATCH001",
     }
 
@@ -82,6 +86,16 @@ def test_explain_command_prints_lsp_dependency_error_details() -> None:
     assert "ELSP001" in result.stdout
     assert "LSP optional dependencies unavailable" in result.stdout
     assert "nlsc[lsp]" in result.stdout
+    assert result.stderr == ""
+
+
+def test_explain_command_prints_assoc_permission_error_details() -> None:
+    result = _run_nlsc("explain", "EASSOC003")
+
+    assert result.returncode == 0
+    assert "EASSOC003" in result.stdout
+    assert "Association permission denied" in result.stdout
+    assert "--user" in result.stdout
     assert result.stderr == ""
 
 

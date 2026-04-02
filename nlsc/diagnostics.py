@@ -23,6 +23,10 @@ from .error_catalog import (
     ELOCK002,
     ELSP001,
     ELSP002,
+    EASSOC001,
+    EASSOC002,
+    EASSOC003,
+    EASSOC004,
     EPARSE001,
     EPARSE002,
     EWATCH001,
@@ -117,6 +121,50 @@ def lsp_startup_failure_diagnostic(detail: str) -> Diagnostic:
         col=None,
         message=f"LSP server failed to start: {detail}",
         hint="Check the selected transport, host, and port, then rerun `nlsc lsp`.",
+    )
+
+
+def assoc_platform_diagnostic() -> Diagnostic:
+    return Diagnostic(
+        code=EASSOC001,
+        file="<cli>",
+        line=None,
+        col=None,
+        message="File association command is only available on Windows.",
+        hint="Run `nlsc assoc` on Windows, or manage `.nl` file associations with your OS tooling.",
+    )
+
+
+def assoc_icon_missing_diagnostic() -> Diagnostic:
+    return Diagnostic(
+        code=EASSOC002,
+        file="<cli>",
+        line=None,
+        col=None,
+        message="Could not find `nls-file.ico` in package resources.",
+        hint="Run `python windows/generate_ico.py` from the project root to regenerate the icon asset.",
+    )
+
+
+def assoc_permission_diagnostic() -> Diagnostic:
+    return Diagnostic(
+        code=EASSOC003,
+        file="<cli>",
+        line=None,
+        col=None,
+        message="Permission denied while updating file associations.",
+        hint="Rerun with elevated permissions or use `nlsc assoc --user` for a per-user association.",
+    )
+
+
+def assoc_runtime_failure_diagnostic(detail: str) -> Diagnostic:
+    return Diagnostic(
+        code=EASSOC004,
+        file="<cli>",
+        line=None,
+        col=None,
+        message=f"File association update failed: {detail}",
+        hint="Inspect the Windows registry state and the reported runtime failure, then rerun `nlsc assoc`.",
     )
 
 

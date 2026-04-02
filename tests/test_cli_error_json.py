@@ -16,6 +16,43 @@ from nlsc.cli import main
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
+class _FakeRegistryKey:
+    def __enter__(self) -> object:
+        return object()
+
+    def __exit__(self, exc_type: object, exc: object, tb: object) -> bool:
+        return False
+
+
+class _FakeWinreg(ModuleType):
+    HKEY_CURRENT_USER = object()
+    HKEY_CLASSES_ROOT = object()
+    REG_SZ = 1
+
+    def __init__(self, *, create_key_error: Exception | None = None) -> None:
+        super().__init__("winreg")
+        self._create_key_error = create_key_error
+
+    def CreateKey(self, root_key: object, sub_key: str) -> _FakeRegistryKey:
+        del root_key, sub_key
+        if self._create_key_error is not None:
+            raise self._create_key_error
+        return _FakeRegistryKey()
+
+    def SetValueEx(
+        self,
+        key: object,
+        name: str,
+        reserved: int,
+        reg_type: int,
+        value: str,
+    ) -> None:
+        del key, name, reserved, reg_type, value
+
+    def DeleteKey(self, root_key: object, sub_key: str) -> None:
+        del root_key, sub_key
+
+
 def _run_nlsc(
     argv: list[str], *, cwd: Path, env: dict[str, str] | None = None
 ) -> subprocess.CompletedProcess[str]:
@@ -295,6 +332,126 @@ def test_main_argv_json_parse_errors_use_supplied_argv(capsys: Any) -> None:
         }
     ]
     assert payload["usage"].startswith("usage: nlsc verify")
+    assert captured.err == ""
+
+
+def test_assoc_json_reports_non_windows_platform(capsys: Any, monkeypatch: Any) -> None:
+    import nlsc.cli as cli_module
+
+    monkeypatch.setattr(cli_module.platform, "system", lambda: "Linux")
+    exit_code = main(["assoc", "--json"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["command"] == "assoc"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EASSOC001",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "File association command is only available on Windows.",
+            "hint": "Run `nlsc assoc` on Windows, or manage `.nl` file associations with your OS tooling.",
+        }
+    ]
+    assert captured.err == ""
+
+
+def test_assoc_json_reports_missing_icon_path(capsys: Any, monkeypatch: Any) -> None:
+    import nlsc.cli as cli_module
+
+    monkeypatch.setattr(cli_module.platform, "system", lambda: "Windows")
+    monkeypatch.setitem(sys.modules, "winreg", _FakeWinreg())
+    real_exists = cli_module.Path.exists
+    monkeypatch.setattr(
+        cli_module.Path,
+        "exists",
+        lambda self: False if self.name == "nls-file.ico" else real_exists(self),
+    )
+
+    exit_code = main(["assoc", "--json"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["command"] == "assoc"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EASSOC002",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "Could not find `nls-file.ico` in package resources.",
+            "hint": "Run `python windows/generate_ico.py` from the project root to regenerate the icon asset.",
+        }
+    ]
+    assert captured.err == ""
+
+
+def test_assoc_json_reports_permission_failure(
+    capsys: Any, monkeypatch: Any, tmp_path: Path
+) -> None:
+    import nlsc.cli as cli_module
+
+    monkeypatch.setattr(cli_module.platform, "system", lambda: "Windows")
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    monkeypatch.setattr(cli_module, "_check", lambda: "[OK]")
+    monkeypatch.setitem(
+        sys.modules,
+        "winreg",
+        _FakeWinreg(create_key_error=PermissionError("Access is denied")),
+    )
+
+    exit_code = main(["assoc", "--json"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["command"] == "assoc"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EASSOC003",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "Permission denied while updating file associations.",
+            "hint": "Rerun with elevated permissions or use `nlsc assoc --user` for a per-user association.",
+        }
+    ]
+    assert captured.err == ""
+
+
+def test_assoc_json_reports_runtime_failure(
+    capsys: Any, monkeypatch: Any, tmp_path: Path
+) -> None:
+    import nlsc.cli as cli_module
+
+    monkeypatch.setattr(cli_module.platform, "system", lambda: "Windows")
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    monkeypatch.setattr(cli_module, "_check", lambda: "[OK]")
+    monkeypatch.setitem(
+        sys.modules,
+        "winreg",
+        _FakeWinreg(create_key_error=RuntimeError("registry transaction aborted")),
+    )
+
+    exit_code = main(["assoc", "--json"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["command"] == "assoc"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EASSOC004",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "File association update failed: registry transaction aborted",
+            "hint": "Inspect the Windows registry state and the reported runtime failure, then rerun `nlsc assoc`.",
+        }
+    ]
     assert captured.err == ""
 
 
