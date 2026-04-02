@@ -1240,10 +1240,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#regex-parser-default" class="md-nav__link">
+  <a href="#regex-parser-canonical-ast" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Regex Parser (Default)
+        Regex Parser (Canonical AST)
       
     </span>
   </a>
@@ -1255,6 +1255,17 @@
     <span class="md-ellipsis">
       
         Tree-sitter Parser
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#canonical-parser-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Canonical Parser Contract
       
     </span>
   </a>
@@ -1543,10 +1554,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#regex-parser-default" class="md-nav__link">
+  <a href="#regex-parser-canonical-ast" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Regex Parser (Default)
+        Regex Parser (Canonical AST)
       
     </span>
   </a>
@@ -1558,6 +1569,17 @@
     <span class="md-ellipsis">
       
         Tree-sitter Parser
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#canonical-parser-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Canonical Parser Contract
       
     </span>
   </a>
@@ -1827,7 +1849,7 @@
 </table>
 <hr />
 <h2 id="parser-backends">Parser Backends<a class="headerlink" href="#parser-backends" title="Permanent link">&para;</a></h2>
-<h3 id="regex-parser-default">Regex Parser (Default)<a class="headerlink" href="#regex-parser-default" title="Permanent link">&para;</a></h3>
+<h3 id="regex-parser-canonical-ast">Regex Parser (Canonical AST)<a class="headerlink" href="#regex-parser-canonical-ast" title="Permanent link">&para;</a></h3>
 <p>The regex parser uses pattern matching to tokenize and parse <code>.nl</code> files.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Pattern examples from parser.py</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">ANLU_START</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;^\[([a-z][a-z0-9.-]*)\]\s*$&quot;</span>
@@ -1839,6 +1861,7 @@
 <li>Zero dependencies</li>
 <li>Fast for simple files</li>
 <li>Easy to understand</li>
+<li>Canonical semantic contract for AST output</li>
 </ul>
 <p><strong>Cons:</strong></p>
 <ul>
@@ -1863,6 +1886,14 @@
 <ul>
 <li>Requires native dependency</li>
 <li>Slightly more complex setup</li>
+</ul>
+<h3 id="canonical-parser-contract">Canonical Parser Contract<a class="headerlink" href="#canonical-parser-contract" title="Permanent link">&para;</a></h3>
+<p><code>nlsc/parser.py</code> is the canonical parser path for semantic AST output.</p>
+<ul>
+<li><code>parse_nl_file()</code> defines the canonical AST shape and behavior.</li>
+<li><code>parse_nl_file_treesitter()</code> may use tree-sitter for supported structural parsing, but it must return regex-equivalent AST output for every supported construct.</li>
+<li>When tree-sitter coverage is incomplete or semantics would diverge (for example <code>@test</code>, <code>@property</code>, <code>@invariant</code>, <code>@literal</code>, <code>@main</code>, or LOGIC output bindings), the implementation falls back to the regex parser to preserve parity.</li>
+<li><code>nlsc/pipeline.py</code> auto mode follows the same rule: tree-sitter is optional acceleration, while regex semantics remain authoritative.</li>
 </ul>
 <hr />
 <h2 id="ast-schema">AST Schema<a class="headerlink" href="#ast-schema" title="Permanent link">&para;</a></h2>
@@ -1978,6 +2009,7 @@
 <li>Regenerate with <code>npx tree-sitter generate</code></li>
 <li>Update <code>parser_treesitter.py</code> to handle new nodes</li>
 <li>Update <code>parser.py</code> with matching regex patterns</li>
+<li>Add or extend parity coverage in <code>tests/test_parser_parity.py</code> so the canonical AST remains identical across parser paths</li>
 </ol>
 <h3 id="adding-a-new-cli-command">Adding a New CLI Command<a class="headerlink" href="#adding-a-new-cli-command" title="Permanent link">&para;</a></h3>
 <ol>
