@@ -1005,6 +1005,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#etest001-test-execution-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ETEST001 - Test execution failed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#econtract001-contract-validation-error" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1941,6 +1952,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#etest001-test-execution-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ETEST001 - Test execution failed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#econtract001-contract-validation-error" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2544,7 +2566,7 @@
 <h1 id="error-reference">Error Reference<a class="headerlink" href="#error-reference" title="Permanent link">&para;</a></h1>
 <p>Complete guide to NLS errors, their causes, and how to fix them.</p>
 <h2 id="active-cli-error-codes">Active CLI Error Codes<a class="headerlink" href="#active-cli-error-codes" title="Permanent link">&para;</a></h2>
-<p>These are the stable error codes currently emitted by <code>nlsc compile</code>, <code>nlsc verify</code>, <code>nlsc run</code>, <code>nlsc graph</code>, and <code>nlsc diff</code>.</p>
+<p>These are the stable error codes currently emitted by <code>nlsc compile</code>, <code>nlsc verify</code>, <code>nlsc run</code>, <code>nlsc graph</code>, <code>nlsc diff</code>, and <code>nlsc test</code>.</p>
 <p>Use the CLI to get the extended explanation for any code:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>nlsc<span class="w"> </span>explain<span class="w"> </span>EPARSE001
 </span></code></pre></div>
@@ -2559,23 +2581,28 @@
 <tbody>
 <tr>
 <td><code>EFILE001</code></td>
-<td><code>compile</code>, <code>verify</code>, <code>run</code></td>
+<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>diff</code></td>
 <td>The requested <code>.nl</code> file does not exist.</td>
 </tr>
 <tr>
 <td><code>EPARSE001</code></td>
-<td><code>compile</code>, <code>verify</code>, <code>run</code></td>
+<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>diff</code></td>
 <td>The source file failed syntax parsing.</td>
 </tr>
 <tr>
 <td><code>EUSE001</code></td>
-<td><code>compile</code>, <code>verify</code>, <code>run</code></td>
+<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code></td>
 <td>A referenced <code>@use</code> stdlib domain could not be resolved.</td>
 </tr>
 <tr>
 <td><code>E_RESOLUTION</code></td>
-<td><code>compile</code>, <code>verify</code>, <code>run</code></td>
+<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code></td>
 <td>The ANLU dependency graph contains a missing or circular dependency.</td>
+</tr>
+<tr>
+<td><code>ETEST001</code></td>
+<td><code>test</code></td>
+<td><code>nlsc test</code> generated pytest cases, but the run failed or could not be executed successfully.</td>
 </tr>
 <tr>
 <td><code>ECONTRACT001</code></td>
@@ -2626,6 +2653,9 @@
 <h3 id="e_resolution-dependency-resolution-error"><code>E_RESOLUTION</code> - Dependency resolution error<a class="headerlink" href="#e_resolution-dependency-resolution-error" title="Permanent link">&para;</a></h3>
 <p>Raised when an ANLU depends on a missing ANLU or participates in a dependency cycle.</p>
 <p><strong>Fix:</strong> Define the missing dependency, rename the dependency reference, or break the cycle.</p>
+<h3 id="etest001-test-execution-failed"><code>ETEST001</code> - Test execution failed<a class="headerlink" href="#etest001-test-execution-failed" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc test --json</code> successfully generates tests but pytest exits non-zero or cannot be launched.</p>
+<p><strong>Fix:</strong> Inspect <code>pytest_stdout</code> and <code>pytest_stderr</code> in the JSON payload, then fix the failing assertion, import/setup error, or local pytest environment issue.</p>
 <h3 id="econtract001-contract-validation-error"><code>ECONTRACT001</code> - Contract validation error<a class="headerlink" href="#econtract001-contract-validation-error" title="Permanent link">&para;</a></h3>
 <p>Raised by <code>nlsc verify</code> when an ANLU is missing a required contract field.</p>
 <p><strong>Fix:</strong> Add the missing <code>PURPOSE:</code> or <code>RETURNS:</code> field and verify again.</p>
