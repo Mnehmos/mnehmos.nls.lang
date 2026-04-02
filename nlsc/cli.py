@@ -121,6 +121,7 @@ _JSON_PARSER_BOOTSTRAP_COMMANDS = {
     "test",
     "graph",
     "diff",
+    "lsp",
     "watch",
     "lock:check",
     "lock:update",
@@ -1512,6 +1513,9 @@ def cmd_lsp(args: argparse.Namespace) -> int:
         from nlsc.lsp import start_server
     except ImportError as e:
         diagnostic = lsp_dependencies_unavailable_diagnostic(str(e))
+        return _emit_lsp_startup_failure(args, diagnostic)
+    except Exception as e:
+        diagnostic = lsp_startup_failure_diagnostic(str(e))
         return _emit_lsp_startup_failure(args, diagnostic)
 
     transport = getattr(args, "transport", "stdio")

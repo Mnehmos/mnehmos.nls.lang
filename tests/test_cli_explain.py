@@ -61,6 +61,7 @@ def test_explain_command_prints_cli_usage_error_details() -> None:
     assert "ECLI001" in result.stdout
     assert "CLI usage error" in result.stdout
     assert "--json" in result.stdout
+    assert "lsp" in result.stdout
     assert result.stderr == ""
 
 

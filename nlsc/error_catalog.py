@@ -50,6 +50,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
             "graph",
             "atomize",
             "diff",
+            "lsp",
             "watch",
             "lock:check",
             "lock:update",
