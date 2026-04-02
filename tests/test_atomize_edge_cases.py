@@ -620,6 +620,25 @@ def flatten_list(nested: list[list[int]]) -> list[int]:
         assert "result.extend(sublist)" in py_code
         assert namespace["flatten_list"]([[1, 2], [3], []]) == [1, 2, 3]
 
+    def test_triple_quote_literals_do_not_break_emitted_docstrings(self):
+        """Triple-quote literals in RETURNS text should not poison docstrings."""
+        code = (
+            "def has_triple_quotes(string: str) -> bool:\n"
+            '    """Check whether a string starts with three quotation characters."""\n'
+            "    raw_string = string\n"
+            "    return raw_string[:3] in {'\"\"\"', \"'''\"}\n"
+        )
+        nl_content = atomize_to_nl(code, module_name="quotes")
+
+        nl_file = parse_nl_file(nl_content)
+        py_code = emit_python(nl_file)
+        namespace = {}
+        exec(py_code, namespace)
+
+        assert namespace["has_triple_quotes"]('"""hello') is True
+        assert namespace["has_triple_quotes"]("'''hello") is True
+        assert namespace["has_triple_quotes"]("hello") is False
+
     def test_dataclass_defaults_do_not_emit_invalid_field_syntax(self):
         """Drop unsupported default metadata from atomized type fields."""
         code = """\
