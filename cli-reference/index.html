@@ -2003,7 +2003,7 @@
 <hr />
 <h3 id="nlsc-atomize"><code>nlsc atomize</code><a class="headerlink" href="#nlsc-atomize" title="Permanent link">&para;</a></h3>
 <p>Extract ANLUs from existing Python source code (reverse compilation).</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>nlsc<span class="w"> </span>atomize<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>-o<span class="w"> </span>OUTPUT<span class="o">]</span><span class="w"> </span><span class="o">[</span>-m<span class="w"> </span>MODULE<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>nlsc<span class="w"> </span>atomize<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>-o<span class="w"> </span>OUTPUT<span class="o">]</span><span class="w"> </span><span class="o">[</span>-m<span class="w"> </span>MODULE<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -2025,12 +2025,17 @@
 <td><code>-m, --module</code></td>
 <td>Module name for generated <code>.nl</code></td>
 </tr>
+<tr>
+<td><code>--json</code></td>
+<td>Emit structured JSON output</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Example:</strong></p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>nlsc<span class="w"> </span>atomize<span class="w"> </span>legacy/utils.py<span class="w"> </span>-o<span class="w"> </span>src/utils.nl<span class="w"> </span>-m<span class="w"> </span>utils
 </span></code></pre></div>
 <p>This extracts functions from Python and generates corresponding ANLU blocks.</p>
+<p>When <code>--json</code> is enabled, <code>nlsc atomize</code> emits stable diagnostics for missing input files, Python syntax failures, and unexpected atomize/write failures.</p>
 <hr />
 <h2 id="exit-codes">Exit Codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
 <table>
