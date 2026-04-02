@@ -972,6 +972,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#eexplain001-unknown-explain-error-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EEXPLAIN001 - Unknown explain error code
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#efile001-file-not-found" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2073,6 +2084,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#eexplain001-unknown-explain-error-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EEXPLAIN001 - Unknown explain error code
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#efile001-file-not-found" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2893,6 +2915,11 @@
 <td>CLI argument parsing failed before command dispatch while <code>--json</code> was active.</td>
 </tr>
 <tr>
+<td><code>EEXPLAIN001</code></td>
+<td><code>explain</code></td>
+<td><code>nlsc explain</code> was asked to document an unknown stable error code.</td>
+</tr>
+<tr>
 <td><code>EFILE001</code></td>
 <td><code>atomize</code>, <code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>diff</code>, <code>watch</code>, <code>lock:check</code>, <code>lock:update</code></td>
 <td>The requested input path does not exist.</td>
@@ -3023,6 +3050,9 @@
 <p>Raised when argparse rejects the command line before <code>nlsc</code> can dispatch the requested command, and <code>--json</code> is present so automation receives structured diagnostics instead of raw stderr usage text.</p>
 <p>Covered cases include missing required positional arguments, invalid choice values such as an unsupported <code>--target</code>, and unknown subcommands.</p>
 <p><strong>Fix:</strong> Rerun the command with <code>--help</code>, correct the argument list, and keep <code>--json</code> enabled if an automated caller expects structured diagnostics.</p>
+<h3 id="eexplain001-unknown-explain-error-code"><code>EEXPLAIN001</code> - Unknown explain error code<a class="headerlink" href="#eexplain001-unknown-explain-error-code" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc explain</code> receives a code that is not present in the stable CLI error catalog. With <code>--json</code>, the command returns a structured diagnostic plus a <code>known_codes</code> list so automation can recover without scraping stderr.</p>
+<p><strong>Fix:</strong> Correct the requested code, or choose one of the reported catalog entries and rerun <code>nlsc explain</code>.</p>
 <h3 id="efile001-file-not-found"><code>EFILE001</code> - File not found<a class="headerlink" href="#efile001-file-not-found" title="Permanent link">&para;</a></h3>
 <p>Raised when the input path passed to <code>atomize</code>, <code>compile</code>, <code>verify</code>, <code>run</code>, or <code>watch</code> does not exist.</p>
 <p><strong>Fix:</strong> Check the path, ensure the file exists, and rerun the command.</p>

@@ -966,6 +966,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#nlsc-explain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc explain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#nlsc-test" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1520,6 +1531,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#nlsc-explain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc explain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#nlsc-test" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1692,7 +1714,7 @@
 </tr>
 </tbody>
 </table>
-<p>If <code>--json</code> is present, JSON-capable commands now return structured bootstrap diagnostics even when argparse fails before command dispatch. Use <code>ECLI001</code> for CLI usage errors such as missing required args, invalid choice values, or unknown subcommands, <code>EPARSE002</code> for parser-backend bootstrap failures such as <code>--parser treesitter</code> without tree-sitter installed, <code>ELSP001</code> for missing optional <code>nlsc[lsp]</code> dependencies, <code>ELSP002</code> for LSP server startup failures after import succeeds, and <code>EASSOC001</code> through <code>EASSOC004</code> for <code>nlsc assoc</code> platform, icon, permission, and runtime failures.</p>
+<p>If <code>--json</code> is present, JSON-capable commands now return structured bootstrap diagnostics even when argparse fails before command dispatch. Use <code>ECLI001</code> for CLI usage errors such as missing required args, invalid choice values, or unknown subcommands, <code>EEXPLAIN001</code> when <code>nlsc explain</code> is asked for an uncataloged code, <code>EPARSE002</code> for parser-backend bootstrap failures such as <code>--parser treesitter</code> without tree-sitter installed, <code>ELSP001</code> for missing optional <code>nlsc[lsp]</code> dependencies, <code>ELSP002</code> for LSP server startup failures after import succeeds, and <code>EASSOC001</code> through <code>EASSOC004</code> for <code>nlsc assoc</code> platform, icon, permission, and runtime failures.</p>
 <hr />
 <h2 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">&para;</a></h2>
 <h3 id="nlsc-init"><code>nlsc init</code><a class="headerlink" href="#nlsc-init" title="Permanent link">&para;</a></h3>
@@ -1804,9 +1826,40 @@
 </span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>Verification passed!
 </span></code></pre></div>
 <hr />
+<h3 id="nlsc-explain"><code>nlsc explain</code><a class="headerlink" href="#nlsc-explain" title="Permanent link">&para;</a></h3>
+<p>Print the catalog entry for a stable CLI error code.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>nlsc<span class="w"> </span>explain<span class="w"> </span>&lt;code&gt;<span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
+</span></code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>code</code></td>
+<td>Stable CLI error code to explain</td>
+</tr>
+<tr>
+<td><code>--json</code></td>
+<td>Emit structured JSON for the explanation or unknown-code diagnostic</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples:</strong></p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Human-readable explanation</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>nlsc<span class="w"> </span>explain<span class="w"> </span>EPARSE001
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># Machine-readable explanation payload</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>nlsc<span class="w"> </span>explain<span class="w"> </span>EPARSE001<span class="w"> </span>--json
+</span></code></pre></div>
+<p>If the requested code is not cataloged, <code>nlsc explain --json</code> returns an <code>EEXPLAIN001</code> diagnostic plus <code>requested_code</code> and <code>known_codes</code> fields so callers can recover deterministically.</p>
+<hr />
 <h3 id="nlsc-test"><code>nlsc test</code><a class="headerlink" href="#nlsc-test" title="Permanent link">&para;</a></h3>
 <p>Run <code>@test</code> specifications from a <code>.nl</code> file.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>nlsc<span class="w"> </span><span class="nb">test</span><span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>nlsc<span class="w"> </span><span class="nb">test</span><span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -1831,7 +1884,7 @@
 </tbody>
 </table>
 <p><strong>Example:</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>nlsc<span class="w"> </span><span class="nb">test</span><span class="w"> </span>src/math.nl<span class="w"> </span>-v
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>nlsc<span class="w"> </span><span class="nb">test</span><span class="w"> </span>src/math.nl<span class="w"> </span>-v
 </span></code></pre></div>
 <p>The command:</p>
 <ol>
@@ -1842,7 +1895,7 @@
 <hr />
 <h3 id="nlsc-graph"><code>nlsc graph</code><a class="headerlink" href="#nlsc-graph" title="Permanent link">&para;</a></h3>
 <p>Generate dependency and dataflow visualizations.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>nlsc<span class="w"> </span>graph<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>-f<span class="w"> </span>FORMAT<span class="o">]</span><span class="w"> </span><span class="o">[</span>-a<span class="w"> </span>ANLU<span class="o">]</span><span class="w"> </span><span class="o">[</span>--dataflow<span class="o">]</span><span class="w"> </span><span class="o">[</span>-o<span class="w"> </span>OUTPUT<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>nlsc<span class="w"> </span>graph<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>-f<span class="w"> </span>FORMAT<span class="o">]</span><span class="w"> </span><span class="o">[</span>-a<span class="w"> </span>ANLU<span class="o">]</span><span class="w"> </span><span class="o">[</span>--dataflow<span class="o">]</span><span class="w"> </span><span class="o">[</span>-o<span class="w"> </span>OUTPUT<span class="o">]</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -1875,19 +1928,19 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Module dependency graph</span>
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>nlsc<span class="w"> </span>graph<span class="w"> </span>src/order.nl<span class="w"> </span>--format<span class="w"> </span>mermaid
-</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
-</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Dataflow for specific ANLU</span>
-</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>nlsc<span class="w"> </span>graph<span class="w"> </span>src/order.nl<span class="w"> </span>--anlu<span class="w"> </span>process-order<span class="w"> </span>--dataflow
-</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
-</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1"># Export as DOT for Graphviz</span>
-</span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>nlsc<span class="w"> </span>graph<span class="w"> </span>src/order.nl<span class="w"> </span>--format<span class="w"> </span>dot<span class="w"> </span>-o<span class="w"> </span>deps.dot
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Module dependency graph</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>nlsc<span class="w"> </span>graph<span class="w"> </span>src/order.nl<span class="w"> </span>--format<span class="w"> </span>mermaid
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Dataflow for specific ANLU</span>
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>nlsc<span class="w"> </span>graph<span class="w"> </span>src/order.nl<span class="w"> </span>--anlu<span class="w"> </span>process-order<span class="w"> </span>--dataflow
+</span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
+</span><span id="__span-14-7"><a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1"># Export as DOT for Graphviz</span>
+</span><span id="__span-14-8"><a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>nlsc<span class="w"> </span>graph<span class="w"> </span>src/order.nl<span class="w"> </span>--format<span class="w"> </span>dot<span class="w"> </span>-o<span class="w"> </span>deps.dot
 </span></code></pre></div>
 <hr />
 <h3 id="nlsc-diff"><code>nlsc diff</code><a class="headerlink" href="#nlsc-diff" title="Permanent link">&para;</a></h3>
 <p>Show changes since last compile by comparing against the lockfile.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>nlsc<span class="w"> </span>diff<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>--stat<span class="o">]</span><span class="w"> </span><span class="o">[</span>--full<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>nlsc<span class="w"> </span>diff<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>--stat<span class="o">]</span><span class="w"> </span><span class="o">[</span>--full<span class="o">]</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -1912,19 +1965,19 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Show changed ANLUs</span>
-</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>nlsc<span class="w"> </span>diff<span class="w"> </span>src/api.nl
-</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
-</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Summary statistics</span>
-</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>nlsc<span class="w"> </span>diff<span class="w"> </span>src/api.nl<span class="w"> </span>--stat
-</span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
-</span><span id="__span-14-7"><a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1"># Full unified diff</span>
-</span><span id="__span-14-8"><a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>nlsc<span class="w"> </span>diff<span class="w"> </span>src/api.nl<span class="w"> </span>--full
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Show changed ANLUs</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>nlsc<span class="w"> </span>diff<span class="w"> </span>src/api.nl
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Summary statistics</span>
+</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>nlsc<span class="w"> </span>diff<span class="w"> </span>src/api.nl<span class="w"> </span>--stat
+</span><span id="__span-16-6"><a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
+</span><span id="__span-16-7"><a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># Full unified diff</span>
+</span><span id="__span-16-8"><a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>nlsc<span class="w"> </span>diff<span class="w"> </span>src/api.nl<span class="w"> </span>--full
 </span></code></pre></div>
 <hr />
 <h3 id="nlsc-lockcheck"><code>nlsc lock:check</code><a class="headerlink" href="#nlsc-lockcheck" title="Permanent link">&para;</a></h3>
 <p>Verify that an existing <code>.nl.lock</code> file still matches the current source file.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>nlsc<span class="w"> </span>lock:check<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>nlsc<span class="w"> </span>lock:check<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -1945,16 +1998,16 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Human-readable status</span>
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>nlsc<span class="w"> </span>lock:check<span class="w"> </span>src/api.nl
-</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
-</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Structured diagnostics for tooling</span>
-</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>nlsc<span class="w"> </span>lock:check<span class="w"> </span>src/api.nl<span class="w"> </span>--json
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Human-readable status</span>
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>nlsc<span class="w"> </span>lock:check<span class="w"> </span>src/api.nl
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
+</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># Structured diagnostics for tooling</span>
+</span><span id="__span-18-5"><a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>nlsc<span class="w"> </span>lock:check<span class="w"> </span>src/api.nl<span class="w"> </span>--json
 </span></code></pre></div>
 <hr />
 <h3 id="nlsc-lockupdate"><code>nlsc lock:update</code><a class="headerlink" href="#nlsc-lockupdate" title="Permanent link">&para;</a></h3>
 <p>Regenerate the <code>.nl.lock</code> file from the current source and compiled output.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>nlsc<span class="w"> </span>lock:update<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>nlsc<span class="w"> </span>lock:update<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -1975,16 +2028,16 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Refresh the lockfile in place</span>
-</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>nlsc<span class="w"> </span>lock:update<span class="w"> </span>src/api.nl
-</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
-</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># Machine-readable output for scripts</span>
-</span><span id="__span-18-5"><a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>nlsc<span class="w"> </span>lock:update<span class="w"> </span>src/api.nl<span class="w"> </span>--json
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Refresh the lockfile in place</span>
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>nlsc<span class="w"> </span>lock:update<span class="w"> </span>src/api.nl
+</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># Machine-readable output for scripts</span>
+</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>nlsc<span class="w"> </span>lock:update<span class="w"> </span>src/api.nl<span class="w"> </span>--json
 </span></code></pre></div>
 <hr />
 <h3 id="nlsc-watch"><code>nlsc watch</code><a class="headerlink" href="#nlsc-watch" title="Permanent link">&para;</a></h3>
 <p>Watch a directory for <code>.nl</code> file changes and automatically recompile.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>nlsc<span class="w"> </span>watch<span class="w"> </span><span class="o">[</span>dir<span class="o">]</span><span class="w"> </span><span class="o">[</span>-q<span class="o">]</span><span class="w"> </span><span class="o">[</span>-t<span class="o">]</span><span class="w"> </span><span class="o">[</span>-d<span class="w"> </span>DEBOUNCE<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>nlsc<span class="w"> </span>watch<span class="w"> </span><span class="o">[</span>dir<span class="o">]</span><span class="w"> </span><span class="o">[</span>-q<span class="o">]</span><span class="w"> </span><span class="o">[</span>-t<span class="o">]</span><span class="w"> </span><span class="o">[</span>-d<span class="w"> </span>DEBOUNCE<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -2017,14 +2070,14 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Watch current directory</span>
-</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>nlsc<span class="w"> </span>watch
-</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
-</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># Watch with tests</span>
-</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>nlsc<span class="w"> </span>watch<span class="w"> </span>src/<span class="w"> </span>--test
-</span><span id="__span-20-6"><a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
-</span><span id="__span-20-7"><a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="c1"># Quiet mode with custom debounce</span>
-</span><span id="__span-20-8"><a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>nlsc<span class="w"> </span>watch<span class="w"> </span>src/<span class="w"> </span>-q<span class="w"> </span>-d<span class="w"> </span><span class="m">500</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Watch current directory</span>
+</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>nlsc<span class="w"> </span>watch
+</span><span id="__span-22-3"><a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
+</span><span id="__span-22-4"><a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Watch with tests</span>
+</span><span id="__span-22-5"><a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>nlsc<span class="w"> </span>watch<span class="w"> </span>src/<span class="w"> </span>--test
+</span><span id="__span-22-6"><a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>
+</span><span id="__span-22-7"><a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="c1"># Quiet mode with custom debounce</span>
+</span><span id="__span-22-8"><a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>nlsc<span class="w"> </span>watch<span class="w"> </span>src/<span class="w"> </span>-q<span class="w"> </span>-d<span class="w"> </span><span class="m">500</span>
 </span></code></pre></div>
 <p>Press <code>Ctrl+C</code> to stop watching.</p>
 <p>When <code>--json</code> is enabled, <code>nlsc watch</code> emits stable diagnostics for deterministic startup failures before the watcher begins, including missing directories and non-directory paths.</p>
@@ -2032,7 +2085,7 @@
 <hr />
 <h3 id="nlsc-assoc"><code>nlsc assoc</code><a class="headerlink" href="#nlsc-assoc" title="Permanent link">&para;</a></h3>
 <p>Install or remove the Windows Explorer file association for <code>.nl</code> files.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>nlsc<span class="w"> </span>assoc<span class="w"> </span><span class="o">[</span>--user<span class="o">]</span><span class="w"> </span><span class="o">[</span>--uninstall<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>nlsc<span class="w"> </span>assoc<span class="w"> </span><span class="o">[</span>--user<span class="o">]</span><span class="w"> </span><span class="o">[</span>--uninstall<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -2060,7 +2113,7 @@
 <hr />
 <h3 id="nlsc-atomize"><code>nlsc atomize</code><a class="headerlink" href="#nlsc-atomize" title="Permanent link">&para;</a></h3>
 <p>Extract ANLUs from existing Python source code (reverse compilation).</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>nlsc<span class="w"> </span>atomize<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>-o<span class="w"> </span>OUTPUT<span class="o">]</span><span class="w"> </span><span class="o">[</span>-m<span class="w"> </span>MODULE<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>nlsc<span class="w"> </span>atomize<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>-o<span class="w"> </span>OUTPUT<span class="o">]</span><span class="w"> </span><span class="o">[</span>-m<span class="w"> </span>MODULE<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -2089,7 +2142,7 @@
 </tbody>
 </table>
 <p><strong>Example:</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>nlsc<span class="w"> </span>atomize<span class="w"> </span>legacy/utils.py<span class="w"> </span>-o<span class="w"> </span>src/utils.nl<span class="w"> </span>-m<span class="w"> </span>utils
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>nlsc<span class="w"> </span>atomize<span class="w"> </span>legacy/utils.py<span class="w"> </span>-o<span class="w"> </span>src/utils.nl<span class="w"> </span>-m<span class="w"> </span>utils
 </span></code></pre></div>
 <p>This extracts functions from Python and generates corresponding ANLU blocks.</p>
 <p>When <code>--json</code> is enabled, <code>nlsc atomize</code> emits stable diagnostics for missing input files, Python syntax failures, and unexpected atomize/write failures.</p>
@@ -2130,25 +2183,25 @@
 </table>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
 <p>Project settings are stored in <code>nl.config.yaml</code>:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="nt">project</span><span class="p">:</span>
-</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-project</span>
-</span><span id="__span-24-3"><a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1.0</span>
-</span><span id="__span-24-4"><a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>
-</span><span id="__span-24-5"><a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="nt">compiler</span><span class="p">:</span>
-</span><span id="__span-24-6"><a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="w">  </span><span class="nt">default_target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python</span>
-</span><span id="__span-24-7"><a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="w">  </span><span class="nt">llm_backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mock</span>
-</span><span id="__span-24-8"><a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="w">  </span><span class="nt">cache_strategy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aggressive</span>
-</span><span id="__span-24-9"><a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>
-</span><span id="__span-24-10"><a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="nt">targets</span><span class="p">:</span>
-</span><span id="__span-24-11"><a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a><span class="w">  </span><span class="nt">python</span><span class="p">:</span>
-</span><span id="__span-24-12"><a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&gt;=3.11&quot;</span>
-</span><span id="__span-24-13"><a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a><span class="w">    </span><span class="nt">style</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">black</span>
-</span><span id="__span-24-14"><a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a><span class="w">    </span><span class="nt">type_hints</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">strict</span>
-</span><span id="__span-24-15"><a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a>
-</span><span id="__span-24-16"><a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a><span class="nt">validation</span><span class="p">:</span>
-</span><span id="__span-24-17"><a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a><span class="w">  </span><span class="nt">require_purpose</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-</span><span id="__span-24-18"><a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a><span class="w">  </span><span class="nt">require_guards</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-</span><span id="__span-24-19"><a id="__codelineno-24-19" name="__codelineno-24-19" href="#__codelineno-24-19"></a><span class="w">  </span><span class="nt">max_anlu_complexity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="nt">project</span><span class="p">:</span>
+</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-project</span>
+</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1.0</span>
+</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>
+</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="nt">compiler</span><span class="p">:</span>
+</span><span id="__span-26-6"><a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a><span class="w">  </span><span class="nt">default_target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python</span>
+</span><span id="__span-26-7"><a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="w">  </span><span class="nt">llm_backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mock</span>
+</span><span id="__span-26-8"><a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a><span class="w">  </span><span class="nt">cache_strategy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aggressive</span>
+</span><span id="__span-26-9"><a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>
+</span><span id="__span-26-10"><a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a><span class="nt">targets</span><span class="p">:</span>
+</span><span id="__span-26-11"><a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a><span class="w">  </span><span class="nt">python</span><span class="p">:</span>
+</span><span id="__span-26-12"><a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a><span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&gt;=3.11&quot;</span>
+</span><span id="__span-26-13"><a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a><span class="w">    </span><span class="nt">style</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">black</span>
+</span><span id="__span-26-14"><a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a><span class="w">    </span><span class="nt">type_hints</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">strict</span>
+</span><span id="__span-26-15"><a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>
+</span><span id="__span-26-16"><a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a><span class="nt">validation</span><span class="p">:</span>
+</span><span id="__span-26-17"><a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a><span class="w">  </span><span class="nt">require_purpose</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-26-18"><a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a><span class="w">  </span><span class="nt">require_guards</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</span><span id="__span-26-19"><a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a><span class="w">  </span><span class="nt">max_anlu_complexity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
 </span></code></pre></div>
 
 
