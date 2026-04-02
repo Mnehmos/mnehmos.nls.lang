@@ -292,6 +292,18 @@ def _emit_json(command: str, diagnostics: list[Diagnostic], **extra: object) -> 
     return 0 if not diagnostics else 1
 
 
+def _emit_watch_runtime_json(path: Path, diagnostics: list[Diagnostic]) -> None:
+    payload: dict[str, object] = {
+        "ok": False,
+        "command": "watch",
+        "event": "compile",
+        "phase": "runtime",
+        "file": str(path),
+        "diagnostics": [diagnostic.to_dict() for diagnostic in diagnostics],
+    }
+    print(json.dumps(payload, indent=2))
+
+
 def _emit_cli_parse_failure(error: CLIParseError) -> int:
     diagnostic = cli_parse_error_diagnostic(error.message)
     return _emit_json(
@@ -1014,8 +1026,17 @@ def cmd_watch(args: argparse.Namespace) -> int:
     run_tests = args.test
     debounce_ms = args.debounce
 
-    def on_compile(path: Path, success: bool, error: str | None) -> None:
+    def on_compile(
+        path: Path,
+        success: bool,
+        error: str | None,
+        diagnostics: list[Diagnostic] | None = None,
+    ) -> None:
         """Callback for compile events"""
+        if json_output and not success and diagnostics:
+            _emit_watch_runtime_json(path, diagnostics)
+            return
+
         timestamp = format_timestamp()
         if success:
             if not quiet:

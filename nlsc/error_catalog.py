@@ -29,6 +29,7 @@ EASSOC002 = "EASSOC002"
 EASSOC003 = "EASSOC003"
 EASSOC004 = "EASSOC004"
 EWATCH001 = "EWATCH001"
+EWATCH002 = "EWATCH002"
 
 
 @dataclass(frozen=True)
@@ -134,6 +135,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
             "test",
             "graph",
             "diff",
+            "watch",
             "lock:check",
             "lock:update",
         ),
@@ -174,7 +176,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         code=EUSE001,
         title="Missing stdlib domain",
         summary="A referenced `@use` domain could not be resolved from the stdlib roots.",
-        emitted_by=("compile", "verify", "run", "test"),
+        emitted_by=("compile", "verify", "run", "test", "watch"),
         common_causes=(
             "The domain name is misspelled.",
             "The expected stdlib root was not included via project, CLI, or environment config.",
@@ -188,7 +190,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         code=E_RESOLUTION,
         title="Dependency resolution error",
         summary="An ANLU dependency graph is invalid or references an unresolved ANLU.",
-        emitted_by=("compile", "verify", "run", "test"),
+        emitted_by=("compile", "verify", "run", "test", "watch"),
         common_causes=(
             "A `DEPENDS` entry points at an ANLU that does not exist.",
             "Two or more ANLUs form a dependency cycle.",
@@ -227,7 +229,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         code=ETARGET001,
         title="Unsupported target",
         summary="The requested CLI target is not supported for the selected command.",
-        emitted_by=("compile", "run", "lock:update"),
+        emitted_by=("compile", "run", "watch", "lock:update"),
         common_causes=(
             "The command was given a target that the emitter does not implement.",
             "The source target and CLI override do not match a supported execution path.",
@@ -241,7 +243,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         code=EVALIDATE001,
         title="Generated output validation failed",
         summary="Compiled output was emitted, but the generated artifact failed validation.",
-        emitted_by=("compile",),
+        emitted_by=("compile", "watch"),
         common_causes=(
             "Generated Python did not pass `py_compile`.",
             "Emitter output and the validator expectations are out of sync.",
@@ -431,6 +433,20 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Pass a directory path to `nlsc watch` and rerun the command.",
             "Use `nlsc compile <file>` or `nlsc test <file>` when working with a single source file.",
+        ),
+    ),
+    EWATCH002: ErrorDefinition(
+        code=EWATCH002,
+        title="Watch runtime compile failed",
+        summary="`nlsc watch --json` hit an unexpected runtime compile failure after startup that did not map to a shared parse, resolution, target, or validation diagnostic.",
+        emitted_by=("watch",),
+        common_causes=(
+            "Writing the generated artifact failed due to a filesystem or permission problem.",
+            "A watch-triggered compile path hit an unexpected internal runtime error.",
+        ),
+        next_steps=(
+            "Inspect the reported runtime message and the watched source file path.",
+            "Fix the underlying environment or source issue, then save the file again to retrigger compilation.",
         ),
     ),
 }

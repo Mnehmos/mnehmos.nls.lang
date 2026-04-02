@@ -283,7 +283,7 @@ nlsc watch [dir] [-q] [-t] [-d DEBOUNCE] [--json]
 | `-q, --quiet`    | Suppress success messages              |
 | `-t, --test`     | Run tests after successful compile     |
 | `-d, --debounce` | Debounce interval in ms (default: 100) |
-| `--json`         | Emit structured diagnostics for startup path errors |
+| `--json`         | Emit structured diagnostics for startup failures and runtime compile errors |
 
 **Examples:**
 
@@ -301,6 +301,8 @@ nlsc watch src/ -q -d 500
 Press `Ctrl+C` to stop watching.
 
 When `--json` is enabled, `nlsc watch` emits stable diagnostics for deterministic startup failures before the watcher begins, including missing directories and non-directory paths.
+
+After startup, watch-triggered compile failures also emit structured JSON payloads with `event: "compile"` and `phase: "runtime"`. These runtime diagnostics reuse the shared compile-oriented codes where possible: `EPARSE001` for parse failures, `EUSE001` for `@use` resolution failures, `E_RESOLUTION` for dependency errors, `ETARGET001` for unsupported targets, and `EVALIDATE001` for post-emit validation failures. `EWATCH002` is reserved for unexpected runtime compile failures that do not fit one of those shared categories.
 
 ---
 

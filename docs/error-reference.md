@@ -18,14 +18,14 @@ nlsc explain EPARSE001
 | `EFILE001` | `atomize`, `compile`, `verify`, `run`, `test`, `graph`, `diff`, `watch`, `lock:check`, `lock:update` | The requested input path does not exist. |
 | `EATOM001` | `atomize` | The input Python file failed syntax parsing during atomization. |
 | `EATOM002` | `atomize` | `nlsc atomize` hit an unexpected extraction or write failure. |
-| `EPARSE001` | `compile`, `verify`, `run`, `test`, `graph`, `diff`, `lock:check`, `lock:update` | The source file failed syntax parsing. |
+| `EPARSE001` | `compile`, `verify`, `run`, `test`, `graph`, `diff`, `watch`, `lock:check`, `lock:update` | The source file failed syntax parsing. |
 | `EPARSE002` | `compile`, `verify`, `run`, `test`, `graph`, `diff`, `watch`, `lock:check`, `lock:update` | The requested parser backend could not be initialized before command execution. |
-| `EUSE001` | `compile`, `verify`, `run`, `test` | A referenced `@use` stdlib domain could not be resolved. |
-| `E_RESOLUTION` | `compile`, `verify`, `run`, `test` | The ANLU dependency graph contains a missing or circular dependency. |
+| `EUSE001` | `compile`, `verify`, `run`, `test`, `watch` | A referenced `@use` stdlib domain could not be resolved. |
+| `E_RESOLUTION` | `compile`, `verify`, `run`, `test`, `watch` | The ANLU dependency graph contains a missing or circular dependency. |
 | `ETEST001` | `test` | `nlsc test` generated pytest cases, but the run failed or could not be executed successfully. |
 | `ECONTRACT001` | `verify` | An ANLU is missing a required contract field such as `PURPOSE` or `RETURNS`. |
-| `ETARGET001` | `compile`, `run`, `lock:update` | The requested target is not supported by the command. |
-| `EVALIDATE001` | `compile` | Generated output failed post-emit validation. |
+| `ETARGET001` | `compile`, `run`, `watch`, `lock:update` | The requested target is not supported by the command. |
+| `EVALIDATE001` | `compile`, `watch` | Generated output failed post-emit validation. |
 | `E_RUN` | `run` | `nlsc run` hit an unexpected internal error before execution completed. |
 | `EEXEC001` | `run` | `nlsc run` failed while setting up or launching the generated module. |
 | `EGRAPH001` | `graph` | `nlsc graph --anlu` requested an ANLU that is not defined in the source file. |
@@ -39,6 +39,7 @@ nlsc explain EPARSE001
 | `EASSOC003` | `assoc` | `nlsc assoc` could not write the required registry keys due to permissions. |
 | `EASSOC004` | `assoc` | `nlsc assoc` hit an unexpected runtime failure while updating the association. |
 | `EWATCH001` | `watch` | `nlsc watch` was given a path that exists but is not a directory. |
+| `EWATCH002` | `watch` | `nlsc watch --json` hit an unexpected runtime compile failure after startup. |
 
 ### `ECLI001` - CLI usage error
 
@@ -68,7 +69,7 @@ Raised when `nlsc atomize --json` hits an unexpected read/extract/write failure,
 
 ### `EPARSE001` - Parse error
 
-Raised when the parser rejects the `.nl` source.
+Raised when the parser rejects the `.nl` source, including watch-triggered recompiles after `nlsc watch` has already started.
 
 **Fix:** Use the reported line number, correct the syntax, then rerun `nlsc verify <file>`.
 
@@ -80,13 +81,13 @@ Raised when a parser bootstrap step fails before the command can parse the sourc
 
 ### `EUSE001` - Missing stdlib domain
 
-Raised when a referenced `@use` module cannot be found in the stdlib search roots.
+Raised when a referenced `@use` module cannot be found in the stdlib search roots, including runtime recompiles under `nlsc watch --json`.
 
 **Fix:** Verify the domain name and add the correct stdlib root with `--stdlib-path` or `NLS_STDLIB_PATH`.
 
 ### `E_RESOLUTION` - Dependency resolution error
 
-Raised when an ANLU depends on a missing ANLU or participates in a dependency cycle.
+Raised when an ANLU depends on a missing ANLU or participates in a dependency cycle, including watch-triggered recompiles.
 
 **Fix:** Define the missing dependency, rename the dependency reference, or break the cycle.
 
@@ -104,13 +105,13 @@ Raised by `nlsc verify` when an ANLU is missing a required contract field.
 
 ### `ETARGET001` - Unsupported target
 
-Raised when the requested target is not implemented for the current command.
+Raised when the requested target is not implemented for the current command, including unsupported `@target` values discovered by `nlsc watch` during a runtime recompile.
 
 **Fix:** Use a supported target. For `nlsc run`, use `python`.
 
 ### `EVALIDATE001` - Generated output validation failed
 
-Raised when emitted output is written successfully but fails validation, such as `py_compile`.
+Raised when emitted output is written successfully but fails validation, such as `py_compile`, including watch-triggered recompiles after startup.
 
 **Fix:** Inspect the generated artifact and the validator error, then recompile after fixing the source or emitter issue.
 
@@ -191,6 +192,12 @@ Raised when `nlsc assoc --json` hits a registry or shell-notification failure th
 Raised when `nlsc watch --json` is given a path that exists but is not a directory.
 
 **Fix:** Pass a directory path to `nlsc watch`, or use a file-oriented command such as `nlsc compile <file>` for a single source file.
+
+### `EWATCH002` - Watch runtime compile failed
+
+Raised when `nlsc watch --json` hits an unexpected runtime compile failure after startup and the failure does not map cleanly to a shared parse, `@use`, dependency-resolution, target, or validation diagnostic.
+
+**Fix:** Inspect the runtime message and watched file path, correct the underlying environment or source issue, then save again to retrigger the compile.
 
 ## Parse Errors
 

@@ -6,12 +6,20 @@ Watches .nl files and recompiles on save.
 
 import time
 import py_compile
+from inspect import signature
 from datetime import datetime
 from pathlib import Path
 from typing import Callable, Optional
 
+from .diagnostics import (
+    Diagnostic,
+    dependency_error_diagnostics,
+    parse_error_diagnostic,
+    stdlib_use_diagnostic,
+)
 from .emitter import emit_python, emit_tests
 from .emitter_typescript import emit_tests_typescript, emit_typescript
+from .error_catalog import ETARGET001, EVALIDATE001, EWATCH002
 
 
 def is_nl_file(path: Path) -> bool:
@@ -40,7 +48,7 @@ class NLWatcher:
         debounce_ms: int = 100,
         quiet: bool = False,
         run_tests: bool = False,
-        on_compile: Optional[Callable[[Path, bool, Optional[str]], None]] = None,
+        on_compile: Optional[Callable[..., None]] = None,
     ):
         self.watch_path = Path(watch_path)
         self.debounce_ms = debounce_ms
@@ -51,6 +59,23 @@ class NLWatcher:
         # Track file modification times for debouncing
         self._last_compile: dict[Path, float] = {}
         self._running = False
+
+    def _notify_compile(
+        self,
+        path: Path,
+        success: bool,
+        error: str | None = None,
+        diagnostics: list[Diagnostic] | None = None,
+    ) -> None:
+        if self.on_compile is None:
+            return
+
+        callback: Callable[..., None] = self.on_compile
+
+        if len(signature(callback).parameters) >= 4:
+            callback(path, success, error, diagnostics)
+        else:
+            callback(path, success, error)
 
     def compile_file(self, path: Path) -> bool:
         """
@@ -68,7 +93,9 @@ class NLWatcher:
         from .stdlib_resolver import StdlibUseError
 
         error_msg = None
+        diagnostics: list[Diagnostic] | None = None
         success = False
+        output_path: Path | None = None
 
         try:
             # Parse
@@ -76,13 +103,11 @@ class NLWatcher:
 
             validation = validate_semantics(nl_file, path)
             if validation.dependency_errors:
-                messages = [
-                    f"{error.anlu_id}: {error.message}"
-                    for error in validation.dependency_errors
-                ]
-                error_msg = "; ".join(messages)
-                if self.on_compile:
-                    self.on_compile(path, False, error_msg)
+                diagnostics = dependency_error_diagnostics(
+                    path, nl_file, validation.dependency_errors
+                )
+                error_msg = "; ".join(diagnostic.message for diagnostic in diagnostics)
+                self._notify_compile(path, False, error_msg, diagnostics)
                 return False
 
             target = nl_file.module.target or "python"
@@ -100,8 +125,17 @@ class NLWatcher:
                 py_compile_required = False
             else:
                 error_msg = f"Target '{target}' not yet supported"
-                if self.on_compile:
-                    self.on_compile(path, False, error_msg)
+                diagnostics = [
+                    Diagnostic(
+                        code=ETARGET001,
+                        file=str(path),
+                        line=None,
+                        col=None,
+                        message=error_msg,
+                        hint="Select a supported target and try again.",
+                    )
+                ]
+                self._notify_compile(path, False, error_msg, diagnostics)
                 return False
 
             output_path.write_text(generated_code, encoding="utf-8")
@@ -126,18 +160,44 @@ class NLWatcher:
             success = True
 
         except ParseError as e:
-            error_msg = f"Parse error: {e}"
+            diagnostics = [parse_error_diagnostic(path, e)]
+            error_msg = diagnostics[0].message
         except StdlibUseError as e:
+            diagnostics = [stdlib_use_diagnostic(path, e)]
             attempted = [str(p) for p in e.attempted_roots]
             error_msg = (
-                f"{e.code} domain={e.domain} major={e.major} "
+                f"{diagnostics[0].code} domain={e.domain} major={e.major} "
                 f"candidate_relpath={e.candidate_relpath} attempted_roots={attempted}"
             )
+        except py_compile.PyCompileError as e:
+            output_label = (
+                output_path if output_path is not None else path.with_suffix(".py")
+            )
+            diagnostics = [
+                Diagnostic(
+                    code=EVALIDATE001,
+                    file=str(output_label),
+                    line=None,
+                    col=None,
+                    message=f"py_compile validation failed for {output_label}: {e}",
+                    hint="Inspect the generated output and compiler logic.",
+                )
+            ]
+            error_msg = diagnostics[0].message
         except Exception as e:
-            error_msg = f"Error: {e}"
+            diagnostics = [
+                Diagnostic(
+                    code=EWATCH002,
+                    file=str(path),
+                    line=None,
+                    col=None,
+                    message=f"Watch runtime compile failed: {e}",
+                    hint="Inspect the source file and runtime message, then save again after correcting the issue.",
+                )
+            ]
+            error_msg = diagnostics[0].message
 
-        if self.on_compile:
-            self.on_compile(path, success, error_msg)
+        self._notify_compile(path, success, error_msg, diagnostics)
 
         return success
 
