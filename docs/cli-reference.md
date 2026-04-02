@@ -14,6 +14,8 @@ nlsc [--parser {regex,treesitter}] [--version] [--help] <command>
 | `--version` | Show version number                               |
 | `--help`    | Show help message                                 |
 
+If `--parser treesitter` is selected but the backend is unavailable, JSON-capable commands emit the stable diagnostic code `EPARSE002` when run with `--json`.
+
 ---
 
 ## Commands
