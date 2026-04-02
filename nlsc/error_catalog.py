@@ -13,6 +13,8 @@ ETARGET001 = "ETARGET001"
 EVALIDATE001 = "EVALIDATE001"
 E_RUN = "E_RUN"
 EEXEC001 = "EEXEC001"
+EGRAPH001 = "EGRAPH001"
+EGRAPH002 = "EGRAPH002"
 
 
 @dataclass(frozen=True)
@@ -147,6 +149,34 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Inspect the generated module path and runtime environment.",
             "Retry after fixing the local execution issue.",
+        ),
+    ),
+    EGRAPH001: ErrorDefinition(
+        code=EGRAPH001,
+        title="Graph ANLU not found",
+        summary="`nlsc graph --anlu` was asked to render an ANLU identifier that does not exist in the source file.",
+        emitted_by=("graph",),
+        common_causes=(
+            "The requested ANLU identifier is misspelled.",
+            "The file was edited and the requested ANLU no longer exists.",
+        ),
+        next_steps=(
+            "Choose one of the ANLU identifiers defined in the file and rerun the command.",
+            "Run `nlsc graph <file>` without `--anlu` to inspect the full graph first.",
+        ),
+    ),
+    EGRAPH002: ErrorDefinition(
+        code=EGRAPH002,
+        title="Unsupported graph output format",
+        summary="`nlsc graph --anlu` only supports formats that can render ANLU-level dataflow or FSM output.",
+        emitted_by=("graph",),
+        common_causes=(
+            "`--format dot` was used together with `--anlu`.",
+            "A graph output mode was selected that is only implemented for whole-file dependency graphs.",
+        ),
+        next_steps=(
+            "Use `--format mermaid` or `--format ascii` when rendering a specific ANLU.",
+            "Drop `--anlu` if you need a whole-file DOT graph.",
         ),
     ),
 }
