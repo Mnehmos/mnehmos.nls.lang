@@ -43,6 +43,7 @@ class StdlibUseError(RuntimeError):
         self,
         *,
         code: str,
+        domain_spec: str,
         domain: str,
         major: int,
         candidate_relpath: str,
@@ -50,6 +51,7 @@ class StdlibUseError(RuntimeError):
         message: str,
     ) -> None:
         self.code = code
+        self.domain_spec = domain_spec
         self.domain = domain
         self.major = major
         self.candidate_relpath = candidate_relpath
@@ -95,6 +97,7 @@ def _missing_domain_error(
     # NOTE: tests assert for stable code + candidate_relpath + attempted_roots.
     return StdlibUseError(
         code="EUSE001",
+        domain_spec=domain_spec,
         domain=domain or domain_spec,
         major=major,
         candidate_relpath=candidate_rel,
@@ -118,7 +121,7 @@ def stdlib_search_roots(
         roots.append(Path(cwd) / PROJECT_STDLIB_REL)
 
     # 2) CLI roots (repeatable; left-to-right precedence)
-    for r in (cli_roots or []):
+    for r in cli_roots or []:
         roots.append(Path(r))
 
     # 3) Env roots (path list; left-to-right precedence)
@@ -146,7 +149,9 @@ def resolve_use(
 
     if not domain or not _DOMAIN_TOKEN.match(domain):
         # Treat invalid domains as missing for Slice C.
-        raise _missing_domain_error(domain_spec=domain_spec, domain=domain or "", major=major, roots=roots)
+        raise _missing_domain_error(
+            domain_spec=domain_spec, domain=domain or "", major=major, roots=roots
+        )
 
     candidate_rel = domain_to_relpath(major=major, domain=domain)
     attempted: list[Path] = []
@@ -154,7 +159,13 @@ def resolve_use(
         attempted.append(root)
         candidate = root / candidate_rel
         if candidate.exists() and candidate.is_file():
-            return ResolvedUse(domain=domain, major=major, candidate_relpath=candidate_rel, path=candidate)
+            return ResolvedUse(
+                domain=domain,
+                major=major,
+                candidate_relpath=candidate_rel,
+                path=candidate,
+            )
 
-    raise _missing_domain_error(domain_spec=domain_spec, domain=domain, major=major, roots=attempted)
-
+    raise _missing_domain_error(
+        domain_spec=domain_spec, domain=domain, major=major, roots=attempted
+    )

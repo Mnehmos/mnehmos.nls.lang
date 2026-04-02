@@ -11,7 +11,7 @@ from pathlib import Path
 
 from .localization import ANLU_IDENTIFIER_PATTERN, normalize_localized_source
 from .parser import parse_nl_file, ParseError
-from .resolver import resolve_dependencies
+from .resolver import ResolutionError, resolve_dependencies
 from .schema import NLFile
 from .stdlib_resolver import (
     ResolvedUse,
@@ -121,7 +121,7 @@ class SemanticValidationResult:
     """Shared semantic validation result for CLI commands."""
 
     resolved_uses: list[ResolvedUse]
-    dependency_errors: list[str]
+    dependency_errors: list[ResolutionError]
     contract_errors: list[str]
 
     @property
@@ -150,9 +150,7 @@ def validate_semantics(
     """Run shared semantic validation used by compile/verify/run/watch."""
     resolved_uses = resolve_stdlib_uses(nl_file, source_path, cli_stdlib_paths)
     dependency_result = resolve_dependencies(nl_file)
-    dependency_errors = [
-        f"{err.anlu_id}: {err.message}" for err in dependency_result.errors
-    ]
+    dependency_errors = dependency_result.errors
     contract_errors = (
         validate_contract_fields(nl_file) if require_contract_fields else []
     )

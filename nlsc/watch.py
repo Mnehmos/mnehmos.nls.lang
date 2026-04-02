@@ -76,7 +76,11 @@ class NLWatcher:
 
             validation = validate_semantics(nl_file, path)
             if validation.dependency_errors:
-                error_msg = "; ".join(validation.dependency_errors)
+                messages = [
+                    f"{error.anlu_id}: {error.message}"
+                    for error in validation.dependency_errors
+                ]
+                error_msg = "; ".join(messages)
                 if self.on_compile:
                     self.on_compile(path, False, error_msg)
                 return False
