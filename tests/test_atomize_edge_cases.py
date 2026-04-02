@@ -620,6 +620,29 @@ def flatten_list(nested: list[list[int]]) -> list[int]:
         assert "result.extend(sublist)" in py_code
         assert namespace["flatten_list"]([[1, 2], [3], []]) == [1, 2, 3]
 
+    def test_bitwise_augmented_assignment_roundtrips_back_to_python(self):
+        """Non-arithmetic augmented assignments should survive loop roundtrip."""
+        code = '''\
+def all_true(flags: list[bool]) -> bool:
+    """Check whether all flags are true."""
+    result = True
+    for flag in flags:
+        result &= flag
+    return result
+'''
+        nl_content = atomize_to_nl(code, module_name="bitwise")
+
+        assert "FOR each flag IN flags: result &= flag" in nl_content
+
+        nl_file = parse_nl_file(nl_content)
+        py_code = emit_python(nl_file)
+        namespace = {}
+        exec(py_code, namespace)
+
+        assert "result &= flag" in py_code
+        assert namespace["all_true"]([True, True, True]) is True
+        assert namespace["all_true"]([True, False, True]) is False
+
     def test_triple_quote_literals_do_not_break_emitted_docstrings(self):
         """Triple-quote literals in RETURNS text should not poison docstrings."""
         code = (

@@ -304,6 +304,13 @@ def extract_logic_steps(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[st
                         ast.Div: "/=",
                         ast.Mod: "%=",
                         ast.FloorDiv: "//=",
+                        ast.Pow: "**=",
+                        ast.BitAnd: "&=",
+                        ast.BitOr: "|=",
+                        ast.BitXor: "^=",
+                        ast.LShift: "<<=",
+                        ast.RShift: ">>=",
+                        ast.MatMult: "@=",
                     }
                     op_str = op_map.get(type(node.op), "?=")
                     expr = ast.unparse(node.value)
@@ -366,6 +373,14 @@ def _extract_for_body(body: list) -> list[str]:
                         ast.Mult: "*=",
                         ast.Div: "/=",
                         ast.Mod: "%=",
+                        ast.FloorDiv: "//=",
+                        ast.Pow: "**=",
+                        ast.BitAnd: "&=",
+                        ast.BitOr: "|=",
+                        ast.BitXor: "^=",
+                        ast.LShift: "<<=",
+                        ast.RShift: ">>=",
+                        ast.MatMult: "@=",
                     }
                     op_str = op_map.get(type(node.op), "?=")
                     expr = ast.unparse(node.value)
