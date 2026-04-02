@@ -16,6 +16,7 @@ Commands:
 """
 
 import argparse
+import json
 import os
 import py_compile
 import subprocess
@@ -43,6 +44,14 @@ from .diff import (
     format_changes_output,
     format_stat_output,
     generate_full_diff,
+)
+from .diagnostics import (
+    Diagnostic,
+    contract_error_diagnostics,
+    dependency_error_diagnostics,
+    missing_file_diagnostic,
+    parse_error_diagnostic,
+    stdlib_use_diagnostic,
 )
 from .lockfile import read_lockfile
 from .watch import NLWatcher, format_timestamp
@@ -145,6 +154,25 @@ def _print_stdlib_use_error(error: StdlibUseError) -> None:
     )
 
 
+def _emit_json(command: str, diagnostics: list[Diagnostic], **extra: object) -> int:
+    payload: dict[str, object] = {
+        "ok": not diagnostics,
+        "command": command,
+        "diagnostics": [diagnostic.to_dict() for diagnostic in diagnostics],
+    }
+    payload.update(extra)
+    print(json.dumps(payload, indent=2))
+    return 0 if not diagnostics else 1
+
+
+def _format_dependency_error(error: object) -> str:
+    if hasattr(error, "anlu_id") and hasattr(error, "message"):
+        anlu_id = getattr(error, "anlu_id")
+        message = getattr(error, "message")
+        return f"{anlu_id}: {message}"
+    return str(error)
+
+
 def cmd_init(args: argparse.Namespace) -> int:
     """Initialize a new NLS project"""
     project_dir = Path(args.path or ".")
@@ -212,20 +240,29 @@ validation:
 def cmd_compile(args: argparse.Namespace) -> int:
     """Compile a .nl file to target language"""
     source_path = Path(args.file)
+    json_output = getattr(args, "json", False)
 
     if not source_path.exists():
-        print(f"Error: File not found: {source_path}", file=sys.stderr)
-        print("Error: Check that the path exists and try again.", file=sys.stderr)
+        diagnostic = missing_file_diagnostic(source_path)
+        if json_output:
+            return _emit_json("compile", [diagnostic], file=str(source_path))
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
+        print(f"Error: {diagnostic.hint}", file=sys.stderr)
         return 1
 
     parser_name = "tree-sitter" if _use_treesitter else "regex"
-    print(f"Compiling {source_path} (parser: {parser_name})...")
+    if not json_output:
+        print(f"Compiling {source_path} (parser: {parser_name})...")
 
     # Parse
     try:
         nl_file = parse_nl_file_auto(source_path)
-        print(f"  {_check()} Parsed {len(nl_file.anlus)} ANLUs")
+        if not json_output:
+            print(f"  {_check()} Parsed {len(nl_file.anlus)} ANLUs")
     except ParseError as e:
+        diagnostic = parse_error_diagnostic(source_path, e)
+        if json_output:
+            return _emit_json("compile", [diagnostic], file=str(source_path))
         print(f"  {_cross()} Parse error: {e}", file=sys.stderr)
         return 1
 
@@ -236,18 +273,31 @@ def cmd_compile(args: argparse.Namespace) -> int:
             cli_stdlib_paths=getattr(args, "stdlib_path", None),
         )
     except StdlibUseError as e:
+        if json_output:
+            return _emit_json(
+                "compile",
+                [stdlib_use_diagnostic(source_path, e)],
+                file=str(source_path),
+            )
         _print_stdlib_use_error(e)
         return 1
 
-    for resolved in validation.resolved_uses:
-        print(f"  {_check()} @use {resolved.domain} -> {resolved.path}")
+    if not json_output:
+        for resolved in validation.resolved_uses:
+            print(f"  {_check()} @use {resolved.domain} -> {resolved.path}")
 
     if validation.dependency_errors:
+        diagnostics = dependency_error_diagnostics(
+            source_path, nl_file, validation.dependency_errors
+        )
+        if json_output:
+            return _emit_json("compile", diagnostics, file=str(source_path))
         print(f"  {_cross()} Resolution errors:", file=sys.stderr)
         for err in validation.dependency_errors:
-            print(f"    - {err}", file=sys.stderr)
+            print(f"    - {_format_dependency_error(err)}", file=sys.stderr)
         return 1
-    print(f"  {_check()} Resolved dependencies")
+    if not json_output:
+        print(f"  {_check()} Resolved dependencies")
 
     target = _resolve_target(nl_file, getattr(args, "target", None))
     try:
@@ -255,6 +305,16 @@ def cmd_compile(args: argparse.Namespace) -> int:
             nl_file, target
         )
     except ValueError as exc:
+        if json_output:
+            diagnostic = Diagnostic(
+                code="ETARGET001",
+                file=str(source_path),
+                line=None,
+                col=None,
+                message=str(exc),
+                hint="Select a supported target and try again.",
+            )
+            return _emit_json("compile", [diagnostic], file=str(source_path))
         print(f"  {_cross()} {exc}", file=sys.stderr)
         return 1
 
@@ -265,10 +325,21 @@ def cmd_compile(args: argparse.Namespace) -> int:
 
     output_path.write_text(generated_code, encoding="utf-8")
     line_count = generated_code.count("\n") + 1
-    print(f"  {_check()} Generated {output_path.name} ({line_count} lines)")
+    if not json_output:
+        print(f"  {_check()} Generated {output_path.name} ({line_count} lines)")
 
     is_valid, validation_error = _validate_target_output(target, output_path)
     if not is_valid:
+        if json_output:
+            diagnostic = Diagnostic(
+                code="EVALIDATE001",
+                file=str(output_path),
+                line=None,
+                col=None,
+                message=f"py_compile validation failed for {output_path}: {validation_error}",
+                hint="Inspect the generated output and compiler logic.",
+            )
+            return _emit_json("compile", [diagnostic], file=str(source_path))
         print(
             f"  {_cross()} py_compile validation failed for {output_path}: {validation_error}",
             file=sys.stderr,
@@ -278,7 +349,8 @@ def cmd_compile(args: argparse.Namespace) -> int:
     if test_code and nl_file.tests:
         test_path = source_path.parent / f"test_{source_path.stem}{test_suffix}"
         test_path.write_text(test_code, encoding="utf-8")
-        print(f"  {_check()} Generated {test_path.name}")
+        if not json_output:
+            print(f"  {_check()} Generated {test_path.name}")
 
     # Generate lockfile
     lock_path = source_path.with_suffix(".nl.lock")
@@ -290,6 +362,16 @@ def cmd_compile(args: argparse.Namespace) -> int:
         target=target,
     )
     write_lockfile(lockfile, lock_path)
+    if json_output:
+        return _emit_json(
+            "compile",
+            [],
+            file=str(source_path),
+            output=str(output_path),
+            lockfile=str(lock_path),
+            target=target,
+            line_count=line_count,
+        )
     print(f"  {_check()} Updated {lock_path.name}")
 
     print("\nCompilation complete!")
@@ -299,19 +381,28 @@ def cmd_compile(args: argparse.Namespace) -> int:
 def cmd_verify(args: argparse.Namespace) -> int:
     """Verify a .nl file without generating code"""
     source_path = Path(args.file)
+    json_output = getattr(args, "json", False)
 
     if not source_path.exists():
-        print(f"Error: File not found: {source_path}", file=sys.stderr)
+        diagnostic = missing_file_diagnostic(source_path)
+        if json_output:
+            return _emit_json("verify", [diagnostic], file=str(source_path))
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
         return 1
 
     parser_name = "tree-sitter" if _use_treesitter else "regex"
-    print(f"Verifying {source_path} (parser: {parser_name})...")
+    if not json_output:
+        print(f"Verifying {source_path} (parser: {parser_name})...")
 
     # Parse
     try:
         nl_file = parse_nl_file_auto(source_path)
-        print(f"  {_check()} Syntax valid: {len(nl_file.anlus)} ANLUs")
+        if not json_output:
+            print(f"  {_check()} Syntax valid: {len(nl_file.anlus)} ANLUs")
     except ParseError as e:
+        diagnostic = parse_error_diagnostic(source_path, e)
+        if json_output:
+            return _emit_json("verify", [diagnostic], file=str(source_path))
         print(f"  {_cross()} Parse error: {e}", file=sys.stderr)
         return 1
 
@@ -322,26 +413,46 @@ def cmd_verify(args: argparse.Namespace) -> int:
             require_contract_fields=True,
         )
     except StdlibUseError as e:
+        if json_output:
+            return _emit_json(
+                "verify", [stdlib_use_diagnostic(source_path, e)], file=str(source_path)
+            )
         _print_stdlib_use_error(e)
         return 1
     if validation.resolved_uses:
-        print(
-            f"  {_check()} Resolved {len(validation.resolved_uses)} @use directive(s)"
-        )
+        if not json_output:
+            print(
+                f"  {_check()} Resolved {len(validation.resolved_uses)} @use directive(s)"
+            )
 
     if validation.dependency_errors:
+        diagnostics = dependency_error_diagnostics(
+            source_path, nl_file, validation.dependency_errors
+        )
+        if json_output:
+            return _emit_json("verify", diagnostics, file=str(source_path))
         print(f"  {_cross()} Resolution errors:")
         for err in validation.dependency_errors:
-            print(f"    - {err}")
+            print(f"    - {_format_dependency_error(err)}")
         return 1
-    print(f"  {_check()} Dependencies valid")
+    if not json_output:
+        print(f"  {_check()} Dependencies valid")
 
     if validation.contract_errors:
+        diagnostics = contract_error_diagnostics(
+            source_path, validation.contract_errors
+        )
+        if json_output:
+            return _emit_json("verify", diagnostics, file=str(source_path))
         print(f"  {_cross()} Validation errors:")
         for validation_err in validation.contract_errors:
             print(f"    - {validation_err}")
         return 1
 
+    if json_output:
+        return _emit_json(
+            "verify", [], file=str(source_path), anlu_count=len(nl_file.anlus)
+        )
     print(f"  {_check()} All ANLUs valid")
     print("\nVerification passed!")
     return 0
@@ -730,41 +841,80 @@ def cmd_run(args: argparse.Namespace) -> int:
     source_path = Path(args.file)
     source_root = source_path.parent.resolve()
     verbose = getattr(args, "verbose", False)
+    json_output = getattr(args, "json", False)
 
     if not source_path.exists():
-        print(f"Error: File not found: {source_path}", file=sys.stderr)
-        print("Error: Check that the path exists and try again.", file=sys.stderr)
+        diagnostic = missing_file_diagnostic(source_path)
+        if json_output:
+            return _emit_json("run", [diagnostic], file=str(source_path))
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
+        print(f"Error: {diagnostic.hint}", file=sys.stderr)
         return 1
 
     # Parse
     try:
         nl_file = parse_nl_file_auto(source_path)
     except ParseError as e:
+        if json_output:
+            return _emit_json(
+                "run", [parse_error_diagnostic(source_path, e)], file=str(source_path)
+            )
         print(f"Error: Parse error: {e}", file=sys.stderr)
         return 1
     except Exception as e:
+        if json_output:
+            diagnostic = Diagnostic(
+                code="E_RUN",
+                file=str(source_path),
+                line=None,
+                col=None,
+                message=f"Unexpected run error: {e}",
+                hint="Retry with --verbose and inspect the parser backend.",
+            )
+            return _emit_json("run", [diagnostic], file=str(source_path))
         print(f"Error: Unexpected run error [E_RUN]: {e}", file=sys.stderr)
         return 1
 
     try:
         validation = validate_semantics(nl_file, source_path)
     except StdlibUseError as e:
+        if json_output:
+            return _emit_json(
+                "run", [stdlib_use_diagnostic(source_path, e)], file=str(source_path)
+            )
         _print_stdlib_use_error(e)
         return 1
 
     if validation.dependency_errors:
+        diagnostics = dependency_error_diagnostics(
+            source_path, nl_file, validation.dependency_errors
+        )
+        if json_output:
+            return _emit_json("run", diagnostics, file=str(source_path))
         print("Error: [E_RESOLUTION] Resolution errors:", file=sys.stderr)
         for err in validation.dependency_errors:
-            print(f"  - {err}", file=sys.stderr)
+            print(f"  - {_format_dependency_error(err)}", file=sys.stderr)
         return 1
 
     # Emit Python (target flag for future multi-target support)
     target = getattr(args, "target", "python")
     if target != "python":
+        if json_output:
+            diagnostic = Diagnostic(
+                code="ETARGET001",
+                file=str(source_path),
+                line=None,
+                col=None,
+                message=f"Target '{target}' not yet supported",
+                hint="Use the python target for nlsc run.",
+            )
+            return _emit_json("run", [diagnostic], file=str(source_path))
         print(f"Error: Target '{target}' not yet supported", file=sys.stderr)
         return 1
 
     python_code = emit_python(nl_file, mode="mock")
+    proc: subprocess.CompletedProcess[str] | None = None
+    translated_stderr = ""
 
     # Create temp directory or use --keep location
     if args.keep:
@@ -836,16 +986,28 @@ def cmd_run(args: argparse.Namespace) -> int:
         )
 
         # Output stdout
-        if proc.stdout:
+        if proc.stdout and not json_output:
             print(proc.stdout, end="")
 
         # Translate and output stderr with source mapping
+        translated_stderr = ""
         if proc.stderr:
             translated_stderr = source_map.translate_error(proc.stderr)
-            print(translated_stderr, end="", file=sys.stderr)
+            if not json_output:
+                print(translated_stderr, end="", file=sys.stderr)
 
         exit_code = proc.returncode
     except Exception as e:
+        if json_output:
+            diagnostic = Diagnostic(
+                code="EEXEC001",
+                file=str(source_path),
+                line=None,
+                col=None,
+                message=f"Execution error: {e}",
+                hint="Inspect the generated module and runtime environment.",
+            )
+            return _emit_json("run", [diagnostic], file=str(source_path))
         print(f"Execution error: {e}", file=sys.stderr)
         exit_code = 1
     finally:
@@ -855,6 +1017,15 @@ def cmd_run(args: argparse.Namespace) -> int:
 
             shutil.rmtree(temp_dir, ignore_errors=True)
 
+    if json_output:
+        return _emit_json(
+            "run",
+            [],
+            file=str(source_path),
+            exit_code=exit_code,
+            stdout=proc.stdout if proc is not None else "",
+            stderr=translated_stderr,
+        )
     return exit_code
 
 
@@ -1049,6 +1220,11 @@ The conversation is the programming. The .nl file is the receipt.
         default=[],
         help="Additional stdlib root directory (repeatable; highest precedence).",
     )
+    compile_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit structured JSON output.",
+    )
 
     # run command
     run_parser = subparsers.add_parser("run", help="Compile and execute .nl file")
@@ -1072,10 +1248,20 @@ The conversation is the programming. The .nl file is the receipt.
         action="store_true",
         help="Show detailed output including source mapping",
     )
+    run_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit structured JSON output.",
+    )
 
     # verify command
     verify_parser = subparsers.add_parser("verify", help="Verify .nl file")
     verify_parser.add_argument("file", help="Path to .nl file")
+    verify_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit structured JSON output.",
+    )
 
     # graph command
     graph_parser = subparsers.add_parser(
