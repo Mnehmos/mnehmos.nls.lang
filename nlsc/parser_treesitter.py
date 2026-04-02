@@ -703,13 +703,12 @@ def parse_nl_file_treesitter(source: str, source_path: Optional[str] = None) -> 
         NLFile with parsed module info and ANLUs
     """
     normalized_source = normalize_localized_source(source)
-    canonical_result = parse_nl_file(source, source_path=source_path)
 
     if not normalized_source.isascii():
-        return canonical_result
+        return parse_nl_file(source, source_path=source_path)
 
     if _should_use_regex_canonical_parse(normalized_source):
-        return canonical_result
+        return parse_nl_file(source, source_path=source_path)
 
     # Pre-check for a known edge case: malformed INPUTS bullets.
     # Tree-sitter may recover by dropping the malformed line, but we want
