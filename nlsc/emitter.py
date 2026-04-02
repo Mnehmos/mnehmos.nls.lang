@@ -278,22 +278,27 @@ def emit_function_signature(anlu: ANLU) -> str:
 
 def emit_docstring(anlu: ANLU) -> str:
     """Generate docstring from ANLU purpose and inputs"""
-    lines = ['    """', f"    {anlu.purpose}"]
+    lines = ['    """', f"    {_escape_docstring_text(anlu.purpose)}"]
 
     if anlu.inputs:
         lines.append("")
         lines.append("    Args:")
         for inp in anlu.inputs:
             desc = inp.description or inp.type
-            lines.append(f"        {inp.name}: {desc}")
+            lines.append(f"        {inp.name}: {_escape_docstring_text(desc)}")
 
     if anlu.returns:
         lines.append("")
         lines.append("    Returns:")
-        lines.append(f"        {anlu.returns}")
+        lines.append(f"        {_escape_docstring_text(anlu.returns)}")
 
     lines.append('    """')
     return "\n".join(lines)
+
+
+def _escape_docstring_text(text: str) -> str:
+    """Escape content that would terminate a triple-double-quoted docstring."""
+    return text.replace('"""', '\\"\\"\\"')
 
 
 def emit_guards(anlu: ANLU) -> list[str]:

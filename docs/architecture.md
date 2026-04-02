@@ -50,7 +50,7 @@ The compiler follows a classic pipeline architecture:
 
 ## Parser Backends
 
-### Regex Parser (Default)
+### Regex Parser (Canonical AST)
 
 The regex parser uses pattern matching to tokenize and parse `.nl` files.
 
@@ -66,6 +66,7 @@ SECTION = r"^(PURPOSE|INPUTS|GUARDS|LOGIC|RETURNS|DEPENDS|EDGE CASES):"
 - Zero dependencies
 - Fast for simple files
 - Easy to understand
+- Canonical semantic contract for AST output
 
 **Cons:**
 
@@ -94,6 +95,15 @@ nlsc --parser treesitter compile src/auth.nl
 
 - Requires native dependency
 - Slightly more complex setup
+
+### Canonical Parser Contract
+
+`nlsc/parser.py` is the canonical parser path for semantic AST output.
+
+- `parse_nl_file()` defines the canonical AST shape and behavior.
+- `parse_nl_file_treesitter()` may use tree-sitter for supported structural parsing, but it must return regex-equivalent AST output for every supported construct.
+- When tree-sitter coverage is incomplete or semantics would diverge (for example `@test`, `@property`, `@invariant`, `@literal`, `@main`, or LOGIC output bindings), the implementation falls back to the regex parser to preserve parity.
+- `nlsc/pipeline.py` auto mode follows the same rule: tree-sitter is optional acceleration, while regex semantics remain authoritative.
 
 ---
 
@@ -246,6 +256,7 @@ The lockfile enables:
 2. Regenerate with `npx tree-sitter generate`
 3. Update `parser_treesitter.py` to handle new nodes
 4. Update `parser.py` with matching regex patterns
+5. Add or extend parity coverage in `tests/test_parser_parity.py` so the canonical AST remains identical across parser paths
 
 ### Adding a New CLI Command
 
