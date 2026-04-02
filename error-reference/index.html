@@ -1005,6 +1005,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#eparse002-parser-backend-unavailable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EPARSE002 - Parser backend unavailable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#euse001-missing-stdlib-domain" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2007,6 +2018,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#eparse002-parser-backend-unavailable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EPARSE002 - Parser backend unavailable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#euse001-missing-stdlib-domain" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2710,6 +2732,11 @@
 <td>The source file failed syntax parsing.</td>
 </tr>
 <tr>
+<td><code>EPARSE002</code></td>
+<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>diff</code>, <code>watch</code>, <code>lock:check</code>, <code>lock:update</code></td>
+<td>The requested parser backend could not be initialized before command execution.</td>
+</tr>
+<tr>
 <td><code>EUSE001</code></td>
 <td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code></td>
 <td>A referenced <code>@use</code> stdlib domain could not be resolved.</td>
@@ -2788,6 +2815,9 @@
 <h3 id="eparse001-parse-error"><code>EPARSE001</code> - Parse error<a class="headerlink" href="#eparse001-parse-error" title="Permanent link">&para;</a></h3>
 <p>Raised when the parser rejects the <code>.nl</code> source.</p>
 <p><strong>Fix:</strong> Use the reported line number, correct the syntax, then rerun <code>nlsc verify &lt;file&gt;</code>.</p>
+<h3 id="eparse002-parser-backend-unavailable"><code>EPARSE002</code> - Parser backend unavailable<a class="headerlink" href="#eparse002-parser-backend-unavailable" title="Permanent link">&para;</a></h3>
+<p>Raised when a parser bootstrap step fails before the command can parse the source, starting with <code>--parser treesitter</code> when tree-sitter support is unavailable.</p>
+<p><strong>Fix:</strong> Install the optional backend with <code>pip install nlsc[treesitter]</code>, or rerun with <code>--parser auto</code> or <code>--parser regex</code>.</p>
 <h3 id="euse001-missing-stdlib-domain"><code>EUSE001</code> - Missing stdlib domain<a class="headerlink" href="#euse001-missing-stdlib-domain" title="Permanent link">&para;</a></h3>
 <p>Raised when a referenced <code>@use</code> module cannot be found in the stdlib search roots.</p>
 <p><strong>Fix:</strong> Verify the domain name and add the correct stdlib root with <code>--stdlib-path</code> or <code>NLS_STDLIB_PATH</code>.</p>
