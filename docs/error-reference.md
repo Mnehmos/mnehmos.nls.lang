@@ -18,6 +18,7 @@ nlsc explain EPARSE001
 | `EATOM001` | `atomize` | The input Python file failed syntax parsing during atomization. |
 | `EATOM002` | `atomize` | `nlsc atomize` hit an unexpected extraction or write failure. |
 | `EPARSE001` | `compile`, `verify`, `run`, `test`, `graph`, `diff`, `lock:check`, `lock:update` | The source file failed syntax parsing. |
+| `EPARSE002` | `compile`, `verify`, `run`, `test`, `graph`, `diff`, `watch`, `lock:check`, `lock:update` | The requested parser backend could not be initialized before command execution. |
 | `EUSE001` | `compile`, `verify`, `run`, `test` | A referenced `@use` stdlib domain could not be resolved. |
 | `E_RESOLUTION` | `compile`, `verify`, `run`, `test` | The ANLU dependency graph contains a missing or circular dependency. |
 | `ETEST001` | `test` | `nlsc test` generated pytest cases, but the run failed or could not be executed successfully. |
@@ -55,6 +56,12 @@ Raised when `nlsc atomize --json` hits an unexpected read/extract/write failure,
 Raised when the parser rejects the `.nl` source.
 
 **Fix:** Use the reported line number, correct the syntax, then rerun `nlsc verify <file>`.
+
+### `EPARSE002` - Parser backend unavailable
+
+Raised when a parser bootstrap step fails before the command can parse the source, starting with `--parser treesitter` when tree-sitter support is unavailable.
+
+**Fix:** Install the optional backend with `pip install nlsc[treesitter]`, or rerun with `--parser auto` or `--parser regex`.
 
 ### `EUSE001` - Missing stdlib domain
 

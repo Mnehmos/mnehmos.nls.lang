@@ -8,6 +8,7 @@ EATOM001 = "EATOM001"
 EATOM002 = "EATOM002"
 EFILE001 = "EFILE001"
 EPARSE001 = "EPARSE001"
+EPARSE002 = "EPARSE002"
 EUSE001 = "EUSE001"
 E_RESOLUTION = "E_RESOLUTION"
 ETEST001 = "ETEST001"
@@ -108,6 +109,30 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Use the reported line number to fix the source syntax.",
             "Run `nlsc verify <file>` after editing to confirm the file parses cleanly.",
+        ),
+    ),
+    EPARSE002: ErrorDefinition(
+        code=EPARSE002,
+        title="Parser backend unavailable",
+        summary="The requested parser backend could not be initialized before the command started.",
+        emitted_by=(
+            "compile",
+            "verify",
+            "run",
+            "test",
+            "graph",
+            "diff",
+            "watch",
+            "lock:check",
+            "lock:update",
+        ),
+        common_causes=(
+            "`--parser treesitter` was requested, but the optional tree-sitter dependency is not installed.",
+            "The selected parser backend is not available in the current environment.",
+        ),
+        next_steps=(
+            "Install the optional backend with `pip install nlsc[treesitter]`.",
+            "Rerun the command with `--parser auto` or `--parser regex` if tree-sitter is not required.",
         ),
     ),
     EUSE001: ErrorDefinition(

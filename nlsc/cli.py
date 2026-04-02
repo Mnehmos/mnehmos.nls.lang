@@ -58,6 +58,7 @@ from .diagnostics import (
     lockfile_unavailable_diagnostic,
     missing_file_diagnostic,
     parse_error_diagnostic,
+    parser_backend_unavailable_diagnostic,
     stdlib_use_diagnostic,
     test_execution_diagnostic,
     watch_not_directory_diagnostic,
@@ -108,6 +109,26 @@ def _cross() -> str:
 
 # Parser selection - default to tree-sitter if available
 _use_treesitter = detect_treesitter()
+_JSON_PARSER_BOOTSTRAP_COMMANDS = {
+    "compile",
+    "verify",
+    "run",
+    "test",
+    "graph",
+    "diff",
+    "watch",
+    "lock:check",
+    "lock:update",
+}
+
+
+class ParserBootstrapError(RuntimeError):
+    """Raised when the requested parser backend cannot be initialized."""
+
+    def __init__(self, backend: str, detail: str) -> None:
+        super().__init__(detail)
+        self.backend = backend
+        self.detail = detail
 
 
 def _resolve_target(nl_file: NLFile, requested_target: str | None) -> str:
@@ -149,12 +170,30 @@ def set_parser_backend(backend: str) -> None:
             if not parser_treesitter.is_available():
                 raise ImportError("tree-sitter is not installed")
         except ImportError as e:
-            print(f"Error: Tree-sitter parser not available: {e}", file=sys.stderr)
-            print("Install with: pip install nlsc[treesitter]", file=sys.stderr)
-            sys.exit(1)
+            raise ParserBootstrapError("treesitter", str(e)) from e
         _use_treesitter = True
     else:
         _use_treesitter = False
+
+
+def _emit_parser_bootstrap_failure(
+    args: argparse.Namespace, error: ParserBootstrapError
+) -> int:
+    command = getattr(args, "command", None) or "nlsc"
+    json_output = command in _JSON_PARSER_BOOTSTRAP_COMMANDS and getattr(
+        args, "json", False
+    )
+    diagnostic = parser_backend_unavailable_diagnostic(error.backend, error.detail)
+
+    if json_output:
+        return _emit_json(
+            command, [diagnostic], file=diagnostic.file, parser=error.backend
+        )
+
+    print(f"Error: {diagnostic.message}", file=sys.stderr)
+    if diagnostic.hint:
+        print(diagnostic.hint, file=sys.stderr)
+    return 1
 
 
 def parse_nl_file_auto(source_path: Path) -> NLFile:
@@ -1654,7 +1693,10 @@ The conversation is the programming. The .nl file is the receipt.
 
     # Set parser backend before any parsing commands
     if hasattr(args, "parser") and args.parser:
-        set_parser_backend(args.parser)
+        try:
+            set_parser_backend(args.parser)
+        except ParserBootstrapError as error:
+            return _emit_parser_bootstrap_failure(args, error)
 
     if args.command == "init":
         return cmd_init(args)

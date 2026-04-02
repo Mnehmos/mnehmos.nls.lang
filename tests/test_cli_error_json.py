@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -11,18 +12,38 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
-def _run_nlsc(argv: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
+def _run_nlsc(
+    argv: list[str], *, cwd: Path, env: dict[str, str] | None = None
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "-m", "nlsc", *argv],
         cwd=str(cwd),
         capture_output=True,
         text=True,
+        env=env,
     )
 
 
 def _load_json_output(result: subprocess.CompletedProcess[str]) -> dict:
     assert result.stdout.strip(), f"expected JSON stdout, got stderr={result.stderr!r}"
     return json.loads(result.stdout)
+
+
+def _treesitter_unavailable_env(tmp_path: Path) -> dict[str, str]:
+    hook_dir = tmp_path / "sitecustomize"
+    hook_dir.mkdir()
+    (hook_dir / "sitecustomize.py").write_text(
+        "import nlsc.parser_treesitter as parser_treesitter\n"
+        "parser_treesitter.is_available = lambda: False\n",
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    pythonpath_parts = [str(hook_dir), str(REPO_ROOT)]
+    existing_pythonpath = env.get("PYTHONPATH")
+    if existing_pythonpath:
+        pythonpath_parts.append(existing_pythonpath)
+    env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
+    return env
 
 
 def test_verify_json_reports_missing_file(tmp_path: Path) -> None:
@@ -76,6 +97,35 @@ RETURNS: void
             "col": None,
             "message": "Invalid LOGIC step format; expected numbered step like '1. ...'",
             "hint": "Rewrite the line as a numbered LOGIC step like '1. ...'.",
+        }
+    ]
+
+
+def test_verify_json_reports_parser_backend_unavailable(tmp_path: Path) -> None:
+    source_path = tmp_path / "verify_source.nl"
+    source_path.write_text(
+        "@module verify-source\n@target python\n\n[main]\nPURPOSE: Ok\nRETURNS: 1\n",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(
+        ["--parser", "treesitter", "verify", str(source_path), "--json"],
+        cwd=REPO_ROOT,
+        env=_treesitter_unavailable_env(tmp_path),
+    )
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "verify"
+    assert payload["parser"] == "treesitter"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EPARSE002",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "Parser backend 'treesitter' is unavailable: tree-sitter is not installed",
+            "hint": "Install with: pip install nlsc[treesitter], or rerun with --parser auto or --parser regex.",
         }
     ]
 
@@ -155,6 +205,35 @@ def test_compile_json_reports_missing_file(tmp_path: Path) -> None:
     payload = _load_json_output(result)
     assert payload["command"] == "compile"
     assert payload["diagnostics"][0]["code"] == "EFILE001"
+
+
+def test_compile_json_reports_parser_backend_unavailable(tmp_path: Path) -> None:
+    source_path = tmp_path / "compile_source.nl"
+    source_path.write_text(
+        "@module compile-source\n@target python\n\n[main]\nPURPOSE: Ok\nRETURNS: 1\n",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(
+        ["--parser", "treesitter", "compile", str(source_path), "--json"],
+        cwd=REPO_ROOT,
+        env=_treesitter_unavailable_env(tmp_path),
+    )
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "compile"
+    assert payload["parser"] == "treesitter"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EPARSE002",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "Parser backend 'treesitter' is unavailable: tree-sitter is not installed",
+            "hint": "Install with: pip install nlsc[treesitter], or rerun with --parser auto or --parser regex.",
+        }
+    ]
 
 
 def test_run_json_reports_missing_file(tmp_path: Path) -> None:

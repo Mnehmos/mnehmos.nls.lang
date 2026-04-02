@@ -20,6 +20,7 @@ from .error_catalog import (
     ELOCK001,
     ELOCK002,
     EPARSE001,
+    EPARSE002,
     EWATCH001,
     E_RESOLUTION,
     ETEST001,
@@ -114,6 +115,17 @@ def parse_error_diagnostic(path: Path, error: ParseError) -> Diagnostic:
         col=None,
         message=message,
         hint=hint,
+    )
+
+
+def parser_backend_unavailable_diagnostic(backend: str, detail: str) -> Diagnostic:
+    return Diagnostic(
+        code=EPARSE002,
+        file="<cli>",
+        line=None,
+        col=None,
+        message=f"Parser backend '{backend}' is unavailable: {detail}",
+        hint="Install with: pip install nlsc[treesitter], or rerun with --parser auto or --parser regex.",
     )
 
 

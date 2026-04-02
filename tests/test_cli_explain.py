@@ -22,6 +22,7 @@ def test_error_catalog_covers_active_cli_error_codes() -> None:
         "EATOM002",
         "EFILE001",
         "EPARSE001",
+        "EPARSE002",
         "EUSE001",
         "E_RESOLUTION",
         "ETEST001",
@@ -47,6 +48,16 @@ def test_explain_command_prints_known_error_details() -> None:
     assert "EPARSE001" in result.stdout
     assert "Parse error" in result.stdout
     assert "verify" in result.stdout
+    assert result.stderr == ""
+
+
+def test_explain_command_prints_parser_backend_unavailable_details() -> None:
+    result = _run_nlsc("explain", "EPARSE002")
+
+    assert result.returncode == 0
+    assert "EPARSE002" in result.stdout
+    assert "Parser backend unavailable" in result.stdout
+    assert "treesitter" in result.stdout
     assert result.stderr == ""
 
 
