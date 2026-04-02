@@ -17,6 +17,7 @@ from .error_catalog import (
     EGRAPH002,
     EPARSE001,
     E_RESOLUTION,
+    ETEST001,
 )
 
 
@@ -166,6 +167,22 @@ def graph_format_diagnostic(path: Path, anlu: object, output_format: str) -> Dia
         col=1 if line is not None else None,
         message=f"Format '{output_format}' is not supported for ANLU dataflow graphs",
         hint="Use --format mermaid or --format ascii when selecting --anlu.",
+    )
+
+
+def test_execution_diagnostic(path: Path, pytest_exit_code: int | None) -> Diagnostic:
+    if pytest_exit_code is None:
+        message = "Generated tests could not be executed."
+    else:
+        message = f"Generated tests failed with pytest exit code {pytest_exit_code}."
+
+    return Diagnostic(
+        code=ETEST001,
+        file=str(path),
+        line=None,
+        col=None,
+        message=message,
+        hint="Inspect pytest_stdout and pytest_stderr for failing assertions or setup errors.",
     )
 
 

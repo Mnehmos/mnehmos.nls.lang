@@ -134,13 +134,14 @@ Verification passed!
 Run `@test` specifications from a `.nl` file.
 
 ```bash
-nlsc test <file> [-v]
+nlsc test <file> [-v] [--json]
 ```
 
 | Option          | Description        |
 | --------------- | ------------------ |
 | `file`          | Path to `.nl` file |
 | `-v, --verbose` | Verbose output     |
+| `--json`        | Emit structured diagnostics and pytest metadata |
 
 **Example:**
 

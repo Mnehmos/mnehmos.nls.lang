@@ -4,7 +4,7 @@ Complete guide to NLS errors, their causes, and how to fix them.
 
 ## Active CLI Error Codes
 
-These are the stable error codes currently emitted by `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, and `nlsc diff`.
+These are the stable error codes currently emitted by `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, `nlsc diff`, and `nlsc test`.
 
 Use the CLI to get the extended explanation for any code:
 
@@ -14,10 +14,11 @@ nlsc explain EPARSE001
 
 | Code | Commands | Meaning |
 | --- | --- | --- |
-| `EFILE001` | `compile`, `verify`, `run` | The requested `.nl` file does not exist. |
-| `EPARSE001` | `compile`, `verify`, `run` | The source file failed syntax parsing. |
-| `EUSE001` | `compile`, `verify`, `run` | A referenced `@use` stdlib domain could not be resolved. |
-| `E_RESOLUTION` | `compile`, `verify`, `run` | The ANLU dependency graph contains a missing or circular dependency. |
+| `EFILE001` | `compile`, `verify`, `run`, `test`, `graph`, `diff` | The requested `.nl` file does not exist. |
+| `EPARSE001` | `compile`, `verify`, `run`, `test`, `graph`, `diff` | The source file failed syntax parsing. |
+| `EUSE001` | `compile`, `verify`, `run`, `test` | A referenced `@use` stdlib domain could not be resolved. |
+| `E_RESOLUTION` | `compile`, `verify`, `run`, `test` | The ANLU dependency graph contains a missing or circular dependency. |
+| `ETEST001` | `test` | `nlsc test` generated pytest cases, but the run failed or could not be executed successfully. |
 | `ECONTRACT001` | `verify` | An ANLU is missing a required contract field such as `PURPOSE` or `RETURNS`. |
 | `ETARGET001` | `compile`, `run` | The requested target is not supported by the command. |
 | `EVALIDATE001` | `compile` | Generated output failed post-emit validation. |
@@ -49,6 +50,12 @@ Raised when a referenced `@use` module cannot be found in the stdlib search root
 Raised when an ANLU depends on a missing ANLU or participates in a dependency cycle.
 
 **Fix:** Define the missing dependency, rename the dependency reference, or break the cycle.
+
+### `ETEST001` - Test execution failed
+
+Raised when `nlsc test --json` successfully generates tests but pytest exits non-zero or cannot be launched.
+
+**Fix:** Inspect `pytest_stdout` and `pytest_stderr` in the JSON payload, then fix the failing assertion, import/setup error, or local pytest environment issue.
 
 ### `ECONTRACT001` - Contract validation error
 

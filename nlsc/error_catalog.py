@@ -8,6 +8,7 @@ EFILE001 = "EFILE001"
 EPARSE001 = "EPARSE001"
 EUSE001 = "EUSE001"
 E_RESOLUTION = "E_RESOLUTION"
+ETEST001 = "ETEST001"
 ECONTRACT001 = "ECONTRACT001"
 ETARGET001 = "ETARGET001"
 EVALIDATE001 = "EVALIDATE001"
@@ -32,7 +33,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         code=EFILE001,
         title="File not found",
         summary="The requested source file does not exist at the provided path.",
-        emitted_by=("compile", "verify", "run"),
+        emitted_by=("compile", "verify", "run", "test", "graph", "diff"),
         common_causes=(
             "The .nl path is misspelled or points to the wrong working directory.",
             "The file has not been created yet or was moved.",
@@ -46,7 +47,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         code=EPARSE001,
         title="Parse error",
         summary="The .nl source contains syntax the parser cannot accept.",
-        emitted_by=("compile", "verify", "run"),
+        emitted_by=("compile", "verify", "run", "test", "graph", "diff"),
         common_causes=(
             "A required directive or section is malformed or missing.",
             "A LOGIC, INPUTS, or GUARDS line does not follow the expected shape.",
@@ -60,7 +61,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         code=EUSE001,
         title="Missing stdlib domain",
         summary="A referenced `@use` domain could not be resolved from the stdlib roots.",
-        emitted_by=("compile", "verify", "run"),
+        emitted_by=("compile", "verify", "run", "test"),
         common_causes=(
             "The domain name is misspelled.",
             "The expected stdlib root was not included via project, CLI, or environment config.",
@@ -74,7 +75,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         code=E_RESOLUTION,
         title="Dependency resolution error",
         summary="An ANLU dependency graph is invalid or references an unresolved ANLU.",
-        emitted_by=("compile", "verify", "run"),
+        emitted_by=("compile", "verify", "run", "test"),
         common_causes=(
             "A `DEPENDS` entry points at an ANLU that does not exist.",
             "Two or more ANLUs form a dependency cycle.",
@@ -82,6 +83,20 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Define the missing ANLU or remove the dependency reference.",
             "Break cycles so dependency edges form an acyclic graph.",
+        ),
+    ),
+    ETEST001: ErrorDefinition(
+        code=ETEST001,
+        title="Test execution failed",
+        summary="`nlsc test` generated pytest cases, but the test run did not complete successfully.",
+        emitted_by=("test",),
+        common_causes=(
+            "One or more generated assertions failed.",
+            "Pytest hit an import, collection, or local environment error while running the generated tests.",
+        ),
+        next_steps=(
+            "Inspect the pytest stdout/stderr captured in the JSON payload.",
+            "Fix the generated behavior, source spec, or local test environment and rerun `nlsc test`.",
         ),
     ),
     ECONTRACT001: ErrorDefinition(
