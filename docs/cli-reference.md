@@ -14,7 +14,7 @@ nlsc [--parser {regex,treesitter}] [--version] [--help] <command>
 | `--version` | Show version number                               |
 | `--help`    | Show help message                                 |
 
-If `--json` is present, JSON-capable commands now return structured bootstrap diagnostics even when argparse fails before command dispatch. Use `ECLI001` for CLI usage errors such as missing required args, invalid choice values, or unknown subcommands, `EPARSE002` for parser-backend bootstrap failures such as `--parser treesitter` without tree-sitter installed, `ELSP001` for missing optional `nlsc[lsp]` dependencies, `ELSP002` for LSP server startup failures after import succeeds, and `EASSOC001` through `EASSOC004` for `nlsc assoc` platform, icon, permission, and runtime failures.
+If `--json` is present, JSON-capable commands now return structured bootstrap diagnostics even when argparse fails before command dispatch. Use `ECLI001` for CLI usage errors such as missing required args, invalid choice values, or unknown subcommands, `EEXPLAIN001` when `nlsc explain` is asked for an uncataloged code, `EPARSE002` for parser-backend bootstrap failures such as `--parser treesitter` without tree-sitter installed, `ELSP001` for missing optional `nlsc[lsp]` dependencies, `ELSP002` for LSP server startup failures after import succeeds, and `EASSOC001` through `EASSOC004` for `nlsc assoc` platform, icon, permission, and runtime failures.
 
 ---
 
@@ -128,6 +128,33 @@ Verifying src/order.nl (parser: regex)...
 
 Verification passed!
 ```
+
+---
+
+### `nlsc explain`
+
+Print the catalog entry for a stable CLI error code.
+
+```bash
+nlsc explain <code> [--json]
+```
+
+| Option   | Description |
+| -------- | ----------- |
+| `code`   | Stable CLI error code to explain |
+| `--json` | Emit structured JSON for the explanation or unknown-code diagnostic |
+
+**Examples:**
+
+```bash
+# Human-readable explanation
+nlsc explain EPARSE001
+
+# Machine-readable explanation payload
+nlsc explain EPARSE001 --json
+```
+
+If the requested code is not cataloged, `nlsc explain --json` returns an `EEXPLAIN001` diagnostic plus `requested_code` and `known_codes` fields so callers can recover deterministically.
 
 ---
 

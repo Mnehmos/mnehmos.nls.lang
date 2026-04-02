@@ -58,6 +58,7 @@ from .diagnostics import (
     Diagnostic,
     contract_error_diagnostics,
     dependency_error_diagnostics,
+    explain_unknown_code_diagnostic,
     graph_anlu_not_found_diagnostic,
     graph_format_diagnostic,
     lockfile_outdated_diagnostics,
@@ -73,6 +74,7 @@ from .diagnostics import (
 )
 from .error_catalog import (
     ECLI001,
+    EEXPLAIN001,
     EEXEC001,
     ETARGET001,
     EVALIDATE001,
@@ -314,6 +316,33 @@ def _emit_cli_parse_failure(error: CLIParseError) -> int:
     )
 
 
+def _emit_explain_definition_json(code: str) -> int:
+    definition = get_error_definition(code)
+    if definition is None:
+        diagnostic = explain_unknown_code_diagnostic(code)
+        return _emit_json(
+            "explain",
+            [diagnostic],
+            requested_code=code,
+            known_codes=list(known_error_codes()),
+            error_type=EEXPLAIN001,
+        )
+
+    payload: dict[str, object] = {
+        "ok": True,
+        "command": "explain",
+        "code": definition.code,
+        "title": definition.title,
+        "summary": definition.summary,
+        "emitted_by": list(definition.emitted_by),
+        "common_causes": list(definition.common_causes),
+        "next_steps": list(definition.next_steps),
+        "diagnostics": [],
+    }
+    print(json.dumps(payload, indent=2))
+    return 0
+
+
 def _emit_lsp_startup_failure(args: argparse.Namespace, diagnostic: Diagnostic) -> int:
     transport = getattr(args, "transport", "stdio")
     host = getattr(args, "host", "127.0.0.1")
@@ -344,9 +373,13 @@ def _format_dependency_error(error: object) -> str:
 
 def cmd_explain(args: argparse.Namespace) -> int:
     """Explain a stable CLI error code."""
+    if getattr(args, "json", False):
+        return _emit_explain_definition_json(args.code)
+
     definition = get_error_definition(args.code)
     if definition is None:
-        print(f"Unknown error code: {args.code}", file=sys.stderr)
+        diagnostic = explain_unknown_code_diagnostic(args.code)
+        print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
         print(f"Known codes: {', '.join(known_error_codes())}", file=sys.stderr)
         return 1
 
@@ -1703,6 +1736,11 @@ The conversation is the programming. The .nl file is the receipt.
         "explain", help="Explain a stable CLI error code"
     )
     explain_parser.add_argument("code", help="Stable CLI error code to explain")
+    explain_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit structured JSON output.",
+    )
 
     # graph command
     graph_parser = subparsers.add_parser(

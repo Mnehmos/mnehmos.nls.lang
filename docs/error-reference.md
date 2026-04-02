@@ -15,6 +15,7 @@ nlsc explain EPARSE001
 | Code | Commands | Meaning |
 | --- | --- | --- |
 | `ECLI001` | `compile`, `verify`, `run`, `test`, `graph`, `atomize`, `diff`, `lsp`, `assoc`, `watch`, `lock:check`, `lock:update`, `unknown-subcommand` | CLI argument parsing failed before command dispatch while `--json` was active. |
+| `EEXPLAIN001` | `explain` | `nlsc explain` was asked to document an unknown stable error code. |
 | `EFILE001` | `atomize`, `compile`, `verify`, `run`, `test`, `graph`, `diff`, `watch`, `lock:check`, `lock:update` | The requested input path does not exist. |
 | `EATOM001` | `atomize` | The input Python file failed syntax parsing during atomization. |
 | `EATOM002` | `atomize` | `nlsc atomize` hit an unexpected extraction or write failure. |
@@ -48,6 +49,12 @@ Raised when argparse rejects the command line before `nlsc` can dispatch the req
 Covered cases include missing required positional arguments, invalid choice values such as an unsupported `--target`, and unknown subcommands.
 
 **Fix:** Rerun the command with `--help`, correct the argument list, and keep `--json` enabled if an automated caller expects structured diagnostics.
+
+### `EEXPLAIN001` - Unknown explain error code
+
+Raised when `nlsc explain` receives a code that is not present in the stable CLI error catalog. With `--json`, the command returns a structured diagnostic plus a `known_codes` list so automation can recover without scraping stderr.
+
+**Fix:** Correct the requested code, or choose one of the reported catalog entries and rerun `nlsc explain`.
 
 ### `EFILE001` - File not found
 

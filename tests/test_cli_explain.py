@@ -19,6 +19,7 @@ def test_error_catalog_covers_active_cli_error_codes() -> None:
 
     expected_codes = {
         "ECLI001",
+        "EEXPLAIN001",
         "EATOM001",
         "EATOM002",
         "EFILE001",
@@ -110,9 +111,19 @@ def test_explain_command_prints_watch_runtime_error_details() -> None:
     assert result.stderr == ""
 
 
+def test_explain_command_prints_explain_unknown_code_details() -> None:
+    result = _run_nlsc("explain", "EEXPLAIN001")
+
+    assert result.returncode == 0
+    assert "EEXPLAIN001" in result.stdout
+    assert "Unknown explain error code" in result.stdout
+    assert "nlsc explain" in result.stdout
+    assert result.stderr == ""
+
+
 def test_explain_command_rejects_unknown_error_code() -> None:
     result = _run_nlsc("explain", "ENOPE999")
 
     assert result.returncode == 1
-    assert "Unknown error code: ENOPE999" in result.stderr
+    assert "Error [EEXPLAIN001]: Unknown error code: ENOPE999" in result.stderr
     assert "Known codes:" in result.stderr

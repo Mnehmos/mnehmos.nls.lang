@@ -128,6 +128,62 @@ def test_verify_json_reports_missing_required_file_argument() -> None:
     assert payload["usage"].startswith("usage: nlsc verify")
 
 
+def test_explain_json_reports_known_error_definition() -> None:
+    result = _run_nlsc(["explain", "EPARSE001", "--json"], cwd=REPO_ROOT)
+
+    assert result.returncode == 0
+    payload = _load_json_output(result)
+    assert payload == {
+        "ok": True,
+        "command": "explain",
+        "code": "EPARSE001",
+        "title": "Parse error",
+        "summary": "The .nl source contains syntax the parser cannot accept.",
+        "emitted_by": [
+            "compile",
+            "verify",
+            "run",
+            "test",
+            "graph",
+            "diff",
+            "watch",
+            "lock:check",
+            "lock:update",
+        ],
+        "common_causes": [
+            "A required directive or section is malformed or missing.",
+            "A LOGIC, INPUTS, or GUARDS line does not follow the expected shape.",
+        ],
+        "next_steps": [
+            "Use the reported line number to fix the source syntax.",
+            "Run `nlsc verify <file>` after editing to confirm the file parses cleanly.",
+        ],
+        "diagnostics": [],
+    }
+
+
+def test_explain_json_reports_unknown_error_code() -> None:
+    result = _run_nlsc(["explain", "ENOPE999", "--json"], cwd=REPO_ROOT)
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["ok"] is False
+    assert payload["command"] == "explain"
+    assert payload["requested_code"] == "ENOPE999"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EEXPLAIN001",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "Unknown error code: ENOPE999",
+            "hint": "Run `nlsc explain --json ECLI001` or inspect `known_codes` to choose a cataloged error code.",
+        }
+    ]
+    assert "ECLI001" in payload["known_codes"]
+    assert "EWATCH002" in payload["known_codes"]
+
+
 def test_verify_json_reports_parse_error_location(tmp_path: Path) -> None:
     source_path = tmp_path / "broken.nl"
     source_path.write_text(
