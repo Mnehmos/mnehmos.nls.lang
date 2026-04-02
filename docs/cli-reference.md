@@ -272,7 +272,7 @@ nlsc lock:update src/api.nl --json
 Watch a directory for `.nl` file changes and automatically recompile.
 
 ```bash
-nlsc watch [dir] [-q] [-t] [-d DEBOUNCE]
+nlsc watch [dir] [-q] [-t] [-d DEBOUNCE] [--json]
 ```
 
 | Option           | Description                            |
@@ -281,6 +281,7 @@ nlsc watch [dir] [-q] [-t] [-d DEBOUNCE]
 | `-q, --quiet`    | Suppress success messages              |
 | `-t, --test`     | Run tests after successful compile     |
 | `-d, --debounce` | Debounce interval in ms (default: 100) |
+| `--json`         | Emit structured diagnostics for startup path errors |
 
 **Examples:**
 
@@ -296,6 +297,8 @@ nlsc watch src/ -q -d 500
 ```
 
 Press `Ctrl+C` to stop watching.
+
+When `--json` is enabled, `nlsc watch` emits stable diagnostics for deterministic startup failures before the watcher begins, including missing directories and non-directory paths.
 
 ---
 

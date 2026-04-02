@@ -8,6 +8,9 @@ import sys
 from pathlib import Path
 
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
 def _run_nlsc(argv: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "-m", "nlsc", *argv],
@@ -25,7 +28,7 @@ def _load_json_output(result: subprocess.CompletedProcess[str]) -> dict:
 def test_verify_json_reports_missing_file(tmp_path: Path) -> None:
     missing_path = tmp_path / "missing.nl"
 
-    result = _run_nlsc(["verify", str(missing_path), "--json"], cwd=tmp_path)
+    result = _run_nlsc(["verify", str(missing_path), "--json"], cwd=REPO_ROOT)
 
     assert result.returncode == 1
     payload = _load_json_output(result)
@@ -60,7 +63,7 @@ RETURNS: void
     )
 
     result = _run_nlsc(
-        ["--parser", "regex", "verify", str(source_path), "--json"], cwd=tmp_path
+        ["--parser", "regex", "verify", str(source_path), "--json"], cwd=REPO_ROOT
     )
 
     assert result.returncode == 1
@@ -93,7 +96,7 @@ RETURNS: 1
     )
 
     result = _run_nlsc(
-        ["--parser", "regex", "verify", str(source_path), "--json"], cwd=tmp_path
+        ["--parser", "regex", "verify", str(source_path), "--json"], cwd=REPO_ROOT
     )
 
     assert result.returncode == 1
@@ -126,7 +129,7 @@ RETURNS: 1
     )
 
     result = _run_nlsc(
-        ["--parser", "regex", "verify", str(source_path), "--json"], cwd=tmp_path
+        ["--parser", "regex", "verify", str(source_path), "--json"], cwd=REPO_ROOT
     )
 
     assert result.returncode == 1
@@ -146,7 +149,7 @@ RETURNS: 1
 def test_compile_json_reports_missing_file(tmp_path: Path) -> None:
     missing_path = tmp_path / "missing_compile.nl"
 
-    result = _run_nlsc(["compile", str(missing_path), "--json"], cwd=tmp_path)
+    result = _run_nlsc(["compile", str(missing_path), "--json"], cwd=REPO_ROOT)
 
     assert result.returncode == 1
     payload = _load_json_output(result)
@@ -157,7 +160,7 @@ def test_compile_json_reports_missing_file(tmp_path: Path) -> None:
 def test_run_json_reports_missing_file(tmp_path: Path) -> None:
     missing_path = tmp_path / "missing_run.nl"
 
-    result = _run_nlsc(["run", str(missing_path), "--json"], cwd=tmp_path)
+    result = _run_nlsc(["run", str(missing_path), "--json"], cwd=REPO_ROOT)
 
     assert result.returncode == 1
     payload = _load_json_output(result)
@@ -168,7 +171,7 @@ def test_run_json_reports_missing_file(tmp_path: Path) -> None:
 def test_graph_json_reports_missing_file(tmp_path: Path) -> None:
     missing_path = tmp_path / "missing_graph.nl"
 
-    result = _run_nlsc(["graph", str(missing_path), "--json"], cwd=tmp_path)
+    result = _run_nlsc(["graph", str(missing_path), "--json"], cwd=REPO_ROOT)
 
     assert result.returncode == 1
     payload = _load_json_output(result)
@@ -191,7 +194,7 @@ RETURNS: 1
     )
 
     result = _run_nlsc(
-        ["graph", str(source_path), "--json", "--anlu", "helper"], cwd=tmp_path
+        ["graph", str(source_path), "--json", "--anlu", "helper"], cwd=REPO_ROOT
     )
 
     assert result.returncode == 1
@@ -225,7 +228,7 @@ RETURNS: 1
 
     result = _run_nlsc(
         ["graph", str(source_path), "--json", "--anlu", "main", "--format", "dot"],
-        cwd=tmp_path,
+        cwd=REPO_ROOT,
     )
 
     assert result.returncode == 1
@@ -246,7 +249,7 @@ RETURNS: 1
 def test_atomize_json_reports_missing_file(tmp_path: Path) -> None:
     missing_path = tmp_path / "missing_atomize.py"
 
-    result = _run_nlsc(["atomize", str(missing_path), "--json"], cwd=tmp_path)
+    result = _run_nlsc(["atomize", str(missing_path), "--json"], cwd=REPO_ROOT)
 
     assert result.returncode == 1
     payload = _load_json_output(result)
@@ -270,7 +273,7 @@ def test_atomize_json_reports_python_syntax_error(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    result = _run_nlsc(["atomize", str(source_path), "--json"], cwd=tmp_path)
+    result = _run_nlsc(["atomize", str(source_path), "--json"], cwd=REPO_ROOT)
 
     assert result.returncode == 1
     payload = _load_json_output(result)
@@ -297,7 +300,7 @@ def test_atomize_json_reports_write_failure(tmp_path: Path) -> None:
 
     result = _run_nlsc(
         ["atomize", str(source_path), "--output", str(output_path), "--json"],
-        cwd=tmp_path,
+        cwd=REPO_ROOT,
     )
 
     assert result.returncode == 1
@@ -320,7 +323,7 @@ def test_atomize_json_reports_write_failure(tmp_path: Path) -> None:
 def test_diff_json_reports_missing_file(tmp_path: Path) -> None:
     missing_path = tmp_path / "missing_diff.nl"
 
-    result = _run_nlsc(["diff", str(missing_path), "--json"], cwd=tmp_path)
+    result = _run_nlsc(["diff", str(missing_path), "--json"], cwd=REPO_ROOT)
 
     assert result.returncode == 1
     payload = _load_json_output(result)
@@ -345,7 +348,7 @@ RETURNS: 1
     )
 
     result = _run_nlsc(
-        ["--parser", "regex", "diff", str(source_path), "--json"], cwd=tmp_path
+        ["--parser", "regex", "diff", str(source_path), "--json"], cwd=REPO_ROOT
     )
 
     assert result.returncode == 1
@@ -366,7 +369,7 @@ RETURNS: 1
 def test_test_json_reports_missing_file(tmp_path: Path) -> None:
     missing_path = tmp_path / "missing_test.nl"
 
-    result = _run_nlsc(["test", str(missing_path), "--json"], cwd=tmp_path)
+    result = _run_nlsc(["test", str(missing_path), "--json"], cwd=REPO_ROOT)
 
     assert result.returncode == 1
     payload = _load_json_output(result)
@@ -400,7 +403,7 @@ RETURNS: 1
     )
 
     result = _run_nlsc(
-        ["--parser", "regex", "test", str(source_path), "--json"], cwd=tmp_path
+        ["--parser", "regex", "test", str(source_path), "--json"], cwd=REPO_ROOT
     )
 
     assert result.returncode == 1
@@ -432,7 +435,7 @@ RETURNS: 1
         encoding="utf-8",
     )
 
-    result = _run_nlsc(["lock:check", str(source_path), "--json"], cwd=tmp_path)
+    result = _run_nlsc(["lock:check", str(source_path), "--json"], cwd=REPO_ROOT)
 
     assert result.returncode == 1
     payload = _load_json_output(result)
@@ -490,7 +493,7 @@ targets:
     )
 
     result = _run_nlsc(
-        ["--parser", "regex", "lock:check", str(source_path), "--json"], cwd=tmp_path
+        ["--parser", "regex", "lock:check", str(source_path), "--json"], cwd=REPO_ROOT
     )
 
     assert result.returncode == 1
@@ -525,7 +528,7 @@ RETURNS: 1
     )
 
     result = _run_nlsc(
-        ["--parser", "regex", "lock:update", str(source_path), "--json"], cwd=tmp_path
+        ["--parser", "regex", "lock:update", str(source_path), "--json"], cwd=REPO_ROOT
     )
 
     assert result.returncode == 1
@@ -563,7 +566,7 @@ RETURNS: 1
     )
 
     result = _run_nlsc(
-        ["--parser", "regex", "test", str(source_path), "--json"], cwd=tmp_path
+        ["--parser", "regex", "test", str(source_path), "--json"], cwd=REPO_ROOT
     )
 
     assert result.returncode == 1
@@ -601,7 +604,7 @@ RETURNS: 1
     )
 
     result = _run_nlsc(
-        ["--parser", "regex", "test", str(source_path), "--json"], cwd=tmp_path
+        ["--parser", "regex", "test", str(source_path), "--json"], cwd=REPO_ROOT
     )
 
     assert result.returncode == 1
@@ -639,7 +642,7 @@ RETURNS: 1
         encoding="utf-8",
     )
 
-    result = _run_nlsc(["test", str(source_path), "--json"], cwd=tmp_path)
+    result = _run_nlsc(["test", str(source_path), "--json"], cwd=REPO_ROOT)
 
     assert result.returncode == 1
     payload = _load_json_output(result)
@@ -682,7 +685,7 @@ RETURNS: a + b
         encoding="utf-8",
     )
 
-    result = _run_nlsc(["test", str(source_path), "--json"], cwd=tmp_path)
+    result = _run_nlsc(["test", str(source_path), "--json"], cwd=REPO_ROOT)
 
     assert result.returncode == 0
     payload = _load_json_output(result)
@@ -693,3 +696,44 @@ RETURNS: a + b
     assert payload["total_cases"] == 2
     assert payload["pytest_exit_code"] == 0
     assert payload["pytest_stdout"]
+
+
+def test_watch_json_reports_missing_directory(tmp_path: Path) -> None:
+    missing_path = tmp_path / "missing_watch_dir"
+
+    result = _run_nlsc(["watch", str(missing_path), "--json"], cwd=REPO_ROOT)
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "watch"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EFILE001",
+            "file": str(missing_path),
+            "line": None,
+            "col": None,
+            "message": f"Directory not found: {missing_path}",
+            "hint": "Check that the path exists and try again.",
+        }
+    ]
+
+
+def test_watch_json_reports_not_a_directory(tmp_path: Path) -> None:
+    source_path = tmp_path / "not_a_dir.nl"
+    source_path.write_text("@module watch\n@target python\n", encoding="utf-8")
+
+    result = _run_nlsc(["watch", str(source_path), "--json"], cwd=REPO_ROOT)
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "watch"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EWATCH001",
+            "file": str(source_path),
+            "line": None,
+            "col": None,
+            "message": f"Watch path is not a directory: {source_path}",
+            "hint": "Pass a directory path to `nlsc watch` and try again.",
+        }
+    ]
