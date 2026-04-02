@@ -55,6 +55,7 @@ from .diagnostics import (
     missing_file_diagnostic,
     parse_error_diagnostic,
     stdlib_use_diagnostic,
+    test_execution_diagnostic,
 )
 from .error_catalog import (
     EEXEC001,
@@ -563,20 +564,57 @@ def cmd_graph(args: argparse.Namespace) -> int:
 def cmd_test(args: argparse.Namespace) -> int:
     """Run @test specifications from a .nl file"""
     source_path = Path(args.file)
+    json_output = getattr(args, "json", False)
 
     if not source_path.exists():
-        print(f"Error: File not found: {source_path}", file=sys.stderr)
+        diagnostic = missing_file_diagnostic(source_path)
+        if json_output:
+            return _emit_json("test", [diagnostic], file=str(source_path))
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
         return 1
 
     # Parse
     try:
         nl_file = parse_nl_file_auto(source_path)
     except ParseError as e:
+        diagnostic = parse_error_diagnostic(source_path, e)
+        if json_output:
+            return _emit_json("test", [diagnostic], file=str(source_path))
         print(f"Parse error: {e}", file=sys.stderr)
+        return 1
+
+    try:
+        validation = validate_semantics(nl_file, source_path)
+    except StdlibUseError as e:
+        diagnostic = stdlib_use_diagnostic(source_path, e)
+        if json_output:
+            return _emit_json("test", [diagnostic], file=str(source_path))
+        _print_stdlib_use_error(e)
+        return 1
+
+    if validation.dependency_errors:
+        diagnostics = dependency_error_diagnostics(
+            source_path, nl_file, validation.dependency_errors
+        )
+        if json_output:
+            return _emit_json("test", diagnostics, file=str(source_path))
+        print(f"{_cross()} Resolution errors:", file=sys.stderr)
+        for err in validation.dependency_errors:
+            print(f"  - {_format_dependency_error(err)}", file=sys.stderr)
         return 1
 
     # Check for tests
     if not nl_file.tests:
+        if json_output:
+            return _emit_json(
+                "test",
+                [],
+                file=str(source_path),
+                total_cases=0,
+                pytest_exit_code=None,
+                pytest_stdout="",
+                pytest_stderr="",
+            )
         print(f"No @test blocks found in {source_path}")
         return 0
 
@@ -607,10 +645,11 @@ def cmd_test(args: argparse.Namespace) -> int:
 
         # Print summary
         total_cases = sum(len(ts.cases) for ts in nl_file.tests)
-        print(f"Running {total_cases} test cases from {source_path}...")
-        for ts in nl_file.tests:
-            print(f"  • [{ts.anlu_id}]: {len(ts.cases)} cases")
-        print()
+        if not json_output:
+            print(f"Running {total_cases} test cases from {source_path}...")
+            for ts in nl_file.tests:
+                print(f"  • [{ts.anlu_id}]: {len(ts.cases)} cases")
+            print()
 
         # Run pytest
         verbose_flag = "-v" if getattr(args, "verbose", False) else "-q"
@@ -643,14 +682,50 @@ def cmd_test(args: argparse.Namespace) -> int:
 
         # Report results
         if result.returncode == 0:
+            if json_output:
+                return _emit_json(
+                    "test",
+                    [],
+                    file=str(source_path),
+                    total_cases=total_cases,
+                    pytest_exit_code=result.returncode,
+                    pytest_stdout=result.stdout or "",
+                    pytest_stderr=result.stderr or "",
+                )
             print(f"{_check()} All {total_cases} tests passed!")
             return 0
+
+        if json_output:
+            return _emit_json(
+                "test",
+                [test_execution_diagnostic(source_path, result.returncode)],
+                file=str(source_path),
+                total_cases=total_cases,
+                pytest_exit_code=result.returncode,
+                pytest_stdout=result.stdout or "",
+                pytest_stderr=result.stderr or "",
+            )
 
         print(f"{_cross()} Tests failed")
         if result.stdout:
             print(result.stdout)
         if result.stderr:
             print(result.stderr, file=sys.stderr)
+        return 1
+    except OSError as exc:
+        diagnostic = test_execution_diagnostic(source_path, None)
+        if json_output:
+            return _emit_json(
+                "test",
+                [diagnostic],
+                file=str(source_path),
+                total_cases=0,
+                pytest_exit_code=None,
+                pytest_stdout="",
+                pytest_stderr=str(exc),
+            )
+        print(f"{_cross()} {diagnostic.message}", file=sys.stderr)
+        print(str(exc), file=sys.stderr)
         return 1
     finally:
         shutil.rmtree(temp_path, ignore_errors=True)
@@ -1348,6 +1423,11 @@ The conversation is the programming. The .nl file is the receipt.
     )
     test_parser.add_argument(
         "-k", "--case", help="Run specific test case (regex pattern)"
+    )
+    test_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit structured JSON output.",
     )
 
     # atomize command

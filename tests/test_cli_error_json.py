@@ -287,3 +287,210 @@ RETURNS: 1
             "hint": "Rewrite the line as a numbered LOGIC step like '1. ...'.",
         }
     ]
+
+
+def test_test_json_reports_missing_file(tmp_path: Path) -> None:
+    missing_path = tmp_path / "missing_test.nl"
+
+    result = _run_nlsc(["test", str(missing_path), "--json"], cwd=tmp_path)
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "test"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EFILE001",
+            "file": str(missing_path),
+            "line": None,
+            "col": None,
+            "message": f"File not found: {missing_path}",
+            "hint": "Check that the path exists and try again.",
+        }
+    ]
+
+
+def test_test_json_reports_parse_error(tmp_path: Path) -> None:
+    source_path = tmp_path / "broken_test.nl"
+    source_path.write_text(
+        """\
+@module broken-test
+@target python
+
+[main]
+PURPOSE: Broken test file
+LOGIC:
+  bad step
+RETURNS: 1
+""",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(
+        ["--parser", "regex", "test", str(source_path), "--json"], cwd=tmp_path
+    )
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "test"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EPARSE001",
+            "file": str(source_path),
+            "line": 7,
+            "col": None,
+            "message": "Invalid LOGIC step format; expected numbered step like '1. ...'",
+            "hint": "Rewrite the line as a numbered LOGIC step like '1. ...'.",
+        }
+    ]
+
+
+def test_test_json_reports_resolution_error(tmp_path: Path) -> None:
+    source_path = tmp_path / "missing_dep_test.nl"
+    source_path.write_text(
+        """\
+@module missing-dep-test
+@target python
+
+[main]
+PURPOSE: Needs helper
+DEPENDS: [helper]
+RETURNS: 1
+
+@test [main] {
+  main() == 1
+}
+""",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(
+        ["--parser", "regex", "test", str(source_path), "--json"], cwd=tmp_path
+    )
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "test"
+    assert payload["diagnostics"] == [
+        {
+            "code": "E_RESOLUTION",
+            "file": str(source_path),
+            "line": 4,
+            "col": 1,
+            "message": "main: Missing dependency: helper",
+            "hint": "Define [helper] or remove it from DEPENDS.",
+        }
+    ]
+
+
+def test_test_json_reports_stdlib_use_error(tmp_path: Path) -> None:
+    source_path = tmp_path / "use_missing_test.nl"
+    source_path.write_text(
+        """\
+@module use-missing-test
+@target python
+@use math.missing
+
+[main]
+PURPOSE: No-op
+RETURNS: 1
+
+@test [main] {
+  main() == 1
+}
+""",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(
+        ["--parser", "regex", "test", str(source_path), "--json"], cwd=tmp_path
+    )
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "test"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EUSE001",
+            "file": str(source_path),
+            "line": 3,
+            "col": 1,
+            "message": "Missing stdlib domain: math.missing",
+            "hint": "Add the module under an stdlib root or pass --stdlib-path.",
+        }
+    ]
+
+
+def test_test_json_reports_pytest_failures(tmp_path: Path) -> None:
+    source_path = tmp_path / "failing_test.nl"
+    source_path.write_text(
+        """\
+@module failing-test
+@target python
+
+[always-one]
+PURPOSE: Always returns one
+INPUTS:
+  - value: number
+RETURNS: 1
+
+@test [always-one] {
+  always_one(5) == 5
+}
+""",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(["test", str(source_path), "--json"], cwd=tmp_path)
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "test"
+    assert payload["ok"] is False
+    assert payload["diagnostics"] == [
+        {
+            "code": "ETEST001",
+            "file": str(source_path),
+            "line": None,
+            "col": None,
+            "message": "Generated tests failed with pytest exit code 1.",
+            "hint": "Inspect pytest_stdout and pytest_stderr for failing assertions or setup errors.",
+        }
+    ]
+    assert payload["total_cases"] == 1
+    assert payload["pytest_exit_code"] == 1
+    assert "assert 1 == 5" in payload["pytest_stdout"]
+
+
+def test_test_json_reports_success_metadata(tmp_path: Path) -> None:
+    source_path = tmp_path / "passing_test.nl"
+    source_path.write_text(
+        """\
+@module passing-test
+@target python
+
+[add]
+PURPOSE: Add two numbers
+INPUTS:
+  - a: number
+  - b: number
+RETURNS: a + b
+
+@test [add] {
+  add(2, 3) == 5
+  add(4, 1) == 5
+}
+""",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(["test", str(source_path), "--json"], cwd=tmp_path)
+
+    assert result.returncode == 0
+    payload = _load_json_output(result)
+    assert payload["ok"] is True
+    assert payload["command"] == "test"
+    assert payload["diagnostics"] == []
+    assert payload["file"] == str(source_path)
+    assert payload["total_cases"] == 2
+    assert payload["pytest_exit_code"] == 0
+    assert payload["pytest_stdout"]

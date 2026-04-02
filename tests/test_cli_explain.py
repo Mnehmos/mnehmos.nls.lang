@@ -22,6 +22,7 @@ def test_error_catalog_covers_active_cli_error_codes() -> None:
         "EPARSE001",
         "EUSE001",
         "E_RESOLUTION",
+        "ETEST001",
         "ECONTRACT001",
         "ETARGET001",
         "EVALIDATE001",
