@@ -36,6 +36,8 @@ def test_error_catalog_covers_active_cli_error_codes() -> None:
         "EGRAPH002",
         "ELOCK001",
         "ELOCK002",
+        "ELSP001",
+        "ELSP002",
         "EWATCH001",
     }
 
@@ -69,6 +71,16 @@ def test_explain_command_prints_parser_backend_unavailable_details() -> None:
     assert "EPARSE002" in result.stdout
     assert "Parser backend unavailable" in result.stdout
     assert "treesitter" in result.stdout
+    assert result.stderr == ""
+
+
+def test_explain_command_prints_lsp_dependency_error_details() -> None:
+    result = _run_nlsc("explain", "ELSP001")
+
+    assert result.returncode == 0
+    assert "ELSP001" in result.stdout
+    assert "LSP optional dependencies unavailable" in result.stdout
+    assert "nlsc[lsp]" in result.stdout
     assert result.stderr == ""
 
 

@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 from nlsc.cli import main
@@ -294,6 +295,78 @@ def test_main_argv_json_parse_errors_use_supplied_argv(capsys: Any) -> None:
         }
     ]
     assert payload["usage"].startswith("usage: nlsc verify")
+    assert captured.err == ""
+
+
+def test_lsp_json_reports_missing_optional_dependencies(
+    capsys: Any, monkeypatch: Any
+) -> None:
+    import builtins
+
+    real_import = builtins.__import__
+
+    def fake_import(
+        name: str,
+        globals: dict[str, object] | None = None,
+        locals: dict[str, object] | None = None,
+        fromlist: tuple[str, ...] = (),
+        level: int = 0,
+    ) -> Any:
+        if name == "nlsc.lsp":
+            raise ImportError("No module named 'pygls'")
+        return real_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.delitem(sys.modules, "nlsc.lsp", raising=False)
+    monkeypatch.delitem(sys.modules, "nlsc.lsp.server", raising=False)
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    exit_code = main(["lsp", "--json"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["command"] == "lsp"
+    assert payload["diagnostics"] == [
+        {
+            "code": "ELSP001",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "LSP optional dependencies are unavailable: No module named 'pygls'",
+            "hint": "Install with: pip install nlsc[lsp] and rerun `nlsc lsp`.",
+        }
+    ]
+    assert captured.err == ""
+
+
+def test_lsp_json_reports_startup_failure(capsys: Any, monkeypatch: Any) -> None:
+    fake_module = ModuleType("nlsc.lsp")
+
+    def fake_start_server(*, transport: str, host: str, port: int) -> None:
+        raise RuntimeError(f"failed to bind {transport} server on {host}:{port}")
+
+    setattr(fake_module, "start_server", fake_start_server)
+    monkeypatch.setitem(sys.modules, "nlsc.lsp", fake_module)
+
+    exit_code = main(["lsp", "--json", "--transport", "tcp", "--port", "2088"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["command"] == "lsp"
+    assert payload["transport"] == "tcp"
+    assert payload["host"] == "127.0.0.1"
+    assert payload["port"] == 2088
+    assert payload["diagnostics"] == [
+        {
+            "code": "ELSP002",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "LSP server failed to start: failed to bind tcp server on 127.0.0.1:2088",
+            "hint": "Check the selected transport, host, and port, then rerun `nlsc lsp`.",
+        }
+    ]
     assert captured.err == ""
 
 

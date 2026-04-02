@@ -4,7 +4,7 @@ Complete guide to NLS errors, their causes, and how to fix them.
 
 ## Active CLI Error Codes
 
-These are the stable error codes currently emitted by `nlsc atomize`, `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, `nlsc diff`, `nlsc test`, `nlsc watch`, `nlsc lock:check`, and `nlsc lock:update`.
+These are the stable error codes currently emitted by `nlsc atomize`, `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, `nlsc diff`, `nlsc test`, `nlsc watch`, `nlsc lock:check`, `nlsc lock:update`, and `nlsc lsp`.
 
 Use the CLI to get the extended explanation for any code:
 
@@ -32,6 +32,8 @@ nlsc explain EPARSE001
 | `EGRAPH002` | `graph` | `nlsc graph --anlu` was asked for an output format that is not supported for ANLU-level graphs. |
 | `ELOCK001` | `lock:check` | `nlsc lock:check` could not load the `.nl.lock` file because it is missing or malformed. |
 | `ELOCK002` | `lock:check` | `nlsc lock:check` found source content that no longer matches the lockfile. |
+| `ELSP001` | `lsp` | `nlsc lsp` could not import the optional language-server dependencies. |
+| `ELSP002` | `lsp` | `nlsc lsp` loaded but failed while starting the requested transport. |
 | `EWATCH001` | `watch` | `nlsc watch` was given a path that exists but is not a directory. |
 
 ### `ECLI001` - CLI usage error
@@ -143,6 +145,18 @@ Raised when `nlsc lock:check --json` cannot load the `.nl.lock` file because it 
 Raised when `nlsc lock:check --json` finds ANLUs that no longer match the current `.nl` source.
 
 **Fix:** Regenerate the lockfile with `nlsc compile <file>` or `nlsc lock:update <file>` after reviewing the reported ANLU mismatches.
+
+### `ELSP001` - LSP optional dependencies unavailable
+
+Raised when `nlsc lsp` cannot import the optional dependencies that back the language server, such as `pygls` or `lsprotocol`.
+
+**Fix:** Install the extras with `pip install nlsc[lsp]`, then rerun `nlsc lsp` in the same environment.
+
+### `ELSP002` - LSP server startup failed
+
+Raised when `nlsc lsp` imports successfully but the server fails while initializing the selected transport or binding the requested endpoint.
+
+**Fix:** Check the selected transport, host, and port, inspect the startup message, and rerun `nlsc lsp`.
 
 ### `EWATCH001` - Watch path is not a directory
 

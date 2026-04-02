@@ -21,6 +21,8 @@ from .error_catalog import (
     EGRAPH002,
     ELOCK001,
     ELOCK002,
+    ELSP001,
+    ELSP002,
     EPARSE001,
     EPARSE002,
     EWATCH001,
@@ -93,6 +95,28 @@ def watch_not_directory_diagnostic(path: Path) -> Diagnostic:
         col=None,
         message=f"Watch path is not a directory: {path}",
         hint="Pass a directory path to `nlsc watch` and try again.",
+    )
+
+
+def lsp_dependencies_unavailable_diagnostic(detail: str) -> Diagnostic:
+    return Diagnostic(
+        code=ELSP001,
+        file="<cli>",
+        line=None,
+        col=None,
+        message=f"LSP optional dependencies are unavailable: {detail}",
+        hint="Install with: pip install nlsc[lsp] and rerun `nlsc lsp`.",
+    )
+
+
+def lsp_startup_failure_diagnostic(detail: str) -> Diagnostic:
+    return Diagnostic(
+        code=ELSP002,
+        file="<cli>",
+        line=None,
+        col=None,
+        message=f"LSP server failed to start: {detail}",
+        hint="Check the selected transport, host, and port, then rerun `nlsc lsp`.",
     )
 
 

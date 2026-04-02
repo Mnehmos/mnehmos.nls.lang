@@ -22,6 +22,8 @@ EGRAPH001 = "EGRAPH001"
 EGRAPH002 = "EGRAPH002"
 ELOCK001 = "ELOCK001"
 ELOCK002 = "ELOCK002"
+ELSP001 = "ELSP001"
+ELSP002 = "ELSP002"
 EWATCH001 = "EWATCH001"
 
 
@@ -325,6 +327,34 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Run `nlsc compile <file>` or `nlsc lock:update <file>` to regenerate the lockfile.",
             "Review the reported ANLU diagnostics to confirm the source changes are expected.",
+        ),
+    ),
+    ELSP001: ErrorDefinition(
+        code=ELSP001,
+        title="LSP optional dependencies unavailable",
+        summary="`nlsc lsp` could not import the optional LSP server dependencies before startup.",
+        emitted_by=("lsp",),
+        common_causes=(
+            "The optional `nlsc[lsp]` extras were not installed in the current Python environment.",
+            "A transitive LSP dependency such as `pygls` or `lsprotocol` is missing or broken.",
+        ),
+        next_steps=(
+            "Install the optional dependencies with `pip install nlsc[lsp]`.",
+            "Retry `nlsc lsp` in the same environment after the install completes.",
+        ),
+    ),
+    ELSP002: ErrorDefinition(
+        code=ELSP002,
+        title="LSP server startup failed",
+        summary="`nlsc lsp` loaded successfully, but the server failed during startup or transport initialization.",
+        emitted_by=("lsp",),
+        common_causes=(
+            "The requested TCP host or port could not be bound.",
+            "The language server raised an unexpected runtime error while initializing the selected transport.",
+        ),
+        next_steps=(
+            "Check the selected transport, host, and port, then rerun `nlsc lsp`.",
+            "Inspect the reported startup message to identify the failing runtime dependency or bind step.",
         ),
     ),
     EWATCH001: ErrorDefinition(
