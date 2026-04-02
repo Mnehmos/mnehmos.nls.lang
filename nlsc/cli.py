@@ -6,6 +6,7 @@ Commands:
     nlsc compile <file>    Compile .nl file to target language
     nlsc run <file>        Compile and execute in one step
     nlsc verify <file>     Verify .nl file without generating
+    nlsc explain <code>    Explain a stable CLI error code
     nlsc graph <file>      Visualize dependencies and dataflow
     nlsc test <file>       Run @test specifications
     nlsc atomize <file>    Extract ANLUs from Python code
@@ -52,6 +53,15 @@ from .diagnostics import (
     missing_file_diagnostic,
     parse_error_diagnostic,
     stdlib_use_diagnostic,
+)
+from .error_catalog import (
+    EEXEC001,
+    ETARGET001,
+    EVALIDATE001,
+    E_RUN,
+    format_error_explanation,
+    get_error_definition,
+    known_error_codes,
 )
 from .lockfile import read_lockfile
 from .watch import NLWatcher, format_timestamp
@@ -171,6 +181,18 @@ def _format_dependency_error(error: object) -> str:
         message = getattr(error, "message")
         return f"{anlu_id}: {message}"
     return str(error)
+
+
+def cmd_explain(args: argparse.Namespace) -> int:
+    """Explain a stable CLI error code."""
+    definition = get_error_definition(args.code)
+    if definition is None:
+        print(f"Unknown error code: {args.code}", file=sys.stderr)
+        print(f"Known codes: {', '.join(known_error_codes())}", file=sys.stderr)
+        return 1
+
+    print(format_error_explanation(definition))
+    return 0
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -307,7 +329,7 @@ def cmd_compile(args: argparse.Namespace) -> int:
     except ValueError as exc:
         if json_output:
             diagnostic = Diagnostic(
-                code="ETARGET001",
+                code=ETARGET001,
                 file=str(source_path),
                 line=None,
                 col=None,
@@ -332,7 +354,7 @@ def cmd_compile(args: argparse.Namespace) -> int:
     if not is_valid:
         if json_output:
             diagnostic = Diagnostic(
-                code="EVALIDATE001",
+                code=EVALIDATE001,
                 file=str(output_path),
                 line=None,
                 col=None,
@@ -864,7 +886,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     except Exception as e:
         if json_output:
             diagnostic = Diagnostic(
-                code="E_RUN",
+                code=E_RUN,
                 file=str(source_path),
                 line=None,
                 col=None,
@@ -901,7 +923,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     if target != "python":
         if json_output:
             diagnostic = Diagnostic(
-                code="ETARGET001",
+                code=ETARGET001,
                 file=str(source_path),
                 line=None,
                 col=None,
@@ -1000,7 +1022,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     except Exception as e:
         if json_output:
             diagnostic = Diagnostic(
-                code="EEXEC001",
+                code=EEXEC001,
                 file=str(source_path),
                 line=None,
                 col=None,
@@ -1263,6 +1285,12 @@ The conversation is the programming. The .nl file is the receipt.
         help="Emit structured JSON output.",
     )
 
+    # explain command
+    explain_parser = subparsers.add_parser(
+        "explain", help="Explain a stable CLI error code"
+    )
+    explain_parser.add_argument("code", help="Stable CLI error code to explain")
+
     # graph command
     graph_parser = subparsers.add_parser(
         "graph", help="Visualize dependencies and dataflow"
@@ -1399,6 +1427,8 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_run(args)
     elif args.command == "verify":
         return cmd_verify(args)
+    elif args.command == "explain":
+        return cmd_explain(args)
     elif args.command == "graph":
         return cmd_graph(args)
     elif args.command == "test":

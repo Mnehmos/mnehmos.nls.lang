@@ -22,6 +22,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from .error_catalog import EUSE001
+
 
 ENV_STDLIB_PATH = "NLS_STDLIB_PATH"
 PROJECT_STDLIB_REL = Path(".nls") / "stdlib"
@@ -96,7 +98,7 @@ def _missing_domain_error(
     candidate_rel = domain_to_relpath(major=major, domain=domain)
     # NOTE: tests assert for stable code + candidate_relpath + attempted_roots.
     return StdlibUseError(
-        code="EUSE001",
+        code=EUSE001,
         domain_spec=domain_spec,
         domain=domain or domain_spec,
         major=major,
