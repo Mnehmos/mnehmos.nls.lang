@@ -50,6 +50,8 @@ from .diagnostics import (
     Diagnostic,
     contract_error_diagnostics,
     dependency_error_diagnostics,
+    graph_anlu_not_found_diagnostic,
+    graph_format_diagnostic,
     missing_file_diagnostic,
     parse_error_diagnostic,
     stdlib_use_diagnostic,
@@ -483,15 +485,23 @@ def cmd_verify(args: argparse.Namespace) -> int:
 def cmd_graph(args: argparse.Namespace) -> int:
     """Generate dependency graph visualization"""
     source_path = Path(args.file)
+    json_output = getattr(args, "json", False)
 
     if not source_path.exists():
-        print(f"Error: File not found: {source_path}", file=sys.stderr)
+        diagnostic = missing_file_diagnostic(source_path)
+        if json_output:
+            return _emit_json("graph", [diagnostic], file=str(source_path))
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
+        print(f"Error: {diagnostic.hint}", file=sys.stderr)
         return 1
 
     # Parse
     try:
         nl_file = parse_nl_file_auto(source_path)
     except ParseError as e:
+        diagnostic = parse_error_diagnostic(source_path, e)
+        if json_output:
+            return _emit_json("graph", [diagnostic], file=str(source_path))
         print(f"Parse error: {e}", file=sys.stderr)
         return 1
 
@@ -503,8 +513,11 @@ def cmd_graph(args: argparse.Namespace) -> int:
     if anlu_id:
         anlu = nl_file.get_anlu(anlu_id)
         if not anlu:
-            print(f"Error: ANLU '{anlu_id}' not found", file=sys.stderr)
-            print(f"Available: {', '.join(a.identifier for a in nl_file.anlus)}")
+            diagnostic = graph_anlu_not_found_diagnostic(source_path, nl_file, anlu_id)
+            if json_output:
+                return _emit_json("graph", [diagnostic], file=str(source_path))
+            print(f"Error: {diagnostic.message}", file=sys.stderr)
+            print(f"Error: {diagnostic.hint}", file=sys.stderr)
             return 1
 
         # Check if ANLU has FSM states
@@ -518,10 +531,11 @@ def cmd_graph(args: argparse.Namespace) -> int:
         elif output_format == "ascii":
             output = emit_dataflow_ascii(anlu)
         else:
-            print(
-                f"Error: Format '{output_format}' not supported for dataflow",
-                file=sys.stderr,
-            )
+            diagnostic = graph_format_diagnostic(source_path, anlu, output_format)
+            if json_output:
+                return _emit_json("graph", [diagnostic], file=str(source_path))
+            print(f"Error: {diagnostic.message}", file=sys.stderr)
+            print(f"Error: {diagnostic.hint}", file=sys.stderr)
             return 1
     else:
         # Full file dependency graph
@@ -679,15 +693,23 @@ def cmd_atomize(args: argparse.Namespace) -> int:
 def cmd_diff(args: argparse.Namespace) -> int:
     """Show changes since last compile"""
     source_path = Path(args.file)
+    json_output = getattr(args, "json", False)
 
     if not source_path.exists():
-        print(f"Error: File not found: {source_path}", file=sys.stderr)
+        diagnostic = missing_file_diagnostic(source_path)
+        if json_output:
+            return _emit_json("diff", [diagnostic], file=str(source_path))
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
+        print(f"Error: {diagnostic.hint}", file=sys.stderr)
         return 1
 
     # Parse current NL file
     try:
         nl_file = parse_nl_file_auto(source_path)
     except ParseError as e:
+        diagnostic = parse_error_diagnostic(source_path, e)
+        if json_output:
+            return _emit_json("diff", [diagnostic], file=str(source_path))
         print(f"Parse error: {e}", file=sys.stderr)
         return 1
 
@@ -1312,6 +1334,11 @@ The conversation is the programming. The .nl file is the receipt.
     graph_parser.add_argument(
         "-o", "--output", help="Output file path (default: stdout)"
     )
+    graph_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit structured JSON output.",
+    )
 
     # test command
     test_parser = subparsers.add_parser("test", help="Run @test specifications")
@@ -1339,6 +1366,11 @@ The conversation is the programming. The .nl file is the receipt.
     diff_parser.add_argument("--stat", action="store_true", help="Show summary only")
     diff_parser.add_argument(
         "--full", action="store_true", help="Show full unified dif"
+    )
+    diff_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit structured JSON output.",
     )
 
     # watch command

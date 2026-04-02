@@ -10,7 +10,14 @@ from .parser import ParseError
 from .resolver import ResolutionError
 from .schema import NLFile
 from .stdlib_resolver import StdlibUseError
-from .error_catalog import ECONTRACT001, EFILE001, EPARSE001, E_RESOLUTION
+from .error_catalog import (
+    ECONTRACT001,
+    EFILE001,
+    EGRAPH001,
+    EGRAPH002,
+    EPARSE001,
+    E_RESOLUTION,
+)
 
 
 @dataclass(frozen=True)
@@ -134,6 +141,32 @@ def contract_error_diagnostics(path: Path, errors: list[str]) -> list[Diagnostic
         )
         for error in errors
     ]
+
+
+def graph_anlu_not_found_diagnostic(
+    path: Path, nl_file: NLFile, anlu_id: str
+) -> Diagnostic:
+    available = ", ".join(anlu.identifier for anlu in nl_file.anlus) or "none"
+    return Diagnostic(
+        code=EGRAPH001,
+        file=str(path),
+        line=None,
+        col=None,
+        message=f"ANLU '{anlu_id}' not found",
+        hint=f"Choose one of the defined ANLUs: {available}.",
+    )
+
+
+def graph_format_diagnostic(path: Path, anlu: object, output_format: str) -> Diagnostic:
+    line = getattr(anlu, "line_number", 0) or None
+    return Diagnostic(
+        code=EGRAPH002,
+        file=str(path),
+        line=line,
+        col=1 if line is not None else None,
+        message=f"Format '{output_format}' is not supported for ANLU dataflow graphs",
+        hint="Use --format mermaid or --format ascii when selecting --anlu.",
+    )
 
 
 def _find_use_line(path: Path, domain_spec: str) -> int | None:

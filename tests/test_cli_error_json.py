@@ -163,3 +163,127 @@ def test_run_json_reports_missing_file(tmp_path: Path) -> None:
     payload = _load_json_output(result)
     assert payload["command"] == "run"
     assert payload["diagnostics"][0]["code"] == "EFILE001"
+
+
+def test_graph_json_reports_missing_file(tmp_path: Path) -> None:
+    missing_path = tmp_path / "missing_graph.nl"
+
+    result = _run_nlsc(["graph", str(missing_path), "--json"], cwd=tmp_path)
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "graph"
+    assert payload["diagnostics"][0]["code"] == "EFILE001"
+
+
+def test_graph_json_reports_missing_anlu(tmp_path: Path) -> None:
+    source_path = tmp_path / "graph_source.nl"
+    source_path.write_text(
+        """\
+@module graph-source
+@target python
+
+[main]
+PURPOSE: Show graph
+RETURNS: 1
+""",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(
+        ["graph", str(source_path), "--json", "--anlu", "helper"], cwd=tmp_path
+    )
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "graph"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EGRAPH001",
+            "file": str(source_path),
+            "line": None,
+            "col": None,
+            "message": "ANLU 'helper' not found",
+            "hint": "Choose one of the defined ANLUs: main.",
+        }
+    ]
+
+
+def test_graph_json_reports_unsupported_dataflow_format(tmp_path: Path) -> None:
+    source_path = tmp_path / "graph_dataflow.nl"
+    source_path.write_text(
+        """\
+@module graph-dataflow
+@target python
+
+[main]
+PURPOSE: Show graph
+RETURNS: 1
+""",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(
+        ["graph", str(source_path), "--json", "--anlu", "main", "--format", "dot"],
+        cwd=tmp_path,
+    )
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "graph"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EGRAPH002",
+            "file": str(source_path),
+            "line": 4,
+            "col": 1,
+            "message": "Format 'dot' is not supported for ANLU dataflow graphs",
+            "hint": "Use --format mermaid or --format ascii when selecting --anlu.",
+        }
+    ]
+
+
+def test_diff_json_reports_missing_file(tmp_path: Path) -> None:
+    missing_path = tmp_path / "missing_diff.nl"
+
+    result = _run_nlsc(["diff", str(missing_path), "--json"], cwd=tmp_path)
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "diff"
+    assert payload["diagnostics"][0]["code"] == "EFILE001"
+
+
+def test_diff_json_reports_parse_error(tmp_path: Path) -> None:
+    source_path = tmp_path / "diff_broken.nl"
+    source_path.write_text(
+        """\
+@module diff-broken
+@target python
+
+[main]
+PURPOSE: Broken diff
+LOGIC:
+  bad step
+RETURNS: 1
+""",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(
+        ["--parser", "regex", "diff", str(source_path), "--json"], cwd=tmp_path
+    )
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "diff"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EPARSE001",
+            "file": str(source_path),
+            "line": 7,
+            "col": None,
+            "message": "Invalid LOGIC step format; expected numbered step like '1. ...'",
+            "hint": "Rewrite the line as a numbered LOGIC step like '1. ...'.",
+        }
+    ]

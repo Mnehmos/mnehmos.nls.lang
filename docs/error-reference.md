@@ -4,7 +4,7 @@ Complete guide to NLS errors, their causes, and how to fix them.
 
 ## Active CLI Error Codes
 
-These are the stable error codes currently emitted by `nlsc compile`, `nlsc verify`, and `nlsc run`.
+These are the stable error codes currently emitted by `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, and `nlsc diff`.
 
 Use the CLI to get the extended explanation for any code:
 
@@ -23,6 +23,8 @@ nlsc explain EPARSE001
 | `EVALIDATE001` | `compile` | Generated output failed post-emit validation. |
 | `E_RUN` | `run` | `nlsc run` hit an unexpected internal error before execution completed. |
 | `EEXEC001` | `run` | `nlsc run` failed while setting up or launching the generated module. |
+| `EGRAPH001` | `graph` | `nlsc graph --anlu` requested an ANLU that is not defined in the source file. |
+| `EGRAPH002` | `graph` | `nlsc graph --anlu` was asked for an output format that is not supported for ANLU-level graphs. |
 
 ### `EFILE001` - File not found
 
@@ -77,6 +79,18 @@ Raised when `nlsc run` encounters an internal setup or parser-path failure befor
 Raised when `nlsc run` fails while preparing or launching the generated Python module.
 
 **Fix:** Inspect the generated module path and local runtime environment, then rerun.
+
+### `EGRAPH001` - Graph ANLU not found
+
+Raised when `nlsc graph --anlu <id>` names an ANLU that does not exist in the `.nl` file.
+
+**Fix:** Use one of the ANLU identifiers defined in the file, or omit `--anlu` to render the full dependency graph.
+
+### `EGRAPH002` - Unsupported graph output format
+
+Raised when `nlsc graph --anlu` is combined with an output format that only supports whole-file graphs, such as `--format dot`.
+
+**Fix:** Use `--format mermaid` or `--format ascii` for ANLU-level graphs, or remove `--anlu` when generating a DOT graph.
 
 ## Parse Errors
 
