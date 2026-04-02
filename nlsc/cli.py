@@ -47,6 +47,8 @@ from .diff import (
     generate_full_diff,
 )
 from .diagnostics import (
+    atomize_failure_diagnostic,
+    atomize_syntax_error_diagnostic,
     Diagnostic,
     contract_error_diagnostics,
     dependency_error_diagnostics,
@@ -736,34 +738,55 @@ def cmd_test(args: argparse.Namespace) -> int:
 def cmd_atomize(args: argparse.Namespace) -> int:
     """Extract ANLUs from Python source code"""
     source_path = Path(args.file)
+    json_output = getattr(args, "json", False)
 
     if not source_path.exists():
-        print(f"Error: File not found: {source_path}", file=sys.stderr)
+        diagnostic = missing_file_diagnostic(source_path)
+        if json_output:
+            return _emit_json("atomize", [diagnostic], file=str(source_path))
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
         return 1
 
     # Determine output path
-    output_path = Path(args.output) if args.output else None
+    output_path = Path(args.output) if args.output else source_path.with_suffix(".nl")
 
     # Determine module name
     module_name = args.module
 
-    print(f"Atomizing {source_path}...")
+    if not json_output:
+        print(f"Atomizing {source_path}...")
 
     try:
         nl_content = atomize_file(source_path, output_path, module_name)
 
         # Count ANLUs
         anlu_count = nl_content.count("[") - nl_content.count("[[")
-        final_output = output_path or source_path.with_suffix(".nl")
+        final_output = output_path
+
+        if json_output:
+            return _emit_json(
+                "atomize",
+                [],
+                file=str(source_path),
+                output=str(final_output),
+                anlu_count=anlu_count,
+                module=module_name or source_path.stem.replace("_", "-"),
+            )
 
         print(f"  {_check()} Extracted {anlu_count} ANLUs")
         print(f"  {_check()} Wrote {final_output}")
         return 0
     except SyntaxError as e:
-        print(f"  {_cross()} Python syntax error: {e}", file=sys.stderr)
+        diagnostic = atomize_syntax_error_diagnostic(source_path, e)
+        if json_output:
+            return _emit_json("atomize", [diagnostic], file=str(source_path))
+        print(f"  {_cross()} {diagnostic.message}", file=sys.stderr)
         return 1
     except Exception as e:
-        print(f"  {_cross()} Error: {e}", file=sys.stderr)
+        diagnostic = atomize_failure_diagnostic(source_path, e, output_path=output_path)
+        if json_output:
+            return _emit_json("atomize", [diagnostic], file=str(source_path))
+        print(f"  {_cross()} {diagnostic.message}", file=sys.stderr)
         return 1
 
 
@@ -1511,6 +1534,11 @@ The conversation is the programming. The .nl file is the receipt.
     atomize_parser.add_argument("file", help="Path to Python file")
     atomize_parser.add_argument("-o", "--output", help="Output .nl file path")
     atomize_parser.add_argument("-m", "--module", help="Module name for generated .nl")
+    atomize_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit structured JSON diagnostics.",
+    )
 
     # diff command
     diff_parser = subparsers.add_parser(

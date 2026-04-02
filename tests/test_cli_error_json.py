@@ -243,6 +243,80 @@ RETURNS: 1
     ]
 
 
+def test_atomize_json_reports_missing_file(tmp_path: Path) -> None:
+    missing_path = tmp_path / "missing_atomize.py"
+
+    result = _run_nlsc(["atomize", str(missing_path), "--json"], cwd=tmp_path)
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "atomize"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EFILE001",
+            "file": str(missing_path),
+            "line": None,
+            "col": None,
+            "message": f"File not found: {missing_path}",
+            "hint": "Check that the path exists and try again.",
+        }
+    ]
+
+
+def test_atomize_json_reports_python_syntax_error(tmp_path: Path) -> None:
+    source_path = tmp_path / "broken.py"
+    source_path.write_text(
+        "def broken(:\n    return 1\n",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(["atomize", str(source_path), "--json"], cwd=tmp_path)
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "atomize"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EATOM001",
+            "file": str(source_path),
+            "line": 1,
+            "col": 12,
+            "message": "Python syntax error: invalid syntax",
+            "hint": "Fix the Python syntax and rerun `nlsc atomize`.",
+        }
+    ]
+
+
+def test_atomize_json_reports_write_failure(tmp_path: Path) -> None:
+    source_path = tmp_path / "ok.py"
+    source_path.write_text(
+        "def add(a: int, b: int) -> int:\n    return a + b\n",
+        encoding="utf-8",
+    )
+    output_path = tmp_path / "missing" / "out.nl"
+
+    result = _run_nlsc(
+        ["atomize", str(source_path), "--output", str(output_path), "--json"],
+        cwd=tmp_path,
+    )
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "atomize"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EATOM002",
+            "file": str(source_path),
+            "line": None,
+            "col": None,
+            "message": payload["diagnostics"][0]["message"],
+            "hint": "Check the output path and local filesystem permissions, then rerun `nlsc atomize`.",
+        }
+    ]
+    assert str(output_path) in payload["diagnostics"][0]["message"]
+    assert "No such file or directory" in payload["diagnostics"][0]["message"]
+
+
 def test_diff_json_reports_missing_file(tmp_path: Path) -> None:
     missing_path = tmp_path / "missing_diff.nl"
 

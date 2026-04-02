@@ -11,6 +11,8 @@ from .resolver import ResolutionError
 from .schema import NLFile
 from .stdlib_resolver import StdlibUseError
 from .error_catalog import (
+    EATOM001,
+    EATOM002,
     ECONTRACT001,
     EFILE001,
     EGRAPH001,
@@ -51,6 +53,30 @@ def missing_file_diagnostic(path: Path) -> Diagnostic:
         col=None,
         message=f"File not found: {path}",
         hint="Check that the path exists and try again.",
+    )
+
+
+def atomize_syntax_error_diagnostic(path: Path, error: SyntaxError) -> Diagnostic:
+    return Diagnostic(
+        code=EATOM001,
+        file=str(path),
+        line=error.lineno or None,
+        col=error.offset or None,
+        message=f"Python syntax error: {error.msg}",
+        hint="Fix the Python syntax and rerun `nlsc atomize`.",
+    )
+
+
+def atomize_failure_diagnostic(
+    path: Path, exc: Exception, *, output_path: Path
+) -> Diagnostic:
+    return Diagnostic(
+        code=EATOM002,
+        file=str(path),
+        line=None,
+        col=None,
+        message=f"Atomize failed while writing {output_path}: {exc}",
+        hint="Check the output path and local filesystem permissions, then rerun `nlsc atomize`.",
     )
 
 

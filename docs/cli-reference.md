@@ -304,7 +304,7 @@ Press `Ctrl+C` to stop watching.
 Extract ANLUs from existing Python source code (reverse compilation).
 
 ```bash
-nlsc atomize <file> [-o OUTPUT] [-m MODULE]
+nlsc atomize <file> [-o OUTPUT] [-m MODULE] [--json]
 ```
 
 | Option         | Description                     |
@@ -312,6 +312,7 @@ nlsc atomize <file> [-o OUTPUT] [-m MODULE]
 | `file`         | Path to Python file             |
 | `-o, --output` | Output `.nl` file path          |
 | `-m, --module` | Module name for generated `.nl` |
+| `--json`       | Emit structured JSON output     |
 
 **Example:**
 
@@ -320,6 +321,8 @@ nlsc atomize legacy/utils.py -o src/utils.nl -m utils
 ```
 
 This extracts functions from Python and generates corresponding ANLU blocks.
+
+When `--json` is enabled, `nlsc atomize` emits stable diagnostics for missing input files, Python syntax failures, and unexpected atomize/write failures.
 
 ---
 

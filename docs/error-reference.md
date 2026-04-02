@@ -4,7 +4,7 @@ Complete guide to NLS errors, their causes, and how to fix them.
 
 ## Active CLI Error Codes
 
-These are the stable error codes currently emitted by `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, `nlsc diff`, `nlsc test`, `nlsc lock:check`, and `nlsc lock:update`.
+These are the stable error codes currently emitted by `nlsc atomize`, `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, `nlsc diff`, `nlsc test`, `nlsc lock:check`, and `nlsc lock:update`.
 
 Use the CLI to get the extended explanation for any code:
 
@@ -14,7 +14,9 @@ nlsc explain EPARSE001
 
 | Code | Commands | Meaning |
 | --- | --- | --- |
-| `EFILE001` | `compile`, `verify`, `run`, `test`, `graph`, `diff`, `lock:check`, `lock:update` | The requested input file does not exist. |
+| `EFILE001` | `atomize`, `compile`, `verify`, `run`, `test`, `graph`, `diff`, `lock:check`, `lock:update` | The requested input file does not exist. |
+| `EATOM001` | `atomize` | The input Python file failed syntax parsing during atomization. |
+| `EATOM002` | `atomize` | `nlsc atomize` hit an unexpected extraction or write failure. |
 | `EPARSE001` | `compile`, `verify`, `run`, `test`, `graph`, `diff`, `lock:check`, `lock:update` | The source file failed syntax parsing. |
 | `EUSE001` | `compile`, `verify`, `run`, `test` | A referenced `@use` stdlib domain could not be resolved. |
 | `E_RESOLUTION` | `compile`, `verify`, `run`, `test` | The ANLU dependency graph contains a missing or circular dependency. |
@@ -31,9 +33,21 @@ nlsc explain EPARSE001
 
 ### `EFILE001` - File not found
 
-Raised when the input path passed to `compile`, `verify`, or `run` does not exist.
+Raised when the input path passed to `atomize`, `compile`, `verify`, or `run` does not exist.
 
 **Fix:** Check the path, ensure the file exists, and rerun the command.
+
+### `EATOM001` - Python syntax error
+
+Raised when `nlsc atomize --json` cannot parse the input `.py` file into a Python AST.
+
+**Fix:** Correct the reported Python syntax error and rerun `nlsc atomize <file>`.
+
+### `EATOM002` - Atomize write failed
+
+Raised when `nlsc atomize --json` hits an unexpected read/extract/write failure, such as an invalid output path.
+
+**Fix:** Check the output path and filesystem permissions, then rerun `nlsc atomize <file>`.
 
 ### `EPARSE001` - Parse error
 
