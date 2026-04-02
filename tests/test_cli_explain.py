@@ -30,6 +30,8 @@ def test_error_catalog_covers_active_cli_error_codes() -> None:
         "EEXEC001",
         "EGRAPH001",
         "EGRAPH002",
+        "ELOCK001",
+        "ELOCK002",
     }
 
     assert expected_codes <= set(ERROR_CATALOG)

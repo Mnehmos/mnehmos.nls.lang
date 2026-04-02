@@ -4,7 +4,7 @@ Complete guide to NLS errors, their causes, and how to fix them.
 
 ## Active CLI Error Codes
 
-These are the stable error codes currently emitted by `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, `nlsc diff`, and `nlsc test`.
+These are the stable error codes currently emitted by `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, `nlsc diff`, `nlsc test`, `nlsc lock:check`, and `nlsc lock:update`.
 
 Use the CLI to get the extended explanation for any code:
 
@@ -14,18 +14,20 @@ nlsc explain EPARSE001
 
 | Code | Commands | Meaning |
 | --- | --- | --- |
-| `EFILE001` | `compile`, `verify`, `run`, `test`, `graph`, `diff` | The requested `.nl` file does not exist. |
-| `EPARSE001` | `compile`, `verify`, `run`, `test`, `graph`, `diff` | The source file failed syntax parsing. |
+| `EFILE001` | `compile`, `verify`, `run`, `test`, `graph`, `diff`, `lock:check`, `lock:update` | The requested input file does not exist. |
+| `EPARSE001` | `compile`, `verify`, `run`, `test`, `graph`, `diff`, `lock:check`, `lock:update` | The source file failed syntax parsing. |
 | `EUSE001` | `compile`, `verify`, `run`, `test` | A referenced `@use` stdlib domain could not be resolved. |
 | `E_RESOLUTION` | `compile`, `verify`, `run`, `test` | The ANLU dependency graph contains a missing or circular dependency. |
 | `ETEST001` | `test` | `nlsc test` generated pytest cases, but the run failed or could not be executed successfully. |
 | `ECONTRACT001` | `verify` | An ANLU is missing a required contract field such as `PURPOSE` or `RETURNS`. |
-| `ETARGET001` | `compile`, `run` | The requested target is not supported by the command. |
+| `ETARGET001` | `compile`, `run`, `lock:update` | The requested target is not supported by the command. |
 | `EVALIDATE001` | `compile` | Generated output failed post-emit validation. |
 | `E_RUN` | `run` | `nlsc run` hit an unexpected internal error before execution completed. |
 | `EEXEC001` | `run` | `nlsc run` failed while setting up or launching the generated module. |
 | `EGRAPH001` | `graph` | `nlsc graph --anlu` requested an ANLU that is not defined in the source file. |
 | `EGRAPH002` | `graph` | `nlsc graph --anlu` was asked for an output format that is not supported for ANLU-level graphs. |
+| `ELOCK001` | `lock:check` | `nlsc lock:check` could not load the `.nl.lock` file because it is missing or malformed. |
+| `ELOCK002` | `lock:check` | `nlsc lock:check` found source content that no longer matches the lockfile. |
 
 ### `EFILE001` - File not found
 
@@ -98,6 +100,18 @@ Raised when `nlsc graph --anlu <id>` names an ANLU that does not exist in the `.
 Raised when `nlsc graph --anlu` is combined with an output format that only supports whole-file graphs, such as `--format dot`.
 
 **Fix:** Use `--format mermaid` or `--format ascii` for ANLU-level graphs, or remove `--anlu` when generating a DOT graph.
+
+### `ELOCK001` - Lockfile unavailable
+
+Raised when `nlsc lock:check --json` cannot load the `.nl.lock` file because it is missing or malformed.
+
+**Fix:** Run `nlsc compile <file>` or `nlsc lock:update <file>` to generate a fresh lockfile.
+
+### `ELOCK002` - Lockfile out of date
+
+Raised when `nlsc lock:check --json` finds ANLUs that no longer match the current `.nl` source.
+
+**Fix:** Regenerate the lockfile with `nlsc compile <file>` or `nlsc lock:update <file>` after reviewing the reported ANLU mismatches.
 
 ## Parse Errors
 
