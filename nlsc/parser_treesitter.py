@@ -177,6 +177,16 @@ def _sanitize_source_for_treesitter(source: str) -> str:
     return "\n".join(sanitized_lines)
 
 
+def _should_use_regex_canonical_parse(source: str) -> bool:
+    """Return True when regex parsing is the canonical semantic path."""
+    return bool(
+        re.search(
+            r"^\s*@(?:test|property|invariant|literal|main)\b", source, re.MULTILINE
+        )
+        or re.search(r"^\s*\d+\.\s+.+(?:->|→)\s+.+$", source, re.MULTILINE)
+    )
+
+
 # Determine platform-specific library name
 if sys.platform == "win32":
     _LIB_NAME = "nl.dll"
@@ -693,9 +703,13 @@ def parse_nl_file_treesitter(source: str, source_path: Optional[str] = None) -> 
         NLFile with parsed module info and ANLUs
     """
     normalized_source = normalize_localized_source(source)
+    canonical_result = parse_nl_file(source, source_path=source_path)
 
     if not normalized_source.isascii():
-        return parse_nl_file(source, source_path=source_path)
+        return canonical_result
+
+    if _should_use_regex_canonical_parse(normalized_source):
+        return canonical_result
 
     # Pre-check for a known edge case: malformed INPUTS bullets.
     # Tree-sitter may recover by dropping the malformed line, but we want

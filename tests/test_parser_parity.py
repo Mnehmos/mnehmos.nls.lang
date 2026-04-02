@@ -7,7 +7,7 @@ Ensures that both parsers produce equivalent AST output for the same input.
 import pytest
 from pathlib import Path
 
-from nlsc.parser import parse_nl_file, ParseError
+from nlsc.parser import parse_nl_file
 from nlsc.schema import NLFile
 
 
@@ -17,6 +17,7 @@ try:
         parse_nl_file_treesitter,
         is_available as treesitter_available,
     )
+
     TREESITTER_AVAILABLE = treesitter_available()
 except ImportError:
     TREESITTER_AVAILABLE = False
@@ -25,9 +26,14 @@ except ImportError:
 
 # Skip all tests if tree-sitter is not available
 pytestmark = pytest.mark.skipif(
-    not TREESITTER_AVAILABLE,
-    reason="tree-sitter not available"
+    not TREESITTER_AVAILABLE, reason="tree-sitter not available"
 )
+
+
+def parse_with_treesitter(source: str, source_path: str | None = None) -> NLFile:
+    """Typed wrapper around the optional tree-sitter parser import."""
+    assert parse_nl_file_treesitter is not None
+    return parse_nl_file_treesitter(source, source_path=source_path)
 
 
 def compare_anlus(regex_file: NLFile, ts_file: NLFile) -> list[str]:
@@ -45,53 +51,85 @@ def compare_anlus(regex_file: NLFile, ts_file: NLFile) -> list[str]:
         prefix = f"ANLU[{i}] {ra.identifier}"
 
         if ra.identifier != ta.identifier:
-            errors.append(f"{prefix}: identifier mismatch: {ra.identifier} vs {ta.identifier}")
+            errors.append(
+                f"{prefix}: identifier mismatch: {ra.identifier} vs {ta.identifier}"
+            )
 
         if ra.purpose != ta.purpose:
-            errors.append(f"{prefix}: purpose mismatch: '{ra.purpose}' vs '{ta.purpose}'")
+            errors.append(
+                f"{prefix}: purpose mismatch: '{ra.purpose}' vs '{ta.purpose}'"
+            )
 
         if ra.returns != ta.returns:
-            errors.append(f"{prefix}: returns mismatch: '{ra.returns}' vs '{ta.returns}'")
+            errors.append(
+                f"{prefix}: returns mismatch: '{ra.returns}' vs '{ta.returns}'"
+            )
 
         # Compare inputs
         if len(ra.inputs) != len(ta.inputs):
-            errors.append(f"{prefix}: input count mismatch: {len(ra.inputs)} vs {len(ta.inputs)}")
+            errors.append(
+                f"{prefix}: input count mismatch: {len(ra.inputs)} vs {len(ta.inputs)}"
+            )
         else:
             for j, (ri, ti) in enumerate(zip(ra.inputs, ta.inputs)):
                 if ri.name != ti.name:
-                    errors.append(f"{prefix}: input[{j}].name mismatch: {ri.name} vs {ti.name}")
+                    errors.append(
+                        f"{prefix}: input[{j}].name mismatch: {ri.name} vs {ti.name}"
+                    )
                 if ri.type != ti.type:
-                    errors.append(f"{prefix}: input[{j}].type mismatch: {ri.type} vs {ti.type}")
+                    errors.append(
+                        f"{prefix}: input[{j}].type mismatch: {ri.type} vs {ti.type}"
+                    )
 
         # Compare guards
         if len(ra.guards) != len(ta.guards):
-            errors.append(f"{prefix}: guard count mismatch: {len(ra.guards)} vs {len(ta.guards)}")
+            errors.append(
+                f"{prefix}: guard count mismatch: {len(ra.guards)} vs {len(ta.guards)}"
+            )
         else:
             for j, (rg, tg) in enumerate(zip(ra.guards, ta.guards)):
                 if rg.condition != tg.condition:
-                    errors.append(f"{prefix}: guard[{j}].condition mismatch: '{rg.condition}' vs '{tg.condition}'")
+                    errors.append(
+                        f"{prefix}: guard[{j}].condition mismatch: '{rg.condition}' vs '{tg.condition}'"
+                    )
                 if rg.error_type != tg.error_type:
-                    errors.append(f"{prefix}: guard[{j}].error_type mismatch: {rg.error_type} vs {tg.error_type}")
+                    errors.append(
+                        f"{prefix}: guard[{j}].error_type mismatch: {rg.error_type} vs {tg.error_type}"
+                    )
                 if rg.error_message != tg.error_message:
-                    errors.append(f"{prefix}: guard[{j}].error_message mismatch: {rg.error_message} vs {tg.error_message}")
+                    errors.append(
+                        f"{prefix}: guard[{j}].error_message mismatch: {rg.error_message} vs {tg.error_message}"
+                    )
 
         # Compare logic steps
         if len(ra.logic_steps) != len(ta.logic_steps):
-            errors.append(f"{prefix}: logic_step count mismatch: {len(ra.logic_steps)} vs {len(ta.logic_steps)}")
+            errors.append(
+                f"{prefix}: logic_step count mismatch: {len(ra.logic_steps)} vs {len(ta.logic_steps)}"
+            )
         else:
             for j, (rs, ts) in enumerate(zip(ra.logic_steps, ta.logic_steps)):
                 if rs.number != ts.number:
-                    errors.append(f"{prefix}: logic_step[{j}].number mismatch: {rs.number} vs {ts.number}")
+                    errors.append(
+                        f"{prefix}: logic_step[{j}].number mismatch: {rs.number} vs {ts.number}"
+                    )
                 if rs.description != ts.description:
-                    errors.append(f"{prefix}: logic_step[{j}].description mismatch: '{rs.description}' vs '{ts.description}'")
+                    errors.append(
+                        f"{prefix}: logic_step[{j}].description mismatch: '{rs.description}' vs '{ts.description}'"
+                    )
                 if rs.assigns != ts.assigns:
-                    errors.append(f"{prefix}: logic_step[{j}].assigns mismatch: {rs.assigns} vs {ts.assigns}")
+                    errors.append(
+                        f"{prefix}: logic_step[{j}].assigns mismatch: {rs.assigns} vs {ts.assigns}"
+                    )
                 if rs.uses != ts.uses:
-                    errors.append(f"{prefix}: logic_step[{j}].uses mismatch: {rs.uses} vs {ts.uses}")
+                    errors.append(
+                        f"{prefix}: logic_step[{j}].uses mismatch: {rs.uses} vs {ts.uses}"
+                    )
 
         # Compare edge cases
         if len(ra.edge_cases) != len(ta.edge_cases):
-            errors.append(f"{prefix}: edge_case count mismatch: {len(ra.edge_cases)} vs {len(ta.edge_cases)}")
+            errors.append(
+                f"{prefix}: edge_case count mismatch: {len(ra.edge_cases)} vs {len(ta.edge_cases)}"
+            )
 
         # Compare depends
         if ra.depends != ta.depends:
@@ -121,13 +159,19 @@ def compare_types(regex_file: NLFile, ts_file: NLFile) -> list[str]:
             errors.append(f"{prefix}: base mismatch: {rt.base} vs {tt.base}")
 
         if len(rt.fields) != len(tt.fields):
-            errors.append(f"{prefix}: field count mismatch: {len(rt.fields)} vs {len(tt.fields)}")
+            errors.append(
+                f"{prefix}: field count mismatch: {len(rt.fields)} vs {len(tt.fields)}"
+            )
         else:
             for j, (rf, tf) in enumerate(zip(rt.fields, tt.fields)):
                 if rf.name != tf.name:
-                    errors.append(f"{prefix}: field[{j}].name mismatch: {rf.name} vs {tf.name}")
+                    errors.append(
+                        f"{prefix}: field[{j}].name mismatch: {rf.name} vs {tf.name}"
+                    )
                 if rf.type != tf.type:
-                    errors.append(f"{prefix}: field[{j}].type mismatch: {rf.type} vs {tf.type}")
+                    errors.append(
+                        f"{prefix}: field[{j}].type mismatch: {rf.type} vs {tf.type}"
+                    )
 
     return errors
 
@@ -150,13 +194,19 @@ def compare_tests(regex_file: NLFile, ts_file: NLFile) -> list[str]:
             errors.append(f"{prefix}: anlu_id mismatch: {rt.anlu_id} vs {tt.anlu_id}")
 
         if len(rt.cases) != len(tt.cases):
-            errors.append(f"{prefix}: case count mismatch: {len(rt.cases)} vs {len(tt.cases)}")
+            errors.append(
+                f"{prefix}: case count mismatch: {len(rt.cases)} vs {len(tt.cases)}"
+            )
         else:
             for j, (rc, tc) in enumerate(zip(rt.cases, tt.cases)):
                 if rc.expression != tc.expression:
-                    errors.append(f"{prefix}: case[{j}].expression mismatch: '{rc.expression}' vs '{tc.expression}'")
+                    errors.append(
+                        f"{prefix}: case[{j}].expression mismatch: '{rc.expression}' vs '{tc.expression}'"
+                    )
                 if rc.expected != tc.expected:
-                    errors.append(f"{prefix}: case[{j}].expected mismatch: '{rc.expected}' vs '{tc.expected}'")
+                    errors.append(
+                        f"{prefix}: case[{j}].expected mismatch: '{rc.expected}' vs '{tc.expected}'"
+                    )
 
     return errors
 
@@ -179,17 +229,27 @@ def compare_properties(regex_file: NLFile, ts_file: NLFile) -> list[str]:
             errors.append(f"{prefix}: anlu_id mismatch: {rp.anlu_id} vs {tp.anlu_id}")
 
         if len(rp.assertions) != len(tp.assertions):
-            errors.append(f"{prefix}: assertion count mismatch: {len(rp.assertions)} vs {len(tp.assertions)}")
+            errors.append(
+                f"{prefix}: assertion count mismatch: {len(rp.assertions)} vs {len(tp.assertions)}"
+            )
         else:
             for j, (ra, ta) in enumerate(zip(rp.assertions, tp.assertions)):
                 if ra.expression != ta.expression:
-                    errors.append(f"{prefix}: assertion[{j}].expression mismatch: '{ra.expression}' vs '{ta.expression}'")
+                    errors.append(
+                        f"{prefix}: assertion[{j}].expression mismatch: '{ra.expression}' vs '{ta.expression}'"
+                    )
                 if ra.quantifier != ta.quantifier:
-                    errors.append(f"{prefix}: assertion[{j}].quantifier mismatch: {ra.quantifier} vs {ta.quantifier}")
+                    errors.append(
+                        f"{prefix}: assertion[{j}].quantifier mismatch: {ra.quantifier} vs {ta.quantifier}"
+                    )
                 if ra.variable != ta.variable:
-                    errors.append(f"{prefix}: assertion[{j}].variable mismatch: '{ra.variable}' vs '{ta.variable}'")
+                    errors.append(
+                        f"{prefix}: assertion[{j}].variable mismatch: '{ra.variable}' vs '{ta.variable}'"
+                    )
                 if ra.variable_type != ta.variable_type:
-                    errors.append(f"{prefix}: assertion[{j}].variable_type mismatch: '{ra.variable_type}' vs '{ta.variable_type}'")
+                    errors.append(
+                        f"{prefix}: assertion[{j}].variable_type mismatch: '{ra.variable_type}' vs '{ta.variable_type}'"
+                    )
 
     return errors
 
@@ -209,14 +269,20 @@ def compare_invariants(regex_file: NLFile, ts_file: NLFile) -> list[str]:
         prefix = f"Invariant[{i}] {ri.type_name}"
 
         if ri.type_name != ti.type_name:
-            errors.append(f"{prefix}: type_name mismatch: {ri.type_name} vs {ti.type_name}")
+            errors.append(
+                f"{prefix}: type_name mismatch: {ri.type_name} vs {ti.type_name}"
+            )
 
         if len(ri.conditions) != len(ti.conditions):
-            errors.append(f"{prefix}: condition count mismatch: {len(ri.conditions)} vs {len(ti.conditions)}")
+            errors.append(
+                f"{prefix}: condition count mismatch: {len(ri.conditions)} vs {len(ti.conditions)}"
+            )
         else:
             for j, (rc, tc) in enumerate(zip(ri.conditions, ti.conditions)):
                 if rc != tc:
-                    errors.append(f"{prefix}: condition[{j}] mismatch: '{rc}' vs '{tc}'")
+                    errors.append(
+                        f"{prefix}: condition[{j}] mismatch: '{rc}' vs '{tc}'"
+                    )
 
     return errors
 
@@ -239,21 +305,63 @@ def compare_main_block(regex_file: NLFile, ts_file: NLFile) -> list[str]:
     return errors
 
 
+def compare_literals(regex_file: NLFile, ts_file: NLFile) -> list[str]:
+    """Compare literal blocks from both parsers."""
+    errors = []
+
+    if len(regex_file.literals) != len(ts_file.literals):
+        errors.append(
+            f"Literal block count mismatch: regex={len(regex_file.literals)}, "
+            f"ts={len(ts_file.literals)}"
+        )
+        return errors
+
+    for i, (rl, tl) in enumerate(zip(regex_file.literals, ts_file.literals)):
+        if rl != tl:
+            errors.append(f"Literal block[{i}] mismatch: {rl!r} vs {tl!r}")
+
+    return errors
+
+
 def compare_module(regex_file: NLFile, ts_file: NLFile) -> list[str]:
     """Compare module-level metadata from both parsers."""
     errors = []
 
     if regex_file.module.name != ts_file.module.name:
-        errors.append(f"module.name mismatch: {regex_file.module.name} vs {ts_file.module.name}")
+        errors.append(
+            f"module.name mismatch: {regex_file.module.name} vs {ts_file.module.name}"
+        )
     if regex_file.module.version != ts_file.module.version:
-        errors.append(f"module.version mismatch: {regex_file.module.version} vs {ts_file.module.version}")
+        errors.append(
+            f"module.version mismatch: {regex_file.module.version} vs {ts_file.module.version}"
+        )
     if regex_file.module.target != ts_file.module.target:
-        errors.append(f"module.target mismatch: {regex_file.module.target} vs {ts_file.module.target}")
+        errors.append(
+            f"module.target mismatch: {regex_file.module.target} vs {ts_file.module.target}"
+        )
     if regex_file.module.imports != ts_file.module.imports:
-        errors.append(f"module.imports mismatch: {regex_file.module.imports} vs {ts_file.module.imports}")
+        errors.append(
+            f"module.imports mismatch: {regex_file.module.imports} vs {ts_file.module.imports}"
+        )
     if regex_file.module.uses != ts_file.module.uses:
-        errors.append(f"module.uses mismatch: {regex_file.module.uses} vs {ts_file.module.uses}")
+        errors.append(
+            f"module.uses mismatch: {regex_file.module.uses} vs {ts_file.module.uses}"
+        )
 
+    return errors
+
+
+def compare_full_parse(regex_file: NLFile, ts_file: NLFile) -> list[str]:
+    """Compare all currently parity-tested parser outputs."""
+    errors = []
+    errors.extend(compare_module(regex_file, ts_file))
+    errors.extend(compare_anlus(regex_file, ts_file))
+    errors.extend(compare_types(regex_file, ts_file))
+    errors.extend(compare_tests(regex_file, ts_file))
+    errors.extend(compare_properties(regex_file, ts_file))
+    errors.extend(compare_invariants(regex_file, ts_file))
+    errors.extend(compare_literals(regex_file, ts_file))
+    errors.extend(compare_main_block(regex_file, ts_file))
     return errors
 
 
@@ -270,14 +378,14 @@ INPUTS:
 RETURNS: a + b
 """
         regex_result = parse_nl_file(source)
-        ts_result = parse_nl_file_treesitter(source)
+        ts_result = parse_with_treesitter(source)
 
         errors = compare_anlus(regex_result, ts_result)
         assert not errors, "\n".join(errors)
 
     def test_anlu_with_guards(self):
         """Test ANLU with guards."""
-        source = '''[divide]
+        source = """[divide]
 PURPOSE: Divide two numbers
 INPUTS:
   - a: number
@@ -285,9 +393,9 @@ INPUTS:
 GUARDS:
   - b must not be zero -> ValueError("Division by zero")
 RETURNS: a / b
-'''
+"""
         regex_result = parse_nl_file(source)
-        ts_result = parse_nl_file_treesitter(source)
+        ts_result = parse_with_treesitter(source)
 
         errors = compare_anlus(regex_result, ts_result)
         assert not errors, "\n".join(errors)
@@ -305,7 +413,7 @@ LOGIC:
 RETURNS: total
 """
         regex_result = parse_nl_file(source)
-        ts_result = parse_nl_file_treesitter(source)
+        ts_result = parse_with_treesitter(source)
 
         errors = compare_anlus(regex_result, ts_result)
         assert not errors, "\n".join(errors)
@@ -325,7 +433,7 @@ INPUTS:
 RETURNS: a
 """
         regex_result = parse_nl_file(source)
-        ts_result = parse_nl_file_treesitter(source)
+        ts_result = parse_with_treesitter(source)
 
         errors = compare_module(regex_result, ts_result)
         assert not errors, "\n".join(errors)
@@ -339,7 +447,7 @@ RETURNS: a
 }
 """
         regex_result = parse_nl_file(source)
-        ts_result = parse_nl_file_treesitter(source)
+        ts_result = parse_with_treesitter(source)
 
         errors = compare_types(regex_result, ts_result)
         assert not errors, "\n".join(errors)
@@ -359,7 +467,7 @@ RETURNS: a + b
 }
 """
         regex_result = parse_nl_file(source)
-        ts_result = parse_nl_file_treesitter(source)
+        ts_result = parse_with_treesitter(source)
 
         errors = compare_tests(regex_result, ts_result)
         assert not errors, "\n".join(errors)
@@ -378,7 +486,7 @@ EDGE CASES:
 RETURNS: a / b
 """
         regex_result = parse_nl_file(source)
-        ts_result = parse_nl_file_treesitter(source)
+        ts_result = parse_with_treesitter(source)
 
         errors = compare_anlus(regex_result, ts_result)
         assert not errors, "\n".join(errors)
@@ -393,7 +501,7 @@ DEPENDS: [validate-order], [calculate-total]
 RETURNS: ProcessedOrder
 """
         regex_result = parse_nl_file(source)
-        ts_result = parse_nl_file_treesitter(source)
+        ts_result = parse_with_treesitter(source)
 
         errors = compare_anlus(regex_result, ts_result)
         assert not errors, "\n".join(errors)
@@ -414,7 +522,7 @@ RETURNS: a + b
 }
 """
         regex_result = parse_nl_file(source)
-        ts_result = parse_nl_file_treesitter(source)
+        ts_result = parse_with_treesitter(source)
 
         errors = compare_properties(regex_result, ts_result)
         assert not errors, "\n".join(errors)
@@ -442,7 +550,7 @@ INPUTS:
 RETURNS: updated account
 """
         regex_result = parse_nl_file(source)
-        ts_result = parse_nl_file_treesitter(source)
+        ts_result = parse_with_treesitter(source)
 
         errors = compare_invariants(regex_result, ts_result)
         assert not errors, "\n".join(errors)
@@ -464,7 +572,7 @@ RETURNS: greeting message
 }
 """
         regex_result = parse_nl_file(source)
-        ts_result = parse_nl_file_treesitter(source)
+        ts_result = parse_with_treesitter(source)
 
         errors = compare_main_block(regex_result, ts_result)
         assert not errors, "\n".join(errors)
@@ -487,7 +595,7 @@ RETURNS: void
 }
 """
         regex_result = parse_nl_file(source)
-        ts_result = parse_nl_file_treesitter(source)
+        ts_result = parse_with_treesitter(source)
 
         errors = compare_main_block(regex_result, ts_result)
         assert not errors, "\n".join(errors)
@@ -496,6 +604,96 @@ RETURNS: void
         assert "if (condition) {" in regex_result.main_block[0]
         assert "}" in regex_result.main_block[2]  # closing brace of if
         assert "for item in items {" in regex_result.main_block[3]
+
+    def test_literal_blocks(self):
+        """Test @literal block parsing parity."""
+        source = """@module codegen
+@target python
+
+[render]
+PURPOSE: Render generated output
+INPUTS:
+  - value: string
+RETURNS: value
+
+@literal python {
+def helper(payload):
+    return payload.strip().upper()
+}
+"""
+        regex_result = parse_nl_file(source)
+        ts_result = parse_with_treesitter(source)
+
+        errors = compare_literals(regex_result, ts_result)
+        assert not errors, "\n".join(errors)
+        assert regex_result.literals[0].startswith("def helper(payload):")
+
+    def test_mixed_feature_file(self):
+        """Test parity for a file combining directives, ANLUs, tests, properties, literals, invariants, and @main."""
+        source = """@module parity-suite
+@version 1.2.3
+@target python
+@imports datetime
+@use std.math
+
+@type Account {
+  id: string, required
+  balance: number
+}
+
+@invariant Account {
+  balance >= 0
+}
+
+[normalize-balance]
+PURPOSE: Normalize a raw balance into a non-negative amount
+INPUTS:
+  - account: Account
+  - raw_balance: number
+GUARDS:
+  - raw_balance == raw_balance -> ValueError("raw_balance must be numeric")
+LOGIC:
+  1. max(raw_balance, 0) -> normalized
+RETURNS: normalized
+
+[format-account]
+PURPOSE: Render an account summary
+INPUTS:
+  - account: Account
+EDGE CASES:
+  - not account.id -> return "unknown"
+LOGIC:
+  1. normalize_balance(account, account.balance) -> safe_balance
+RETURNS: f"{account.id}:{safe_balance}"
+DEPENDS: [normalize-balance]
+
+@test [format-account] {
+  format_account(Account(id="acct-1", balance=4),) == 'acct-1:4'
+}
+
+@property [normalize-balance] {
+  forall amount: number -> normalize_balance(Account(id="x", balance=amount), amount) >= 0
+}
+
+@literal python {
+def literal_helper(value):
+    return value.strip()
+}
+
+@main {
+  print(format_account(Account(id="acct-2", balance=7)))
+}
+"""
+        regex_result = parse_nl_file(source)
+        ts_result = parse_with_treesitter(source)
+
+        errors = compare_full_parse(regex_result, ts_result)
+        assert not errors, "\n".join(errors)
+        assert regex_result.module.uses == ["std.math"]
+        assert regex_result.literals
+        assert regex_result.main_block == [
+            'print(format_account(Account(id="acct-2", balance=7)))'
+        ]
 
 
 class TestParserParityExamples:
@@ -513,11 +711,32 @@ class TestParserParityExamples:
 
         source = math_file.read_text(encoding="utf-8")
         regex_result = parse_nl_file(source)
-        ts_result = parse_nl_file_treesitter(source)
+        ts_result = parse_with_treesitter(source)
 
-        errors = []
-        errors.extend(compare_anlus(regex_result, ts_result))
-        errors.extend(compare_types(regex_result, ts_result))
-        errors.extend(compare_tests(regex_result, ts_result))
-
+        errors = compare_full_parse(regex_result, ts_result)
         assert not errors, "\n".join(errors)
+
+    @pytest.mark.parametrize(
+        "example_name",
+        [
+            "billing.nl",
+            "math.nl",
+            "shop_demo.nl",
+            "sorting.nl",
+            "sorting_ts.nl",
+            "strings.nl",
+            "workflow_engine.nl",
+        ],
+    )
+    def test_ascii_example_corpus(self, examples_dir: Path, example_name: str):
+        """Test parity across the maintained ASCII example corpus."""
+        example_file = examples_dir / example_name
+        if not example_file.exists():
+            pytest.skip(f"{example_name} not found")
+
+        source = example_file.read_text(encoding="utf-8")
+        regex_result = parse_nl_file(source)
+        ts_result = parse_with_treesitter(source)
+
+        errors = compare_full_parse(regex_result, ts_result)
+        assert not errors, f"{example_name}\n" + "\n".join(errors)
