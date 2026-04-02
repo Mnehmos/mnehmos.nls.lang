@@ -52,6 +52,8 @@ from .diagnostics import (
     dependency_error_diagnostics,
     graph_anlu_not_found_diagnostic,
     graph_format_diagnostic,
+    lockfile_outdated_diagnostics,
+    lockfile_unavailable_diagnostic,
     missing_file_diagnostic,
     parse_error_diagnostic,
     stdlib_use_diagnostic,
@@ -876,38 +878,82 @@ def cmd_watch(args: argparse.Namespace) -> int:
 def cmd_lock_check(args: argparse.Namespace) -> int:
     """Verify that lockfile is current with source"""
     source_path = Path(args.file)
+    json_output = getattr(args, "json", False)
 
     if not source_path.exists():
-        print(f"Error: File not found: {source_path}", file=sys.stderr)
+        diagnostic = missing_file_diagnostic(source_path)
+        if json_output:
+            return _emit_json("lock:check", [diagnostic], file=str(source_path))
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
         return 1
 
     lock_path = source_path.with_suffix(".nl.lock")
     if not lock_path.exists():
-        print(f"Error: Lockfile not found: {lock_path}", file=sys.stderr)
+        diagnostic = lockfile_unavailable_diagnostic(lock_path)
+        if json_output:
+            return _emit_json(
+                "lock:check",
+                [diagnostic],
+                file=str(source_path),
+                lockfile=str(lock_path),
+            )
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
         return 1
 
     # Parse current NL file
     try:
         nl_file = parse_nl_file_auto(source_path)
     except ParseError as e:
+        diagnostic = parse_error_diagnostic(source_path, e)
+        if json_output:
+            return _emit_json(
+                "lock:check",
+                [diagnostic],
+                file=str(source_path),
+                lockfile=str(lock_path),
+            )
         print(f"Parse error: {e}", file=sys.stderr)
         return 1
 
     # Read lockfile
     lockfile = read_lockfile(lock_path)
     if not lockfile:
-        print(f"Error: Could not read lockfile: {lock_path}", file=sys.stderr)
+        diagnostic = lockfile_unavailable_diagnostic(lock_path, unreadable=True)
+        if json_output:
+            return _emit_json(
+                "lock:check",
+                [diagnostic],
+                file=str(source_path),
+                lockfile=str(lock_path),
+            )
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
         return 1
 
     # Verify
     errors = verify_lockfile(lockfile, nl_file)
 
     if errors:
+        diagnostics = lockfile_outdated_diagnostics(source_path, nl_file, errors)
+        if json_output:
+            return _emit_json(
+                "lock:check",
+                diagnostics,
+                file=str(source_path),
+                lockfile=str(lock_path),
+            )
         print("Lockfile out of date:")
         for err in errors:
             print(f"  • {err}")
         return 1
 
+    if json_output:
+        return _emit_json(
+            "lock:check",
+            [],
+            file=str(source_path),
+            lockfile=str(lock_path),
+            anlu_count=len(nl_file.anlus),
+        )
     print(f"{_check()} Lockfile is current")
     return 0
 
@@ -915,15 +961,22 @@ def cmd_lock_check(args: argparse.Namespace) -> int:
 def cmd_lock_update(args: argparse.Namespace) -> int:
     """Regenerate lockfile from current source and compiled output"""
     source_path = Path(args.file)
+    json_output = getattr(args, "json", False)
 
     if not source_path.exists():
-        print(f"Error: File not found: {source_path}", file=sys.stderr)
+        diagnostic = missing_file_diagnostic(source_path)
+        if json_output:
+            return _emit_json("lock:update", [diagnostic], file=str(source_path))
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
         return 1
 
     # Parse current NL file
     try:
         nl_file = parse_nl_file_auto(source_path)
     except ParseError as e:
+        diagnostic = parse_error_diagnostic(source_path, e)
+        if json_output:
+            return _emit_json("lock:update", [diagnostic], file=str(source_path))
         print(f"Parse error: {e}", file=sys.stderr)
         return 1
 
@@ -931,10 +984,21 @@ def cmd_lock_update(args: argparse.Namespace) -> int:
     output_suffix = ".py" if target == "python" else ".ts"
     output_path = source_path.with_suffix(output_suffix)
     if not output_path.exists():
-        print(f"Warning: Compiled file not found, generating fresh: {output_path}")
+        if not json_output:
+            print(f"Warning: Compiled file not found, generating fresh: {output_path}")
         try:
             generated_code, _, _, _ = _emit_target_code(nl_file, target)
         except ValueError as exc:
+            if json_output:
+                diagnostic = Diagnostic(
+                    code=ETARGET001,
+                    file=str(source_path),
+                    line=None,
+                    col=None,
+                    message=str(exc),
+                    hint="Select a supported target and try again.",
+                )
+                return _emit_json("lock:update", [diagnostic], file=str(source_path))
             print(str(exc), file=sys.stderr)
             return 1
     else:
@@ -951,6 +1015,16 @@ def cmd_lock_update(args: argparse.Namespace) -> int:
     )
     write_lockfile(lockfile, lock_path)
 
+    if json_output:
+        return _emit_json(
+            "lock:update",
+            [],
+            file=str(source_path),
+            lockfile=str(lock_path),
+            output=str(output_path),
+            target=target,
+            anlu_count=len(nl_file.anlus),
+        )
     print(f"{_check()} Updated {lock_path.name}")
     return 0
 
@@ -1479,12 +1553,22 @@ The conversation is the programming. The .nl file is the receipt.
         "lock:check", help="Verify lockfile is current"
     )
     lock_check_parser.add_argument("file", help="Path to .nl file")
+    lock_check_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit structured JSON diagnostics.",
+    )
 
     # lock:update command
     lock_update_parser = subparsers.add_parser(
         "lock:update", help="Regenerate lockfile"
     )
     lock_update_parser.add_argument("file", help="Path to .nl file")
+    lock_update_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit structured JSON diagnostics.",
+    )
 
     # lsp command
     lsp_parser = subparsers.add_parser("lsp", help="Start NLS language server")

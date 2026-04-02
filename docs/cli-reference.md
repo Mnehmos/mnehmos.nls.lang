@@ -1,6 +1,6 @@
 # CLI Reference
 
-The `nlsc` command-line interface provides 8 commands for working with NLS files.
+The `nlsc` command-line interface provides commands for creating, validating, testing, visualizing, and locking NLS specs.
 
 ## Global Options
 
@@ -213,6 +213,56 @@ nlsc diff src/api.nl --stat
 
 # Full unified diff
 nlsc diff src/api.nl --full
+```
+
+---
+
+### `nlsc lock:check`
+
+Verify that an existing `.nl.lock` file still matches the current source file.
+
+```bash
+nlsc lock:check <file> [--json]
+```
+
+| Option   | Description |
+| -------- | ----------- |
+| `file`   | Path to `.nl` file |
+| `--json` | Emit structured JSON diagnostics instead of human-readable output |
+
+**Examples:**
+
+```bash
+# Human-readable status
+nlsc lock:check src/api.nl
+
+# Structured diagnostics for tooling
+nlsc lock:check src/api.nl --json
+```
+
+---
+
+### `nlsc lock:update`
+
+Regenerate the `.nl.lock` file from the current source and compiled output.
+
+```bash
+nlsc lock:update <file> [--json]
+```
+
+| Option   | Description |
+| -------- | ----------- |
+| `file`   | Path to `.nl` file |
+| `--json` | Emit structured JSON diagnostics and success metadata |
+
+**Examples:**
+
+```bash
+# Refresh the lockfile in place
+nlsc lock:update src/api.nl
+
+# Machine-readable output for scripts
+nlsc lock:update src/api.nl --json
 ```
 
 ---

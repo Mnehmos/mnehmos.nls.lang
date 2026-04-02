@@ -15,6 +15,8 @@ from .error_catalog import (
     EFILE001,
     EGRAPH001,
     EGRAPH002,
+    ELOCK001,
+    ELOCK002,
     EPARSE001,
     E_RESOLUTION,
     ETEST001,
@@ -186,6 +188,46 @@ def test_execution_diagnostic(path: Path, pytest_exit_code: int | None) -> Diagn
     )
 
 
+def lockfile_unavailable_diagnostic(
+    path: Path, *, unreadable: bool = False
+) -> Diagnostic:
+    message = f"Could not read lockfile: {path}"
+    hint = "Run `nlsc compile <file>` or `nlsc lock:update <file>` to regenerate the lockfile."
+    if not unreadable:
+        message = f"Lockfile not found: {path}"
+        hint = "Run `nlsc compile <file>` or `nlsc lock:update <file>` to generate a lockfile."
+
+    return Diagnostic(
+        code=ELOCK001,
+        file=str(path),
+        line=None,
+        col=None,
+        message=message,
+        hint=hint,
+    )
+
+
+def lockfile_outdated_diagnostics(
+    path: Path, nl_file: NLFile, errors: Sequence[str]
+) -> list[Diagnostic]:
+    anlu_lines = {anlu.identifier: anlu.line_number or None for anlu in nl_file.anlus}
+    diagnostics: list[Diagnostic] = []
+    for error in errors:
+        anlu_id = _parse_lockfile_error_anlu(error)
+        line = anlu_lines.get(anlu_id) if anlu_id is not None else None
+        diagnostics.append(
+            Diagnostic(
+                code=ELOCK002,
+                file=str(path),
+                line=line,
+                col=1 if line is not None else None,
+                message=error,
+                hint="Run `nlsc compile <file>` or `nlsc lock:update <file>` to regenerate the lockfile.",
+            )
+        )
+    return diagnostics
+
+
 def _find_use_line(path: Path, domain_spec: str) -> int | None:
     try:
         for index, raw_line in enumerate(
@@ -204,3 +246,12 @@ def _split_dependency_error(error: str) -> tuple[str | None, str]:
         return None, error
     anlu_id, message = error.split(":", 1)
     return anlu_id.strip() or None, message.strip()
+
+
+def _parse_lockfile_error_anlu(error: str) -> str | None:
+    if not error.startswith("ANLU "):
+        return None
+    parts = error.split()
+    if len(parts) < 2:
+        return None
+    return parts[1]

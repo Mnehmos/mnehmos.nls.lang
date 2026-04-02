@@ -16,6 +16,8 @@ E_RUN = "E_RUN"
 EEXEC001 = "EEXEC001"
 EGRAPH001 = "EGRAPH001"
 EGRAPH002 = "EGRAPH002"
+ELOCK001 = "ELOCK001"
+ELOCK002 = "ELOCK002"
 
 
 @dataclass(frozen=True)
@@ -32,8 +34,17 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
     EFILE001: ErrorDefinition(
         code=EFILE001,
         title="File not found",
-        summary="The requested source file does not exist at the provided path.",
-        emitted_by=("compile", "verify", "run", "test", "graph", "diff"),
+        summary="The requested input file does not exist at the provided path.",
+        emitted_by=(
+            "compile",
+            "verify",
+            "run",
+            "test",
+            "graph",
+            "diff",
+            "lock:check",
+            "lock:update",
+        ),
         common_causes=(
             "The .nl path is misspelled or points to the wrong working directory.",
             "The file has not been created yet or was moved.",
@@ -47,7 +58,16 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         code=EPARSE001,
         title="Parse error",
         summary="The .nl source contains syntax the parser cannot accept.",
-        emitted_by=("compile", "verify", "run", "test", "graph", "diff"),
+        emitted_by=(
+            "compile",
+            "verify",
+            "run",
+            "test",
+            "graph",
+            "diff",
+            "lock:check",
+            "lock:update",
+        ),
         common_causes=(
             "A required directive or section is malformed or missing.",
             "A LOGIC, INPUTS, or GUARDS line does not follow the expected shape.",
@@ -114,7 +134,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         code=ETARGET001,
         title="Unsupported target",
         summary="The requested CLI target is not supported for the selected command.",
-        emitted_by=("compile", "run"),
+        emitted_by=("compile", "run", "lock:update"),
         common_causes=(
             "The command was given a target that the emitter does not implement.",
             "The source target and CLI override do not match a supported execution path.",
@@ -192,6 +212,34 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Use `--format mermaid` or `--format ascii` when rendering a specific ANLU.",
             "Drop `--anlu` if you need a whole-file DOT graph.",
+        ),
+    ),
+    ELOCK001: ErrorDefinition(
+        code=ELOCK001,
+        title="Lockfile unavailable",
+        summary="`nlsc lock:check` could not load the `.nl.lock` file because it is missing or malformed.",
+        emitted_by=("lock:check",),
+        common_causes=(
+            "The lockfile has not been generated yet for the source file.",
+            "The existing `.nl.lock` file was edited manually or became corrupted.",
+        ),
+        next_steps=(
+            "Run `nlsc compile <file>` or `nlsc lock:update <file>` to regenerate the lockfile.",
+            "If the lockfile should already exist, inspect it for truncation or invalid contents before regenerating.",
+        ),
+    ),
+    ELOCK002: ErrorDefinition(
+        code=ELOCK002,
+        title="Lockfile out of date",
+        summary="`nlsc lock:check` found one or more ANLUs that no longer match the current source file.",
+        emitted_by=("lock:check",),
+        common_causes=(
+            "The `.nl` source changed after the last compile or lockfile update.",
+            "A new ANLU was added or renamed without regenerating the lockfile.",
+        ),
+        next_steps=(
+            "Run `nlsc compile <file>` or `nlsc lock:update <file>` to regenerate the lockfile.",
+            "Review the reported ANLU diagnostics to confirm the source changes are expected.",
         ),
     ),
 }
