@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import re
 from typing import Sequence
 
 from .parser import ParseError
@@ -60,6 +61,7 @@ def missing_file_diagnostic(path: Path, *, subject: str = "File") -> Diagnostic:
 
 
 def cli_parse_error_diagnostic(message: str) -> Diagnostic:
+    message = _normalize_cli_parse_message(message)
     return Diagnostic(
         code=ECLI001,
         file="<cli>",
@@ -68,6 +70,19 @@ def cli_parse_error_diagnostic(message: str) -> Diagnostic:
         message=message,
         hint="Rerun the command with --help to inspect the required arguments and valid options.",
     )
+
+
+def _normalize_cli_parse_message(message: str) -> str:
+    return re.sub(
+        r"\(choose from (?P<choices>[^)]*)\)",
+        _strip_argparse_choice_quotes,
+        message,
+    )
+
+
+def _strip_argparse_choice_quotes(match: re.Match[str]) -> str:
+    choices = match.group("choices").replace("'", "")
+    return f"(choose from {choices})"
 
 
 def watch_not_directory_diagnostic(path: Path) -> Diagnostic:
