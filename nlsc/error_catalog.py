@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+EATOM001 = "EATOM001"
+EATOM002 = "EATOM002"
 EFILE001 = "EFILE001"
 EPARSE001 = "EPARSE001"
 EUSE001 = "EUSE001"
@@ -36,6 +38,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         title="File not found",
         summary="The requested input file does not exist at the provided path.",
         emitted_by=(
+            "atomize",
             "compile",
             "verify",
             "run",
@@ -52,6 +55,34 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Check the file path and rerun the command.",
             "Use an absolute path if the current working directory is ambiguous.",
+        ),
+    ),
+    EATOM001: ErrorDefinition(
+        code=EATOM001,
+        title="Python syntax error",
+        summary="`nlsc atomize` could not parse the input Python source into an AST.",
+        emitted_by=("atomize",),
+        common_causes=(
+            "The Python source contains invalid syntax such as an incomplete function signature or statement.",
+            "The file was saved with partially edited code that no longer parses.",
+        ),
+        next_steps=(
+            "Fix the reported Python syntax error and rerun `nlsc atomize`.",
+            "Run the file through Python tooling such as `python -m py_compile` if you need an independent syntax check.",
+        ),
+    ),
+    EATOM002: ErrorDefinition(
+        code=EATOM002,
+        title="Atomize write failed",
+        summary="`nlsc atomize` hit an unexpected extraction or filesystem error before the `.nl` output could be written successfully.",
+        emitted_by=("atomize",),
+        common_causes=(
+            "The requested output path points to a missing directory or unwritable location.",
+            "Atomization hit an unexpected internal failure while reading, extracting, or writing output.",
+        ),
+        next_steps=(
+            "Check the output path and local filesystem permissions, then rerun `nlsc atomize`.",
+            "If the failure persists with a valid path, inspect the reported message for the failing read/write step.",
         ),
     ),
     EPARSE001: ErrorDefinition(

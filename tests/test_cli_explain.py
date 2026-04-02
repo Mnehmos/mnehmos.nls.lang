@@ -18,6 +18,8 @@ def test_error_catalog_covers_active_cli_error_codes() -> None:
     from nlsc.error_catalog import ERROR_CATALOG
 
     expected_codes = {
+        "EATOM001",
+        "EATOM002",
         "EFILE001",
         "EPARSE001",
         "EUSE001",
