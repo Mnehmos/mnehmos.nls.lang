@@ -1961,7 +1961,7 @@
 <hr />
 <h3 id="nlsc-watch"><code>nlsc watch</code><a class="headerlink" href="#nlsc-watch" title="Permanent link">&para;</a></h3>
 <p>Watch a directory for <code>.nl</code> file changes and automatically recompile.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>nlsc<span class="w"> </span>watch<span class="w"> </span><span class="o">[</span>dir<span class="o">]</span><span class="w"> </span><span class="o">[</span>-q<span class="o">]</span><span class="w"> </span><span class="o">[</span>-t<span class="o">]</span><span class="w"> </span><span class="o">[</span>-d<span class="w"> </span>DEBOUNCE<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>nlsc<span class="w"> </span>watch<span class="w"> </span><span class="o">[</span>dir<span class="o">]</span><span class="w"> </span><span class="o">[</span>-q<span class="o">]</span><span class="w"> </span><span class="o">[</span>-t<span class="o">]</span><span class="w"> </span><span class="o">[</span>-d<span class="w"> </span>DEBOUNCE<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -1987,6 +1987,10 @@
 <td><code>-d, --debounce</code></td>
 <td>Debounce interval in ms (default: 100)</td>
 </tr>
+<tr>
+<td><code>--json</code></td>
+<td>Emit structured diagnostics for startup path errors</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
@@ -2000,6 +2004,7 @@
 </span><span id="__span-20-8"><a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>nlsc<span class="w"> </span>watch<span class="w"> </span>src/<span class="w"> </span>-q<span class="w"> </span>-d<span class="w"> </span><span class="m">500</span>
 </span></code></pre></div>
 <p>Press <code>Ctrl+C</code> to stop watching.</p>
+<p>When <code>--json</code> is enabled, <code>nlsc watch</code> emits stable diagnostics for deterministic startup failures before the watcher begins, including missing directories and non-directory paths.</p>
 <hr />
 <h3 id="nlsc-atomize"><code>nlsc atomize</code><a class="headerlink" href="#nlsc-atomize" title="Permanent link">&para;</a></h3>
 <p>Extract ANLUs from existing Python source code (reverse compilation).</p>

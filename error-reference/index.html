@@ -1136,6 +1136,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#ewatch001-watch-path-is-not-a-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EWATCH001 - Watch path is not a directory
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2127,6 +2138,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#ewatch001-watch-path-is-not-a-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EWATCH001 - Watch path is not a directory
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2654,7 +2676,7 @@
 <h1 id="error-reference">Error Reference<a class="headerlink" href="#error-reference" title="Permanent link">&para;</a></h1>
 <p>Complete guide to NLS errors, their causes, and how to fix them.</p>
 <h2 id="active-cli-error-codes">Active CLI Error Codes<a class="headerlink" href="#active-cli-error-codes" title="Permanent link">&para;</a></h2>
-<p>These are the stable error codes currently emitted by <code>nlsc atomize</code>, <code>nlsc compile</code>, <code>nlsc verify</code>, <code>nlsc run</code>, <code>nlsc graph</code>, <code>nlsc diff</code>, <code>nlsc test</code>, <code>nlsc lock:check</code>, and <code>nlsc lock:update</code>.</p>
+<p>These are the stable error codes currently emitted by <code>nlsc atomize</code>, <code>nlsc compile</code>, <code>nlsc verify</code>, <code>nlsc run</code>, <code>nlsc graph</code>, <code>nlsc diff</code>, <code>nlsc test</code>, <code>nlsc watch</code>, <code>nlsc lock:check</code>, and <code>nlsc lock:update</code>.</p>
 <p>Use the CLI to get the extended explanation for any code:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>nlsc<span class="w"> </span>explain<span class="w"> </span>EPARSE001
 </span></code></pre></div>
@@ -2669,8 +2691,8 @@
 <tbody>
 <tr>
 <td><code>EFILE001</code></td>
-<td><code>atomize</code>, <code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>diff</code>, <code>lock:check</code>, <code>lock:update</code></td>
-<td>The requested input file does not exist.</td>
+<td><code>atomize</code>, <code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>diff</code>, <code>watch</code>, <code>lock:check</code>, <code>lock:update</code></td>
+<td>The requested input path does not exist.</td>
 </tr>
 <tr>
 <td><code>EATOM001</code></td>
@@ -2747,10 +2769,15 @@
 <td><code>lock:check</code></td>
 <td><code>nlsc lock:check</code> found source content that no longer matches the lockfile.</td>
 </tr>
+<tr>
+<td><code>EWATCH001</code></td>
+<td><code>watch</code></td>
+<td><code>nlsc watch</code> was given a path that exists but is not a directory.</td>
+</tr>
 </tbody>
 </table>
 <h3 id="efile001-file-not-found"><code>EFILE001</code> - File not found<a class="headerlink" href="#efile001-file-not-found" title="Permanent link">&para;</a></h3>
-<p>Raised when the input path passed to <code>atomize</code>, <code>compile</code>, <code>verify</code>, or <code>run</code> does not exist.</p>
+<p>Raised when the input path passed to <code>atomize</code>, <code>compile</code>, <code>verify</code>, <code>run</code>, or <code>watch</code> does not exist.</p>
 <p><strong>Fix:</strong> Check the path, ensure the file exists, and rerun the command.</p>
 <h3 id="eatom001-python-syntax-error"><code>EATOM001</code> - Python syntax error<a class="headerlink" href="#eatom001-python-syntax-error" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc atomize --json</code> cannot parse the input <code>.py</code> file into a Python AST.</p>
@@ -2797,6 +2824,9 @@
 <h3 id="elock002-lockfile-out-of-date"><code>ELOCK002</code> - Lockfile out of date<a class="headerlink" href="#elock002-lockfile-out-of-date" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc lock:check --json</code> finds ANLUs that no longer match the current <code>.nl</code> source.</p>
 <p><strong>Fix:</strong> Regenerate the lockfile with <code>nlsc compile &lt;file&gt;</code> or <code>nlsc lock:update &lt;file&gt;</code> after reviewing the reported ANLU mismatches.</p>
+<h3 id="ewatch001-watch-path-is-not-a-directory"><code>EWATCH001</code> - Watch path is not a directory<a class="headerlink" href="#ewatch001-watch-path-is-not-a-directory" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc watch --json</code> is given a path that exists but is not a directory.</p>
+<p><strong>Fix:</strong> Pass a directory path to <code>nlsc watch</code>, or use a file-oriented command such as <code>nlsc compile &lt;file&gt;</code> for a single source file.</p>
 <h2 id="parse-errors">Parse Errors<a class="headerlink" href="#parse-errors" title="Permanent link">&para;</a></h2>
 <p>Parse errors occur when the <code>.nl</code> file has invalid syntax.</p>
 <h3 id="missing-module-directive">Missing Module Directive<a class="headerlink" href="#missing-module-directive" title="Permanent link">&para;</a></h3>
