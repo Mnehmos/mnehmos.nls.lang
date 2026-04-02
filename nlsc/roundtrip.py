@@ -58,8 +58,14 @@ class RepositoryRoundTripReport:
         )
 
     @property
+    def unsupported_files(self) -> int:
+        return sum(
+            1 for result in self.file_results if result.stage == "unsupported_source"
+        )
+
+    @property
     def failed_files(self) -> int:
-        return self.total_files - self.succeeded_files
+        return self.total_files - self.succeeded_files - self.unsupported_files
 
 
 def validate_roundtrip(
@@ -275,6 +281,10 @@ def validate_python_structure_roundtrip(
         result.stage = "parse"
         nl_file = parse_nl_file(atomized_nl)
         result.regenerated_python = emit_python(nl_file)
+    except SyntaxError as exc:
+        result.stage = "unsupported_source"
+        result.errors.append(f"Unsupported source syntax: {exc}")
+        return result
     except Exception as exc:
         result.errors.append(f"Structural round-trip failed: {exc}")
         return result
