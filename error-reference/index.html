@@ -1159,6 +1159,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#elsp001-lsp-optional-dependencies-unavailable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ELSP001 - LSP optional dependencies unavailable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#elsp002-lsp-server-startup-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ELSP002 - LSP server startup failed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ewatch001-watch-path-is-not-a-directory" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2183,6 +2205,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#elsp001-lsp-optional-dependencies-unavailable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ELSP001 - LSP optional dependencies unavailable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#elsp002-lsp-server-startup-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ELSP002 - LSP server startup failed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ewatch001-watch-path-is-not-a-directory" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2720,7 +2764,7 @@
 <h1 id="error-reference">Error Reference<a class="headerlink" href="#error-reference" title="Permanent link">&para;</a></h1>
 <p>Complete guide to NLS errors, their causes, and how to fix them.</p>
 <h2 id="active-cli-error-codes">Active CLI Error Codes<a class="headerlink" href="#active-cli-error-codes" title="Permanent link">&para;</a></h2>
-<p>These are the stable error codes currently emitted by <code>nlsc atomize</code>, <code>nlsc compile</code>, <code>nlsc verify</code>, <code>nlsc run</code>, <code>nlsc graph</code>, <code>nlsc diff</code>, <code>nlsc test</code>, <code>nlsc watch</code>, <code>nlsc lock:check</code>, and <code>nlsc lock:update</code>.</p>
+<p>These are the stable error codes currently emitted by <code>nlsc atomize</code>, <code>nlsc compile</code>, <code>nlsc verify</code>, <code>nlsc run</code>, <code>nlsc graph</code>, <code>nlsc diff</code>, <code>nlsc test</code>, <code>nlsc watch</code>, <code>nlsc lock:check</code>, <code>nlsc lock:update</code>, and <code>nlsc lsp</code>.</p>
 <p>Use the CLI to get the extended explanation for any code:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>nlsc<span class="w"> </span>explain<span class="w"> </span>EPARSE001
 </span></code></pre></div>
@@ -2824,6 +2868,16 @@
 <td><code>nlsc lock:check</code> found source content that no longer matches the lockfile.</td>
 </tr>
 <tr>
+<td><code>ELSP001</code></td>
+<td><code>lsp</code></td>
+<td><code>nlsc lsp</code> could not import the optional language-server dependencies.</td>
+</tr>
+<tr>
+<td><code>ELSP002</code></td>
+<td><code>lsp</code></td>
+<td><code>nlsc lsp</code> loaded but failed while starting the requested transport.</td>
+</tr>
+<tr>
 <td><code>EWATCH001</code></td>
 <td><code>watch</code></td>
 <td><code>nlsc watch</code> was given a path that exists but is not a directory.</td>
@@ -2885,6 +2939,12 @@
 <h3 id="elock002-lockfile-out-of-date"><code>ELOCK002</code> - Lockfile out of date<a class="headerlink" href="#elock002-lockfile-out-of-date" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc lock:check --json</code> finds ANLUs that no longer match the current <code>.nl</code> source.</p>
 <p><strong>Fix:</strong> Regenerate the lockfile with <code>nlsc compile &lt;file&gt;</code> or <code>nlsc lock:update &lt;file&gt;</code> after reviewing the reported ANLU mismatches.</p>
+<h3 id="elsp001-lsp-optional-dependencies-unavailable"><code>ELSP001</code> - LSP optional dependencies unavailable<a class="headerlink" href="#elsp001-lsp-optional-dependencies-unavailable" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc lsp</code> cannot import the optional dependencies that back the language server, such as <code>pygls</code> or <code>lsprotocol</code>.</p>
+<p><strong>Fix:</strong> Install the extras with <code>pip install nlsc[lsp]</code>, then rerun <code>nlsc lsp</code> in the same environment.</p>
+<h3 id="elsp002-lsp-server-startup-failed"><code>ELSP002</code> - LSP server startup failed<a class="headerlink" href="#elsp002-lsp-server-startup-failed" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc lsp</code> imports successfully but the server fails while initializing the selected transport or binding the requested endpoint.</p>
+<p><strong>Fix:</strong> Check the selected transport, host, and port, inspect the startup message, and rerun <code>nlsc lsp</code>.</p>
 <h3 id="ewatch001-watch-path-is-not-a-directory"><code>EWATCH001</code> - Watch path is not a directory<a class="headerlink" href="#ewatch001-watch-path-is-not-a-directory" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc watch --json</code> is given a path that exists but is not a directory.</p>
 <p><strong>Fix:</strong> Pass a directory path to <code>nlsc watch</code>, or use a file-oriented command such as <code>nlsc compile &lt;file&gt;</code> for a single source file.</p>
