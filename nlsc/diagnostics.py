@@ -20,6 +20,7 @@ from .error_catalog import (
     ELOCK001,
     ELOCK002,
     EPARSE001,
+    EWATCH001,
     E_RESOLUTION,
     ETEST001,
 )
@@ -45,14 +46,25 @@ class Diagnostic:
         }
 
 
-def missing_file_diagnostic(path: Path) -> Diagnostic:
+def missing_file_diagnostic(path: Path, *, subject: str = "File") -> Diagnostic:
     return Diagnostic(
         code=EFILE001,
         file=str(path),
         line=None,
         col=None,
-        message=f"File not found: {path}",
+        message=f"{subject} not found: {path}",
         hint="Check that the path exists and try again.",
+    )
+
+
+def watch_not_directory_diagnostic(path: Path) -> Diagnostic:
+    return Diagnostic(
+        code=EWATCH001,
+        file=str(path),
+        line=None,
+        col=None,
+        message=f"Watch path is not a directory: {path}",
+        hint="Pass a directory path to `nlsc watch` and try again.",
     )
 
 

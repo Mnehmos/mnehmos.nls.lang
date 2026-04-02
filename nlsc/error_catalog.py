@@ -20,6 +20,7 @@ EGRAPH001 = "EGRAPH001"
 EGRAPH002 = "EGRAPH002"
 ELOCK001 = "ELOCK001"
 ELOCK002 = "ELOCK002"
+EWATCH001 = "EWATCH001"
 
 
 @dataclass(frozen=True)
@@ -47,6 +48,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
             "diff",
             "lock:check",
             "lock:update",
+            "watch",
         ),
         common_causes=(
             "The .nl path is misspelled or points to the wrong working directory.",
@@ -271,6 +273,20 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Run `nlsc compile <file>` or `nlsc lock:update <file>` to regenerate the lockfile.",
             "Review the reported ANLU diagnostics to confirm the source changes are expected.",
+        ),
+    ),
+    EWATCH001: ErrorDefinition(
+        code=EWATCH001,
+        title="Watch path is not a directory",
+        summary="`nlsc watch` requires an existing directory path before it can start the watcher.",
+        emitted_by=("watch",),
+        common_causes=(
+            "The watch path points at a single `.nl` file instead of a directory.",
+            "The path exists but resolves to another filesystem object such as a file or symlink target that is not a directory.",
+        ),
+        next_steps=(
+            "Pass a directory path to `nlsc watch` and rerun the command.",
+            "Use `nlsc compile <file>` or `nlsc test <file>` when working with a single source file.",
         ),
     ),
 }

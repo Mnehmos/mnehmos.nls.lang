@@ -60,6 +60,7 @@ from .diagnostics import (
     parse_error_diagnostic,
     stdlib_use_diagnostic,
     test_execution_diagnostic,
+    watch_not_directory_diagnostic,
 )
 from .error_catalog import (
     EEXEC001,
@@ -854,13 +855,20 @@ def cmd_diff(args: argparse.Namespace) -> int:
 def cmd_watch(args: argparse.Namespace) -> int:
     """Watch directory for .nl file changes and recompile"""
     watch_path = Path(args.dir)
+    json_output = getattr(args, "json", False)
 
     if not watch_path.exists():
-        print(f"Error: Directory not found: {watch_path}", file=sys.stderr)
+        diagnostic = missing_file_diagnostic(watch_path, subject="Directory")
+        if json_output:
+            return _emit_json("watch", [diagnostic], file=str(watch_path))
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
         return 1
 
     if not watch_path.is_dir():
-        print(f"Error: Not a directory: {watch_path}", file=sys.stderr)
+        diagnostic = watch_not_directory_diagnostic(watch_path)
+        if json_output:
+            return _emit_json("watch", [diagnostic], file=str(watch_path))
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
         return 1
 
     quiet = args.quiet
@@ -1574,6 +1582,11 @@ The conversation is the programming. The .nl file is the receipt.
         type=int,
         default=100,
         help="Debounce interval in ms (default: 100)",
+    )
+    watch_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit structured JSON diagnostics for startup errors.",
     )
 
     # lock:check command

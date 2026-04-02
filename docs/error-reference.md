@@ -4,7 +4,7 @@ Complete guide to NLS errors, their causes, and how to fix them.
 
 ## Active CLI Error Codes
 
-These are the stable error codes currently emitted by `nlsc atomize`, `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, `nlsc diff`, `nlsc test`, `nlsc lock:check`, and `nlsc lock:update`.
+These are the stable error codes currently emitted by `nlsc atomize`, `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, `nlsc diff`, `nlsc test`, `nlsc watch`, `nlsc lock:check`, and `nlsc lock:update`.
 
 Use the CLI to get the extended explanation for any code:
 
@@ -14,7 +14,7 @@ nlsc explain EPARSE001
 
 | Code | Commands | Meaning |
 | --- | --- | --- |
-| `EFILE001` | `atomize`, `compile`, `verify`, `run`, `test`, `graph`, `diff`, `lock:check`, `lock:update` | The requested input file does not exist. |
+| `EFILE001` | `atomize`, `compile`, `verify`, `run`, `test`, `graph`, `diff`, `watch`, `lock:check`, `lock:update` | The requested input path does not exist. |
 | `EATOM001` | `atomize` | The input Python file failed syntax parsing during atomization. |
 | `EATOM002` | `atomize` | `nlsc atomize` hit an unexpected extraction or write failure. |
 | `EPARSE001` | `compile`, `verify`, `run`, `test`, `graph`, `diff`, `lock:check`, `lock:update` | The source file failed syntax parsing. |
@@ -30,10 +30,11 @@ nlsc explain EPARSE001
 | `EGRAPH002` | `graph` | `nlsc graph --anlu` was asked for an output format that is not supported for ANLU-level graphs. |
 | `ELOCK001` | `lock:check` | `nlsc lock:check` could not load the `.nl.lock` file because it is missing or malformed. |
 | `ELOCK002` | `lock:check` | `nlsc lock:check` found source content that no longer matches the lockfile. |
+| `EWATCH001` | `watch` | `nlsc watch` was given a path that exists but is not a directory. |
 
 ### `EFILE001` - File not found
 
-Raised when the input path passed to `atomize`, `compile`, `verify`, or `run` does not exist.
+Raised when the input path passed to `atomize`, `compile`, `verify`, `run`, or `watch` does not exist.
 
 **Fix:** Check the path, ensure the file exists, and rerun the command.
 
@@ -126,6 +127,12 @@ Raised when `nlsc lock:check --json` cannot load the `.nl.lock` file because it 
 Raised when `nlsc lock:check --json` finds ANLUs that no longer match the current `.nl` source.
 
 **Fix:** Regenerate the lockfile with `nlsc compile <file>` or `nlsc lock:update <file>` after reviewing the reported ANLU mismatches.
+
+### `EWATCH001` - Watch path is not a directory
+
+Raised when `nlsc watch --json` is given a path that exists but is not a directory.
+
+**Fix:** Pass a directory path to `nlsc watch`, or use a file-oriented command such as `nlsc compile <file>` for a single source file.
 
 ## Parse Errors
 
