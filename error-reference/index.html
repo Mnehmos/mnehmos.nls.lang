@@ -1059,6 +1059,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#egraph001-graph-anlu-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EGRAPH001 - Graph ANLU not found
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#egraph002-unsupported-graph-output-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EGRAPH002 - Unsupported graph output format
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1973,6 +1995,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#egraph001-graph-anlu-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EGRAPH001 - Graph ANLU not found
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#egraph002-unsupported-graph-output-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EGRAPH002 - Unsupported graph output format
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2500,7 +2544,7 @@
 <h1 id="error-reference">Error Reference<a class="headerlink" href="#error-reference" title="Permanent link">&para;</a></h1>
 <p>Complete guide to NLS errors, their causes, and how to fix them.</p>
 <h2 id="active-cli-error-codes">Active CLI Error Codes<a class="headerlink" href="#active-cli-error-codes" title="Permanent link">&para;</a></h2>
-<p>These are the stable error codes currently emitted by <code>nlsc compile</code>, <code>nlsc verify</code>, and <code>nlsc run</code>.</p>
+<p>These are the stable error codes currently emitted by <code>nlsc compile</code>, <code>nlsc verify</code>, <code>nlsc run</code>, <code>nlsc graph</code>, and <code>nlsc diff</code>.</p>
 <p>Use the CLI to get the extended explanation for any code:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>nlsc<span class="w"> </span>explain<span class="w"> </span>EPARSE001
 </span></code></pre></div>
@@ -2558,6 +2602,16 @@
 <td><code>run</code></td>
 <td><code>nlsc run</code> failed while setting up or launching the generated module.</td>
 </tr>
+<tr>
+<td><code>EGRAPH001</code></td>
+<td><code>graph</code></td>
+<td><code>nlsc graph --anlu</code> requested an ANLU that is not defined in the source file.</td>
+</tr>
+<tr>
+<td><code>EGRAPH002</code></td>
+<td><code>graph</code></td>
+<td><code>nlsc graph --anlu</code> was asked for an output format that is not supported for ANLU-level graphs.</td>
+</tr>
 </tbody>
 </table>
 <h3 id="efile001-file-not-found"><code>EFILE001</code> - File not found<a class="headerlink" href="#efile001-file-not-found" title="Permanent link">&para;</a></h3>
@@ -2587,6 +2641,12 @@
 <h3 id="eexec001-execution-setup-error"><code>EEXEC001</code> - Execution setup error<a class="headerlink" href="#eexec001-execution-setup-error" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc run</code> fails while preparing or launching the generated Python module.</p>
 <p><strong>Fix:</strong> Inspect the generated module path and local runtime environment, then rerun.</p>
+<h3 id="egraph001-graph-anlu-not-found"><code>EGRAPH001</code> - Graph ANLU not found<a class="headerlink" href="#egraph001-graph-anlu-not-found" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc graph --anlu &lt;id&gt;</code> names an ANLU that does not exist in the <code>.nl</code> file.</p>
+<p><strong>Fix:</strong> Use one of the ANLU identifiers defined in the file, or omit <code>--anlu</code> to render the full dependency graph.</p>
+<h3 id="egraph002-unsupported-graph-output-format"><code>EGRAPH002</code> - Unsupported graph output format<a class="headerlink" href="#egraph002-unsupported-graph-output-format" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc graph --anlu</code> is combined with an output format that only supports whole-file graphs, such as <code>--format dot</code>.</p>
+<p><strong>Fix:</strong> Use <code>--format mermaid</code> or <code>--format ascii</code> for ANLU-level graphs, or remove <code>--anlu</code> when generating a DOT graph.</p>
 <h2 id="parse-errors">Parse Errors<a class="headerlink" href="#parse-errors" title="Permanent link">&para;</a></h2>
 <p>Parse errors occur when the <code>.nl</code> file has invalid syntax.</p>
 <h3 id="missing-module-directive">Missing Module Directive<a class="headerlink" href="#missing-module-directive" title="Permanent link">&para;</a></h3>
