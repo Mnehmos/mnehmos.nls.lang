@@ -1092,6 +1092,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#elock001-lockfile-unavailable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ELOCK001 - Lockfile unavailable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#elock002-lockfile-out-of-date" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ELOCK002 - Lockfile out of date
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2039,6 +2061,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#elock001-lockfile-unavailable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ELOCK001 - Lockfile unavailable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#elock002-lockfile-out-of-date" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ELOCK002 - Lockfile out of date
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2566,7 +2610,7 @@
 <h1 id="error-reference">Error Reference<a class="headerlink" href="#error-reference" title="Permanent link">&para;</a></h1>
 <p>Complete guide to NLS errors, their causes, and how to fix them.</p>
 <h2 id="active-cli-error-codes">Active CLI Error Codes<a class="headerlink" href="#active-cli-error-codes" title="Permanent link">&para;</a></h2>
-<p>These are the stable error codes currently emitted by <code>nlsc compile</code>, <code>nlsc verify</code>, <code>nlsc run</code>, <code>nlsc graph</code>, <code>nlsc diff</code>, and <code>nlsc test</code>.</p>
+<p>These are the stable error codes currently emitted by <code>nlsc compile</code>, <code>nlsc verify</code>, <code>nlsc run</code>, <code>nlsc graph</code>, <code>nlsc diff</code>, <code>nlsc test</code>, <code>nlsc lock:check</code>, and <code>nlsc lock:update</code>.</p>
 <p>Use the CLI to get the extended explanation for any code:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>nlsc<span class="w"> </span>explain<span class="w"> </span>EPARSE001
 </span></code></pre></div>
@@ -2581,12 +2625,12 @@
 <tbody>
 <tr>
 <td><code>EFILE001</code></td>
-<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>diff</code></td>
-<td>The requested <code>.nl</code> file does not exist.</td>
+<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>diff</code>, <code>lock:check</code>, <code>lock:update</code></td>
+<td>The requested input file does not exist.</td>
 </tr>
 <tr>
 <td><code>EPARSE001</code></td>
-<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>diff</code></td>
+<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>diff</code>, <code>lock:check</code>, <code>lock:update</code></td>
 <td>The source file failed syntax parsing.</td>
 </tr>
 <tr>
@@ -2611,7 +2655,7 @@
 </tr>
 <tr>
 <td><code>ETARGET001</code></td>
-<td><code>compile</code>, <code>run</code></td>
+<td><code>compile</code>, <code>run</code>, <code>lock:update</code></td>
 <td>The requested target is not supported by the command.</td>
 </tr>
 <tr>
@@ -2638,6 +2682,16 @@
 <td><code>EGRAPH002</code></td>
 <td><code>graph</code></td>
 <td><code>nlsc graph --anlu</code> was asked for an output format that is not supported for ANLU-level graphs.</td>
+</tr>
+<tr>
+<td><code>ELOCK001</code></td>
+<td><code>lock:check</code></td>
+<td><code>nlsc lock:check</code> could not load the <code>.nl.lock</code> file because it is missing or malformed.</td>
+</tr>
+<tr>
+<td><code>ELOCK002</code></td>
+<td><code>lock:check</code></td>
+<td><code>nlsc lock:check</code> found source content that no longer matches the lockfile.</td>
 </tr>
 </tbody>
 </table>
@@ -2677,6 +2731,12 @@
 <h3 id="egraph002-unsupported-graph-output-format"><code>EGRAPH002</code> - Unsupported graph output format<a class="headerlink" href="#egraph002-unsupported-graph-output-format" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc graph --anlu</code> is combined with an output format that only supports whole-file graphs, such as <code>--format dot</code>.</p>
 <p><strong>Fix:</strong> Use <code>--format mermaid</code> or <code>--format ascii</code> for ANLU-level graphs, or remove <code>--anlu</code> when generating a DOT graph.</p>
+<h3 id="elock001-lockfile-unavailable"><code>ELOCK001</code> - Lockfile unavailable<a class="headerlink" href="#elock001-lockfile-unavailable" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc lock:check --json</code> cannot load the <code>.nl.lock</code> file because it is missing or malformed.</p>
+<p><strong>Fix:</strong> Run <code>nlsc compile &lt;file&gt;</code> or <code>nlsc lock:update &lt;file&gt;</code> to generate a fresh lockfile.</p>
+<h3 id="elock002-lockfile-out-of-date"><code>ELOCK002</code> - Lockfile out of date<a class="headerlink" href="#elock002-lockfile-out-of-date" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc lock:check --json</code> finds ANLUs that no longer match the current <code>.nl</code> source.</p>
+<p><strong>Fix:</strong> Regenerate the lockfile with <code>nlsc compile &lt;file&gt;</code> or <code>nlsc lock:update &lt;file&gt;</code> after reviewing the reported ANLU mismatches.</p>
 <h2 id="parse-errors">Parse Errors<a class="headerlink" href="#parse-errors" title="Permanent link">&para;</a></h2>
 <p>Parse errors occur when the <code>.nl</code> file has invalid syntax.</p>
 <h3 id="missing-module-directive">Missing Module Directive<a class="headerlink" href="#missing-module-directive" title="Permanent link">&para;</a></h3>
