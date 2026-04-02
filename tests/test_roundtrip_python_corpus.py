@@ -63,7 +63,7 @@ def sum_all(*values: float) -> float:
 ''',
             "sum_all",
             [(1.0, 2.0, 3.0)],
-            False,
+            True,
         ),
         (
             "loop_accumulation",
@@ -77,7 +77,7 @@ def flatten_list(nested: list[list[int]]) -> list[int]:
 ''',
             "flatten_list",
             [([[1, 2], [3], []],)],
-            False,
+            True,
         ),
         (
             "try_except_return",
@@ -91,7 +91,7 @@ def safe_parse(text: str) -> int:
 ''',
             "safe_parse",
             [("12",), ("oops",)],
-            False,
+            True,
         ),
     ],
 )

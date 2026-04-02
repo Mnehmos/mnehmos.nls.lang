@@ -257,27 +257,18 @@ def _emit_invariant_checks(invariant: Invariant, field_names: list[str]) -> list
 
 def emit_function_signature(anlu: ANLU) -> str:
     """Generate Python function signature from ANLU"""
-    # Separate required and optional parameters
-    required_inputs = [
-        inp
-        for inp in anlu.inputs
-        if not any(c.lower().strip() == "optional" for c in inp.constraints)
-    ]
-    optional_inputs = [
-        inp
-        for inp in anlu.inputs
-        if any(c.lower().strip() == "optional" for c in inp.constraints)
-    ]
-
-    # Build parameter list: required first, then optional with defaults
     params = []
-    for inp in required_inputs:
+    for inp in anlu.inputs:
         py_type = inp.to_python_type()
-        params.append(f"{inp.name}: {py_type}")
-
-    for inp in optional_inputs:
-        py_type = inp.to_python_type()
-        params.append(f"{inp.name}: {py_type} = None")
+        constraints = {c.lower().strip() for c in inp.constraints}
+        if "keyword variadic" in constraints:
+            params.append(f"**{inp.name}: {py_type}")
+        elif "variadic" in constraints:
+            params.append(f"*{inp.name}: {py_type}")
+        elif "optional" in constraints:
+            params.append(f"{inp.name}: {py_type} = None")
+        else:
+            params.append(f"{inp.name}: {py_type}")
 
     param_str = ", ".join(params)
     return_type = anlu.to_python_return_type()
@@ -394,6 +385,11 @@ def emit_body_from_logic(anlu: ANLU) -> str:
 
     # Process each logic step
     for step in anlu.logic_steps:
+        loop_lines = _emit_for_loop_step(step)
+        if loop_lines is not None:
+            lines.extend(loop_lines)
+            continue
+
         # Check if this is a conditional step
         if step.condition:
             # Generate if statement
@@ -446,6 +442,78 @@ def emit_body_from_logic(anlu: ANLU) -> str:
         lines.append(f"    return None  # TODO: {safe_desc}")
 
     return "\n".join(lines)
+
+
+def _emit_for_loop_step(step: LogicStep) -> Optional[list[str]]:
+    """Emit a `FOR each ... IN ...` logic step as Python."""
+    parsed = _parse_for_each_step(step.description)
+    if parsed is None:
+        return None
+
+    target, iterable, action_desc = parsed
+    lines = [f"    for {target.strip()} in {iterable.strip()}:"]
+    lines.extend(_emit_nested_logic_action(action_desc.strip(), indent="        "))
+    return lines
+
+
+def _emit_nested_logic_action(action_desc: str, indent: str) -> list[str]:
+    """Emit the body of a loop-derived logic step."""
+    parsed = _parse_for_each_step(action_desc)
+    if parsed is not None:
+        target, iterable, nested_action = parsed
+        lines = [f"{indent}for {target.strip()} in {iterable.strip()}:"]
+        lines.extend(_emit_nested_logic_action(nested_action.strip(), indent + "    "))
+        return lines
+
+    expr = _desc_to_expr(action_desc)
+    if expr:
+        return [f"{indent}{expr}"]
+    return [f"{indent}# {action_desc}"]
+
+
+def _parse_for_each_step(text: str) -> Optional[tuple[str, str, str]]:
+    """Parse `FOR each target IN iterable: action` while tolerating slices."""
+    desc = normalize_expression_text(text.strip())
+    prefix_match = re.match(r"^FOR\s+each\s+(.+?)\s+IN\s+(.+)$", desc, re.IGNORECASE)
+    if not prefix_match:
+        return None
+
+    target = prefix_match.group(1).strip()
+    remainder = prefix_match.group(2).strip()
+    iterable, action = _split_top_level_colon(remainder)
+    if action is None:
+        return None
+    return target, iterable.strip(), action.strip()
+
+
+def _split_top_level_colon(text: str) -> tuple[str, Optional[str]]:
+    """Split a string on the first top-level colon."""
+    depth = 0
+    in_string = False
+    string_char = ""
+    escaped = False
+
+    for index, char in enumerate(text):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == string_char:
+                in_string = False
+            continue
+
+        if char in {"'", '"'}:
+            in_string = True
+            string_char = char
+        elif char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth = max(0, depth - 1)
+        elif char == ":" and depth == 0:
+            return text[:index], text[index + 1 :]
+
+    return text, None
 
 
 def _convert_type_return(returns_expr: str, anlu: ANLU) -> str:
@@ -596,6 +664,14 @@ def _desc_to_expr(desc: str) -> Optional[str]:
     if re.match(rf"^{IDENTIFIER_PATTERN}\s*=(?!=)", desc):
         return desc
 
+    # Augmented assignments like total += value
+    if re.match(rf"^{IDENTIFIER_PATTERN}\s*(\+=|-=|\*=|/=|//=|%=)", desc):
+        try:
+            ast.parse(desc)
+            return desc
+        except SyntaxError:
+            pass
+
     # Check if strictly looks like a Python function call: identifier(args)
     # Must start with identifier, have (, end with ), and nothing else
     if re.match(rf"^{IDENTIFIER_PATTERN}\s*\(.*\)$", desc):
@@ -698,15 +774,15 @@ def emit_body_mock(anlu: ANLU) -> str:
     expr = _convert_type_return(expr, anlu)
 
     # Helper to generate the return line (or non-throwing placeholder for invalid)
-    def make_return(e: str) -> str:
+    def make_return(e: str, indent: str = "    ") -> str:
         if _is_valid_return_expr(e):
-            return f"    return {e}"
+            return f"{indent}return {e}"
         safe_desc = e.replace("'", "\\'")
         # Keep code runnable (Issue #90): don't raise at runtime for descriptive RETURNS.
         return "\n".join(
             [
-                f"    # NotImplementedError('TODO: {safe_desc}')",
-                f"    return None  # TODO: {safe_desc}",
+                f"{indent}# NotImplementedError('TODO: {safe_desc}')",
+                f"{indent}return None  # TODO: {safe_desc}",
             ]
         )
 
@@ -726,6 +802,24 @@ def emit_body_mock(anlu: ANLU) -> str:
         lines.append("    # Generated from LOGIC steps:")
         for i, step in enumerate(anlu.logic, 1):
             lines.append(f"    # {i}. {step}")
+
+    try_except_match = re.match(
+        r"^(.+?),\s+or\s+(.+?)\s+on\s+([A-Za-z_][A-Za-z0-9_.]*)$",
+        returns,
+    )
+    if try_except_match:
+        try_expr, except_expr, error_type = try_except_match.groups()
+        try_expr = _convert_type_return(
+            try_expr.strip().replace("×", "*").replace("÷", "/"), anlu
+        )
+        except_expr = _convert_type_return(
+            except_expr.strip().replace("×", "*").replace("÷", "/"), anlu
+        )
+        lines.append("    try:")
+        lines.append(make_return(try_expr, indent="        "))
+        lines.append(f"    except {error_type.strip()}:")
+        lines.append(make_return(except_expr, indent="        "))
+        return "\n".join(lines)
 
     # Check for function-like returns: "result with field1, field2"
     if " with " in returns.lower():

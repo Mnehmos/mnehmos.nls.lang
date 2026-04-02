@@ -250,6 +250,16 @@ class ANLU:
             inner = normalized_type[8:]
             return Input(name="_", type=f"list of {inner}").to_python_type()
 
+        builtin_return_types = {
+            "sum(": "float",
+            "len(": "float",
+            "max(": "float",
+            "min(": "float",
+        }
+        for prefix, inferred_type in builtin_return_types.items():
+            if returns.startswith(prefix):
+                return inferred_type
+
         # Handle function calls with arguments (e.g., json.loads(text), max(a, b))
         # These are expressions, not types
         if "(" in returns and ")" in returns:

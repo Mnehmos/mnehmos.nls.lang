@@ -601,7 +601,9 @@ def extract_anlu_from_function(
     # Include positional, keyword-only, *args, and **kwargs to preserve callable contract.
     inputs: list[dict[str, Any]] = []
 
-    def _add_arg(arg_node: ast.arg | None) -> None:
+    def _add_arg(
+        arg_node: ast.arg | None, constraints: list[str] | None = None
+    ) -> None:
         if arg_node is None:
             return
         if arg_node.arg == "self":
@@ -610,6 +612,7 @@ def extract_anlu_from_function(
             {
                 "name": arg_node.arg,
                 "type": python_type_to_nl(arg_node.annotation),
+                "constraints": constraints or [],
             }
         )
 
@@ -621,8 +624,8 @@ def extract_anlu_from_function(
         _add_arg(arg)
 
     # variadics
-    _add_arg(func.args.vararg)
-    _add_arg(func.args.kwarg)
+    _add_arg(func.args.vararg, ["variadic"])
+    _add_arg(func.args.kwarg, ["keyword variadic"])
 
     # Extract GUARDS (if/raise patterns)
     guards = extract_guards(func)
@@ -717,7 +720,10 @@ def atomize_to_nl(code: str, module_name: str = "extracted") -> str:
         if anlu["inputs"]:
             lines.append("INPUTS:")
             for inp in anlu["inputs"]:
-                lines.append(f"  - {inp['name']}: {inp['type']}")
+                input_line = f"  - {inp['name']}: {inp['type']}"
+                if inp.get("constraints"):
+                    input_line += ", " + ", ".join(inp["constraints"])
+                lines.append(input_line)
 
         if anlu.get("guards"):
             lines.append("GUARDS:")

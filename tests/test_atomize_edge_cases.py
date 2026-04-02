@@ -554,6 +554,72 @@ def validate_even(value: int) -> int:
         with pytest.raises(ValueError):
             namespace["validate_even"](3)
 
+    def test_variadic_inputs_roundtrip_back_to_python_signature(self):
+        """Star args should survive atomize -> parse -> emit."""
+        code = '''\
+def sum_all(*values: float) -> float:
+    """Sum all values."""
+    return sum(values)
+'''
+        nl_content = atomize_to_nl(code, module_name="variadics")
+
+        assert "- values: number, variadic" in nl_content
+
+        nl_file = parse_nl_file(nl_content)
+        py_code = emit_python(nl_file)
+        namespace = {}
+        exec(py_code, namespace)
+
+        assert "def sum_all(*values: float) -> float:" in py_code
+        assert namespace["sum_all"](1.0, 2.0, 3.0) == 6.0
+
+    def test_try_except_return_pattern_roundtrips_back_to_python(self):
+        """Try/except fallback returns should emit executable Python."""
+        code = '''\
+def safe_parse(text: str) -> int:
+    """Parse safely."""
+    try:
+        return int(text)
+    except ValueError:
+        return 0
+'''
+        nl_content = atomize_to_nl(code, module_name="safe")
+
+        assert "RETURNS: int(text), or 0 on ValueError" in nl_content
+
+        nl_file = parse_nl_file(nl_content)
+        py_code = emit_python(nl_file)
+        namespace = {}
+        exec(py_code, namespace)
+
+        assert "try:" in py_code
+        assert "except ValueError:" in py_code
+        assert namespace["safe_parse"]("12") == 12
+        assert namespace["safe_parse"]("oops") == 0
+
+    def test_loop_carried_mutation_roundtrips_back_to_python(self):
+        """Accumulator loops should emit executable for-loops."""
+        code = '''\
+def flatten_list(nested: list[list[int]]) -> list[int]:
+    """Flatten a nested list by one level."""
+    result = []
+    for sublist in nested:
+        result.extend(sublist)
+    return result
+'''
+        nl_content = atomize_to_nl(code, module_name="flatten")
+
+        assert "FOR each sublist IN nested: result.extend(sublist)" in nl_content
+
+        nl_file = parse_nl_file(nl_content)
+        py_code = emit_python(nl_file)
+        namespace = {}
+        exec(py_code, namespace)
+
+        assert "for sublist in nested:" in py_code
+        assert "result.extend(sublist)" in py_code
+        assert namespace["flatten_list"]([[1, 2], [3], []]) == [1, 2, 3]
+
     def test_dataclass_defaults_do_not_emit_invalid_field_syntax(self):
         """Drop unsupported default metadata from atomized type fields."""
         code = """\

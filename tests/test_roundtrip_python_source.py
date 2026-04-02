@@ -30,7 +30,7 @@ def add(a: float, b: float) -> float:
     assert "RETURNS: a + b" in result.atomized_nl
 
 
-def test_validate_python_source_roundtrip_reports_variadic_mismatch():
+def test_validate_python_source_roundtrip_matches_variadic_behavior():
     py_source = '''\
 def sum_all(*values: float) -> float:
     """Sum all values."""
@@ -44,9 +44,9 @@ def sum_all(*values: float) -> float:
         module_name="variadics",
     )
 
-    assert not result.all_match
-    assert result.stage == "behavior"
-    assert result.errors
+    assert result.success
+    assert result.all_match
+    assert result.stage == "ok"
 
 
 def test_roundtrip_python_file_writes_artifacts(tmp_path: Path):
@@ -106,8 +106,8 @@ def sum_all(*values: float) -> float:
     )
 
     assert report.total_files == 2
-    assert report.succeeded_files == 1
-    assert report.failed_files == 1
+    assert report.succeeded_files == 2
+    assert report.failed_files == 0
     assert (output_root / "good.nl").exists()
     assert (output_root / "weak.nl").exists()
 
