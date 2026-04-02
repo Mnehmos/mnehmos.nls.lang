@@ -56,9 +56,8 @@ class Input:
 
         # Handle "X or null" / "X or none" → Optional[X]
         if " or null" in type_str.lower() or " or none" in type_str.lower():
-            # Extract the non-null type
             base_type = type_str.split(" or ")[0].strip()
-            base_py = type_map.get(base_type.lower(), base_type)
+            base_py = Input(name=self.name, type=base_type).to_python_type()
             return f"Optional[{base_py}]"
 
         # Handle nested "list of list of X"
@@ -421,6 +420,11 @@ class TypeField:
         if type_str.endswith("?"):
             type_str = type_str[:-1]  # Remove trailing ?
             suffix_optional = True
+
+        if " or null" in type_str.lower() or " or none" in type_str.lower():
+            base_type = type_str.split(" or ")[0].strip()
+            base_py = TypeField(name=self.name, type=base_type).to_python_type()
+            return f"Optional[{base_py}]"
 
         # Handle "list of X"
         if type_str.startswith("list of "):

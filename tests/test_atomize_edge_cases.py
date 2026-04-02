@@ -1,8 +1,12 @@
 """Tests for edge cases in atomization - production-grade patterns"""
 
-import pytest
-from nlsc.atomize import atomize_python_file, atomize_to_nl, python_type_to_nl
 import ast
+
+import pytest
+
+from nlsc.atomize import atomize_python_file, atomize_to_nl, python_type_to_nl
+from nlsc.emitter import emit_python
+from nlsc.parser import parse_nl_file
 
 
 class TestComplexTypeHints:
@@ -70,6 +74,30 @@ def count_items(items: dict[str, int]) -> int:
         anlus, _ = atomize_python_file(code)
         assert len(anlus) == 1
         assert "dict" in anlus[0]["inputs"][0]["type"].lower()
+
+    def test_annotated_type_degrades_to_inner_type(self):
+        """Handle Annotated by preserving the underlying type only."""
+        type_node = ast.parse("Annotated[str, 'username']", mode="eval").body
+
+        assert python_type_to_nl(type_node) == "string"
+
+    def test_literal_type_degrades_to_primitive_type(self):
+        """Handle Literal by degrading to the primitive domain type."""
+        type_node = ast.parse("Literal['pending', 'active']", mode="eval").body
+
+        assert python_type_to_nl(type_node) == "string"
+
+    def test_callable_type_degrades_to_any(self):
+        """Handle Callable by degrading to a safe supported type."""
+        type_node = ast.parse("Callable[[int], int]", mode="eval").body
+
+        assert python_type_to_nl(type_node) == "any"
+
+    def test_stringified_annotated_type_degrades_to_inner_type(self):
+        """Handle string annotations that contain Annotated syntax."""
+        type_node = ast.Constant("Annotated[int, typer.Argument()]")
+
+        assert python_type_to_nl(type_node) == "number"
 
 
 class TestDefaultParameters:
@@ -379,14 +407,14 @@ class Employee(Person):
 
     def test_enum_class(self):
         """Handle Enum classes"""
-        code = '''\
+        code = """\
 from enum import Enum
 
 class Status(Enum):
     PENDING = 1
     ACTIVE = 2
     COMPLETED = 3
-'''
+"""
         _, types = atomize_python_file(code)
         # Enum should not be extracted as dataclass
         assert len(types) == 0
@@ -499,5 +527,71 @@ async def create_user(name: str, email: str) -> User:
         assert "ASYNC: true" in nl_content
         assert "PURPOSE:" in nl_content
         assert "INPUTS:" in nl_content
-        assert "GUARDS:" in nl_content or "name" in nl_content  # May or may not have guards
+        assert (
+            "GUARDS:" in nl_content or "name" in nl_content
+        )  # May or may not have guards
         assert "RETURNS:" in nl_content
+
+    def test_atomized_guards_roundtrip_back_to_python(self):
+        """Guard lines emitted by atomize should be parser-compatible."""
+        code = '''\
+def validate_even(value: int) -> int:
+    """Validate an even non-negative integer."""
+    if value < 0 or value % 2 != 0:
+        raise ValueError("Should be a positive, even integer.")
+    return value
+'''
+        nl_content = atomize_to_nl(code, module_name="validate")
+
+        assert '-> ValueError("Should be a positive, even integer.")' in nl_content
+
+        nl_file = parse_nl_file(nl_content)
+        py_code = emit_python(nl_file)
+        namespace = {}
+        exec(py_code, namespace)
+
+        assert namespace["validate_even"](4) == 4
+        with pytest.raises(ValueError):
+            namespace["validate_even"](3)
+
+    def test_dataclass_defaults_do_not_emit_invalid_field_syntax(self):
+        """Drop unsupported default metadata from atomized type fields."""
+        code = """\
+from dataclasses import dataclass, field
+
+@dataclass
+class Ticket:
+    tags: list[str] = field(default_factory=list)
+    owner: str | None = None
+"""
+        nl_content = atomize_to_nl(code, module_name="tickets")
+
+        assert "default:" not in nl_content
+
+        nl_file = parse_nl_file(nl_content)
+        py_code = emit_python(nl_file)
+
+        assert "tags: list[str]" in py_code
+        assert "owner: Optional[str]" in py_code
+
+    def test_optional_list_type_roundtrips_to_valid_python_signature(self):
+        """Optional list inputs should emit nested Optional[list[T]] correctly."""
+        code = '''\
+def main(user: list[str] | None = None) -> list[str] | None:
+    """Return the provided users."""
+    return user
+'''
+        nl_content = atomize_to_nl(code, module_name="users")
+        nl_file = parse_nl_file(nl_content)
+        py_code = emit_python(nl_file)
+
+        assert "def main(user: Optional[list[str]]) -> Optional[list[str]]:" in py_code
+
+    def test_atomize_python_file_strips_utf8_bom(self):
+        """UTF-8 BOM prefixed files should still atomize successfully."""
+        code = '\ufeffdef add(a: float, b: float) -> float:\n    """Add two numbers"""\n    return a + b\n'
+
+        anlus, _ = atomize_python_file(code)
+
+        assert len(anlus) == 1
+        assert anlus[0]["identifier"] == "add"

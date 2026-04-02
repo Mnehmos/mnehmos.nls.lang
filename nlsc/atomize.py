@@ -5,6 +5,7 @@ Converts Python functions to NL specification format.
 """
 
 import ast
+import json
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,84 @@ TYPE_MAP = {
     "Any": "any",
 }
 
+COLLECTION_TYPES = {
+    "list",
+    "sequence",
+    "mutablesequence",
+    "iterable",
+    "collection",
+    "set",
+    "frozenset",
+    "tuple",
+}
+
+DICT_TYPES = {
+    "dict",
+    "mapping",
+    "mutablemapping",
+    "defaultdict",
+}
+
+
+def _type_name(node: ast.expr | None) -> str | None:
+    """Return a simple type name when one is available."""
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        return node.attr
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    return None
+
+
+def _subscript_args(slice_node: ast.expr) -> list[ast.expr]:
+    """Normalize generic type arguments to a list."""
+    if isinstance(slice_node, ast.Tuple):
+        return list(slice_node.elts)
+    return [slice_node]
+
+
+def _merge_union_types(type_names: list[str]) -> str:
+    """Collapse a Python union into the nearest supported NLS type."""
+    normalized: list[str] = []
+    for type_name in type_names:
+        candidate = type_name.strip()
+        if candidate and candidate not in normalized:
+            normalized.append(candidate)
+
+    non_null = [name for name in normalized if name not in {"void", "null", "none"}]
+    has_null = len(non_null) != len(normalized)
+
+    if has_null and len(non_null) == 1:
+        return f"{non_null[0]} or null"
+
+    if len(set(non_null)) == 1 and non_null:
+        return non_null[0]
+
+    return "any"
+
+
+def _literal_type_to_nl(args: list[ast.expr]) -> str:
+    """Infer a safe NLS type from Literal members."""
+    literal_types: list[str] = []
+    for arg in args:
+        if isinstance(arg, ast.Constant):
+            value = arg.value
+            if isinstance(value, bool):
+                literal_types.append("boolean")
+            elif isinstance(value, (int, float)):
+                literal_types.append("number")
+            elif isinstance(value, str):
+                literal_types.append("string")
+            elif value is None:
+                literal_types.append("null")
+            else:
+                literal_types.append("any")
+        else:
+            literal_types.append("any")
+
+    return _merge_union_types(literal_types)
+
 
 def python_type_to_nl(type_node: ast.expr | None) -> str:
     """
@@ -35,31 +114,57 @@ def python_type_to_nl(type_node: ast.expr | None) -> str:
     if type_node is None:
         return "any"
 
+    if isinstance(type_node, ast.BinOp) and isinstance(type_node.op, ast.BitOr):
+        return _merge_union_types(
+            [python_type_to_nl(type_node.left), python_type_to_nl(type_node.right)]
+        )
+
     if isinstance(type_node, ast.Name):
         return TYPE_MAP.get(type_node.id, type_node.id)
 
+    if isinstance(type_node, ast.Attribute):
+        return TYPE_MAP.get(type_node.attr, type_node.attr)
+
     if isinstance(type_node, ast.Subscript):
-        # Handle generic types like list[int]
-        if isinstance(type_node.value, ast.Name):
-            base_type = type_node.value.id.lower()
-            if base_type == "list":
-                inner_type = python_type_to_nl(type_node.slice)
+        base_name = _type_name(type_node.value)
+        if base_name:
+            base_type = base_name.lower()
+            args = _subscript_args(type_node.slice)
+            if base_type in COLLECTION_TYPES:
+                inner_type = python_type_to_nl(args[0]) if args else "any"
                 return f"list of {inner_type}"
-            elif base_type == "dict":
+            if base_type in DICT_TYPES:
                 return "dictionary"
-            elif base_type == "optional":
-                inner_type = python_type_to_nl(type_node.slice)
+            if base_type == "optional":
+                inner_type = python_type_to_nl(args[0]) if args else "any"
                 return f"{inner_type} or null"
+            if base_type == "annotated":
+                return python_type_to_nl(args[0]) if args else "any"
+            if base_type == "literal":
+                return _literal_type_to_nl(args)
+            if base_type == "callable":
+                return "any"
+            if base_type == "union":
+                return _merge_union_types([python_type_to_nl(arg) for arg in args])
 
     if isinstance(type_node, ast.Constant):
         if type_node.value is None:
             return "void"
+        if isinstance(type_node.value, str):
+            try:
+                parsed = ast.parse(type_node.value, mode="eval")
+            except SyntaxError:
+                parsed = None
+            if parsed is not None:
+                return python_type_to_nl(parsed.body)
+            return TYPE_MAP.get(type_node.value, type_node.value)
 
-    # Fallback: try to get the string representation
-    return ast.unparse(type_node) if hasattr(ast, "unparse") else "any"
+    return "any"
 
 
-def extract_guards(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[dict[str, str]]:
+def extract_guards(
+    func: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> list[dict[str, str]]:
     """
     Extract GUARDS from if/raise patterns at the start of function body.
 
@@ -89,14 +194,15 @@ def extract_guards(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[dict[st
                     continue
 
                 # Convert "if not X" to guard "X"
-                if isinstance(node.test, ast.UnaryOp) and isinstance(node.test.op, ast.Not):
+                if isinstance(node.test, ast.UnaryOp) and isinstance(
+                    node.test.op, ast.Not
+                ):
                     # Guard is the positive condition
                     condition = ast.unparse(node.test.operand)
                 else:
-                    # Guard is the negation of the condition
-                    # e.g., "if x < 0" -> guard is "x >= 0"
-                    # For simplicity, we'll express it as "NOT (original)"
-                    condition = f"NOT ({condition})"
+                    # Guard is the negation of the condition.
+                    # Emit valid Python so the round-trip parser/emitter can reuse it.
+                    condition = f"not ({condition})"
 
                 # Extract error type and message
                 error_type = "ValueError"
@@ -119,11 +225,13 @@ def extract_guards(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[dict[st
                             except Exception:
                                 pass
 
-                guards.append({
-                    "condition": condition,
-                    "error_type": error_type,
-                    "error_message": error_message,
-                })
+                guards.append(
+                    {
+                        "condition": condition,
+                        "error_type": error_type,
+                        "error_message": error_message,
+                    }
+                )
             else:
                 # Not a simple guard pattern, stop looking
                 break
@@ -169,7 +277,9 @@ def extract_logic_steps(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[st
 
         # Any non-guard statement means we're past guards
         if isinstance(node, (ast.Assign, ast.AugAssign, ast.Expr, ast.For)):
-            if not (isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant)):
+            if not (
+                isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant)
+            ):
                 in_guards = False
 
         # Capture assignments
@@ -188,8 +298,12 @@ def extract_logic_steps(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[st
             if isinstance(node.target, ast.Name):
                 try:
                     op_map = {
-                        ast.Add: "+=", ast.Sub: "-=", ast.Mult: "*=",
-                        ast.Div: "/=", ast.Mod: "%=", ast.FloorDiv: "//=",
+                        ast.Add: "+=",
+                        ast.Sub: "-=",
+                        ast.Mult: "*=",
+                        ast.Div: "/=",
+                        ast.Mod: "%=",
+                        ast.FloorDiv: "//=",
                     }
                     op_str = op_map.get(type(node.op), "?=")
                     expr = ast.unparse(node.value)
@@ -247,8 +361,11 @@ def _extract_for_body(body: list) -> list[str]:
                 # Augmented assignment
                 if isinstance(node.target, ast.Name):
                     op_map = {
-                        ast.Add: "+=", ast.Sub: "-=", ast.Mult: "*=",
-                        ast.Div: "/=", ast.Mod: "%=",
+                        ast.Add: "+=",
+                        ast.Sub: "-=",
+                        ast.Mult: "*=",
+                        ast.Div: "/=",
+                        ast.Mod: "%=",
                     }
                     op_str = op_map.get(type(node.op), "?=")
                     expr = ast.unparse(node.value)
@@ -323,7 +440,11 @@ def extract_return_expression(func: ast.FunctionDef | ast.AsyncFunctionDef) -> s
                 # Express as conditional: "X if condition else Y"
                 try:
                     condition = ast.unparse(node.test)
-                    if len(if_returns) < 30 and len(else_returns) < 30 and len(condition) < 30:
+                    if (
+                        len(if_returns) < 30
+                        and len(else_returns) < 30
+                        and len(condition) < 30
+                    ):
                         return f"{if_returns} if {condition} else {else_returns}"
                 except Exception:
                     pass
@@ -332,13 +453,19 @@ def extract_return_expression(func: ast.FunctionDef | ast.AsyncFunctionDef) -> s
             if if_returns and not node.orelse:
                 # Look for a return after this if block
                 idx = func.body.index(node)
-                for following in func.body[idx + 1:]:
+                for following in func.body[idx + 1 :]:
                     if isinstance(following, ast.Return) and following.value:
                         try:
                             default_expr = ast.unparse(following.value)
                             condition = ast.unparse(node.test)
-                            if len(if_returns) < 30 and len(default_expr) < 30 and len(condition) < 30:
-                                return f"{if_returns} if {condition} else {default_expr}"
+                            if (
+                                len(if_returns) < 30
+                                and len(default_expr) < 30
+                                and len(condition) < 30
+                            ):
+                                return (
+                                    f"{if_returns} if {condition} else {default_expr}"
+                                )
                         except Exception:
                             pass
                         break
@@ -400,7 +527,10 @@ def extract_type_from_class(cls: ast.ClassDef) -> dict[str, Any] | None:
             is_dataclass = True
             break
         if isinstance(decorator, ast.Call):
-            if isinstance(decorator.func, ast.Name) and decorator.func.id == "dataclass":
+            if (
+                isinstance(decorator.func, ast.Name)
+                and decorator.func.id == "dataclass"
+            ):
                 is_dataclass = True
                 break
 
@@ -425,11 +555,13 @@ def extract_type_from_class(cls: ast.ClassDef) -> dict[str, Any] | None:
                     except Exception:
                         pass
 
-                fields.append({
-                    "name": field_name,
-                    "type": field_type,
-                    "default": default,
-                })
+                fields.append(
+                    {
+                        "name": field_name,
+                        "type": field_type,
+                        "default": default,
+                    }
+                )
 
     # Only extract classes with annotated fields (dataclasses or typed classes)
     if not fields:
@@ -443,7 +575,9 @@ def extract_type_from_class(cls: ast.ClassDef) -> dict[str, Any] | None:
     }
 
 
-def extract_anlu_from_function(func: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[str, Any]:
+def extract_anlu_from_function(
+    func: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> dict[str, Any]:
     """
     Extract ANLU specification from a Python function.
 
@@ -472,10 +606,12 @@ def extract_anlu_from_function(func: ast.FunctionDef | ast.AsyncFunctionDef) -> 
             return
         if arg_node.arg == "self":
             return
-        inputs.append({
-            "name": arg_node.arg,
-            "type": python_type_to_nl(arg_node.annotation),
-        })
+        inputs.append(
+            {
+                "name": arg_node.arg,
+                "type": python_type_to_nl(arg_node.annotation),
+            }
+        )
 
     for arg in func.args.args:
         _add_arg(arg)
@@ -517,7 +653,7 @@ def atomize_python_file(code: str) -> tuple[list[dict[str, Any]], list[dict[str,
     Returns:
         Tuple of (list of ANLU dictionaries, list of type definitions)
     """
-    tree = ast.parse(code)
+    tree = ast.parse(code.lstrip("\ufeff"))
     anlus = []
     types = []
 
@@ -568,10 +704,7 @@ def atomize_to_nl(code: str, module_name: str = "extracted") -> str:
         if type_def["description"]:
             lines.append(f"  # {type_def['description']}")
         for field in type_def["fields"]:
-            field_str = f"  - {field['name']}: {field['type']}"
-            if field["default"]:
-                field_str += f" (default: {field['default']})"
-            lines.append(field_str)
+            lines.append(f"  - {field['name']}: {field['type']}")
         lines.append("")
 
     for anlu in anlus:
@@ -589,7 +722,13 @@ def atomize_to_nl(code: str, module_name: str = "extracted") -> str:
         if anlu.get("guards"):
             lines.append("GUARDS:")
             for guard in anlu["guards"]:
-                lines.append(f"  - {guard['condition']} | {guard['error_type']}: \"{guard['error_message']}\"")
+                error_type = guard.get("error_type") or "ValueError"
+                error_message = json.dumps(
+                    guard.get("error_message") or "Guard condition failed"
+                )
+                lines.append(
+                    f"  - {guard['condition']} -> {error_type}({error_message})"
+                )
 
         if anlu.get("logic"):
             lines.append("LOGIC:")
@@ -602,7 +741,9 @@ def atomize_to_nl(code: str, module_name: str = "extracted") -> str:
     return "\n".join(lines)
 
 
-def atomize_file(source_path: Path, output_path: Path | None = None, module_name: str | None = None) -> str:
+def atomize_file(
+    source_path: Path, output_path: Path | None = None, module_name: str | None = None
+) -> str:
     """
     Atomize a Python file and optionally write to output.
 
@@ -614,7 +755,7 @@ def atomize_file(source_path: Path, output_path: Path | None = None, module_name
     Returns:
         Generated NL content
     """
-    code = source_path.read_text(encoding="utf-8")
+    code = source_path.read_text(encoding="utf-8-sig")
 
     if module_name is None:
         module_name = source_path.stem.replace("_", "-")

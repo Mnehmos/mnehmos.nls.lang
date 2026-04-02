@@ -5,6 +5,7 @@ Converts Natural Language Source files into structured ANLU objects.
 Uses regex-based parsing for V0 (sufficient for math example).
 """
 
+import ast
 import re
 from pathlib import Path
 from typing import Optional
@@ -158,41 +159,96 @@ def parse_guard(text: str) -> Guard:
         condition, error_part = text.split("→", 1)
     elif "->" in text:
         condition, error_part = text.split("->", 1)
+    elif "|" in text:
+        condition, error_part = text.split("|", 1)
     else:
         return Guard(condition=normalize_expression_text(text.strip()))
 
     condition = normalize_expression_text(condition.strip())
     error_part = error_part.strip()
 
+    colon_match = re.match(rf"({IDENTIFIER_PATTERN})\s*:\s*(.+)$", error_part)
+    if colon_match:
+        return Guard(
+            condition=condition,
+            error_type=colon_match.group(1),
+            error_message=_parse_guard_message(colon_match.group(2).strip()),
+        )
+
     # Parse error specification like AuthError(MISSING, "Token required")
-    error_match = re.match(r"(\w+)\(([^,]+),\s*\"([^\"]+)\"\)", error_part)
+    error_match = re.match(rf"({IDENTIFIER_PATTERN})\((.+)\)$", error_part)
     if error_match:
+        error_type = error_match.group(1)
+        inner = error_match.group(2).strip()
+        if inner.startswith(("'", '"', "f'", 'f"')):
+            return Guard(
+                condition=condition,
+                error_type=error_type,
+                error_message=_parse_guard_message(inner),
+            )
+        code_part, message_part = _split_guard_args(inner)
+        if message_part:
+            return Guard(
+                condition=condition,
+                error_type=error_type,
+                error_code=code_part.strip(),
+                error_message=_parse_guard_message(message_part.strip()),
+            )
         return Guard(
             condition=condition,
-            error_type=error_match.group(1),
-            error_code=error_match.group(2),
-            error_message=error_match.group(3),
-        )
-
-    # Parse error specification like ValueError("Division by zero") - quoted message
-    quoted_error_match = re.match(r'(\w+)\("([^"]+)"\)', error_part)
-    if quoted_error_match:
-        return Guard(
-            condition=condition,
-            error_type=quoted_error_match.group(1),
-            error_message=quoted_error_match.group(2),
-        )
-
-    # Parse error specification like ValueError(Amount must be positive) - unquoted
-    simple_error_match = re.match(r"(\w+)\(([^)]+)\)", error_part)
-    if simple_error_match:
-        return Guard(
-            condition=condition,
-            error_type=simple_error_match.group(1),
-            error_message=simple_error_match.group(2).strip(),
+            error_type=error_type,
+            error_message=_parse_guard_message(inner),
         )
 
     return Guard(condition=condition, error_message=error_part)
+
+
+def _parse_guard_message(text: str) -> str:
+    """Parse a guard message payload from string-like syntax."""
+    candidate = text.strip()
+    if not candidate:
+        return candidate
+
+    literal_candidate = (
+        candidate[1:] if candidate.startswith(("f'", 'f"')) else candidate
+    )
+    try:
+        parsed = ast.literal_eval(literal_candidate)
+        if isinstance(parsed, str):
+            return parsed
+    except (SyntaxError, ValueError):
+        pass
+    return candidate
+
+
+def _split_guard_args(text: str) -> tuple[str, str]:
+    """Split `Error(code, message)` args on the first top-level comma."""
+    depth = 0
+    in_string = False
+    string_char = ""
+    escaped = False
+
+    for index, char in enumerate(text):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == string_char:
+                in_string = False
+            continue
+
+        if char in {"'", '"'}:
+            in_string = True
+            string_char = char
+        elif char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth = max(0, depth - 1)
+        elif char == "," and depth == 0:
+            return text[:index], text[index + 1 :]
+
+    return text, ""
 
 
 def parse_type_field(text: str) -> TypeField:
