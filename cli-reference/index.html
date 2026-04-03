@@ -1714,12 +1714,12 @@
 </tr>
 </tbody>
 </table>
-<p>If <code>--json</code> is present, JSON-capable commands now return structured bootstrap diagnostics even when argparse fails before command dispatch. Use <code>ECLI001</code> for CLI usage errors such as missing required args, invalid choice values, or unknown subcommands, <code>EEXPLAIN001</code> when <code>nlsc explain</code> is asked for an uncataloged code, <code>EPARSE002</code> for parser-backend bootstrap failures such as <code>--parser treesitter</code> without tree-sitter installed, <code>ELSP001</code> for missing optional <code>nlsc[lsp]</code> dependencies, <code>ELSP002</code> for LSP server startup failures after import succeeds, and <code>EASSOC001</code> through <code>EASSOC004</code> for <code>nlsc assoc</code> platform, icon, permission, and runtime failures.</p>
+<p>If <code>--json</code> is present, JSON-capable commands now return structured bootstrap diagnostics even when argparse fails before command dispatch. Use <code>ECLI001</code> for CLI usage errors such as missing required args, invalid choice values, or unknown subcommands, <code>EEXPLAIN001</code> when <code>nlsc explain</code> is asked for an uncataloged code, <code>EINIT001</code> through <code>EINIT003</code> for <code>nlsc init</code> path, directory-creation, and scaffold-write failures, <code>EPARSE002</code> for parser-backend bootstrap failures such as <code>--parser treesitter</code> without tree-sitter installed, <code>ELSP001</code> for missing optional <code>nlsc[lsp]</code> dependencies, <code>ELSP002</code> for LSP server startup failures after import succeeds, and <code>EASSOC001</code> through <code>EASSOC004</code> for <code>nlsc assoc</code> platform, icon, permission, and runtime failures.</p>
 <hr />
 <h2 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">&para;</a></h2>
 <h3 id="nlsc-init"><code>nlsc init</code><a class="headerlink" href="#nlsc-init" title="Permanent link">&para;</a></h3>
 <p>Initialize a new NLS project with standard folder structure.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>nlsc<span class="w"> </span>init<span class="w"> </span><span class="o">[</span>path<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>nlsc<span class="w"> </span>init<span class="w"> </span><span class="o">[</span>path<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -1732,6 +1732,10 @@
 <tr>
 <td><code>path</code></td>
 <td>Project directory (default: current directory)</td>
+</tr>
+<tr>
+<td><code>--json</code></td>
+<td>Emit structured JSON diagnostics and init metadata</td>
 </tr>
 </tbody>
 </table>
@@ -1746,6 +1750,7 @@
 </span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>└── tests/            # Generated tests
 </span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    └── __init__.py
 </span></code></pre></div>
+<p>With <code>--json</code>, <code>nlsc init</code> emits stable diagnostics for invalid target paths, directory creation failures, and scaffold file write failures. Successful runs return JSON metadata listing created and existing scaffold entries.</p>
 <hr />
 <h3 id="nlsc-compile"><code>nlsc compile</code><a class="headerlink" href="#nlsc-compile" title="Permanent link">&para;</a></h3>
 <p>Compile a <code>.nl</code> file to the target language (currently Python).</p>

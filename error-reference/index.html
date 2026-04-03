@@ -983,6 +983,39 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#einit001-init-target-path-is-invalid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EINIT001 - Init target path is invalid
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#einit002-init-directory-creation-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EINIT002 - Init directory creation failed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#einit003-init-project-file-write-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EINIT003 - Init project file write failed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#efile001-file-not-found" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2095,6 +2128,39 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#einit001-init-target-path-is-invalid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EINIT001 - Init target path is invalid
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#einit002-init-directory-creation-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EINIT002 - Init directory creation failed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#einit003-init-project-file-write-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EINIT003 - Init project file write failed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#efile001-file-not-found" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2896,7 +2962,7 @@
 <h1 id="error-reference">Error Reference<a class="headerlink" href="#error-reference" title="Permanent link">&para;</a></h1>
 <p>Complete guide to NLS errors, their causes, and how to fix them.</p>
 <h2 id="active-cli-error-codes">Active CLI Error Codes<a class="headerlink" href="#active-cli-error-codes" title="Permanent link">&para;</a></h2>
-<p>These are the stable error codes currently emitted by <code>nlsc atomize</code>, <code>nlsc compile</code>, <code>nlsc verify</code>, <code>nlsc run</code>, <code>nlsc graph</code>, <code>nlsc diff</code>, <code>nlsc test</code>, <code>nlsc watch</code>, <code>nlsc lock:check</code>, <code>nlsc lock:update</code>, <code>nlsc lsp</code>, and <code>nlsc assoc</code>.</p>
+<p>These are the stable error codes currently emitted by <code>nlsc init</code>, <code>nlsc atomize</code>, <code>nlsc compile</code>, <code>nlsc verify</code>, <code>nlsc run</code>, <code>nlsc graph</code>, <code>nlsc diff</code>, <code>nlsc test</code>, <code>nlsc watch</code>, <code>nlsc lock:check</code>, <code>nlsc lock:update</code>, <code>nlsc lsp</code>, and <code>nlsc assoc</code>.</p>
 <p>Use the CLI to get the extended explanation for any code:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>nlsc<span class="w"> </span>explain<span class="w"> </span>EPARSE001
 </span></code></pre></div>
@@ -2911,13 +2977,28 @@
 <tbody>
 <tr>
 <td><code>ECLI001</code></td>
-<td><code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>atomize</code>, <code>diff</code>, <code>lsp</code>, <code>assoc</code>, <code>watch</code>, <code>lock:check</code>, <code>lock:update</code>, <code>unknown-subcommand</code></td>
+<td><code>init</code>, <code>compile</code>, <code>verify</code>, <code>run</code>, <code>test</code>, <code>graph</code>, <code>atomize</code>, <code>diff</code>, <code>lsp</code>, <code>assoc</code>, <code>watch</code>, <code>lock:check</code>, <code>lock:update</code>, <code>unknown-subcommand</code></td>
 <td>CLI argument parsing failed before command dispatch while <code>--json</code> was active.</td>
 </tr>
 <tr>
 <td><code>EEXPLAIN001</code></td>
 <td><code>explain</code></td>
 <td><code>nlsc explain</code> was asked to document an unknown stable error code.</td>
+</tr>
+<tr>
+<td><code>EINIT001</code></td>
+<td><code>init</code></td>
+<td><code>nlsc init</code> received a blank path or a path that resolves to a file instead of a directory.</td>
+</tr>
+<tr>
+<td><code>EINIT002</code></td>
+<td><code>init</code></td>
+<td><code>nlsc init</code> could not create the project directory or one of the scaffold directories.</td>
+</tr>
+<tr>
+<td><code>EINIT003</code></td>
+<td><code>init</code></td>
+<td><code>nlsc init</code> failed while writing a scaffolded project file.</td>
 </tr>
 <tr>
 <td><code>EFILE001</code></td>
@@ -3053,6 +3134,15 @@
 <h3 id="eexplain001-unknown-explain-error-code"><code>EEXPLAIN001</code> - Unknown explain error code<a class="headerlink" href="#eexplain001-unknown-explain-error-code" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc explain</code> receives a code that is not present in the stable CLI error catalog. With <code>--json</code>, the command returns a structured diagnostic plus a <code>known_codes</code> list so automation can recover without scraping stderr.</p>
 <p><strong>Fix:</strong> Correct the requested code, or choose one of the reported catalog entries and rerun <code>nlsc explain</code>.</p>
+<h3 id="einit001-init-target-path-is-invalid"><code>EINIT001</code> - Init target path is invalid<a class="headerlink" href="#einit001-init-target-path-is-invalid" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc init --json</code> receives a blank path or a path that already resolves to a file instead of a directory.</p>
+<p><strong>Fix:</strong> Pass a directory path to <code>nlsc init</code>, or omit the argument to use the current directory. If the target path points to a file, remove or rename the conflicting file and rerun.</p>
+<h3 id="einit002-init-directory-creation-failed"><code>EINIT002</code> - Init directory creation failed<a class="headerlink" href="#einit002-init-directory-creation-failed" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc init --json</code> cannot create the project root or one of the scaffold directories such as <code>src/</code> or <code>tests/</code>.</p>
+<p><strong>Fix:</strong> Check that the parent path exists and that the current user can create directories there, then rerun <code>nlsc init</code>.</p>
+<h3 id="einit003-init-project-file-write-failed"><code>EINIT003</code> - Init project file write failed<a class="headerlink" href="#einit003-init-project-file-write-failed" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc init --json</code> reaches a scaffold write step but cannot write <code>nl.config.yaml</code> or one of the package marker files.</p>
+<p><strong>Fix:</strong> Check the destination path, available disk space, and filesystem permissions, then rerun <code>nlsc init</code>.</p>
 <h3 id="efile001-file-not-found"><code>EFILE001</code> - File not found<a class="headerlink" href="#efile001-file-not-found" title="Permanent link">&para;</a></h3>
 <p>Raised when the input path passed to <code>atomize</code>, <code>compile</code>, <code>verify</code>, <code>run</code>, or <code>watch</code> does not exist.</p>
 <p><strong>Fix:</strong> Check the path, ensure the file exists, and rerun the command.</p>
