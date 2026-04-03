@@ -42,6 +42,7 @@ from .graph import (
 )
 from .atomize import atomize_file
 from .diff import (
+    ANLUChange,
     get_anlu_changes,
     format_changes_output,
     format_stat_output,
@@ -354,6 +355,26 @@ def _emit_explain_definition_json(code: str) -> int:
     }
     print(json.dumps(payload, indent=2))
     return 0
+
+
+def _anlu_change_to_dict(change: ANLUChange) -> dict[str, str]:
+    return {
+        "identifier": change.identifier,
+        "status": change.status,
+        "details": change.details,
+    }
+
+
+def _diff_summary(changes: list[ANLUChange]) -> dict[str, int]:
+    summary = {
+        "unchanged": 0,
+        "modified": 0,
+        "new": 0,
+        "removed": 0,
+    }
+    for change in changes:
+        summary[change.status] = summary.get(change.status, 0) + 1
+    return summary
 
 
 def _emit_lsp_startup_failure(args: argparse.Namespace, diagnostic: Diagnostic) -> int:
@@ -798,6 +819,7 @@ def cmd_graph(args: argparse.Namespace) -> int:
     output_format = args.format or "mermaid"
     anlu_id = args.anlu
     dataflow = args.dataflow
+    graph_kind = "dependency"
 
     # If specific ANLU requested
     if anlu_id:
@@ -815,10 +837,13 @@ def cmd_graph(args: argparse.Namespace) -> int:
 
         if output_format == "mermaid":
             if has_fsm and not dataflow:
+                graph_kind = "fsm"
                 output = emit_fsm_mermaid(anlu)
             else:
+                graph_kind = "dataflow"
                 output = emit_dataflow_mermaid(anlu)
         elif output_format == "ascii":
+            graph_kind = "dataflow"
             output = emit_dataflow_ascii(anlu)
         else:
             diagnostic = graph_format_diagnostic(source_path, anlu, output_format)
@@ -843,8 +868,32 @@ def cmd_graph(args: argparse.Namespace) -> int:
     if args.output:
         output_path = Path(args.output)
         output_path.write_text(output, encoding="utf-8")
+        if json_output:
+            return _emit_json(
+                "graph",
+                [],
+                file=str(source_path),
+                format=output_format,
+                anlu=anlu_id,
+                dataflow=graph_kind == "dataflow",
+                graph_kind=graph_kind,
+                output_file=str(output_path),
+                graph=output,
+            )
         print(f"Graph written to {output_path}")
     else:
+        if json_output:
+            return _emit_json(
+                "graph",
+                [],
+                file=str(source_path),
+                format=output_format,
+                anlu=anlu_id,
+                dataflow=graph_kind == "dataflow",
+                graph_kind=graph_kind,
+                output_file=None,
+                graph=output,
+            )
         print(output)
 
     return 0
@@ -1103,37 +1152,71 @@ def cmd_diff(args: argparse.Namespace) -> int:
     # Load lockfile if exists
     lock_path = source_path.with_suffix(".nl.lock")
     lockfile = None
-    if lock_path.exists():
-        try:
-            lockfile = read_lockfile(lock_path)
-        except Exception as e:
-            print(f"Warning: Could not read lockfile: {e}", file=sys.stderr)
+    lockfile_present = lock_path.exists()
+    lockfile_error = None
+    if lockfile_present:
+        if not lock_path.is_file():
+            lockfile_error = f"Lockfile path is not a regular file: {lock_path}"
+        else:
+            try:
+                lockfile = read_lockfile(lock_path)
+            except Exception as e:
+                lockfile_error = str(e)
+                if not json_output:
+                    print(f"Warning: Could not read lockfile: {e}", file=sys.stderr)
+
+            if lockfile is None and lockfile_error is None:
+                lockfile_error = f"Could not load lockfile: {lock_path}"
 
     # Get changes
     changes = get_anlu_changes(nl_file, lockfile)
 
-    if lockfile is None:
-        print("No lockfile found. All ANLUs shown as new.\n")
+    mode = "changes"
+    text_output = ""
 
     # Output based on flags
     if args.stat:
-        print(format_stat_output(changes))
+        mode = "stat"
+        text_output = format_stat_output(changes)
     elif args.full:
-        # Generate Python code for diff
-        from .emitter import emit_python
-
-        py_code_new = emit_python(nl_file)
-
-        # Get original Python code from lockfile target
-        py_path = source_path.with_suffix(".py")
-        if py_path.exists():
-            py_code_orig = py_path.read_text(encoding="utf-8")
-            print(generate_full_diff(py_code_orig, py_code_new, py_path.name))
+        mode = "full"
+        target = _resolve_target(nl_file, None)
+        generated_code, output_suffix, _, _ = _emit_target_code(nl_file, target)
+        output_path = source_path.with_suffix(output_suffix)
+        if output_path.exists():
+            previous_code = output_path.read_text(encoding="utf-8")
+            text_output = generate_full_diff(
+                previous_code,
+                generated_code,
+                output_path.name,
+            )
         else:
-            print("No existing Python file to diff against.")
-            print(format_changes_output(changes))
+            text_output = (
+                f"No existing compiled output to diff against: {output_path.name}.\n"
+                f"{format_changes_output(changes)}"
+            )
     else:
-        print(format_changes_output(changes))
+        text_output = format_changes_output(changes)
+
+    if json_output:
+        return _emit_json(
+            "diff",
+            [],
+            file=str(source_path),
+            lockfile=str(lock_path),
+            lockfile_present=lockfile_present,
+            lockfile_loaded=lockfile is not None,
+            lockfile_error=lockfile_error,
+            mode=mode,
+            summary=_diff_summary(changes),
+            changes=[_anlu_change_to_dict(change) for change in changes],
+            text=text_output,
+        )
+
+    if lockfile is None:
+        print("No lockfile found. All ANLUs shown as new.\n")
+
+    print(text_output)
 
     return 0
 
