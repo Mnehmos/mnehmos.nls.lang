@@ -12,6 +12,7 @@ EINIT003 = "EINIT003"
 EATOM001 = "EATOM001"
 EATOM002 = "EATOM002"
 EFILE001 = "EFILE001"
+EARTIFACT001 = "EARTIFACT001"
 EPARSE001 = "EPARSE001"
 EPARSE002 = "EPARSE002"
 EUSE001 = "EUSE001"
@@ -26,6 +27,7 @@ EGRAPH001 = "EGRAPH001"
 EGRAPH002 = "EGRAPH002"
 ELOCK001 = "ELOCK001"
 ELOCK002 = "ELOCK002"
+ELOCK003 = "ELOCK003"
 ELSP001 = "ELSP001"
 ELSP002 = "ELSP002"
 EASSOC001 = "EASSOC001"
@@ -155,6 +157,20 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Check the file path and rerun the command.",
             "Use an absolute path if the current working directory is ambiguous.",
+        ),
+    ),
+    EARTIFACT001: ErrorDefinition(
+        code=EARTIFACT001,
+        title="Artifact I/O failed",
+        summary="`nlsc compile` or `nlsc lock:update` could not read or write a generated artifact needed to finish the command.",
+        emitted_by=("compile", "lock:update"),
+        common_causes=(
+            "The generated output path is not writable, is locked, or the filesystem rejected the write.",
+            "The existing compiled artifact is unreadable, missing expected permissions, or contains undecodable bytes.",
+        ),
+        next_steps=(
+            "Check the reported artifact path, filesystem permissions, and available disk space.",
+            "For `lock:update`, remove the unreadable artifact and rerun if you want the command to regenerate the code path in memory.",
         ),
     ),
     EATOM001: ErrorDefinition(
@@ -402,6 +418,20 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Run `nlsc compile <file>` or `nlsc lock:update <file>` to regenerate the lockfile.",
             "Review the reported ANLU diagnostics to confirm the source changes are expected.",
+        ),
+    ),
+    ELOCK003: ErrorDefinition(
+        code=ELOCK003,
+        title="Lockfile write failed",
+        summary="`nlsc compile` or `nlsc lock:update` generated lockfile content but could not write the `.nl.lock` artifact to disk.",
+        emitted_by=("compile", "lock:update"),
+        common_causes=(
+            "The destination directory is not writable or the lockfile is held by another process.",
+            "The filesystem ran out of space or rejected the final write.",
+        ),
+        next_steps=(
+            "Check the destination path, permissions, and free space, then rerun the command.",
+            "If another tool is watching the lockfile, close or reconfigure it before retrying.",
         ),
     ),
     ELSP001: ErrorDefinition(

@@ -522,6 +522,120 @@ def test_compile_json_reports_invalid_target_choice(tmp_path: Path) -> None:
     assert payload["usage"].startswith("usage: nlsc compile")
 
 
+def test_compile_json_success_returns_structured_payload(tmp_path: Path) -> None:
+    source_path = tmp_path / "compile_ok.nl"
+    output_path = tmp_path / "compile_ok.py"
+    lock_path = tmp_path / "compile_ok.nl.lock"
+    source_path.write_text(
+        """\
+@module compile-ok
+@target python
+
+[main]
+PURPOSE: Compile ok
+RETURNS: 1
+""",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(["compile", str(source_path), "--json"], cwd=REPO_ROOT)
+
+    assert result.returncode == 0
+    payload = _load_json_output(result)
+    assert payload == {
+        "ok": True,
+        "command": "compile",
+        "diagnostics": [],
+        "file": str(source_path),
+        "output": str(output_path),
+        "lockfile": str(lock_path),
+        "target": "python",
+        "line_count": output_path.read_text(encoding="utf-8").count("\n") + 1,
+    }
+
+
+def test_compile_json_reports_artifact_write_failure(
+    capsys: Any, monkeypatch: Any, tmp_path: Path
+) -> None:
+    source_path = tmp_path / "compile_write_fail.nl"
+    output_path = tmp_path / "compile_write_fail.py"
+    source_path.write_text(
+        "@module compile-write-fail\n@target python\n\n[main]\nPURPOSE: Ok\nRETURNS: 1\n",
+        encoding="utf-8",
+    )
+    real_write_text = Path.write_text
+
+    def fake_write_text(self: Path, data: str, *args: Any, **kwargs: Any) -> int:
+        if self == output_path:
+            raise OSError("disk full")
+        return real_write_text(self, data, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", fake_write_text)
+
+    exit_code = main(["compile", str(source_path), "--json"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload == {
+        "ok": False,
+        "command": "compile",
+        "diagnostics": [
+            {
+                "code": "EARTIFACT001",
+                "file": str(output_path),
+                "line": None,
+                "col": None,
+                "message": f"Failed to write artifact: {output_path} (disk full)",
+                "hint": "Check the output path and filesystem permissions, then rerun `nlsc compile`.",
+            }
+        ],
+        "file": str(source_path),
+    }
+    assert captured.err == ""
+
+
+def test_compile_json_reports_lockfile_write_failure(
+    capsys: Any, monkeypatch: Any, tmp_path: Path
+) -> None:
+    source_path = tmp_path / "compile_lock_write_fail.nl"
+    lock_path = tmp_path / "compile_lock_write_fail.nl.lock"
+    source_path.write_text(
+        "@module compile-lock-write-fail\n@target python\n\n[main]\nPURPOSE: Ok\nRETURNS: 1\n",
+        encoding="utf-8",
+    )
+    real_write_text = Path.write_text
+
+    def fake_write_text(self: Path, data: str, *args: Any, **kwargs: Any) -> int:
+        if self == lock_path:
+            raise OSError("permission denied")
+        return real_write_text(self, data, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", fake_write_text)
+
+    exit_code = main(["compile", str(source_path), "--json"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload == {
+        "ok": False,
+        "command": "compile",
+        "diagnostics": [
+            {
+                "code": "ELOCK003",
+                "file": str(lock_path),
+                "line": None,
+                "col": None,
+                "message": f"Failed to write lockfile: {lock_path} (permission denied)",
+                "hint": "Check the destination path and filesystem permissions, then rerun `nlsc compile`.",
+            }
+        ],
+        "file": str(source_path),
+    }
+    assert captured.err == ""
+
+
 def test_unknown_subcommand_with_json_reports_structured_diagnostic() -> None:
     result = _run_nlsc(["frobnicate", "--json"], cwd=REPO_ROOT)
 
@@ -1653,6 +1767,126 @@ RETURNS: 1
             "hint": "Rewrite the line as a numbered LOGIC step like '1. ...'.",
         }
     ]
+
+
+def test_lock_update_json_success_returns_structured_payload(tmp_path: Path) -> None:
+    source_path = tmp_path / "lock_update_ok.nl"
+    output_path = tmp_path / "lock_update_ok.py"
+    lock_path = tmp_path / "lock_update_ok.nl.lock"
+    source_path.write_text(
+        """\
+@module lock-update-ok
+@target python
+
+[main]
+PURPOSE: Refresh lock
+RETURNS: 1
+""",
+        encoding="utf-8",
+    )
+    output_path.write_text("def main() -> int:\n    return 1\n", encoding="utf-8")
+
+    result = _run_nlsc(
+        ["--parser", "regex", "lock:update", str(source_path), "--json"], cwd=REPO_ROOT
+    )
+
+    assert result.returncode == 0
+    payload = _load_json_output(result)
+    assert payload == {
+        "ok": True,
+        "command": "lock:update",
+        "diagnostics": [],
+        "file": str(source_path),
+        "lockfile": str(lock_path),
+        "output": str(output_path),
+        "target": "python",
+        "anlu_count": 1,
+    }
+
+
+def test_lock_update_json_reports_compiled_artifact_read_failure(
+    capsys: Any, monkeypatch: Any, tmp_path: Path
+) -> None:
+    source_path = tmp_path / "lock_update_read_fail.nl"
+    output_path = tmp_path / "lock_update_read_fail.py"
+    source_path.write_text(
+        "@module lock-update-read-fail\n@target python\n\n[main]\nPURPOSE: Ok\nRETURNS: 1\n",
+        encoding="utf-8",
+    )
+    output_path.write_text("def main() -> int:\n    return 1\n", encoding="utf-8")
+    real_read_text = Path.read_text
+
+    def fake_read_text(self: Path, *args: Any, **kwargs: Any) -> str:
+        if self == output_path:
+            raise OSError("access denied")
+        return real_read_text(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", fake_read_text)
+
+    exit_code = main(["lock:update", str(source_path), "--json"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload == {
+        "ok": False,
+        "command": "lock:update",
+        "diagnostics": [
+            {
+                "code": "EARTIFACT001",
+                "file": str(output_path),
+                "line": None,
+                "col": None,
+                "message": f"Failed to read artifact: {output_path} (access denied)",
+                "hint": "Check that the compiled artifact exists and is readable, or remove it so `nlsc lock:update` can regenerate it.",
+            }
+        ],
+        "file": str(source_path),
+    }
+    assert captured.err == ""
+
+
+def test_lock_update_json_reports_lockfile_write_failure(
+    capsys: Any, monkeypatch: Any, tmp_path: Path
+) -> None:
+    source_path = tmp_path / "lock_update_lock_write_fail.nl"
+    output_path = tmp_path / "lock_update_lock_write_fail.py"
+    lock_path = tmp_path / "lock_update_lock_write_fail.nl.lock"
+    source_path.write_text(
+        "@module lock-update-lock-write-fail\n@target python\n\n[main]\nPURPOSE: Ok\nRETURNS: 1\n",
+        encoding="utf-8",
+    )
+    output_path.write_text("def main() -> int:\n    return 1\n", encoding="utf-8")
+    real_write_text = Path.write_text
+
+    def fake_write_text(self: Path, data: str, *args: Any, **kwargs: Any) -> int:
+        if self == lock_path:
+            raise OSError("disk full")
+        return real_write_text(self, data, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", fake_write_text)
+
+    exit_code = main(["lock:update", str(source_path), "--json"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload == {
+        "ok": False,
+        "command": "lock:update",
+        "diagnostics": [
+            {
+                "code": "ELOCK003",
+                "file": str(lock_path),
+                "line": None,
+                "col": None,
+                "message": f"Failed to write lockfile: {lock_path} (disk full)",
+                "hint": "Check the destination path and filesystem permissions, then rerun `nlsc lock:update`.",
+            }
+        ],
+        "file": str(source_path),
+    }
+    assert captured.err == ""
 
 
 def test_test_json_reports_resolution_error(tmp_path: Path) -> None:

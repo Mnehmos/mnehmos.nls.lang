@@ -105,6 +105,23 @@ Domain-to-path mapping is deterministic:
 - `test_<name>.py` — Test file (if `@test` blocks present)
 - `<name>.nl.lock` — Lockfile for reproducibility
 
+With `--json`, successful `compile` runs return a stable payload with `ok`, `command`, `diagnostics`, `file`, `output`, `lockfile`, `target`, and `line_count`. File-I/O failures now stay structured end-to-end with `EARTIFACT001` for artifact read/write errors and `ELOCK003` for lockfile write errors.
+
+Example success payload:
+
+```json
+{
+  "ok": true,
+  "command": "compile",
+  "diagnostics": [],
+  "file": "src/auth.nl",
+  "output": "src/auth.py",
+  "lockfile": "src/auth.nl.lock",
+  "target": "python",
+  "line_count": 12
+}
+```
+
 ---
 
 ### `nlsc verify`
@@ -295,6 +312,23 @@ nlsc lock:update src/api.nl
 
 # Machine-readable output for scripts
 nlsc lock:update src/api.nl --json
+```
+
+With `--json`, successful `lock:update` runs return a stable payload with `ok`, `command`, `diagnostics`, `file`, `lockfile`, `output`, `target`, and `anlu_count`. Artifact read failures use `EARTIFACT001`; lockfile write failures use `ELOCK003`.
+
+Example success payload:
+
+```json
+{
+  "ok": true,
+  "command": "lock:update",
+  "diagnostics": [],
+  "file": "src/api.nl",
+  "lockfile": "src/api.nl.lock",
+  "output": "src/api.py",
+  "target": "python",
+  "anlu_count": 3
+}
 ```
 
 ---

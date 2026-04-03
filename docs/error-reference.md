@@ -20,6 +20,7 @@ nlsc explain EPARSE001
 | `EINIT002` | `init` | `nlsc init` could not create the project directory or one of the scaffold directories. |
 | `EINIT003` | `init` | `nlsc init` failed while writing a scaffolded project file. |
 | `EFILE001` | `atomize`, `compile`, `verify`, `run`, `test`, `graph`, `diff`, `watch`, `lock:check`, `lock:update` | The requested input path does not exist. |
+| `EARTIFACT001` | `compile`, `lock:update` | A generated artifact could not be read or written. |
 | `EATOM001` | `atomize` | The input Python file failed syntax parsing during atomization. |
 | `EATOM002` | `atomize` | `nlsc atomize` hit an unexpected extraction or write failure. |
 | `EPARSE001` | `compile`, `verify`, `run`, `test`, `graph`, `diff`, `watch`, `lock:check`, `lock:update` | The source file failed syntax parsing. |
@@ -36,6 +37,7 @@ nlsc explain EPARSE001
 | `EGRAPH002` | `graph` | `nlsc graph --anlu` was asked for an output format that is not supported for ANLU-level graphs. |
 | `ELOCK001` | `lock:check` | `nlsc lock:check` could not load the `.nl.lock` file because it is missing or malformed. |
 | `ELOCK002` | `lock:check` | `nlsc lock:check` found source content that no longer matches the lockfile. |
+| `ELOCK003` | `compile`, `lock:update` | A generated `.nl.lock` file could not be written to disk. |
 | `ELSP001` | `lsp` | `nlsc lsp` could not import the optional language-server dependencies. |
 | `ELSP002` | `lsp` | `nlsc lsp` loaded but failed while starting the requested transport. |
 | `EASSOC001` | `assoc` | `nlsc assoc` was run on a non-Windows platform. |
@@ -82,6 +84,12 @@ Raised when `nlsc init --json` reaches a scaffold write step but cannot write `n
 Raised when the input path passed to `atomize`, `compile`, `verify`, `run`, or `watch` does not exist.
 
 **Fix:** Check the path, ensure the file exists, and rerun the command.
+
+### `EARTIFACT001` - Artifact I/O failed
+
+Raised when `nlsc compile --json` cannot write a generated artifact such as `<name>.py`, or when `nlsc lock:update --json` cannot read the existing compiled artifact.
+
+**Fix:** Check the reported artifact path, filesystem permissions, file locks, and encoding/readability, then rerun the command. For `lock:update`, removing the unreadable compiled artifact lets the command fall back to regenerating code in memory.
 
 ### `EATOM001` - Python syntax error
 
@@ -178,6 +186,12 @@ Raised when `nlsc lock:check --json` cannot load the `.nl.lock` file because it 
 Raised when `nlsc lock:check --json` finds ANLUs that no longer match the current `.nl` source.
 
 **Fix:** Regenerate the lockfile with `nlsc compile <file>` or `nlsc lock:update <file>` after reviewing the reported ANLU mismatches.
+
+### `ELOCK003` - Lockfile write failed
+
+Raised when `nlsc compile --json` or `nlsc lock:update --json` successfully reaches the lockfile generation step but cannot write the `.nl.lock` file.
+
+**Fix:** Check the destination path, permissions, file locks, and free space, then rerun the command.
 
 ### `ELSP001` - LSP optional dependencies unavailable
 
