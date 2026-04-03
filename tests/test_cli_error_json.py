@@ -934,6 +934,37 @@ RETURNS: 1
     ]
 
 
+def test_graph_json_success_returns_structured_payload(tmp_path: Path) -> None:
+    source_path = tmp_path / "graph_ok.nl"
+    source_path.write_text(
+        """\
+@module graph-ok
+@target python
+
+[main]
+PURPOSE: Show graph
+RETURNS: 1
+""",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(["graph", str(source_path), "--json"], cwd=REPO_ROOT)
+
+    assert result.returncode == 0
+    payload = _load_json_output(result)
+    assert payload == {
+        "ok": True,
+        "command": "graph",
+        "diagnostics": [],
+        "file": str(source_path),
+        "format": "mermaid",
+        "anlu": None,
+        "dataflow": False,
+        "output_file": None,
+        "graph": "graph LR\n    main[main]",
+    }
+
+
 def test_atomize_json_reports_missing_file(tmp_path: Path) -> None:
     missing_path = tmp_path / "missing_atomize.py"
 
@@ -1052,6 +1083,51 @@ RETURNS: 1
             "hint": "Rewrite the line as a numbered LOGIC step like '1. ...'.",
         }
     ]
+
+
+def test_diff_json_success_returns_structured_payload_without_lockfile(
+    tmp_path: Path,
+) -> None:
+    source_path = tmp_path / "diff_ok.nl"
+    source_path.write_text(
+        """\
+@module diff-ok
+@target python
+
+[main]
+PURPOSE: Compare source
+RETURNS: 1
+""",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(["diff", str(source_path), "--json"], cwd=REPO_ROOT)
+
+    assert result.returncode == 0
+    payload = _load_json_output(result)
+    assert payload == {
+        "ok": True,
+        "command": "diff",
+        "diagnostics": [],
+        "file": str(source_path),
+        "lockfile": str(source_path.with_suffix(".nl.lock")),
+        "lockfile_present": False,
+        "mode": "changes",
+        "summary": {
+            "unchanged": 0,
+            "modified": 0,
+            "new": 1,
+            "removed": 0,
+        },
+        "changes": [
+            {
+                "identifier": "main",
+                "status": "new",
+                "details": "New ANLU added",
+            }
+        ],
+        "text": "[main] - new",
+    }
 
 
 def test_test_json_reports_missing_file(tmp_path: Path) -> None:
