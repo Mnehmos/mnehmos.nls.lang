@@ -125,6 +125,7 @@ def _cross() -> str:
 # Parser selection - default to tree-sitter if available
 _use_treesitter = detect_treesitter()
 _JSON_PARSER_BOOTSTRAP_COMMANDS = {
+    "init",
     "compile",
     "verify",
     "run",
@@ -136,6 +137,7 @@ _JSON_PARSER_BOOTSTRAP_COMMANDS = {
     "watch",
     "lock:check",
     "lock:update",
+    "assoc",
 }
 
 

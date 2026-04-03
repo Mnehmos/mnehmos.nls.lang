@@ -321,6 +321,31 @@ def test_explain_json_reports_parser_backend_unavailable(tmp_path: Path) -> None
     ]
 
 
+def test_init_json_reports_parser_backend_unavailable(tmp_path: Path) -> None:
+    project_dir = tmp_path / "project"
+
+    result = _run_nlsc(
+        ["--parser", "treesitter", "init", str(project_dir), "--json"],
+        cwd=REPO_ROOT,
+        env=_treesitter_unavailable_env(tmp_path),
+    )
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "init"
+    assert payload["parser"] == "treesitter"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EPARSE002",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "Parser backend 'treesitter' is unavailable: tree-sitter is not installed",
+            "hint": "Install with: pip install nlsc[treesitter], or rerun with --parser auto or --parser regex.",
+        }
+    ]
+
+
 def test_verify_json_reports_parse_error_location(tmp_path: Path) -> None:
     source_path = tmp_path / "broken.nl"
     source_path.write_text(
@@ -549,6 +574,29 @@ def test_assoc_json_reports_non_windows_platform(capsys: Any, monkeypatch: Any) 
         }
     ]
     assert captured.err == ""
+
+
+def test_assoc_json_reports_parser_backend_unavailable(tmp_path: Path) -> None:
+    result = _run_nlsc(
+        ["--parser", "treesitter", "assoc", "--json"],
+        cwd=REPO_ROOT,
+        env=_treesitter_unavailable_env(tmp_path),
+    )
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "assoc"
+    assert payload["parser"] == "treesitter"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EPARSE002",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "Parser backend 'treesitter' is unavailable: tree-sitter is not installed",
+            "hint": "Install with: pip install nlsc[treesitter], or rerun with --parser auto or --parser regex.",
+        }
+    ]
 
 
 def test_assoc_json_reports_missing_icon_path(capsys: Any, monkeypatch: Any) -> None:
