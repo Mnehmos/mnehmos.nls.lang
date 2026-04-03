@@ -4,7 +4,7 @@ Complete guide to NLS errors, their causes, and how to fix them.
 
 ## Active CLI Error Codes
 
-These are the stable error codes currently emitted by `nlsc atomize`, `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, `nlsc diff`, `nlsc test`, `nlsc watch`, `nlsc lock:check`, `nlsc lock:update`, `nlsc lsp`, and `nlsc assoc`.
+These are the stable error codes currently emitted by `nlsc init`, `nlsc atomize`, `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, `nlsc diff`, `nlsc test`, `nlsc watch`, `nlsc lock:check`, `nlsc lock:update`, `nlsc lsp`, and `nlsc assoc`.
 
 Use the CLI to get the extended explanation for any code:
 
@@ -14,8 +14,11 @@ nlsc explain EPARSE001
 
 | Code | Commands | Meaning |
 | --- | --- | --- |
-| `ECLI001` | `compile`, `verify`, `run`, `test`, `graph`, `atomize`, `diff`, `lsp`, `assoc`, `watch`, `lock:check`, `lock:update`, `unknown-subcommand` | CLI argument parsing failed before command dispatch while `--json` was active. |
+| `ECLI001` | `init`, `compile`, `verify`, `run`, `test`, `graph`, `atomize`, `diff`, `lsp`, `assoc`, `watch`, `lock:check`, `lock:update`, `unknown-subcommand` | CLI argument parsing failed before command dispatch while `--json` was active. |
 | `EEXPLAIN001` | `explain` | `nlsc explain` was asked to document an unknown stable error code. |
+| `EINIT001` | `init` | `nlsc init` received a blank path or a path that resolves to a file instead of a directory. |
+| `EINIT002` | `init` | `nlsc init` could not create the project directory or one of the scaffold directories. |
+| `EINIT003` | `init` | `nlsc init` failed while writing a scaffolded project file. |
 | `EFILE001` | `atomize`, `compile`, `verify`, `run`, `test`, `graph`, `diff`, `watch`, `lock:check`, `lock:update` | The requested input path does not exist. |
 | `EATOM001` | `atomize` | The input Python file failed syntax parsing during atomization. |
 | `EATOM002` | `atomize` | `nlsc atomize` hit an unexpected extraction or write failure. |
@@ -55,6 +58,24 @@ Covered cases include missing required positional arguments, invalid choice valu
 Raised when `nlsc explain` receives a code that is not present in the stable CLI error catalog. With `--json`, the command returns a structured diagnostic plus a `known_codes` list so automation can recover without scraping stderr.
 
 **Fix:** Correct the requested code, or choose one of the reported catalog entries and rerun `nlsc explain`.
+
+### `EINIT001` - Init target path is invalid
+
+Raised when `nlsc init --json` receives a blank path or a path that already resolves to a file instead of a directory.
+
+**Fix:** Pass a directory path to `nlsc init`, or omit the argument to use the current directory. If the target path points to a file, remove or rename the conflicting file and rerun.
+
+### `EINIT002` - Init directory creation failed
+
+Raised when `nlsc init --json` cannot create the project root or one of the scaffold directories such as `src/` or `tests/`.
+
+**Fix:** Check that the parent path exists and that the current user can create directories there, then rerun `nlsc init`.
+
+### `EINIT003` - Init project file write failed
+
+Raised when `nlsc init --json` reaches a scaffold write step but cannot write `nl.config.yaml` or one of the package marker files.
+
+**Fix:** Check the destination path, available disk space, and filesystem permissions, then rerun `nlsc init`.
 
 ### `EFILE001` - File not found
 

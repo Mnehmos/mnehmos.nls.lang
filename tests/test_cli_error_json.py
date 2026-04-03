@@ -108,6 +108,120 @@ def test_verify_json_reports_missing_file(tmp_path: Path) -> None:
     ]
 
 
+def test_init_json_reports_blank_target_path(capsys: Any) -> None:
+    exit_code = main(["init", "", "--json"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["command"] == "init"
+    assert payload["path"] == ""
+    assert payload["diagnostics"] == [
+        {
+            "code": "EINIT001",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "Init target path is missing or blank.",
+            "hint": "Pass a directory path to `nlsc init`, or omit the argument to use the current directory.",
+        }
+    ]
+    assert captured.err == ""
+
+
+def test_init_json_reports_target_path_that_is_a_file(
+    capsys: Any, tmp_path: Path
+) -> None:
+    file_path = tmp_path / "not_a_directory.txt"
+    file_path.write_text("occupied", encoding="utf-8")
+
+    exit_code = main(["init", str(file_path), "--json"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["command"] == "init"
+    assert payload["path"] == str(file_path)
+    assert payload["diagnostics"] == [
+        {
+            "code": "EINIT001",
+            "file": str(file_path),
+            "line": None,
+            "col": None,
+            "message": f"Init target path is not a directory: {file_path}",
+            "hint": "Choose a directory path for `nlsc init`, or remove the conflicting file and rerun.",
+        }
+    ]
+    assert captured.err == ""
+
+
+def test_init_json_reports_directory_creation_failure(
+    capsys: Any, monkeypatch: Any, tmp_path: Path
+) -> None:
+    project_dir = tmp_path / "init-fails"
+    real_mkdir = Path.mkdir
+
+    def fake_mkdir(self: Path, *args: Any, **kwargs: Any) -> None:
+        if self == project_dir:
+            raise PermissionError("permission denied")
+        real_mkdir(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "mkdir", fake_mkdir)
+
+    exit_code = main(["init", str(project_dir), "--json"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["command"] == "init"
+    assert payload["path"] == str(project_dir)
+    assert payload["diagnostics"] == [
+        {
+            "code": "EINIT002",
+            "file": str(project_dir),
+            "line": None,
+            "col": None,
+            "message": f"Failed to create project directory: {project_dir} (permission denied)",
+            "hint": "Check that the parent path exists and that you can create directories there, then rerun `nlsc init`.",
+        }
+    ]
+    assert captured.err == ""
+
+
+def test_init_json_reports_project_file_write_failure(
+    capsys: Any, monkeypatch: Any, tmp_path: Path
+) -> None:
+    project_dir = tmp_path / "init-write-fails"
+    config_path = project_dir / "nl.config.yaml"
+    real_write_text = Path.write_text
+
+    def fake_write_text(self: Path, data: str, *args: Any, **kwargs: Any) -> int:
+        if self == config_path:
+            raise OSError("disk full")
+        return real_write_text(self, data, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", fake_write_text)
+
+    exit_code = main(["init", str(project_dir), "--json"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["command"] == "init"
+    assert payload["path"] == str(project_dir)
+    assert payload["diagnostics"] == [
+        {
+            "code": "EINIT003",
+            "file": str(config_path),
+            "line": None,
+            "col": None,
+            "message": f"Failed to write project file: {config_path} (disk full)",
+            "hint": "Check the destination path and filesystem permissions, then rerun `nlsc init`.",
+        }
+    ]
+    assert captured.err == ""
+
+
 def test_verify_json_reports_missing_required_file_argument() -> None:
     result = _run_nlsc(["verify", "--json"], cwd=REPO_ROOT)
 

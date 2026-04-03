@@ -61,6 +61,9 @@ from .diagnostics import (
     explain_unknown_code_diagnostic,
     graph_anlu_not_found_diagnostic,
     graph_format_diagnostic,
+    init_directory_creation_diagnostic,
+    init_file_write_diagnostic,
+    init_target_path_diagnostic,
     lockfile_outdated_diagnostics,
     lockfile_unavailable_diagnostic,
     lsp_dependencies_unavailable_diagnostic,
@@ -390,12 +393,48 @@ def cmd_explain(args: argparse.Namespace) -> int:
 
 def cmd_init(args: argparse.Namespace) -> int:
     """Initialize a new NLS project"""
-    project_dir = Path(args.path or ".")
+    json_output = getattr(args, "json", False)
+    raw_path = getattr(args, "path", ".")
+
+    if raw_path is None or not str(raw_path).strip():
+        diagnostic = init_target_path_diagnostic(raw_path)
+        if json_output:
+            return _emit_json(
+                "init", [diagnostic], path="" if raw_path is None else str(raw_path)
+            )
+        print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+        if diagnostic.hint:
+            print(diagnostic.hint, file=sys.stderr)
+        return 1
+
+    project_dir = Path(str(raw_path))
+
+    if project_dir.exists() and not project_dir.is_dir():
+        diagnostic = init_target_path_diagnostic(str(project_dir), exists_as_file=True)
+        if json_output:
+            return _emit_json("init", [diagnostic], path=str(project_dir))
+        print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+        if diagnostic.hint:
+            print(diagnostic.hint, file=sys.stderr)
+        return 1
 
     # Create project directory if it doesn't exist
-    project_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        project_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        diagnostic = init_directory_creation_diagnostic(project_dir, exc)
+        if json_output:
+            return _emit_json("init", [diagnostic], path=str(project_dir))
+        print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+        if diagnostic.hint:
+            print(diagnostic.hint, file=sys.stderr)
+        return 1
 
-    print(f"Initializing NLS project in {project_dir.absolute()}...")
+    if not json_output:
+        print(f"Initializing NLS project in {project_dir.absolute()}...")
+
+    created_entries: list[str] = []
+    existing_entries: list[str] = []
 
     # Create config file
     config_path = project_dir / "nl.config.yaml"
@@ -424,10 +463,23 @@ validation:
   require_guards: false
   max_anlu_complexity: 10
 """
-        config_path.write_text(config_content, encoding="utf-8")
-        print(f"  {_check()} Created {config_path.name}")
+        try:
+            config_path.write_text(config_content, encoding="utf-8")
+        except OSError as exc:
+            diagnostic = init_file_write_diagnostic(config_path, exc)
+            if json_output:
+                return _emit_json("init", [diagnostic], path=str(project_dir))
+            print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+            if diagnostic.hint:
+                print(diagnostic.hint, file=sys.stderr)
+            return 1
+        created_entries.append(config_path.name)
+        if not json_output:
+            print(f"  {_check()} Created {config_path.name}")
     else:
-        print(f"  • {config_path.name} already exists")
+        existing_entries.append(config_path.name)
+        if not json_output:
+            print(f"  • {config_path.name} already exists")
 
     # Create directories
     src_dir = project_dir / "src"
@@ -435,15 +487,53 @@ validation:
 
     for dir_path in [src_dir, tests_dir]:
         if not dir_path.exists():
-            dir_path.mkdir(parents=True)
-            print(f"  {_check()} Created {dir_path.name}/")
+            try:
+                dir_path.mkdir(parents=True)
+            except OSError as exc:
+                diagnostic = init_directory_creation_diagnostic(dir_path, exc)
+                if json_output:
+                    return _emit_json("init", [diagnostic], path=str(project_dir))
+                print(
+                    f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr
+                )
+                if diagnostic.hint:
+                    print(diagnostic.hint, file=sys.stderr)
+                return 1
+            created_entries.append(f"{dir_path.name}/")
+            if not json_output:
+                print(f"  {_check()} Created {dir_path.name}/")
         else:
-            print(f"  • {dir_path.name}/ already exists")
+            existing_entries.append(f"{dir_path.name}/")
+            if not json_output:
+                print(f"  • {dir_path.name}/ already exists")
 
     # Create __init__.py files
     for init_path in [src_dir / "__init__.py", tests_dir / "__init__.py"]:
         if not init_path.exists():
-            init_path.write_text("", encoding="utf-8")
+            try:
+                init_path.write_text("", encoding="utf-8")
+            except OSError as exc:
+                diagnostic = init_file_write_diagnostic(init_path, exc)
+                if json_output:
+                    return _emit_json("init", [diagnostic], path=str(project_dir))
+                print(
+                    f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr
+                )
+                if diagnostic.hint:
+                    print(diagnostic.hint, file=sys.stderr)
+                return 1
+            created_entries.append(str(init_path.relative_to(project_dir)))
+        else:
+            existing_entries.append(str(init_path.relative_to(project_dir)))
+
+    if json_output:
+        return _emit_json(
+            "init",
+            [],
+            path=str(project_dir),
+            created=created_entries,
+            existing=existing_entries,
+        )
 
     print("\nNLS project initialized! Next steps:")
     print("  1. Create a .nl file in src/")
@@ -1670,6 +1760,11 @@ The conversation is the programming. The .nl file is the receipt.
     init_parser = subparsers.add_parser("init", help="Initialize NLS project")
     init_parser.add_argument(
         "path", nargs="?", default=".", help="Project directory (default: current)"
+    )
+    init_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit structured JSON diagnostics and init metadata.",
     )
 
     # compile command
