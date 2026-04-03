@@ -6,6 +6,9 @@ from dataclasses import dataclass
 
 ECLI001 = "ECLI001"
 EEXPLAIN001 = "EEXPLAIN001"
+EINIT001 = "EINIT001"
+EINIT002 = "EINIT002"
+EINIT003 = "EINIT003"
 EATOM001 = "EATOM001"
 EATOM002 = "EATOM002"
 EFILE001 = "EFILE001"
@@ -49,6 +52,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         title="CLI usage error",
         summary="Argument parsing failed before command dispatch, and `--json` requested a structured diagnostic instead of raw argparse stderr output.",
         emitted_by=(
+            "init",
             "compile",
             "verify",
             "run",
@@ -84,6 +88,48 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Run `nlsc explain --json ECLI001` or inspect the reported known codes to choose a cataloged error code.",
             "If you expected the code to exist, update the error catalog and reference docs before relying on it in automation.",
+        ),
+    ),
+    EINIT001: ErrorDefinition(
+        code=EINIT001,
+        title="Init target path is invalid",
+        summary="`nlsc init` received a target path that is blank or resolves to a non-directory filesystem object.",
+        emitted_by=("init",),
+        common_causes=(
+            "Automation passed an empty string or whitespace-only path instead of omitting the optional argument.",
+            "The requested init path already exists as a file, so the project scaffold cannot be created there.",
+        ),
+        next_steps=(
+            "Pass a directory path to `nlsc init`, or omit the argument to use the current directory.",
+            "If the path already points to a file, remove or rename the conflicting file and rerun the command.",
+        ),
+    ),
+    EINIT002: ErrorDefinition(
+        code=EINIT002,
+        title="Init directory creation failed",
+        summary="`nlsc init` could not create the project directory or one of the scaffold directories it needs.",
+        emitted_by=("init",),
+        common_causes=(
+            "The parent path does not exist or is not writable by the current user.",
+            "A permission, path-length, or filesystem error blocked directory creation.",
+        ),
+        next_steps=(
+            "Check that the parent path exists and that you can create directories there, then rerun `nlsc init`.",
+            "Inspect the reported path to see which directory creation step failed.",
+        ),
+    ),
+    EINIT003: ErrorDefinition(
+        code=EINIT003,
+        title="Init project file write failed",
+        summary="`nlsc init` created or opened the target project directory but failed while writing a scaffolded project file.",
+        emitted_by=("init",),
+        common_causes=(
+            "The filesystem ran out of space or rejected the write operation.",
+            "A permission or locking issue blocked writing `nl.config.yaml` or the package marker files.",
+        ),
+        next_steps=(
+            "Check the destination path and filesystem permissions, then rerun `nlsc init`.",
+            "Inspect the reported file path to identify which scaffold file could not be written.",
         ),
     ),
     EFILE001: ErrorDefinition(

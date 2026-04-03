@@ -14,6 +14,9 @@ from .stdlib_resolver import StdlibUseError
 from .error_catalog import (
     ECLI001,
     EEXPLAIN001,
+    EINIT001,
+    EINIT002,
+    EINIT003,
     EATOM001,
     EATOM002,
     ECONTRACT001,
@@ -87,6 +90,52 @@ def explain_unknown_code_diagnostic(code: str) -> Diagnostic:
         col=None,
         message=f"Unknown error code: {code}",
         hint="Run `nlsc explain --json ECLI001` or inspect `known_codes` to choose a cataloged error code.",
+    )
+
+
+def init_target_path_diagnostic(
+    path: str | None, *, exists_as_file: bool = False
+) -> Diagnostic:
+    if exists_as_file:
+        rendered_path = path or "<cli>"
+        return Diagnostic(
+            code=EINIT001,
+            file=rendered_path,
+            line=None,
+            col=None,
+            message=f"Init target path is not a directory: {rendered_path}",
+            hint="Choose a directory path for `nlsc init`, or remove the conflicting file and rerun.",
+        )
+
+    return Diagnostic(
+        code=EINIT001,
+        file="<cli>",
+        line=None,
+        col=None,
+        message="Init target path is missing or blank.",
+        hint="Pass a directory path to `nlsc init`, or omit the argument to use the current directory.",
+    )
+
+
+def init_directory_creation_diagnostic(path: Path, exc: OSError) -> Diagnostic:
+    return Diagnostic(
+        code=EINIT002,
+        file=str(path),
+        line=None,
+        col=None,
+        message=f"Failed to create project directory: {path} ({exc})",
+        hint="Check that the parent path exists and that you can create directories there, then rerun `nlsc init`.",
+    )
+
+
+def init_file_write_diagnostic(path: Path, exc: OSError) -> Diagnostic:
+    return Diagnostic(
+        code=EINIT003,
+        file=str(path),
+        line=None,
+        col=None,
+        message=f"Failed to write project file: {path} ({exc})",
+        hint="Check the destination path and filesystem permissions, then rerun `nlsc init`.",
     )
 
 

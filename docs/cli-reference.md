@@ -14,7 +14,7 @@ nlsc [--parser {regex,treesitter}] [--version] [--help] <command>
 | `--version` | Show version number                               |
 | `--help`    | Show help message                                 |
 
-If `--json` is present, JSON-capable commands now return structured bootstrap diagnostics even when argparse fails before command dispatch. Use `ECLI001` for CLI usage errors such as missing required args, invalid choice values, or unknown subcommands, `EEXPLAIN001` when `nlsc explain` is asked for an uncataloged code, `EPARSE002` for parser-backend bootstrap failures such as `--parser treesitter` without tree-sitter installed, `ELSP001` for missing optional `nlsc[lsp]` dependencies, `ELSP002` for LSP server startup failures after import succeeds, and `EASSOC001` through `EASSOC004` for `nlsc assoc` platform, icon, permission, and runtime failures.
+If `--json` is present, JSON-capable commands now return structured bootstrap diagnostics even when argparse fails before command dispatch. Use `ECLI001` for CLI usage errors such as missing required args, invalid choice values, or unknown subcommands, `EEXPLAIN001` when `nlsc explain` is asked for an uncataloged code, `EINIT001` through `EINIT003` for `nlsc init` path, directory-creation, and scaffold-write failures, `EPARSE002` for parser-backend bootstrap failures such as `--parser treesitter` without tree-sitter installed, `ELSP001` for missing optional `nlsc[lsp]` dependencies, `ELSP002` for LSP server startup failures after import succeeds, and `EASSOC001` through `EASSOC004` for `nlsc assoc` platform, icon, permission, and runtime failures.
 
 ---
 
@@ -25,12 +25,13 @@ If `--json` is present, JSON-capable commands now return structured bootstrap di
 Initialize a new NLS project with standard folder structure.
 
 ```bash
-nlsc init [path]
+nlsc init [path] [--json]
 ```
 
 | Argument | Description                                    |
 | -------- | ---------------------------------------------- |
 | `path`   | Project directory (default: current directory) |
+| `--json` | Emit structured JSON diagnostics and init metadata |
 
 **Example:**
 
@@ -48,6 +49,8 @@ my-project/
 └── tests/            # Generated tests
     └── __init__.py
 ```
+
+With `--json`, `nlsc init` emits stable diagnostics for invalid target paths, directory creation failures, and scaffold file write failures. Successful runs return JSON metadata listing created and existing scaffold entries.
 
 ---
 

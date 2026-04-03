@@ -20,6 +20,9 @@ def test_error_catalog_covers_active_cli_error_codes() -> None:
     expected_codes = {
         "ECLI001",
         "EEXPLAIN001",
+        "EINIT001",
+        "EINIT002",
+        "EINIT003",
         "EATOM001",
         "EATOM002",
         "EFILE001",
@@ -78,6 +81,16 @@ def test_explain_command_prints_parser_backend_unavailable_details() -> None:
     assert "EPARSE002" in result.stdout
     assert "Parser backend unavailable" in result.stdout
     assert "treesitter" in result.stdout
+    assert result.stderr == ""
+
+
+def test_explain_command_prints_init_write_failure_details() -> None:
+    result = _run_nlsc("explain", "EINIT003")
+
+    assert result.returncode == 0
+    assert "EINIT003" in result.stdout
+    assert "Init project file write failed" in result.stdout
+    assert "filesystem permissions" in result.stdout
     assert result.stderr == ""
 
 
