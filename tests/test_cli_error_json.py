@@ -321,6 +321,15 @@ def test_explain_json_reports_parser_backend_unavailable(tmp_path: Path) -> None
     ]
 
 
+def test_explain_json_reports_parser_backend_unavailable_definition() -> None:
+    result = _run_nlsc(["explain", "EPARSE002", "--json"], cwd=REPO_ROOT)
+
+    assert result.returncode == 0
+    payload = _load_json_output(result)
+    assert payload["code"] == "EPARSE002"
+    assert "atomize" in payload["emitted_by"]
+
+
 def test_init_json_reports_parser_backend_unavailable(tmp_path: Path) -> None:
     project_dir = tmp_path / "project"
 
@@ -1105,6 +1114,32 @@ def test_atomize_json_reports_missing_file(tmp_path: Path) -> None:
             "col": None,
             "message": f"File not found: {missing_path}",
             "hint": "Check that the path exists and try again.",
+        }
+    ]
+
+
+def test_atomize_json_reports_parser_backend_unavailable(tmp_path: Path) -> None:
+    source_path = tmp_path / "atomize_source.py"
+    source_path.write_text("def main() -> int:\n    return 1\n", encoding="utf-8")
+
+    result = _run_nlsc(
+        ["--parser", "treesitter", "atomize", str(source_path), "--json"],
+        cwd=REPO_ROOT,
+        env=_treesitter_unavailable_env(tmp_path),
+    )
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "atomize"
+    assert payload["parser"] == "treesitter"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EPARSE002",
+            "file": "<cli>",
+            "line": None,
+            "col": None,
+            "message": "Parser backend 'treesitter' is unavailable: tree-sitter is not installed",
+            "hint": "Install with: pip install nlsc[treesitter], or rerun with --parser auto or --parser regex.",
         }
     ]
 
