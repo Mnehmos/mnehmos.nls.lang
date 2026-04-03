@@ -1352,6 +1352,74 @@ RETURNS: a + b
     assert payload["pytest_stdout"]
 
 
+def test_test_json_verbose_preserves_clean_stdout_on_failure(tmp_path: Path) -> None:
+    source_path = tmp_path / "verbose_failing_test.nl"
+    source_path.write_text(
+        """\
+@module verbose-failing-test
+@target python
+
+[always-one]
+PURPOSE: Always returns one
+INPUTS:
+  - value: number
+RETURNS: 1
+
+@test [always-one] {
+  always_one(5) == 5
+}
+""",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(["test", str(source_path), "--json", "-v"], cwd=REPO_ROOT)
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "test"
+    assert payload["ok"] is False
+    assert payload["pytest_exit_code"] == 1
+    assert result.stderr == ""
+    assert result.stdout.lstrip().startswith("{")
+    assert (
+        "============================= test session starts ============================="
+        in payload["pytest_stdout"]
+    )
+
+
+def test_test_json_verbose_preserves_clean_stdout_on_success(tmp_path: Path) -> None:
+    source_path = tmp_path / "verbose_passing_test.nl"
+    source_path.write_text(
+        """\
+@module verbose-passing-test
+@target python
+
+[add]
+PURPOSE: Add two numbers
+INPUTS:
+  - a: number
+  - b: number
+RETURNS: a + b
+
+@test [add] {
+  add(2, 3) == 5
+}
+""",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(["test", str(source_path), "--json", "-v"], cwd=REPO_ROOT)
+
+    assert result.returncode == 0
+    payload = _load_json_output(result)
+    assert payload["command"] == "test"
+    assert payload["ok"] is True
+    assert payload["pytest_exit_code"] == 0
+    assert result.stderr == ""
+    assert result.stdout.lstrip().startswith("{")
+    assert "test session starts" in payload["pytest_stdout"]
+
+
 def test_watch_json_reports_missing_directory(tmp_path: Path) -> None:
     missing_path = tmp_path / "missing_watch_dir"
 

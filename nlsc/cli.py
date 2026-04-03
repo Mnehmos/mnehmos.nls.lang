@@ -955,7 +955,7 @@ def cmd_test(args: argparse.Namespace) -> int:
         result = subprocess.run(
             pytest_args,
             cwd=str(temp_path),
-            capture_output=not getattr(args, "verbose", False),
+            capture_output=json_output or not getattr(args, "verbose", False),
             text=True,
             env=env,
         )
