@@ -218,6 +218,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
             "compile",
             "verify",
             "run",
+            "atomize",
             "explain",
             "test",
             "graph",
