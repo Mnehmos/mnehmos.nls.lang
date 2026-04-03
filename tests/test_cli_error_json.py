@@ -960,6 +960,7 @@ RETURNS: 1
         "format": "mermaid",
         "anlu": None,
         "dataflow": False,
+        "graph_kind": "dependency",
         "output_file": None,
         "graph": "graph LR\n    main[main]",
     }
@@ -995,10 +996,49 @@ RETURNS: 1
         "format": "mermaid",
         "anlu": None,
         "dataflow": False,
+        "graph_kind": "dependency",
         "output_file": str(output_path),
         "graph": "graph LR\n    main[main]",
     }
     assert output_path.read_text(encoding="utf-8") == payload["graph"]
+
+
+def test_graph_json_reports_rendered_dataflow_kind_for_anlu_ascii(
+    tmp_path: Path,
+) -> None:
+    source_path = tmp_path / "graph_anlu_ascii.nl"
+    source_path.write_text(
+        """\
+@module graph-anlu-ascii
+@target python
+
+[main]
+PURPOSE: Show graph output
+LOGIC:
+  1. Set total = 1
+  2. RETURN total
+RETURNS: 1
+""",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(
+        ["graph", str(source_path), "--json", "--anlu", "main", "--format", "ascii"],
+        cwd=REPO_ROOT,
+    )
+
+    assert result.returncode == 0
+    payload = _load_json_output(result)
+    assert payload["ok"] is True
+    assert payload["command"] == "graph"
+    assert payload["diagnostics"] == []
+    assert payload["file"] == str(source_path)
+    assert payload["format"] == "ascii"
+    assert payload["anlu"] == "main"
+    assert payload["dataflow"] is True
+    assert payload["graph_kind"] == "dataflow"
+    assert payload["output_file"] is None
+    assert "Step 1" in payload["graph"]
 
 
 def test_atomize_json_reports_missing_file(tmp_path: Path) -> None:
@@ -1247,7 +1287,43 @@ RETURNS: 1
             "details": "New ANLU added",
         }
     ]
-    assert payload["text"] == "No existing Python file to diff against.\n[main] - new"
+    assert (
+        payload["text"]
+        == "No existing compiled output to diff against: diff_full.py.\n[main] - new"
+    )
+
+
+def test_diff_json_success_returns_full_payload_for_typescript_target(
+    tmp_path: Path,
+) -> None:
+    source_path = tmp_path / "diff_full_typescript.nl"
+    output_path = source_path.with_suffix(".ts")
+    source_path.write_text(
+        """\
+@module diff-full-typescript
+@target typescript
+
+[main]
+PURPOSE: Compare source
+RETURNS: 1
+""",
+        encoding="utf-8",
+    )
+    output_path.write_text(
+        "export function main(): number {\n  return 0;\n}\n", encoding="utf-8"
+    )
+
+    result = _run_nlsc(["diff", str(source_path), "--json", "--full"], cwd=REPO_ROOT)
+
+    assert result.returncode == 0
+    payload = _load_json_output(result)
+    assert payload["ok"] is True
+    assert payload["command"] == "diff"
+    assert payload["diagnostics"] == []
+    assert payload["mode"] == "full"
+    assert payload["text"].startswith(
+        "--- a/diff_full_typescript.ts\n+++ b/diff_full_typescript.ts\n"
+    )
 
 
 def test_diff_json_reports_unreadable_lockfile_in_payload(tmp_path: Path) -> None:

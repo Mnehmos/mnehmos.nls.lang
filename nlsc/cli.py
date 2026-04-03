@@ -819,6 +819,7 @@ def cmd_graph(args: argparse.Namespace) -> int:
     output_format = args.format or "mermaid"
     anlu_id = args.anlu
     dataflow = args.dataflow
+    graph_kind = "dependency"
 
     # If specific ANLU requested
     if anlu_id:
@@ -836,10 +837,13 @@ def cmd_graph(args: argparse.Namespace) -> int:
 
         if output_format == "mermaid":
             if has_fsm and not dataflow:
+                graph_kind = "fsm"
                 output = emit_fsm_mermaid(anlu)
             else:
+                graph_kind = "dataflow"
                 output = emit_dataflow_mermaid(anlu)
         elif output_format == "ascii":
+            graph_kind = "dataflow"
             output = emit_dataflow_ascii(anlu)
         else:
             diagnostic = graph_format_diagnostic(source_path, anlu, output_format)
@@ -871,7 +875,8 @@ def cmd_graph(args: argparse.Namespace) -> int:
                 file=str(source_path),
                 format=output_format,
                 anlu=anlu_id,
-                dataflow=bool(dataflow),
+                dataflow=graph_kind == "dataflow",
+                graph_kind=graph_kind,
                 output_file=str(output_path),
                 graph=output,
             )
@@ -884,7 +889,8 @@ def cmd_graph(args: argparse.Namespace) -> int:
                 file=str(source_path),
                 format=output_format,
                 anlu=anlu_id,
-                dataflow=bool(dataflow),
+                dataflow=graph_kind == "dataflow",
+                graph_kind=graph_kind,
                 output_file=None,
                 graph=output,
             )
@@ -1172,19 +1178,19 @@ def cmd_diff(args: argparse.Namespace) -> int:
         text_output = format_stat_output(changes)
     elif args.full:
         mode = "full"
-        # Generate Python code for diff
-        from .emitter import emit_python
-
-        py_code_new = emit_python(nl_file)
-
-        # Get original Python code from lockfile target
-        py_path = source_path.with_suffix(".py")
-        if py_path.exists():
-            py_code_orig = py_path.read_text(encoding="utf-8")
-            text_output = generate_full_diff(py_code_orig, py_code_new, py_path.name)
+        target = _resolve_target(nl_file, None)
+        generated_code, output_suffix, _, _ = _emit_target_code(nl_file, target)
+        output_path = source_path.with_suffix(output_suffix)
+        if output_path.exists():
+            previous_code = output_path.read_text(encoding="utf-8")
+            text_output = generate_full_diff(
+                previous_code,
+                generated_code,
+                output_path.name,
+            )
         else:
             text_output = (
-                "No existing Python file to diff against.\n"
+                f"No existing compiled output to diff against: {output_path.name}.\n"
                 f"{format_changes_output(changes)}"
             )
     else:
