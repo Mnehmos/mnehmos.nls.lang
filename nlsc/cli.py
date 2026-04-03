@@ -81,6 +81,7 @@ from .error_catalog import (
     ECLI001,
     EEXPLAIN001,
     EEXEC001,
+    EPARSE002,
     ETARGET001,
     EVALIDATE001,
     E_RUN,
@@ -125,19 +126,12 @@ def _cross() -> str:
 
 # Parser selection - default to tree-sitter if available
 _use_treesitter = detect_treesitter()
-_JSON_PARSER_BOOTSTRAP_COMMANDS = {
-    "compile",
-    "verify",
-    "run",
-    "explain",
-    "test",
-    "graph",
-    "diff",
-    "lsp",
-    "watch",
-    "lock:check",
-    "lock:update",
-}
+_parse_bootstrap_definition = get_error_definition(EPARSE002)
+_JSON_PARSER_BOOTSTRAP_COMMANDS = (
+    set(_parse_bootstrap_definition.emitted_by)
+    if _parse_bootstrap_definition is not None
+    else set()
+)
 
 
 class CLIParseError(RuntimeError):

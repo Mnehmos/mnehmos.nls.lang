@@ -80,6 +80,8 @@ def test_explain_command_prints_parser_backend_unavailable_details() -> None:
     assert result.returncode == 0
     assert "EPARSE002" in result.stdout
     assert "Parser backend unavailable" in result.stdout
+    assert "init" in result.stdout
+    assert "assoc" in result.stdout
     assert "treesitter" in result.stdout
     assert result.stderr == ""
 
