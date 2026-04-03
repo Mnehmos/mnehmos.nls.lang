@@ -1,8 +1,9 @@
 """Tests for nlsc atomize command - Issue #12"""
 
-import pytest
-from pathlib import Path
 from argparse import Namespace
+from pathlib import Path
+
+import pytest
 
 from nlsc.atomize import atomize_python_file, extract_anlu_from_function
 from nlsc.cli import cmd_atomize
@@ -47,10 +48,10 @@ def validate(name: str, count: int, ratio: float, active: bool) -> bool:
 
     def test_extract_function_no_docstring(self):
         """Handle function without docstring"""
-        code = '''\
+        code = """\
 def multiply(x: float, y: float) -> float:
     return x * y
-'''
+"""
         anlus, _ = atomize_python_file(code)
 
         assert len(anlus) == 1
@@ -130,6 +131,16 @@ def add(a: float, b: float) -> float:
         result = cmd_atomize(args)
 
         assert result == 1
+
+    def test_cmd_atomize_directory_input_returns_error(self, capsys, tmp_path):
+        """Directory inputs should return a handled atomize failure"""
+        args = Namespace(file=str(tmp_path), output=None, module=None)
+
+        result = cmd_atomize(args)
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "Atomize failed" in captured.err
 
 
 class TestEdgeCases:

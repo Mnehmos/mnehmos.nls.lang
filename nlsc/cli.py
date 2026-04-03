@@ -1032,16 +1032,18 @@ def cmd_atomize(args: argparse.Namespace) -> int:
         print(f"Error: {diagnostic.message}", file=sys.stderr)
         return 1
 
-    # Determine output path
-    output_path = Path(args.output) if args.output else source_path.with_suffix(".nl")
-
     # Determine module name
     module_name = args.module
 
     if not json_output:
         print(f"Atomizing {source_path}...")
 
+    output_path: Path | None = None
+
     try:
+        output_path = (
+            Path(args.output) if args.output else source_path.with_suffix(".nl")
+        )
         nl_content = atomize_file(source_path, output_path, module_name)
 
         # Count ANLUs
