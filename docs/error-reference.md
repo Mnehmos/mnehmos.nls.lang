@@ -20,7 +20,7 @@ nlsc explain EPARSE001
 | `EINIT002` | `init` | `nlsc init` could not create the project directory or one of the scaffold directories. |
 | `EINIT003` | `init` | `nlsc init` failed while writing a scaffolded project file. |
 | `EFILE001` | `atomize`, `compile`, `verify`, `run`, `test`, `graph`, `diff`, `watch`, `lock:check`, `lock:update` | The requested input path does not exist. |
-| `EARTIFACT001` | `compile`, `lock:update` | A generated artifact could not be read or written. |
+| `EARTIFACT001` | `compile`, `graph`, `lock:update` | A generated artifact could not be read or written. |
 | `EATOM001` | `atomize` | The input Python file failed syntax parsing during atomization. |
 | `EATOM002` | `atomize` | `nlsc atomize` hit an unexpected extraction or write failure. |
 | `EPARSE001` | `compile`, `verify`, `run`, `test`, `graph`, `diff`, `watch`, `lock:check`, `lock:update` | The source file failed syntax parsing. |
@@ -87,7 +87,7 @@ Raised when the input path passed to `atomize`, `compile`, `verify`, `run`, or `
 
 ### `EARTIFACT001` - Artifact I/O failed
 
-Raised when `nlsc compile --json` cannot write a generated artifact such as `<name>.py`, or when `nlsc lock:update --json` cannot read the existing compiled artifact.
+Raised when `nlsc compile --json` cannot write a generated artifact such as `<name>.py`, when `nlsc graph --json --output` cannot write the rendered graph artifact, or when `nlsc lock:update --json` cannot read the existing compiled artifact.
 
 **Fix:** Check the reported artifact path, filesystem permissions, file locks, and encoding/readability, then rerun the command. For `lock:update`, removing the unreadable compiled artifact lets the command fall back to regenerating code in memory.
 

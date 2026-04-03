@@ -97,6 +97,17 @@ def test_explain_command_prints_init_write_failure_details() -> None:
     assert result.stderr == ""
 
 
+def test_explain_command_prints_artifact_io_failure_details() -> None:
+    result = _run_nlsc("explain", "EARTIFACT001")
+
+    assert result.returncode == 0
+    assert "EARTIFACT001" in result.stdout
+    assert "Artifact I/O failed" in result.stdout
+    assert "graph" in result.stdout
+    assert "lock:update" in result.stdout
+    assert result.stderr == ""
+
+
 def test_explain_command_prints_lsp_dependency_error_details() -> None:
     result = _run_nlsc("explain", "ELSP001")
 

@@ -162,8 +162,8 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
     EARTIFACT001: ErrorDefinition(
         code=EARTIFACT001,
         title="Artifact I/O failed",
-        summary="`nlsc compile` or `nlsc lock:update` could not read or write a generated artifact needed to finish the command.",
-        emitted_by=("compile", "lock:update"),
+        summary="`nlsc compile`, `nlsc graph`, or `nlsc lock:update` could not read or write a generated artifact needed to finish the command.",
+        emitted_by=("compile", "graph", "lock:update"),
         common_causes=(
             "The generated output path is not writable, is locked, or the filesystem rejected the write.",
             "The existing compiled artifact is unreadable, missing expected permissions, or contains undecodable bytes.",

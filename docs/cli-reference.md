@@ -235,6 +235,8 @@ nlsc graph src/order.nl --anlu process-order --dataflow
 nlsc graph src/order.nl --format dot -o deps.dot
 ```
 
+With `--json`, successful `graph` runs return a stable payload with `ok`, `command`, `diagnostics`, `file`, `format`, `anlu`, `dataflow`, `graph_kind`, `output_file`, and `graph`. Output write failures for `--output` stay structured with `EARTIFACT001`.
+
 ---
 
 ### `nlsc diff`

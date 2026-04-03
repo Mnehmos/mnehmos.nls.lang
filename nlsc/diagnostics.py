@@ -264,9 +264,7 @@ def atomize_failure_diagnostic(
 def artifact_io_diagnostic(
     path: Path, exc: Exception, *, action: str, command: str
 ) -> Diagnostic:
-    hint = (
-        "Check the output path and filesystem permissions, then rerun `nlsc compile`."
-    )
+    hint = f"Check the output path and filesystem permissions, then rerun `nlsc {command}`."
     if command == "lock:update" and action == "read":
         hint = "Check that the compiled artifact exists and is readable, or remove it so `nlsc lock:update` can regenerate it."
 

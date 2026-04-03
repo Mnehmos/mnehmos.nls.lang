@@ -896,7 +896,18 @@ def cmd_graph(args: argparse.Namespace) -> int:
     # Output
     if args.output:
         output_path = Path(args.output)
-        output_path.write_text(output, encoding="utf-8")
+        try:
+            output_path.write_text(output, encoding="utf-8")
+        except OSError as exc:
+            diagnostic = artifact_io_diagnostic(
+                output_path, exc, action="write", command="graph"
+            )
+            if json_output:
+                return _emit_json("graph", [diagnostic], file=str(source_path))
+            print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+            if diagnostic.hint:
+                print(diagnostic.hint, file=sys.stderr)
+            return 1
         if json_output:
             return _emit_json(
                 "graph",
