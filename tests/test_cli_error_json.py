@@ -1174,6 +1174,49 @@ RETURNS: 1
     assert output_path.read_text(encoding="utf-8") == payload["graph"]
 
 
+def test_graph_json_reports_output_write_failure(
+    capsys: Any, monkeypatch: Any, tmp_path: Path
+) -> None:
+    source_path = tmp_path / "graph_write_fail.nl"
+    output_path = tmp_path / "graph_write_fail.mmd"
+    source_path.write_text(
+        "@module graph-write-fail\n@target python\n\n[main]\nPURPOSE: Ok\nRETURNS: 1\n",
+        encoding="utf-8",
+    )
+    real_write_text = Path.write_text
+
+    def fake_write_text(self: Path, data: str, *args: Any, **kwargs: Any) -> int:
+        if self == output_path:
+            raise OSError("disk full")
+        return real_write_text(self, data, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", fake_write_text)
+
+    exit_code = main(
+        ["graph", str(source_path), "--json", "--output", str(output_path)]
+    )
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload == {
+        "ok": False,
+        "command": "graph",
+        "diagnostics": [
+            {
+                "code": "EARTIFACT001",
+                "file": str(output_path),
+                "line": None,
+                "col": None,
+                "message": f"Failed to write artifact: {output_path} (disk full)",
+                "hint": "Check the output path and filesystem permissions, then rerun `nlsc graph`.",
+            }
+        ],
+        "file": str(source_path),
+    }
+    assert captured.err == ""
+
+
 def test_graph_json_reports_rendered_dataflow_kind_for_anlu_ascii(
     tmp_path: Path,
 ) -> None:
