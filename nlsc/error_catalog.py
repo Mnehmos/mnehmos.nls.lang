@@ -330,15 +330,16 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
     ),
     EEXEC001: ErrorDefinition(
         code=EEXEC001,
-        title="Execution setup error",
-        summary="`nlsc run` failed while preparing or launching the generated module.",
+        title="Execution failed",
+        summary="`nlsc run` failed while launching the generated module or the generated program exited with a non-zero status.",
         emitted_by=("run",),
         common_causes=(
             "The temporary execution environment could not be created or used.",
             "Launching the generated module raised an unexpected host-side exception.",
+            "The generated program raised a runtime error or called `sys.exit` with a non-zero status.",
         ),
         next_steps=(
-            "Inspect the generated module path and runtime environment.",
+            "Inspect the generated module path, stdout, stderr, and runtime environment.",
             "Retry after fixing the local execution issue.",
         ),
     ),
