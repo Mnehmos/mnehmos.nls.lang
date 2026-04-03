@@ -1,5 +1,7 @@
 """Tests for nlsc run command - Issue #89"""
 
+import argparse
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -8,8 +10,11 @@ import pytest
 
 from nlsc.cli import cmd_run
 from nlsc.sourcemap import (
-    SourceMap, SourceMapping, generate_source_map,
-    _find_anlu_line, _find_function_range
+    SourceMap,
+    SourceMapping,
+    generate_source_map,
+    _find_anlu_line,
+    _find_function_range,
 )
 from nlsc.parser import parse_nl_file
 
@@ -22,7 +27,7 @@ class TestRunCommand:
         result = subprocess.run(
             [sys.executable, "-m", "nlsc", "run", "--help"],
             capture_output=True,
-            text=True
+            text=True,
         )
         assert result.returncode == 0
         assert "file" in result.stdout.lower()
@@ -33,7 +38,7 @@ class TestRunCommand:
         result = subprocess.run(
             [sys.executable, "-m", "nlsc", "run", "nonexistent.nl"],
             capture_output=True,
-            text=True
+            text=True,
         )
         # Error message should be printed
         assert "not found" in result.stderr.lower()
@@ -53,9 +58,17 @@ LOGIC:
 RETURNS: void
 """)
         result = subprocess.run(
-            [sys.executable, "-m", "nlsc", "run", str(nl_file), "--keep", str(tmp_path / "build")],
+            [
+                sys.executable,
+                "-m",
+                "nlsc",
+                "run",
+                str(nl_file),
+                "--keep",
+                str(tmp_path / "build"),
+            ],
             capture_output=True,
-            text=True
+            text=True,
         )
         # Main function with print should produce output
         # (Mock mode may not actually print, but should not error)
@@ -77,9 +90,17 @@ RETURNS: greeting
         keep_dir = tmp_path / "keep"
 
         result = subprocess.run(
-            [sys.executable, "-m", "nlsc", "run", str(nl_file), "--keep", str(keep_dir)],
+            [
+                sys.executable,
+                "-m",
+                "nlsc",
+                "run",
+                str(nl_file),
+                "--keep",
+                str(keep_dir),
+            ],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         # Check generated file exists
@@ -97,9 +118,19 @@ PURPOSE: Say hello
 RETURNS: void
 """)
         result = subprocess.run(
-            [sys.executable, "-m", "nlsc", "run", str(nl_file), "--target", "python", "--keep", str(tmp_path / "build")],
+            [
+                sys.executable,
+                "-m",
+                "nlsc",
+                "run",
+                str(nl_file),
+                "--target",
+                "python",
+                "--keep",
+                str(tmp_path / "build"),
+            ],
             capture_output=True,
-            text=True
+            text=True,
         )
         assert result.returncode == 0
 
@@ -115,9 +146,18 @@ PURPOSE: Say hello
 RETURNS: void
 """)
         result = subprocess.run(
-            [sys.executable, "-m", "nlsc", "run", str(nl_file), "-v", "--keep", str(tmp_path / "build")],
+            [
+                sys.executable,
+                "-m",
+                "nlsc",
+                "run",
+                str(nl_file),
+                "-v",
+                "--keep",
+                str(tmp_path / "build"),
+            ],
             capture_output=True,
-            text=True
+            text=True,
         )
         assert "Compiled" in result.stdout or "Source mappings" in result.stdout
 
@@ -133,9 +173,17 @@ PURPOSE: Do nothing
 RETURNS: void
 """)
         result = subprocess.run(
-            [sys.executable, "-m", "nlsc", "run", str(nl_file), "--keep", str(tmp_path / "build")],
+            [
+                sys.executable,
+                "-m",
+                "nlsc",
+                "run",
+                str(nl_file),
+                "--keep",
+                str(tmp_path / "build"),
+            ],
             capture_output=True,
-            text=True
+            text=True,
         )
         # Success case
         assert result.returncode == 0
@@ -147,11 +195,7 @@ class TestSourceMap:
     def test_source_mapping_dataclass(self):
         """SourceMapping should store line mappings"""
         mapping = SourceMapping(
-            py_start=10,
-            py_end=20,
-            nl_line=5,
-            anlu_id="my-func",
-            context="in my-func"
+            py_start=10, py_end=20, nl_line=5, anlu_id="my-func", context="in my-func"
         )
         assert mapping.py_start == 10
         assert mapping.nl_line == 5
@@ -164,7 +208,7 @@ class TestSourceMap:
             mappings=[
                 SourceMapping(py_start=10, py_end=20, nl_line=5, anlu_id="func1"),
                 SourceMapping(py_start=25, py_end=35, nl_line=15, anlu_id="func2"),
-            ]
+            ],
         )
 
         # Within first mapping
@@ -187,16 +231,18 @@ class TestSourceMap:
             nl_path="math.nl",
             py_path="/tmp/nlsc_run_xxx/math.py",
             mappings=[
-                SourceMapping(py_start=10, py_end=20, nl_line=5, anlu_id="add", context="in add"),
-            ]
+                SourceMapping(
+                    py_start=10, py_end=20, nl_line=5, anlu_id="add", context="in add"
+                ),
+            ],
         )
 
         error = 'Traceback:\n  File "/tmp/nlsc_run_xxx/math.py", line 15, in add\nTypeError: ...'
         translated = source_map.translate_error(error)
 
-        assert 'math.nl' in translated
-        assert 'line 5' in translated
-        assert 'in add' in translated
+        assert "math.nl" in translated
+        assert "line 5" in translated
+        assert "in add" in translated
 
     def test_find_anlu_line(self):
         """Should find ANLU definition line in NL source"""
@@ -264,6 +310,7 @@ RETURNS: x * y
 
         # Generate some Python code
         from nlsc.emitter import emit_python
+
         python_code = emit_python(nl_file)
 
         source_map = generate_source_map(nl_file, python_code)
@@ -273,7 +320,9 @@ RETURNS: x * y
 
         # Check that we can look up lines
         for mapping in source_map.mappings:
-            assert mapping.anlu_id in ["add", "multiply"] or mapping.context.startswith("type")
+            assert mapping.anlu_id in ["add", "multiply"] or mapping.context.startswith(
+                "type"
+            )
 
 
 class TestRunIntegration:
@@ -298,9 +347,17 @@ RETURNS: greeting message
 }
 """)
         result = subprocess.run(
-            [sys.executable, "-m", "nlsc", "run", str(nl_file), "--keep", str(tmp_path / "build")],
+            [
+                sys.executable,
+                "-m",
+                "nlsc",
+                "run",
+                str(nl_file),
+                "--keep",
+                str(tmp_path / "build"),
+            ],
             capture_output=True,
-            text=True
+            text=True,
         )
         # Should execute without error
         # (actual output depends on mock mode behavior)
@@ -318,9 +375,17 @@ PURPOSE: Say hello
 RETURNS: void
 """)
         result = subprocess.run(
-            [sys.executable, "-m", "nlsc", "run", str(nl_file), "--keep", str(tmp_path / "build")],
+            [
+                sys.executable,
+                "-m",
+                "nlsc",
+                "run",
+                str(nl_file),
+                "--keep",
+                str(tmp_path / "build"),
+            ],
             capture_output=True,
-            text=True
+            text=True,
         )
         # Hyphens should be normalized to underscores
         assert result.returncode == 0
@@ -347,9 +412,99 @@ RETURNS: helper.value()
 }
 """)
         result = subprocess.run(
-            [sys.executable, "-m", "nlsc", "run", str(nl_file), "--keep", str(root / "build")],
+            [
+                sys.executable,
+                "-m",
+                "nlsc",
+                "run",
+                str(nl_file),
+                "--keep",
+                str(root / "build"),
+            ],
             capture_output=True,
-            text=True
+            text=True,
         )
         assert result.returncode == 0
         assert "7" in result.stdout
+
+
+def test_cmd_run_json_preserves_nonzero_exit_without_stderr(tmp_path, monkeypatch):
+    nl_file = tmp_path / "silent_failure.nl"
+    nl_file.write_text(
+        """\
+@module silent-failure
+@target python
+
+[main]
+PURPOSE: Exit silently with a non-zero status
+RETURNS: void
+""",
+        encoding="utf-8",
+    )
+
+    import nlsc.cli as cli_module
+
+    real_subprocess_run = cli_module.subprocess.run
+
+    def fake_subprocess_run(*args, **kwargs):
+        command = args[0]
+        if command[:3] == [sys.executable, "-m", "pytest"]:
+            return real_subprocess_run(*args, **kwargs)
+        return subprocess.CompletedProcess(command, 7, stdout="", stderr="")
+
+    monkeypatch.setattr(cli_module.subprocess, "run", fake_subprocess_run)
+
+    exit_code = cmd_run(
+        argparse.Namespace(
+            file=str(nl_file), keep=None, target="python", verbose=False, json=True
+        )
+    )
+
+    assert exit_code == 7
+
+
+def test_cmd_run_json_reports_execution_setup_failure(tmp_path, monkeypatch, capsys):
+    nl_file = tmp_path / "setup_failure.nl"
+    nl_file.write_text(
+        """\
+@module setup-failure
+@target python
+
+[main]
+PURPOSE: Exit silently with a non-zero status
+RETURNS: void
+""",
+        encoding="utf-8",
+    )
+
+    import nlsc.cli as cli_module
+
+    real_subprocess_run = cli_module.subprocess.run
+
+    def fake_subprocess_run(*args, **kwargs):
+        command = args[0]
+        if command[:3] == [sys.executable, "-m", "pytest"]:
+            return real_subprocess_run(*args, **kwargs)
+        raise OSError("launcher unavailable")
+
+    monkeypatch.setattr(cli_module.subprocess, "run", fake_subprocess_run)
+
+    exit_code = cmd_run(
+        argparse.Namespace(
+            file=str(nl_file), keep=None, target="python", verbose=False, json=True
+        )
+    )
+
+    assert exit_code == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["command"] == "run"
+    assert payload["diagnostics"] == [
+        {
+            "code": "EEXEC001",
+            "file": str(nl_file),
+            "line": None,
+            "col": None,
+            "message": "Execution error: launcher unavailable",
+            "hint": "Inspect the generated module and runtime environment.",
+        }
+    ]

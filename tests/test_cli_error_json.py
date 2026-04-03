@@ -822,6 +822,40 @@ def test_run_json_reports_missing_file(tmp_path: Path) -> None:
     assert payload["diagnostics"][0]["code"] == "EFILE001"
 
 
+def test_run_json_reports_runtime_exit_failures(tmp_path: Path) -> None:
+    source_path = tmp_path / "runtime_failure.nl"
+    source_path.write_text(
+        """\
+@module runtime-failure
+@target python
+
+[main]
+PURPOSE: Trigger a runtime error
+RETURNS: 1 / 0
+""",
+        encoding="utf-8",
+    )
+
+    result = _run_nlsc(["run", str(source_path), "--json"], cwd=REPO_ROOT)
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "run"
+    assert payload["ok"] is False
+    assert payload["exit_code"] == 1
+    assert payload["diagnostics"] == [
+        {
+            "code": "EEXEC001",
+            "file": str(source_path),
+            "line": None,
+            "col": None,
+            "message": "Generated program exited with code 1.",
+            "hint": "Inspect stdout/stderr for the runtime failure and rerun `nlsc run` after fixing the generated behavior or inputs.",
+        }
+    ]
+    assert "ZeroDivisionError" in payload["stderr"]
+
+
 def test_graph_json_reports_missing_file(tmp_path: Path) -> None:
     missing_path = tmp_path / "missing_graph.nl"
 

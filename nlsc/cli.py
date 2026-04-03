@@ -71,6 +71,7 @@ from .diagnostics import (
     missing_file_diagnostic,
     parse_error_diagnostic,
     parser_backend_unavailable_diagnostic,
+    run_execution_failure_diagnostic,
     stdlib_use_diagnostic,
     test_execution_diagnostic,
     watch_not_directory_diagnostic,
@@ -287,7 +288,13 @@ def _print_stdlib_use_error(error: StdlibUseError) -> None:
     )
 
 
-def _emit_json(command: str, diagnostics: list[Diagnostic], **extra: object) -> int:
+def _emit_json(
+    command: str,
+    diagnostics: list[Diagnostic],
+    *,
+    status_code: int | None = None,
+    **extra: object,
+) -> int:
     payload: dict[str, object] = {
         "ok": not diagnostics,
         "command": command,
@@ -295,6 +302,8 @@ def _emit_json(command: str, diagnostics: list[Diagnostic], **extra: object) -> 
     }
     payload.update(extra)
     print(json.dumps(payload, indent=2))
+    if status_code is not None:
+        return status_code
     return 0 if not diagnostics else 1
 
 
@@ -1526,9 +1535,13 @@ def cmd_run(args: argparse.Namespace) -> int:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
     if json_output:
+        diagnostics: list[Diagnostic] = []
+        if exit_code != 0:
+            diagnostics.append(run_execution_failure_diagnostic(source_path, exit_code))
         return _emit_json(
             "run",
-            [],
+            diagnostics,
+            status_code=exit_code,
             file=str(source_path),
             exit_code=exit_code,
             stdout=proc.stdout if proc is not None else "",

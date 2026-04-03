@@ -36,6 +36,7 @@ from .error_catalog import (
     EWATCH001,
     E_RESOLUTION,
     ETEST001,
+    EEXEC001,
 )
 
 
@@ -395,6 +396,17 @@ def test_execution_diagnostic(path: Path, pytest_exit_code: int | None) -> Diagn
         col=None,
         message=message,
         hint="Inspect pytest_stdout and pytest_stderr for failing assertions or setup errors.",
+    )
+
+
+def run_execution_failure_diagnostic(path: Path, exit_code: int) -> Diagnostic:
+    return Diagnostic(
+        code=EEXEC001,
+        file=str(path),
+        line=None,
+        col=None,
+        message=f"Generated program exited with code {exit_code}.",
+        hint="Inspect stdout/stderr for the runtime failure and rerun `nlsc run` after fixing the generated behavior or inputs.",
     )
 
 
