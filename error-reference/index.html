@@ -1027,6 +1027,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#eartifact001-artifact-io-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EARTIFACT001 - Artifact I/O failed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#eatom001-python-syntax-error" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1196,6 +1207,17 @@
     <span class="md-ellipsis">
       
         ELOCK002 - Lockfile out of date
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#elock003-lockfile-write-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ELOCK003 - Lockfile write failed
       
     </span>
   </a>
@@ -2172,6 +2194,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#eartifact001-artifact-io-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EARTIFACT001 - Artifact I/O failed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#eatom001-python-syntax-error" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2341,6 +2374,17 @@
     <span class="md-ellipsis">
       
         ELOCK002 - Lockfile out of date
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#elock003-lockfile-write-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ELOCK003 - Lockfile write failed
       
     </span>
   </a>
@@ -3006,6 +3050,11 @@
 <td>The requested input path does not exist.</td>
 </tr>
 <tr>
+<td><code>EARTIFACT001</code></td>
+<td><code>compile</code>, <code>lock:update</code></td>
+<td>A generated artifact could not be read or written.</td>
+</tr>
+<tr>
 <td><code>EATOM001</code></td>
 <td><code>atomize</code></td>
 <td>The input Python file failed syntax parsing during atomization.</td>
@@ -3086,6 +3135,11 @@
 <td><code>nlsc lock:check</code> found source content that no longer matches the lockfile.</td>
 </tr>
 <tr>
+<td><code>ELOCK003</code></td>
+<td><code>compile</code>, <code>lock:update</code></td>
+<td>A generated <code>.nl.lock</code> file could not be written to disk.</td>
+</tr>
+<tr>
 <td><code>ELSP001</code></td>
 <td><code>lsp</code></td>
 <td><code>nlsc lsp</code> could not import the optional language-server dependencies.</td>
@@ -3146,6 +3200,9 @@
 <h3 id="efile001-file-not-found"><code>EFILE001</code> - File not found<a class="headerlink" href="#efile001-file-not-found" title="Permanent link">&para;</a></h3>
 <p>Raised when the input path passed to <code>atomize</code>, <code>compile</code>, <code>verify</code>, <code>run</code>, or <code>watch</code> does not exist.</p>
 <p><strong>Fix:</strong> Check the path, ensure the file exists, and rerun the command.</p>
+<h3 id="eartifact001-artifact-io-failed"><code>EARTIFACT001</code> - Artifact I/O failed<a class="headerlink" href="#eartifact001-artifact-io-failed" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc compile --json</code> cannot write a generated artifact such as <code>&lt;name&gt;.py</code>, or when <code>nlsc lock:update --json</code> cannot read the existing compiled artifact.</p>
+<p><strong>Fix:</strong> Check the reported artifact path, filesystem permissions, file locks, and encoding/readability, then rerun the command. For <code>lock:update</code>, removing the unreadable compiled artifact lets the command fall back to regenerating code in memory.</p>
 <h3 id="eatom001-python-syntax-error"><code>EATOM001</code> - Python syntax error<a class="headerlink" href="#eatom001-python-syntax-error" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc atomize --json</code> cannot parse the input <code>.py</code> file into a Python AST.</p>
 <p><strong>Fix:</strong> Correct the reported Python syntax error and rerun <code>nlsc atomize &lt;file&gt;</code>.</p>
@@ -3194,6 +3251,9 @@
 <h3 id="elock002-lockfile-out-of-date"><code>ELOCK002</code> - Lockfile out of date<a class="headerlink" href="#elock002-lockfile-out-of-date" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc lock:check --json</code> finds ANLUs that no longer match the current <code>.nl</code> source.</p>
 <p><strong>Fix:</strong> Regenerate the lockfile with <code>nlsc compile &lt;file&gt;</code> or <code>nlsc lock:update &lt;file&gt;</code> after reviewing the reported ANLU mismatches.</p>
+<h3 id="elock003-lockfile-write-failed"><code>ELOCK003</code> - Lockfile write failed<a class="headerlink" href="#elock003-lockfile-write-failed" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc compile --json</code> or <code>nlsc lock:update --json</code> successfully reaches the lockfile generation step but cannot write the <code>.nl.lock</code> file.</p>
+<p><strong>Fix:</strong> Check the destination path, permissions, file locks, and free space, then rerun the command.</p>
 <h3 id="elsp001-lsp-optional-dependencies-unavailable"><code>ELSP001</code> - LSP optional dependencies unavailable<a class="headerlink" href="#elsp001-lsp-optional-dependencies-unavailable" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc lsp</code> cannot import the optional dependencies that back the language server, such as <code>pygls</code> or <code>lsprotocol</code>.</p>
 <p><strong>Fix:</strong> Install the extras with <code>pip install nlsc[lsp]</code>, then rerun <code>nlsc lsp</code> in the same environment.</p>
