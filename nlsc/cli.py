@@ -53,6 +53,7 @@ from .diagnostics import (
     assoc_permission_diagnostic,
     assoc_platform_diagnostic,
     assoc_runtime_failure_diagnostic,
+    artifact_io_diagnostic,
     atomize_failure_diagnostic,
     atomize_syntax_error_diagnostic,
     cli_parse_error_diagnostic,
@@ -67,6 +68,7 @@ from .diagnostics import (
     init_target_path_diagnostic,
     lockfile_outdated_diagnostics,
     lockfile_unavailable_diagnostic,
+    lockfile_write_diagnostic,
     lsp_dependencies_unavailable_diagnostic,
     lsp_startup_failure_diagnostic,
     missing_file_diagnostic,
@@ -652,7 +654,19 @@ def cmd_compile(args: argparse.Namespace) -> int:
     if args.output:
         output_path = Path(args.output)
 
-    output_path.write_text(generated_code, encoding="utf-8")
+    try:
+        output_path.write_text(generated_code, encoding="utf-8")
+    except OSError as exc:
+        diagnostic = artifact_io_diagnostic(
+            output_path, exc, action="write", command="compile"
+        )
+        if json_output:
+            return _emit_json("compile", [diagnostic], file=str(source_path))
+        print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+        if diagnostic.hint:
+            print(diagnostic.hint, file=sys.stderr)
+        return 1
+
     line_count = generated_code.count("\n") + 1
     if not json_output:
         print(f"  {_check()} Generated {output_path.name} ({line_count} lines)")
@@ -677,7 +691,18 @@ def cmd_compile(args: argparse.Namespace) -> int:
 
     if test_code and nl_file.tests:
         test_path = source_path.parent / f"test_{source_path.stem}{test_suffix}"
-        test_path.write_text(test_code, encoding="utf-8")
+        try:
+            test_path.write_text(test_code, encoding="utf-8")
+        except OSError as exc:
+            diagnostic = artifact_io_diagnostic(
+                test_path, exc, action="write", command="compile"
+            )
+            if json_output:
+                return _emit_json("compile", [diagnostic], file=str(source_path))
+            print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+            if diagnostic.hint:
+                print(diagnostic.hint, file=sys.stderr)
+            return 1
         if not json_output:
             print(f"  {_check()} Generated {test_path.name}")
 
@@ -690,7 +715,17 @@ def cmd_compile(args: argparse.Namespace) -> int:
         llm_backend="mock",
         target=target,
     )
-    write_lockfile(lockfile, lock_path)
+    try:
+        write_lockfile(lockfile, lock_path)
+    except OSError as exc:
+        diagnostic = lockfile_write_diagnostic(lock_path, exc, command="compile")
+        if json_output:
+            return _emit_json("compile", [diagnostic], file=str(source_path))
+        print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+        if diagnostic.hint:
+            print(diagnostic.hint, file=sys.stderr)
+        return 1
+
     if json_output:
         return _emit_json(
             "compile",
@@ -1405,7 +1440,18 @@ def cmd_lock_update(args: argparse.Namespace) -> int:
             print(str(exc), file=sys.stderr)
             return 1
     else:
-        generated_code = output_path.read_text(encoding="utf-8")
+        try:
+            generated_code = output_path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            diagnostic = artifact_io_diagnostic(
+                output_path, exc, action="read", command="lock:update"
+            )
+            if json_output:
+                return _emit_json("lock:update", [diagnostic], file=str(source_path))
+            print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+            if diagnostic.hint:
+                print(diagnostic.hint, file=sys.stderr)
+            return 1
 
     # Generate lockfile
     lock_path = source_path.with_suffix(".nl.lock")
@@ -1416,7 +1462,16 @@ def cmd_lock_update(args: argparse.Namespace) -> int:
         llm_backend="mock",
         target=target,
     )
-    write_lockfile(lockfile, lock_path)
+    try:
+        write_lockfile(lockfile, lock_path)
+    except OSError as exc:
+        diagnostic = lockfile_write_diagnostic(lock_path, exc, command="lock:update")
+        if json_output:
+            return _emit_json("lock:update", [diagnostic], file=str(source_path))
+        print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+        if diagnostic.hint:
+            print(diagnostic.hint, file=sys.stderr)
+        return 1
 
     if json_output:
         return _emit_json(

@@ -19,12 +19,14 @@ from .error_catalog import (
     EINIT003,
     EATOM001,
     EATOM002,
+    EARTIFACT001,
     ECONTRACT001,
     EFILE001,
     EGRAPH001,
     EGRAPH002,
     ELOCK001,
     ELOCK002,
+    ELOCK003,
     ELSP001,
     ELSP002,
     EASSOC001,
@@ -259,6 +261,25 @@ def atomize_failure_diagnostic(
     )
 
 
+def artifact_io_diagnostic(
+    path: Path, exc: Exception, *, action: str, command: str
+) -> Diagnostic:
+    hint = (
+        "Check the output path and filesystem permissions, then rerun `nlsc compile`."
+    )
+    if command == "lock:update" and action == "read":
+        hint = "Check that the compiled artifact exists and is readable, or remove it so `nlsc lock:update` can regenerate it."
+
+    return Diagnostic(
+        code=EARTIFACT001,
+        file=str(path),
+        line=None,
+        col=None,
+        message=f"Failed to {action} artifact: {path} ({exc})",
+        hint=hint,
+    )
+
+
 def parse_error_diagnostic(path: Path, error: ParseError) -> Diagnostic:
     line = error.line_number or None
     prefix = f"Line {error.line_number}: " if error.line_number else ""
@@ -453,6 +474,17 @@ def lockfile_outdated_diagnostics(
             )
         )
     return diagnostics
+
+
+def lockfile_write_diagnostic(path: Path, exc: OSError, *, command: str) -> Diagnostic:
+    return Diagnostic(
+        code=ELOCK003,
+        file=str(path),
+        line=None,
+        col=None,
+        message=f"Failed to write lockfile: {path} ({exc})",
+        hint=f"Check the destination path and filesystem permissions, then rerun `nlsc {command}`.",
+    )
 
 
 def _find_use_line(path: Path, domain_spec: str) -> int | None:
