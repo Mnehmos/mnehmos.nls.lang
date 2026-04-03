@@ -1,5 +1,6 @@
 """Tests for nlsc test command - Issue #13"""
 
+import json
 from nlsc.cli import cmd_test
 from argparse import Namespace
 
@@ -118,6 +119,41 @@ RETURNS: helper.offset(value)
         result = cmd_test(args)
 
         assert result == 1
+
+    def test_cmd_test_json_verbose_does_not_stream_pytest_output(
+        self, tmp_path, capsys
+    ):
+        """JSON mode should keep stdout machine-readable even with verbose pytest."""
+        nl_file = tmp_path / "verbose_json.nl"
+        nl_file.write_text(
+            """\
+@module verbose-json
+@target python
+
+[always-one]
+PURPOSE: Always returns 1
+INPUTS:
+  - x: number
+RETURNS: 1
+
+@test [always-one] {
+  always_one(5) == 5
+}
+"""
+        )
+
+        args = Namespace(file=str(nl_file), verbose=True, json=True, case=None)
+        result = cmd_test(args)
+
+        captured = capsys.readouterr()
+        payload = json.loads(captured.out)
+        assert result == 1
+        assert payload["command"] == "test"
+        assert payload["ok"] is False
+        assert payload["pytest_exit_code"] == 1
+        assert captured.err == ""
+        assert captured.out.lstrip().startswith("{")
+        assert "test session starts" in payload["pytest_stdout"]
 
 
 class TestTestBlockParsing:
