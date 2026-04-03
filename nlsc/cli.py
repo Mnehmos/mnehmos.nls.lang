@@ -1144,11 +1144,21 @@ def cmd_diff(args: argparse.Namespace) -> int:
     # Load lockfile if exists
     lock_path = source_path.with_suffix(".nl.lock")
     lockfile = None
-    if lock_path.exists():
-        try:
-            lockfile = read_lockfile(lock_path)
-        except Exception as e:
-            print(f"Warning: Could not read lockfile: {e}", file=sys.stderr)
+    lockfile_present = lock_path.exists()
+    lockfile_error = None
+    if lockfile_present:
+        if not lock_path.is_file():
+            lockfile_error = f"Lockfile path is not a regular file: {lock_path}"
+        else:
+            try:
+                lockfile = read_lockfile(lock_path)
+            except Exception as e:
+                lockfile_error = str(e)
+                if not json_output:
+                    print(f"Warning: Could not read lockfile: {e}", file=sys.stderr)
+
+            if lockfile is None and lockfile_error is None:
+                lockfile_error = f"Could not load lockfile: {lock_path}"
 
     # Get changes
     changes = get_anlu_changes(nl_file, lockfile)
@@ -1186,7 +1196,9 @@ def cmd_diff(args: argparse.Namespace) -> int:
             [],
             file=str(source_path),
             lockfile=str(lock_path),
-            lockfile_present=lockfile is not None,
+            lockfile_present=lockfile_present,
+            lockfile_loaded=lockfile is not None,
+            lockfile_error=lockfile_error,
             mode=mode,
             summary=_diff_summary(changes),
             changes=[_anlu_change_to_dict(change) for change in changes],
