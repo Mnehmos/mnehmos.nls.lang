@@ -242,14 +242,19 @@ def atomize_syntax_error_diagnostic(path: Path, error: SyntaxError) -> Diagnosti
 
 
 def atomize_failure_diagnostic(
-    path: Path, exc: Exception, *, output_path: Path
+    path: Path, exc: Exception, *, output_path: Path | None
 ) -> Diagnostic:
+    if output_path is None:
+        message = f"Atomize failed for {path}: {exc}"
+    else:
+        message = f"Atomize failed while writing {output_path}: {exc}"
+
     return Diagnostic(
         code=EATOM002,
         file=str(path),
         line=None,
         col=None,
-        message=f"Atomize failed while writing {output_path}: {exc}",
+        message=message,
         hint="Check the output path and local filesystem permissions, then rerun `nlsc atomize`.",
     )
 

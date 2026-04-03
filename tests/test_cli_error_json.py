@@ -1008,6 +1008,27 @@ def test_atomize_json_reports_write_failure(tmp_path: Path) -> None:
     assert "No such file or directory" in payload["diagnostics"][0]["message"]
 
 
+def test_atomize_json_reports_default_output_derivation_failure(tmp_path: Path) -> None:
+    result = _run_nlsc(["atomize", ".", "--json"], cwd=tmp_path)
+
+    assert result.returncode == 1
+    payload = _load_json_output(result)
+    assert payload["command"] == "atomize"
+    assert payload["file"] == "."
+    assert payload["diagnostics"] == [
+        {
+            "code": "EATOM002",
+            "file": ".",
+            "line": None,
+            "col": None,
+            "message": payload["diagnostics"][0]["message"],
+            "hint": "Check the output path and local filesystem permissions, then rerun `nlsc atomize`.",
+        }
+    ]
+    assert "Atomize failed" in payload["diagnostics"][0]["message"]
+    assert result.stderr == ""
+
+
 def test_diff_json_reports_missing_file(tmp_path: Path) -> None:
     missing_path = tmp_path / "missing_diff.nl"
 
