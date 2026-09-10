@@ -32,7 +32,7 @@ from .emitter import emit_python, emit_tests
 from .emitter_typescript import emit_tests_typescript, emit_typescript
 from .lockfile import generate_lockfile, write_lockfile, verify_lockfile
 from .sourcemap import generate_source_map
-from .ir import IRModule, module_to_canonical, module_to_json
+from .ir import module_to_canonical, module_to_json
 from .lowering import LoweringError, lower_module
 from .graph import (
     emit_mermaid,

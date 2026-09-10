@@ -54,7 +54,6 @@ from .ir import (
     ForeignExpr,
     ForeignStmt,
     SourceSpan,
-    TypeRef,
     type_ref_from_text,
 )
 from .localization import ANLU_IDENTIFIER_PATTERN, IDENTIFIER_PATTERN
