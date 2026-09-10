@@ -41,6 +41,12 @@ Then right-click any `.nl` file → **Open with** → select the NLS launcher an
 
 ## Quick Start
 
+> **[15-Minute Quickstart](docs/quickstart.md)** — build a real shipping-quote
+> calculator with types, guards, total branches, tests, both targets, and a CI
+> gate. Every command in the guide is exercised by the test suite.
+
+The short version:
+
 ```bash
 # Initialize a new project
 nlsc init my-project
