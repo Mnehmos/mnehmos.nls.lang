@@ -64,9 +64,9 @@ RETURNS: sorted_lesser + equal + sorted_greater
 
     assert test_code is not None
     assert "export function quick_sort(items: number[]): number[] {" in code
-    assert "if (items.length < 2) {" in code
+    assert "if (__nls_truthy(__nls_len(items) < 2)) {" in code
     assert "const lesser = items.filter((x) => x < pivot);" in code
-    assert "const equal = items.filter((x) => x === pivot);" in code
+    assert "const equal = items.filter((x) => __nls_eq(x, pivot));" in code
     assert "return [...sorted_lesser, ...equal, ...sorted_greater];" in code
     assert 'import assert from "node:assert/strict";' in test_code
     assert (

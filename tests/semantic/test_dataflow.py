@@ -184,8 +184,7 @@ INPUTS:
   - x: number
 LOGIC:
   1. base = x * 10
-  2. IF x > 0 THEN result = base + 1
-  3. IF x <= 0 THEN result = base - 1
+  2. IF x > 0 THEN base + 1 -> result ELSE base - 1 -> result
 RETURNS: result
 """
         code = runner.compile(source)

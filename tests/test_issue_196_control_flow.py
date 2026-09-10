@@ -178,7 +178,7 @@ def test_total_branch_executes_identically_on_both_paths():
 
 def test_total_branch_typescript_hoists_joined_binding():
     code = emit_typescript(parse_nl_file(TOTAL_BRANCH))
-    assert "if (flag)" in code
+    assert "if (__nls_truthy(flag))" in code
     assert "else" in code
     # The joined binding must escape both block scopes: declared once at
     # function scope, assigned in each arm (no duplicate const).
