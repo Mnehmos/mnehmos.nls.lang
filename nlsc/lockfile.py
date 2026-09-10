@@ -88,10 +88,35 @@ def semantic_anlu_canonical(
     """
     from .ir import operation_semantic_canonical
     from .lowering import lower_anlu
+    from .lowering import lower_module as _lower_module
 
     declared_types = {t.name for t in module.module.types} if module else set()
-    operation, _diagnostics = lower_anlu(anlu, declared_types)
-    canonical = SEMANTIC_HASH_SCHEME + "\n" + operation_semantic_canonical(operation)
+
+    canonical: Optional[str] = None
+    if module is not None:
+        # Full-module lowering so callee failure propagation (#198) is
+        # part of the caller's semantic identity.
+        lowered = _lower_module(module)
+        lowered_op = next(
+            (op for op in lowered.operations if op.name == anlu.identifier), None
+        )
+        if lowered_op is not None:
+            canonical = (
+                SEMANTIC_HASH_SCHEME
+                + "\n"
+                + operation_semantic_canonical(lowered_op)
+            )
+
+    if canonical is None:
+        operation, _diagnostics = lower_anlu(anlu, declared_types)
+        # Populate own failure entries so a module-less hash matches the
+        # full-module path for dependency-free operations.
+        from .failures import populate_failure_sets
+        from .ir import IRModule as _IRModule
+
+        wrapper = _IRModule(module_name=anlu.identifier, operations=(operation,))
+        populate_failure_sets(wrapper)
+        canonical = SEMANTIC_HASH_SCHEME + "\n" + operation_semantic_canonical(operation)
 
     if module is not None:
         by_id = {other.identifier: other for other in module.anlus}

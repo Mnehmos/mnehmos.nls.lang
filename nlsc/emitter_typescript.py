@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from typing import Optional
 
@@ -225,14 +226,71 @@ def _emit_function_signature(anlu: ANLU) -> str:
     return f"export function {anlu.python_name}({', '.join(params)}): {return_type} {{"
 
 
+TYPESCRIPT_BUILTIN_ERRORS = {
+    "Error",
+    "EvalError",
+    "RangeError",
+    "ReferenceError",
+    "SyntaxError",
+    "TypeError",
+    "URIError",
+}
+
+
+def collect_guard_error_types(nl_file: NLFile) -> list[str]:
+    """Distinct non-builtin guard error types, in first-use order."""
+    seen: list[str] = []
+    for anlu in nl_file.anlus:
+        for guard in anlu.guards:
+            error_type = (guard.error_type or "").strip()
+            if (
+                error_type
+                and error_type not in TYPESCRIPT_BUILTIN_ERRORS
+                and error_type not in seen
+            ):
+                seen.append(error_type)
+    return seen
+
+
+def _emit_guard_error_runtime(nl_file: NLFile) -> list[str]:
+    """Emit portable error classes for guard failure identities (#198).
+
+    Guard failures must preserve type, code, and message on both targets
+    without referencing undefined exception constructors.
+    """
+    lines: list[str] = []
+    for error_type in collect_guard_error_types(nl_file):
+        lines.append(
+            f"class {error_type} extends Error {{"
+        )
+        lines.append("  code?: string;")
+        lines.append("  constructor(message: string, code?: string) {")
+        lines.append("    super(message);")
+        lines.append(f'    this.name = "{error_type}";')
+        lines.append("    if (code !== undefined) {")
+        lines.append("      this.code = code;")
+        lines.append("    }")
+        lines.append("  }")
+        lines.append("}")
+        lines.append("")
+    return lines
+
+
 def _emit_guard_lines(anlu: ANLU) -> list[str]:
     lines = []
     for guard in anlu.guards:
         condition = _translate_expression(guard.condition)
         error_type = guard.error_type or "Error"
         error_message = guard.error_message or "Guard condition failed"
+        message_literal = json.dumps(error_message)
+        code_literal = json.dumps(guard.error_code) if guard.error_code else None
         lines.append(f"  if (!({condition})) {{")
-        lines.append(f"    throw new {error_type}({error_message!r});")
+        if code_literal is not None:
+            lines.append(
+                f"    throw new {error_type}({message_literal}, {code_literal});"
+            )
+        else:
+            lines.append(f"    throw new {error_type}({message_literal});")
         lines.append("  }")
     return lines
 
@@ -446,6 +504,11 @@ def emit_typescript(
             imp_name = imp.strip()
             lines.append(f'import * as {imp_name.replace("-", "_")} from "{imp_name}";')
         lines.append("")
+
+    # Portable error runtime for guard failure identities (#198).
+    guard_error_runtime = _emit_guard_error_runtime(nl_file)
+    if guard_error_runtime:
+        lines.extend(guard_error_runtime)
 
     invariant_map = {inv.type_name: inv for inv in nl_file.invariants}
     for type_def in _order_types(nl_file.module.types):
