@@ -32,6 +32,8 @@ from .emitter import emit_python, emit_tests
 from .emitter_typescript import emit_tests_typescript, emit_typescript
 from .lockfile import generate_lockfile, write_lockfile, verify_lockfile
 from .sourcemap import generate_source_map
+from .ir import IRModule, module_to_canonical, module_to_json
+from .lowering import LoweringError, lower_module
 from .graph import (
     emit_mermaid,
     emit_dot,
@@ -1629,6 +1631,99 @@ def cmd_run(args: argparse.Namespace) -> int:
     return exit_code
 
 
+def cmd_ir(args: argparse.Namespace) -> int:
+    """Emit the target-neutral IR for a .nl file."""
+    from dataclasses import replace as _dc_replace
+
+    source_path = Path(args.file)
+    json_output = getattr(args, "json", False)
+    strict = getattr(args, "strict", False)
+
+    if not source_path.exists():
+        diagnostic = missing_file_diagnostic(source_path)
+        if json_output:
+            return _emit_json("ir", [diagnostic], file=str(source_path))
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
+        print(f"Error: {diagnostic.hint}", file=sys.stderr)
+        return 1
+
+    try:
+        nl_file = parse_nl_file_auto(source_path)
+    except ParseError as e:
+        diagnostic = parse_error_diagnostic(source_path, e)
+        if json_output:
+            return _emit_json("ir", [diagnostic], file=str(source_path))
+        print(f"Parse error: {e}", file=sys.stderr)
+        return 1
+
+    try:
+        module = lower_module(nl_file, strict=strict)
+    except LoweringError as error:
+        diagnostics = [
+            _dc_replace(d, file=str(source_path)) for d in error.diagnostics
+        ]
+        if json_output:
+            return _emit_json("ir", diagnostics, file=str(source_path))
+        for diagnostic in diagnostics:
+            location = f"Line {diagnostic.line}: " if diagnostic.line else ""
+            print(
+                f"Error: {location}{diagnostic.message} [{diagnostic.code}]",
+                file=sys.stderr,
+            )
+            if diagnostic.hint:
+                print(f"Error: {diagnostic.hint}", file=sys.stderr)
+        return 1
+
+    warnings = [_dc_replace(d, file=str(source_path)) for d in module.diagnostics]
+    canonical = module_to_canonical(module)
+
+    if getattr(args, "output", None):
+        output_path = Path(args.output)
+        try:
+            output_path.write_text(canonical, encoding="utf-8")
+        except OSError as exc:
+            diagnostic = Diagnostic(
+                code=EVALIDATE001,
+                file=str(output_path),
+                line=None,
+                col=None,
+                message=f"Failed to write IR output: {exc}",
+                hint="Check the destination path and filesystem permissions.",
+            )
+            if json_output:
+                return _emit_json("ir", [diagnostic], file=str(source_path))
+            print(f"Error: {diagnostic.message}", file=sys.stderr)
+            return 1
+
+    if json_output:
+        # Tolerant mode still succeeds; lowering diagnostics are surfaced
+        # as warnings rather than failures.
+        return _emit_json(
+            "ir",
+            [],
+            status_code=0,
+            file=str(source_path),
+            strict=strict,
+            checked=module.checked,
+            output_file=str(args.output) if getattr(args, "output", None) else None,
+            ir=module_to_json(module),
+            canonical=canonical,
+            warnings=[diagnostic.to_dict() for diagnostic in warnings],
+        )
+
+    if getattr(args, "output", None):
+        print(f"IR written to {args.output}")
+    else:
+        print(canonical, end="")
+    for diagnostic in warnings:
+        location = f"Line {diagnostic.line}: " if diagnostic.line else ""
+        print(
+            f"Warning: {location}{diagnostic.message} [{diagnostic.code}]",
+            file=sys.stderr,
+        )
+    return 0
+
+
 def cmd_assoc(args: argparse.Namespace) -> int:
     """Install Windows file association for .nl files"""
     json_output = getattr(args, "json", False)
@@ -1911,6 +2006,20 @@ The conversation is the programming. The .nl file is the receipt.
     )
 
     # verify command
+    ir_parser = subparsers.add_parser(
+        "ir", help="Emit the target-neutral IR for a .nl file"
+    )
+    ir_parser.add_argument("file", help="Input .nl file")
+    ir_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit structured JSON diagnostics and the IR payload.",
+    )
+    ir_parser.add_argument(
+        "--strict", action="store_true", help="Fail on foreign/unsupported constructs"
+    )
+    ir_parser.add_argument("--output", "-o", help="Write canonical IR to a file")
+    ir_parser.set_defaults(command="ir")
     verify_parser = subparsers.add_parser("verify", help="Verify .nl file")
     verify_parser.add_argument("file", help="Path to .nl file")
     verify_parser.add_argument(
@@ -2115,6 +2224,8 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_compile(args)
     elif args.command == "run":
         return cmd_run(args)
+    elif args.command == "ir":
+        return cmd_ir(args)
     elif args.command == "verify":
         return cmd_verify(args)
     elif args.command == "explain":

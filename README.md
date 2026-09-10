@@ -143,6 +143,7 @@ def distance(p1: Point, p2: Point) -> float:
 | `nlsc compile <file>`    | Compile .nl to Python                  |
 | `nlsc verify <file>`     | Validate syntax and dependencies       |
 | `nlsc test <file>`       | Run `@test` specifications             |
+| `nlsc ir <file>`         | Emit target-neutral IR (text or JSON) |
 | `nlsc graph <file>`      | Generate dependency diagrams           |
 | `nlsc diff <file>`       | Show changes since last compile        |
 | `nlsc watch <dir>`       | Continuous compilation on file changes |
