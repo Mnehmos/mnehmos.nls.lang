@@ -85,7 +85,7 @@ RETURNS: void
 PURPOSE: Return greeting
 INPUTS:
   - name: string
-RETURNS: greeting
+RETURNS: "Hello, " + name
 """)
         keep_dir = tmp_path / "keep"
 

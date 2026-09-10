@@ -34,7 +34,7 @@ from .lockfile import generate_lockfile, write_lockfile, verify_lockfile
 from .sourcemap import generate_source_map
 from .ir import module_to_canonical, module_to_json
 from .lowering import LoweringError, lower_module
-from .pipeline import evaluate_executable_contract
+from .pipeline import evaluate_semantic_gate
 from .graph import (
     emit_mermaid,
     emit_dot,
@@ -315,6 +315,20 @@ def _emit_json(
     if status_code is not None:
         return status_code
     return 0 if not diagnostics else 1
+
+
+def _print_semantic_diagnostics(
+    title: str, diagnostics: list[Diagnostic], *, hint: bool = False
+) -> None:
+    print(f"{title}:", file=sys.stderr)
+    for diagnostic in diagnostics:
+        location = f"Line {diagnostic.line}: " if diagnostic.line else ""
+        print(
+            f"    - {location}{diagnostic.message} [{diagnostic.code}]",
+            file=sys.stderr,
+        )
+        if hint and diagnostic.hint:
+            print(f"      Hint: {diagnostic.hint}", file=sys.stderr)
 
 
 def _emit_watch_runtime_json(path: Path, diagnostics: list[Diagnostic]) -> None:
@@ -643,32 +657,35 @@ def cmd_compile(args: argparse.Namespace) -> int:
     if not json_output:
         print(f"  {_check()} Resolved dependencies")
 
-    # Shared executable contract (Issue #190): strict mode refuses to emit
-    # runnable artifacts from unresolved executable content; scaffold mode
-    # compiles but marks the artifact and warns.
-    contract = evaluate_executable_contract(nl_file, file_token=str(source_path))
-    if contract.diagnostics and getattr(args, "strict", False):
+    # Shared semantic gate (Issues #190/#195): fatal diagnostics fail every
+    # mode; strict mode also refuses unresolved executable content and
+    # contract drift; default mode compiles a marked scaffold with warnings.
+    gate = evaluate_semantic_gate(nl_file, file_token=str(source_path))
+    strict = getattr(args, "strict", False)
+    blocking = gate.fatal + (gate.strict_only + gate.scaffold_warnings if strict else [])
+    if gate.fatal:
         if json_output:
-            return _emit_json("compile", contract.diagnostics, file=str(source_path))
-        print(f"  {_cross()} Executable contract errors (strict):", file=sys.stderr)
-        for diagnostic in contract.diagnostics:
-            location = f"Line {diagnostic.line}: " if diagnostic.line else ""
-            print(
-                f"    - {location}{diagnostic.message} [{diagnostic.code}]",
-                file=sys.stderr,
-            )
-            if diagnostic.hint:
-                print(f"      Hint: {diagnostic.hint}", file=sys.stderr)
+            return _emit_json("compile", gate.fatal, file=str(source_path))
+        _print_semantic_diagnostics(
+            f"  {_cross()} Semantic errors", gate.fatal, hint=True
+        )
         return 1
-    scaffold = contract.scaffold_anlus or None
-    if contract.diagnostics and not json_output:
-        print(f"  {_cross()} Unresolved executable content (scaffold):", file=sys.stderr)
-        for diagnostic in contract.diagnostics:
-            location = f"Line {diagnostic.line}: " if diagnostic.line else ""
-            print(
-                f"    - {location}{diagnostic.message} [{diagnostic.code}]",
-                file=sys.stderr,
-            )
+    if blocking:
+        if json_output:
+            return _emit_json("compile", blocking, file=str(source_path))
+        _print_semantic_diagnostics(
+            f"  {_cross()} Errors (strict)", blocking, hint=True
+        )
+        return 1
+    scaffold = gate.scaffold or None
+    if gate.warnings and not json_output:
+        _print_semantic_diagnostics(
+            f"  {_cross()} Unresolved executable content (scaffold)",
+            gate.scaffold_warnings,
+        )
+        _print_semantic_diagnostics(
+            "  ! Semantic warnings", gate.strict_only
+        )
 
     target = _resolve_target(nl_file, getattr(args, "target", None))
     try:
@@ -775,8 +792,8 @@ def cmd_compile(args: argparse.Namespace) -> int:
             lockfile=str(lock_path),
             target=target,
             line_count=line_count,
-            scaffold=sorted(contract.scaffold_anlus),
-            warnings=[d.to_dict() for d in contract.diagnostics],
+            scaffold=sorted(gate.scaffold),
+            warnings=[d.to_dict() for d in gate.warnings],
         )
     print(f"  {_check()} Updated {lock_path.name}")
 
@@ -855,21 +872,21 @@ def cmd_verify(args: argparse.Namespace) -> int:
             print(f"    - {validation_err}")
         return 1
 
-    # Shared executable contract (Issue #190): the same diagnostic set as
-    # compile/run/test/watch; strict fails, scaffold mode warns.
-    contract = evaluate_executable_contract(nl_file, file_token=str(source_path))
-    if contract.diagnostics and getattr(args, "strict", False):
+    # Shared semantic gate (Issues #190/#195): same boundary as
+    # compile/run/test/watch. Fatal diagnostics fail in every mode; strict
+    # mode also fails on contract drift and unresolved executable content.
+    gate = evaluate_semantic_gate(nl_file, file_token=str(source_path))
+    strict = getattr(args, "strict", False)
+    if gate.fatal:
         if json_output:
-            return _emit_json("verify", contract.diagnostics, file=str(source_path))
-        print(f"  {_cross()} Executable contract errors (strict):")
-        for diagnostic in contract.diagnostics:
-            location = f"Line {diagnostic.line}: " if diagnostic.line else ""
-            print(
-                f"    - {location}{diagnostic.message} [{diagnostic.code}]",
-                file=sys.stderr,
-            )
-            if diagnostic.hint:
-                print(f"      Hint: {diagnostic.hint}", file=sys.stderr)
+            return _emit_json("verify", gate.fatal, file=str(source_path))
+        _print_semantic_diagnostics(f"  {_cross()} Semantic errors", gate.fatal, hint=True)
+        return 1
+    if strict and (gate.strict_only or gate.scaffold_warnings):
+        blocking = gate.strict_only + gate.scaffold_warnings
+        if json_output:
+            return _emit_json("verify", blocking, file=str(source_path))
+        _print_semantic_diagnostics(f"  {_cross()} Errors (strict)", blocking, hint=True)
         return 1
 
     if json_output:
@@ -878,14 +895,14 @@ def cmd_verify(args: argparse.Namespace) -> int:
             [],
             file=str(source_path),
             anlu_count=len(nl_file.anlus),
-            warnings=[d.to_dict() for d in contract.diagnostics],
+            warnings=[d.to_dict() for d in gate.warnings],
         )
-    for diagnostic in contract.diagnostics:
-        location = f"Line {diagnostic.line}: " if diagnostic.line else ""
-        print(
-            f"  ! {location}{diagnostic.message} [{diagnostic.code}]",
-            file=sys.stderr,
+    if gate.scaffold_warnings:
+        _print_semantic_diagnostics(
+            "  ! Unresolved executable content (scaffold)", gate.scaffold_warnings
         )
+    if gate.strict_only:
+        _print_semantic_diagnostics("  ! Semantic warnings", gate.strict_only)
     print(f"  {_check()} All ANLUs valid")
     print("\nVerification passed!")
     return 0
@@ -1039,22 +1056,19 @@ def cmd_test(args: argparse.Namespace) -> int:
             print(f"  - {_format_dependency_error(err)}", file=sys.stderr)
         return 1
 
-    # Shared executable contract (Issue #190).
-    if getattr(args, "strict", False):
-        contract = evaluate_executable_contract(nl_file, file_token=str(source_path))
-        if contract.diagnostics:
-            if json_output:
-                return _emit_json("test", contract.diagnostics, file=str(source_path))
-            print("Error: Executable contract errors (strict):", file=sys.stderr)
-            for diagnostic in contract.diagnostics:
-                location = (
-                    f"Line {diagnostic.line}: " if diagnostic.line else ""
-                )
-                print(
-                    f"  - {location}{diagnostic.message} [{diagnostic.code}]",
-                    file=sys.stderr,
-                )
-            return 1
+    # Shared semantic gate (Issues #190/#195).
+    gate = evaluate_semantic_gate(nl_file, file_token=str(source_path))
+    if gate.fatal:
+        if json_output:
+            return _emit_json("test", gate.fatal, file=str(source_path))
+        _print_semantic_diagnostics("Error: Semantic errors", gate.fatal, hint=True)
+        return 1
+    if getattr(args, "strict", False) and (gate.strict_only or gate.scaffold_warnings):
+        blocking = gate.strict_only + gate.scaffold_warnings
+        if json_output:
+            return _emit_json("test", blocking, file=str(source_path))
+        _print_semantic_diagnostics("Error: Errors (strict)", blocking, hint=True)
+        return 1
 
     # Check for tests
     if not nl_file.tests:
@@ -1635,22 +1649,19 @@ def cmd_run(args: argparse.Namespace) -> int:
             print(f"  - {_format_dependency_error(err)}", file=sys.stderr)
         return 1
 
-    # Shared executable contract (Issue #190).
-    if getattr(args, "strict", False):
-        contract = evaluate_executable_contract(nl_file, file_token=str(source_path))
-        if contract.diagnostics:
-            if json_output:
-                return _emit_json("run", contract.diagnostics, file=str(source_path))
-            print("Error: Executable contract errors (strict):", file=sys.stderr)
-            for diagnostic in contract.diagnostics:
-                location = (
-                    f"Line {diagnostic.line}: " if diagnostic.line else ""
-                )
-                print(
-                    f"  - {location}{diagnostic.message} [{diagnostic.code}]",
-                    file=sys.stderr,
-                )
-            return 1
+    # Shared semantic gate (Issues #190/#195).
+    gate = evaluate_semantic_gate(nl_file, file_token=str(source_path))
+    if gate.fatal:
+        if json_output:
+            return _emit_json("run", gate.fatal, file=str(source_path))
+        _print_semantic_diagnostics("Error: Semantic errors", gate.fatal, hint=True)
+        return 1
+    if getattr(args, "strict", False) and (gate.strict_only or gate.scaffold_warnings):
+        blocking = gate.strict_only + gate.scaffold_warnings
+        if json_output:
+            return _emit_json("run", blocking, file=str(source_path))
+        _print_semantic_diagnostics("Error: Errors (strict)", blocking, hint=True)
+        return 1
 
     # Emit Python (target flag for future multi-target support)
     target = getattr(args, "target", "python")

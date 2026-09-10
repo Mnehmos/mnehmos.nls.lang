@@ -40,6 +40,15 @@ EIR001 = "EIR001"
 EIR002 = "EIR002"
 EIR003 = "EIR003"
 EIR004 = "EIR004"
+ESEM001 = "ESEM001"
+ESEM002 = "ESEM002"
+ESEM003 = "ESEM003"
+ESEM004 = "ESEM004"
+ESEM005 = "ESEM005"
+ESEM006 = "ESEM006"
+ESEM007 = "ESEM007"
+ESEM008 = "ESEM008"
+ESEM009 = "ESEM009"
 
 
 @dataclass(frozen=True)
@@ -550,6 +559,124 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Inspect the reported runtime message and the watched source file path.",
             "Fix the underlying environment or source issue, then save the file again to retrigger compilation.",
+        ),
+    ),
+    ESEM001: ErrorDefinition(
+        code=ESEM001,
+        title="Call to unknown operation",
+        summary="The semantic checker found an [anlu-name] call that does not resolve to any operation in the module, so generated code would raise NameError at runtime.",
+        emitted_by=("verify", "compile", "run", "test", "watch", "ir"),
+        common_causes=(
+            "The referenced ANLU was never defined or is spelled differently.",
+            "The call was expected to come from an import that is not declared.",
+        ),
+        next_steps=(
+            "Define the operation or fix the reference; an omitted DEPENDS entry never makes a call valid.",
+            "Check spelling of kebab-case identifiers such as [charge-payment].",
+        ),
+    ),
+    ESEM002: ErrorDefinition(
+        code=ESEM002,
+        title="Wrong number of call arguments",
+        summary="A call passes a different number of arguments than the operation's declared INPUTS allow.",
+        emitted_by=("verify", "compile", "run", "test", "watch"),
+        common_causes=(
+            "Too many positional arguments were passed.",
+            "A required input was omitted even though it is not optional.",
+        ),
+        next_steps=(
+            "Match the declared INPUTS of the called operation, or mark inputs optional.",
+        ),
+    ),
+    ESEM003: ErrorDefinition(
+        code=ESEM003,
+        title="Argument type mismatch",
+        summary="A call argument's inferred type does not match the declared parameter type.",
+        emitted_by=("verify", "compile", "run", "test", "watch"),
+        common_causes=(
+            "Passing a string where a number is declared (or vice versa).",
+            "Passing a record where a list is declared.",
+        ),
+        next_steps=(
+            "Pass a value of the declared type or widen the parameter declaration.",
+            "Run with --strict to make these mismatches fail during validation.",
+        ),
+    ),
+    ESEM004: ErrorDefinition(
+        code=ESEM004,
+        title="Value used before it is defined",
+        summary="An expression references a name that is neither an input nor a binding defined by an earlier LOGIC step.",
+        emitted_by=("verify", "compile", "run", "test", "watch"),
+        common_causes=(
+            "The defining LOGIC step was removed or reordered.",
+            "The value is produced in a step that comes after its use.",
+        ),
+        next_steps=(
+            "Define the value in LOGIC before using it, or declare it as an input.",
+        ),
+    ),
+    ESEM005: ErrorDefinition(
+        code=ESEM005,
+        title="Unknown field, parameter, or record type",
+        summary="Field access or construction refers to a field that the declared @type does not define, or accesses fields on a non-record value.",
+        emitted_by=("verify", "compile", "run", "test", "watch"),
+        common_causes=(
+            "A typo in the field name.",
+            "The @type block is missing the field or the base value is a primitive.",
+        ),
+        next_steps=(
+            "Check the declared @type fields and use one of the listed names.",
+        ),
+    ),
+    ESEM006: ErrorDefinition(
+        code=ESEM006,
+        title="Incompatible operand or condition type",
+        summary="An operator, guard, or condition receives a value whose inferred type cannot support it (for example 'name + 1').",
+        emitted_by=("verify", "compile", "run", "test", "watch"),
+        common_causes=(
+            "Arithmetic applied to strings or records.",
+            "A guard or IF condition that does not evaluate to boolean.",
+        ),
+        next_steps=(
+            "Use numbers for arithmetic; strings and lists only support '+'.",
+            "Make guard and IF conditions boolean expressions.",
+        ),
+    ),
+    ESEM007: ErrorDefinition(
+        code=ESEM007,
+        title="Duplicate or colliding identifier",
+        summary="Two operations share one identifier, or kebab-case and snake-case names collide into the same target name (foo-bar vs foo_bar).",
+        emitted_by=("verify", "compile", "run", "test", "watch"),
+        common_causes=(
+            "The same ANLU is defined twice.",
+            "A kebab-case id and a snake_case id lower to one function name, overwriting one another.",
+        ),
+        next_steps=("Rename one of the operations so every target name is unique.",),
+    ),
+    ESEM008: ErrorDefinition(
+        code=ESEM008,
+        title="DEPENDS contract drift",
+        summary="The declared DEPENDS list does not match the operations the implementation actually calls.",
+        emitted_by=("verify", "compile", "run", "test", "watch"),
+        common_causes=(
+            "A call was added without updating DEPENDS.",
+            "DEPENDS still lists an operation that is no longer called.",
+        ),
+        next_steps=(
+            "Align DEPENDS with the actual calls; the checker infers dependencies from the implementation.",
+        ),
+    ),
+    ESEM009: ErrorDefinition(
+        code=ESEM009,
+        title="Undeclared foreign call",
+        summary="Checked code calls a function that is neither a module operation, a documented builtin, nor a declared constructor.",
+        emitted_by=("verify", "compile", "run", "test", "watch"),
+        common_causes=(
+            "Calling a helper function that was never defined in NLS.",
+            "Using a builtin outside the documented table.",
+        ),
+        next_steps=(
+            "Define the operation in the module, use a documented builtin, or declare an import contract.",
         ),
     ),
     EIR001: ErrorDefinition(

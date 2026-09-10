@@ -258,6 +258,50 @@ def executable_contract_diagnostics(
     return evaluate_executable_contract(nl_file, file_token=file_token).diagnostics
 
 
+@dataclass
+class SemanticGateResult:
+    """Combined executable-contract + type-check gate (Issues #190/#195).
+
+    Severity tiers:
+
+    - ``fatal``: unambiguous runtime failures-in-waiting (unknown calls,
+      undefined values, unknown fields, duplicates, arity).  Fails every
+      mode, before any backend runs.
+    - ``strict_only``: contract drift (argument types, DEPENDS drift,
+      undeclared foreign calls).  Fatal under ``--strict``, warnings
+      otherwise.
+    - ``scaffold_warnings``: unresolved executable content (EIR002/EIR004)
+      from the #190 contract.  Fatal under ``--strict``; in default mode
+      the artifact compiles marked as an incomplete scaffold.
+    """
+
+    fatal: list[Diagnostic]
+    strict_only: list[Diagnostic]
+    scaffold_warnings: list[Diagnostic]
+    scaffold: set[str]
+
+    @property
+    def warnings(self) -> list[Diagnostic]:
+        """Everything reported as a warning in default mode."""
+        return self.strict_only + self.scaffold_warnings
+
+
+def evaluate_semantic_gate(
+    nl_file: NLFile, *, file_token: str = "<source>"
+) -> SemanticGateResult:
+    """Run the shared executable-contract and type-check boundary."""
+    from .typecheck import check_module
+
+    contract = evaluate_executable_contract(nl_file, file_token=file_token)
+    types = check_module(nl_file, file_token=file_token)
+    return SemanticGateResult(
+        fatal=types.errors,
+        strict_only=types.warnings,
+        scaffold_warnings=contract.diagnostics,
+        scaffold=contract.scaffold_anlus,
+    )
+
+
 def scaffold_anlus(nl_file: NLFile) -> set[str]:
     """ANLU identifiers whose implementation contains unresolved content."""
     return evaluate_executable_contract(nl_file).scaffold_anlus

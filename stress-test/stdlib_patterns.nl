@@ -1,5 +1,6 @@
 @module stdlib-patterns
 @target python
+@imports json
 
 [parse-json-safe]
 PURPOSE: Parse JSON string safely, returning None on error.

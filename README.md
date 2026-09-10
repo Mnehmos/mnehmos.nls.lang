@@ -164,7 +164,17 @@ warnings for each unresolved step.
 Add `--strict` to `compile`, `verify`, `run`, `test`, or `watch` to reject
 unresolved executable content up front — no runnable artifact, no invented
 return values (`RETURNS: number` alone is a declared type, not a zero), and
-prose edge cases mixed with executable conditions are refused:
+prose edge cases mixed with executable conditions are refused.
+
+Compilation is also **type-checked before any backend runs** (Issue #195).
+Calls resolve through a semantic symbol table — module ANLUs (kebab and snake
+spellings), declared `@type` records, documented builtins, and `@imports` —
+so unknown `[anlu]` calls, undefined value uses, unknown fields, duplicate or
+colliding identifiers (`foo-bar` vs `foo_bar`), and arity mismatches fail
+verification in every mode (`ESEM001`–`ESEM007`). Argument-type mismatches,
+DEPENDS drift, and undeclared foreign calls are strict-mode failures
+(`ESEM003`/`ESEM008`/`ESEM009`), and inferred call dependencies come from the
+implementation, not from whether you remembered DEPENDS:
 
 ```bash
 nlsc compile src/payment.nl --strict   # fails until every step is executable
