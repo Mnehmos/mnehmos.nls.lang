@@ -92,6 +92,22 @@ class PythonRunner:
         return self.create_instance(code, class_name, kwargs)
 
 
+def _namespaceify(value: Any) -> Any:
+    """Convert JSON objects to attribute-access namespaces.
+
+    Generated Python records expose fields as attributes; wrapping the
+    TypeScript runner's JSON objects identically lets one test body
+    assert against both targets (#202).
+    """
+    from types import SimpleNamespace
+
+    if isinstance(value, dict):
+        return SimpleNamespace(**{k: _namespaceify(v) for k, v in value.items()})
+    if isinstance(value, list):
+        return [_namespaceify(item) for item in value]
+    return value
+
+
 def node_available() -> bool:
     """True when a Node.js runtime can execute compiled TypeScript."""
     import shutil
@@ -142,7 +158,9 @@ class TypeScriptRunner:
             if line.startswith(marker):
                 payload = json.loads(line[len(marker):])
                 if payload.get("ok"):
-                    return ExecutionResult.from_success(payload.get("value"))
+                    return ExecutionResult.from_success(
+                        _namespaceify(payload.get("value"))
+                    )
                 return ExecutionResult(
                     success=False,
                     exception=None,
@@ -184,19 +202,20 @@ class TypeScriptRunner:
         class_name: str,
         kwargs: dict[str, Any],
     ) -> ExecutionResult:
-        """Create an instance of a generated interface/type.
+        """Create an instance of a generated type via its factory.
 
-        TypeScript records are structural: construction returns the
-        plain object.  Constraint/invariant enforcement at construction
-        is Python-only until the TS backend emits executable checks
-        (tracked in #202).
+        The validating make_<Type> factory enforces constraints and
+        invariants identically to the Python dataclass (#202).  The
+        kwargs object's key order must match the @type field order.
         """
         import json
 
         kwargs_literal = json.dumps(kwargs)
+        keys = ", ".join(kwargs.keys())
         driver = (
             "try {\n"
-            + f"  const __nls_value = {kwargs_literal};\n"
+            + f"  const {{ {keys} }} = {kwargs_literal};\n"
+            + f"  const __nls_value = make_{class_name}({keys});\n"
             + '  console.log("__NLS_RESULT__" + JSON.stringify({ ok: true, value: __nls_value }));\n'
             + "} catch (e) {\n"
             + '  console.log("__NLS_RESULT__" + JSON.stringify({ ok: false, name: (e as Error).name ?? "Error", message: (e as Error).message ?? String(e) }));\n'
