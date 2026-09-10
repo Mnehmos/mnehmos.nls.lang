@@ -11,6 +11,11 @@ from .schema import ANLU, Module, NLFile
 from .parser import parse_nl_file
 from .emitter import emit_python
 
+# Language-spec revision this toolchain fully supports (#144).
+# Versioned independently of the toolchain; see docs/versioning.md.
+SPEC_VERSION = "0.1"
+SPEC_MAJOR = 0
+
 __all__ = [
     "ANLU",
     "Module",

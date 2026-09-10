@@ -310,6 +310,21 @@ jobs:
 
 ## Language Features
 
+### Versioning
+
+Declare the language-spec revision your file targets and get compatibility
+checks for free:
+
+```nl
+@nls 0.1     # spec revision (optional; see docs/versioning.md)
+@version 1.0.0
+```
+
+Same major is compatible, a newer minor warns under `--strict` (`EVER002`),
+and a different major fails everywhere (`EVER001`). Spec changes and
+toolchain changes are tracked separately in the
+[CHANGELOG](CHANGELOG.md).
+
 ### Feature Examples
 
 A strictly-verified example per language feature lives in

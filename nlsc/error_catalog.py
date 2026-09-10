@@ -53,6 +53,8 @@ ESEM010 = "ESEM010"
 ESEM011 = "ESEM011"
 ESEM012 = "ESEM012"
 ESEM013 = "ESEM013"
+EVER001 = "EVER001"
+EVER002 = "EVER002"
 
 
 @dataclass(frozen=True)
@@ -618,6 +620,33 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         ),
         next_steps=(
             "Rename the module to something project-specific (for example 'lists' instead of 'collections').",
+        ),
+    ),
+    EVER001: ErrorDefinition(
+        code=EVER001,
+        title="Language-spec revision is incompatible",
+        summary="The file declares an @nls revision whose major version differs from the one this toolchain supports, so its semantics cannot be guaranteed.",
+        emitted_by=("verify", "compile", "run", "test", "watch", "ir", "ci"),
+        common_causes=(
+            "The file was written for a newer major spec revision.",
+            "The declared revision is malformed or from an unrelated scheme.",
+        ),
+        next_steps=(
+            "Update the file to the supported revision or upgrade the toolchain.",
+            "Run `nlsc --version` to see the supported language-spec revision.",
+        ),
+    ),
+    EVER002: ErrorDefinition(
+        code=EVER002,
+        title="Language-spec revision is newer than the toolchain",
+        summary="The file declares a minor spec revision newer than this toolchain implements; the file may use features this compiler does not understand.",
+        emitted_by=("verify", "compile", "run", "test", "watch"),
+        common_causes=(
+            "The file was saved by a newer nlsc release.",
+            "The @nls revision was bumped ahead of the toolchain upgrade.",
+        ),
+        next_steps=(
+            "Upgrade nlsc, or lower the declared revision to the supported one.",
         ),
     ),
     ESEM001: ErrorDefinition(
