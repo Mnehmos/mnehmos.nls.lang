@@ -734,10 +734,14 @@ class IRParam:
     name: str
     type_ref: TypeRef
     optional: bool = False
+    constraints: tuple[str, ...] = ()
 
     def render(self) -> str:
         opt = " optional" if self.optional else ""
-        return f"(param {self.name} {self.type_ref.render()}{opt})"
+        rendered = f"(param {self.name} {self.type_ref.render()}{opt}"
+        for constraint in self.constraints:
+            rendered += f" {json.dumps(constraint)}"
+        return rendered + ")"
 
     def to_json(self) -> dict[str, object]:
         data: dict[str, object] = {
@@ -746,6 +750,8 @@ class IRParam:
         }
         if self.optional:
             data["optional"] = True
+        if self.constraints:
+            data["constraints"] = list(self.constraints)
         return data
 
 
@@ -856,8 +862,6 @@ class IROperation:
     typestate: Optional[dict[str, object]] = None
 
     def render(self, indent: str = "  ") -> str:
-        from .ir import _render_operation
-
         return _render_operation(self, indent)
 
     def to_json(self) -> dict[str, object]:
@@ -917,25 +921,36 @@ class IRModule:
 # --------------------------------------------------------------------------
 
 
-def _render_operation(op: IROperation, indent: str) -> str:
+def _render_operation(
+    op: IROperation,
+    indent: str,
+    *,
+    with_spans: bool = True,
+    with_purpose: bool = True,
+    with_notes: bool = True,
+) -> str:
     lines: list[str] = []
     header = f"(op {op.name}"
-    if op.span and op.span.line:
+    if with_spans and op.span and op.span.line:
         header += f" (line {op.span.line})"
     lines.append(header)
-    if op.purpose:
+    if with_purpose and op.purpose:
         lines.append(f"{indent}(purpose {json.dumps(op.purpose)})")
     for param in op.params:
         lines.append(f"{indent}{param.render()}")
     for guard in op.guards:
         lines.append(f"{indent}{guard.render()}")
     if op.body:
-        lines.append(f"{indent}(body")
-        for stmt in op.body:
-            rendered = _render_stmt_with_span(stmt)
-            for stmt_line in rendered.split("\n"):
-                lines.append(f"{indent}  {stmt_line}")
-        lines.append(f"{indent})")
+        body_stmts: list[IRStmt] = list(op.body)
+        if not with_notes:
+            body_stmts = [stmt for stmt in body_stmts if not isinstance(stmt, IRNote)]
+        if body_stmts:
+            lines.append(f"{indent}(body")
+            for stmt in body_stmts:
+                rendered = _render_stmt_with_span(stmt) if with_spans else stmt.render()
+                for stmt_line in rendered.split("\n"):
+                    lines.append(f"{indent}  {stmt_line}")
+            lines.append(f"{indent})")
     if op.result is not None:
         lines.append(f"{indent}{op.result.render()}")
     if op.depends:
@@ -948,6 +963,25 @@ def _render_operation(op: IROperation, indent: str) -> str:
         )
     lines.append(")")
     return "\n".join(lines)
+
+
+def operation_to_canonical(op: IROperation, *, with_spans: bool = True) -> str:
+    """Canonical text of one operation (used by `nlsc ir`)."""
+    return _render_operation(op, "  ", with_spans=with_spans)
+
+
+def operation_semantic_canonical(op: IROperation) -> str:
+    """Canonical *executable semantics* of one operation.
+
+    Excludes source spans, PURPOSE narrative, and free-text notes so the
+    rendering captures meaning only: parameters and constraints, guards
+    with error payloads, ordered body statements, result contract,
+    dependencies, literals, and edge cases.  This is the input hashed
+    for lockfile semantic identity (#193).
+    """
+    return _render_operation(
+        op, "  ", with_spans=False, with_purpose=False, with_notes=False
+    )
 
 
 def _render_stmt_with_span(stmt: IRStmt) -> str:

@@ -240,6 +240,23 @@ The lockfile enables:
 - **Reproducible builds**
 - **Audit trails**
 
+### Semantic hashes (Issue #193)
+
+Each ANLU's `source_hash` is the SHA-256 of its **canonical executable
+semantics** — the target-neutral IR rendering (#194) covering ordered LOGIC
+control, guards with error payloads, input constraints, edge cases, the
+result contract, literal implementations, and the contract signatures of
+declared dependencies. Narrative text (PURPOSE, free notes) and source line
+numbers are excluded, so rewording documentation or moving code within a
+file never invalidates a lock; changing a guard message, a constraint, a
+logic expression, or a dependency's signature always does.
+
+**Migration:** lock entries written before the `sem2` scheme (partial
+identifier/purpose/returns hashes) never compare equal to new hashes. On
+first `nlsc compile` or `nlsc lock:update` after upgrading, every legacy
+entry is conservatively reported as changed and regenerated — stale cached
+bodies are never reused.
+
 ---
 
 ## Extension Points

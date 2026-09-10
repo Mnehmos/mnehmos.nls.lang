@@ -59,7 +59,7 @@ def get_anlu_changes(nl_file: NLFile, lockfile: Optional[Lockfile]) -> list[ANLU
     # Check each current ANLU
     for anlu_id, anlu in current_anlus.items():
         # Compute current hash using same function as lockfile
-        current_hash = hash_anlu(anlu)
+        current_hash = hash_anlu(anlu, nl_file)
 
         if anlu_id not in previous_hashes:
             # New ANLU
