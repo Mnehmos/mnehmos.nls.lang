@@ -16,6 +16,7 @@ from .localization import (
     normalize_expression_text,
     normalize_type_text,
 )
+from .ir import IRExpr
 from .schema import ANLU, NLFile, TypeDefinition, Invariant, LogicStep
 
 
@@ -677,6 +678,15 @@ def _extract_action(step: LogicStep) -> Optional[str]:
         then_pos = desc.upper().find(" THEN ")
         desc = desc[then_pos + 6 :].strip()
 
+    # Structural assignment path (#202): render from the IR, which
+    # handles comparisons in the right-hand side that the legacy '=='
+    # heuristic cannot distinguish from comparison statements.
+    structural_assign = re.match(rf"^({IDENTIFIER_PATTERN})\s*=(?!=)\s*(.+)$", desc)
+    if structural_assign:
+        structural_rhs = _structural_python_expression(structural_assign.group(2))
+        if structural_rhs is not None:
+            return f"{structural_assign.group(1)} = {structural_rhs}"
+
     # Check for assignment pattern
     if "=" in desc and not desc.startswith("=") and "==" not in desc:
         # Validate this is actually valid Python before returning
@@ -756,6 +766,160 @@ def _match_complete_call(desc: str) -> Optional[str]:
     return None
 
 
+_PY_BINARY_OPS = {
+    "add": "+",
+    "sub": "-",
+    "mul": "*",
+    "div": "/",
+    "floor_div": "//",
+    "mod": "%",
+    "pow": "**",
+    "eq": "==",
+    "ne": "!=",
+    "lt": "<",
+    "le": "<=",
+    "gt": ">",
+    "ge": ">=",
+    "and": "and",
+    "or": "or",
+    "is": "is",
+    "is_not": "is not",
+    "in": "in",
+    "not_in": "not in",
+}
+
+
+def _py_precedence(op: str) -> int:
+    """Python binding power for minimal-parenthesis rendering."""
+    if op in ("or",):
+        return 1
+    if op in ("and",):
+        return 2
+    if op in ("eq", "ne", "lt", "le", "gt", "ge", "is", "is_not", "in", "not_in"):
+        return 4
+    if op in ("add", "sub"):
+        return 5
+    if op in ("mul", "div", "mod", "floor_div"):
+        return 6
+    if op == "pow":
+        return 8
+    return 100
+
+
+def _render_py_expr(expr: IRExpr, min_prec: int = 0) -> Optional[str]:
+    """Render a lowered IR expression as Python (#202).
+
+    Python is the reference semantics, so most nodes render natively;
+    ANLU calls translate kebab-case identifiers to snake_case.  Returns
+    None for uncovered nodes; callers fall back to the legacy regex
+    translator for those expressions.
+    """
+    from .ir import (
+        IRBinary,
+        IRCall,
+        IRFieldAccess,
+        IRIndexAccess,
+        IRList,
+        IRLiteral,
+        IRMethodCall,
+        IRRef,
+        IRUnary,
+    )
+
+    def _paren_if_needed(rendered: str, prec: int) -> str:
+        if prec < min_prec:
+            return f"({rendered})"
+        return rendered
+
+    if isinstance(expr, IRLiteral):
+        return expr.raw
+    if isinstance(expr, IRRef):
+        return expr.name
+    if isinstance(expr, IRFieldAccess):
+        base = _render_py_expr(expr.base, 100)
+        return None if base is None else f"{base}.{expr.field_name}"
+    if isinstance(expr, IRIndexAccess):
+        base = _render_py_expr(expr.base, 100)
+        index = _render_py_expr(expr.index, 0)
+        if base is None or index is None:
+            return None
+        return f"{base}[{index}]"
+    if isinstance(expr, IRList):
+        items: list[str] = []
+        for item in expr.items:
+            part = _render_py_expr(item, 0)
+            if part is None:
+                return None
+            items.append(part)
+        return "[" + ", ".join(items) + "]"
+    if isinstance(expr, IRUnary):
+        operand = _render_py_expr(expr.operand, 3 if expr.op == "not" else 7)
+        if operand is None:
+            return None
+        if expr.op == "not":
+            return _paren_if_needed(f"not {operand}", 3)
+        return _paren_if_needed(f"-{operand}", 7)
+    if isinstance(expr, IRBinary):
+        ts_op = _PY_BINARY_OPS.get(expr.op)
+        if ts_op is None:
+            return None
+        prec = _py_precedence(expr.op)
+        left_min = prec + 1 if expr.op == "pow" else prec
+        right_min = prec if expr.op == "pow" else prec + 1
+        left = _render_py_expr(expr.left, left_min)
+        right = _render_py_expr(expr.right, right_min)
+        if left is None or right is None:
+            return None
+        return _paren_if_needed(f"{left} {ts_op} {right}", prec)
+    if isinstance(expr, IRCall):
+        args: list[str] = []
+        for argument in expr.args:
+            part = _render_py_expr(argument, 0)
+            if part is None:
+                return None
+            args.append(part)
+        for name, value in expr.kwargs:
+            rendered_kwarg = _render_py_expr(value, 0)
+            if rendered_kwarg is None:
+                return None
+            args.append(f"{name}={rendered_kwarg}")
+        target = expr.target.replace("-", "_") if expr.anlu else expr.target
+        return f"{target}({', '.join(args)})"
+    if isinstance(expr, IRMethodCall):
+        base = _render_py_expr(expr.base, 100)
+        if base is None:
+            return None
+        method_args: list[str] = []
+        for argument in expr.args:
+            part = _render_py_expr(argument, 0)
+            if part is None:
+                return None
+            method_args.append(part)
+        for name, value in expr.kwargs:
+            rendered_kwarg = _render_py_expr(value, 0)
+            if rendered_kwarg is None:
+                return None
+            method_args.append(f"{name}={rendered_kwarg}")
+        return f"{base}.{expr.method}({', '.join(method_args)})"
+    return None
+
+
+def _structural_python_expression(desc: str) -> Optional[str]:
+    """Translate an expression via the target-neutral IR (#202).
+
+    Nested ANLU-call arguments are consumed whole (no regex truncation)
+    and kebab-case identifiers resolve structurally.  Returns None for
+    foreign expressions; the legacy translator handles those.
+    """
+    from .ir import ForeignExpr, SourceSpan
+    from .lowering import lower_expression
+
+    expr = lower_expression(desc, SourceSpan(anlu="python"))
+    if isinstance(expr, ForeignExpr):
+        return None
+    return _render_py_expr(expr)
+
+
 def _desc_to_expr(desc: str) -> Optional[str]:
     """
     Convert a logic step description to a Python expression.
@@ -767,6 +931,12 @@ def _desc_to_expr(desc: str) -> Optional[str]:
     """
     # Clean up the description
     desc = normalize_expression_text(desc.strip())
+
+    # Structural path first (#202): render from the target-neutral IR so
+    # nested call arguments are consumed whole.
+    structural = _structural_python_expression(desc)
+    if structural is not None:
+        return structural
 
     # Check for explicit ANLU reference: [anlu-name](args)
     anlu_call = re.match(rf"\[({ANLU_IDENTIFIER_PATTERN})\]\s*\(([^)]*)\)", desc)
