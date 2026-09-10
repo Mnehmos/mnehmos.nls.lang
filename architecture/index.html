@@ -1386,6 +1386,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Lockfile">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#semantic-hashes-issue-193" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Semantic hashes (Issue #193)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1699,6 +1716,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Lockfile">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#semantic-hashes-issue-193" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Semantic hashes (Issue #193)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2023,6 +2057,20 @@
 <li><strong>Reproducible builds</strong></li>
 <li><strong>Audit trails</strong></li>
 </ul>
+<h3 id="semantic-hashes-issue-193">Semantic hashes (Issue #193)<a class="headerlink" href="#semantic-hashes-issue-193" title="Permanent link">&para;</a></h3>
+<p>Each ANLU's <code>source_hash</code> is the SHA-256 of its <strong>canonical executable
+semantics</strong> — the target-neutral IR rendering (#194) covering ordered LOGIC
+control, guards with error payloads, input constraints, edge cases, the
+result contract, literal implementations, and the contract signatures of
+declared dependencies. Narrative text (PURPOSE, free notes) and source line
+numbers are excluded, so rewording documentation or moving code within a
+file never invalidates a lock; changing a guard message, a constraint, a
+logic expression, or a dependency's signature always does.</p>
+<p><strong>Migration:</strong> lock entries written before the <code>sem2</code> scheme (partial
+identifier/purpose/returns hashes) never compare equal to new hashes. On
+first <code>nlsc compile</code> or <code>nlsc lock:update</code> after upgrading, every legacy
+entry is conservatively reported as changed and regenerated — stale cached
+bodies are never reused.</p>
 <hr />
 <h2 id="extension-points">Extension Points<a class="headerlink" href="#extension-points" title="Permanent link">&para;</a></h2>
 <h3 id="adding-a-new-target">Adding a New Target<a class="headerlink" href="#adding-a-new-target" title="Permanent link">&para;</a></h3>
