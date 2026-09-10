@@ -91,11 +91,7 @@ class NLWatcher:
         """
         from .parser import ParseError
         from .lockfile import generate_lockfile, write_lockfile
-        from .pipeline import (
-            evaluate_executable_contract,
-            parse_nl_path_auto,
-            validate_semantics,
-        )
+        from .pipeline import parse_nl_path_auto, validate_semantics
         from .stdlib_resolver import StdlibUseError
 
         error_msg = None
@@ -116,17 +112,22 @@ class NLWatcher:
                 self._notify_compile(path, False, error_msg, diagnostics)
                 return False
 
-            # Shared executable contract (Issue #190): strict watch refuses
-            # to emit artifacts from unresolved executable content.
-            scaffold_anlus: set[str] = set()
-            contract = evaluate_executable_contract(nl_file, file_token=str(path))
-            if contract.diagnostics and self.strict:
+            # Shared semantic gate (Issues #190/#195): fatal diagnostics
+            # fail in every mode; strict watch also refuses contract drift
+            # and unresolved executable content.
+            from .pipeline import evaluate_semantic_gate
+
+            gate = evaluate_semantic_gate(nl_file, file_token=str(path))
+            blocking = gate.fatal
+            if self.strict:
+                blocking = blocking + gate.strict_only + gate.scaffold_warnings
+            if blocking:
                 error_msg = "; ".join(
-                    diagnostic.message for diagnostic in contract.diagnostics
+                    diagnostic.message for diagnostic in blocking
                 )
-                self._notify_compile(path, False, error_msg, contract.diagnostics)
+                self._notify_compile(path, False, error_msg, blocking)
                 return False
-            scaffold_anlus = contract.scaffold_anlus
+            scaffold_anlus = gate.scaffold
 
             target = nl_file.module.target or "python"
             if target == "python":

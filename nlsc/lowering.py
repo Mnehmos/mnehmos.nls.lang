@@ -244,10 +244,15 @@ def tokenize_expression(text: str) -> list[_Tok]:
 class _ExprParser:
     """Precedence parser over the token stream; fully consumes input."""
 
-    def __init__(self, tokens: list[_Tok], text: str):
+    def __init__(self, tokens: list[_Tok], text: str, bare_anlu_is_call: bool = False):
         self.tokens = tokens
         self.text = text
         self.pos = 0
+        # A bare [name] is a zero-argument ANLU call only when it is the
+        # complete statement text; inside a larger expression, bracketed
+        # identifiers are one-element list literals (matching the
+        # established emitter semantics).
+        self.bare_anlu_is_call = bare_anlu_is_call
 
     # -- token helpers ----------------------------------------------------
     def peek(self, offset: int = 0) -> Optional[_Tok]:
@@ -489,15 +494,19 @@ class _ExprParser:
         if tok.kind == "[":
             return self.parse_bracket()
         if tok.kind == "ANLU_NAME":
-            # [anlu-name] / [anlu-name](args) — structural ANLU reference
-            # with the kebab-case target preserved verbatim.
+            # [anlu-name](args) is always a structural ANLU reference with
+            # the kebab-case target preserved verbatim. A bare [name] is an
+            # ANLU call only when it stands alone as the whole statement;
+            # otherwise it is a one-element list literal.
             self.advance()
             if (after := self.peek()) is not None and after.kind == "(":
                 args, kwargs = self.parse_call_args()
                 return IRCall(
                     target=tok.text, args=args, kwargs=kwargs, anlu=True
                 )
-            return IRCall(target=tok.text, anlu=True)
+            if self.bare_anlu_is_call and len(self.tokens) == 1:
+                return IRCall(target=tok.text, anlu=True)
+            return IRList(items=(IRRef(name=tok.text),))
         if tok.kind == "{":
             raise _UnsupportedError("dict-literal")
         if tok.kind == "OP" and tok.text in _AUG_OPS:
@@ -668,6 +677,7 @@ def lower_expression(
     diagnostics: Optional[list] = None,
     file_token: str = IR_FILE_TOKEN,
     context: str = "",
+    bare_anlu_is_call: bool = False,
 ) -> IRExpr:
     """Lower one expression, never silently dropping content.
 
@@ -678,7 +688,7 @@ def lower_expression(
     prefix = f"{context}: " if context else ""
     try:
         tokens = tokenize_expression(raw)
-        parser = _ExprParser(tokens, raw)
+        parser = _ExprParser(tokens, raw, bare_anlu_is_call=bare_anlu_is_call)
         expr = parser.parse_expression()
         return expr
     except _TokenizeError as exc:
@@ -816,7 +826,12 @@ def _lower_action(
         # expression statement such as a discarded call.
         sub_diagnostics: list[Diagnostic] = []
         value = lower_expression(
-            raw, span, strict=False, diagnostics=sub_diagnostics, context=context
+            raw,
+            span,
+            strict=False,
+            diagnostics=sub_diagnostics,
+            context=context,
+            bare_anlu_is_call=True,
         )
         if isinstance(value, ForeignExpr) and _is_prose_reason(value.reason):
             return [IRNote(text=raw, span=span)]
