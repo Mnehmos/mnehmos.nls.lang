@@ -92,6 +92,7 @@ nav:
     - "Quicksort — An Honest Review": case-studies/quicksort.md
   - Reference:
     - CLI Commands: cli-reference.md
+    - Versioning & Compatibility: versioning.md
     - LLM Reference: llm-reference.md
     - Error Reference: error-reference.md
     - OS File Association Guide: os-integration.md

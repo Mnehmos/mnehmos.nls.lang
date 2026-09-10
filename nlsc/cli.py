@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 from typing import Any, NoReturn
 
-from . import __version__
+from . import SPEC_VERSION, __version__
 from .parser import ParseError
 from .schema import NLFile
 from .emitter import emit_python, emit_tests
@@ -2294,7 +2294,11 @@ Examples:
 The conversation is the programming. The .nl file is the receipt.
 """,
     )
-    parser.add_argument("--version", action="version", version=f"nlsc {__version__}")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"nlsc {__version__} (language spec {SPEC_VERSION})",
+    )
     parser.add_argument(
         "--parser",
         choices=["auto", "regex", "treesitter"],

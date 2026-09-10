@@ -534,6 +534,9 @@ class Module:
 
     name: str
     version: str = "0.1.0"
+    # Declared language-spec revision from @nls (Issue #144); None when
+    # the file does not declare one (treated as the current revision).
+    spec_version: Optional[str] = None
     target: str = "python"
     imports: list[str] = field(default_factory=list)
     # Issue #90: stdlib domain dependencies declared via @use

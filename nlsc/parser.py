@@ -49,7 +49,7 @@ class ParseError(Exception):
 PATTERNS = {
     "anlu_header": re.compile(rf"^\[({ANLU_IDENTIFIER_PATTERN})\]\s*$"),
     "directive": re.compile(
-        r"^@(module|version|target|imports|use|types|type|test|property|invariant|literal|main)\s*(.*)$"
+        r"^@(module|version|nls|target|imports|use|types|type|test|property|invariant|literal|main)\s*(.*)$"
     ),
     "purpose": re.compile(r"^PURPOSE:\s*(.+)$", re.IGNORECASE),
     "inputs": re.compile(r"^INPUTS:\s*$", re.IGNORECASE),
@@ -89,6 +89,8 @@ def apply_module_directive(
         module.name = directive_value
     elif directive_type == "version":
         module.version = directive_value
+    elif directive_type == "nls":
+        module.spec_version = directive_value
     elif directive_type == "target":
         module.target = directive_value
     elif directive_type == "imports":
@@ -528,7 +530,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             directive_type = directive_match.group(1)
             directive_value = directive_match.group(2).strip()
 
-            if directive_type in {"module", "version", "target", "imports", "use"}:
+            if directive_type in {"module", "version", "nls", "target", "imports", "use"}:
                 apply_module_directive(
                     module, directive_type, directive_value, line_num
                 )

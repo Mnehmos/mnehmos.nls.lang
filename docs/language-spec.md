@@ -24,6 +24,13 @@ An `.nl` file consists of:
 
 ## Directives
 
+`@nls MAJOR.MINOR` declares the language-spec revision the file targets
+(Issue #144). It is optional; without it the file is treated as targeting the
+current revision. Compatibility rules live in
+[Versioning & Compatibility](versioning.md): same major is compatible, a
+newer minor warns under strict (`EVER002`), a different major is fatal
+(`EVER001`).
+
 ### `@module`
 
 **Required.** Declares the module name.
@@ -533,6 +540,7 @@ with causes and next steps.
 | `ESEM010` | Branch totality | [Bindings, branches, and guards](#bindings-branches-and-guards) |
 | `ESEM012` | Guard error identity | [Effects and failure contracts](#effects-and-failure-contracts) |
 | `ESEM013` | Module/file name shadows a host stdlib module | [File Structure](#file-structure) |
+| `EVER001`, `EVER002` | Declared `@nls` revision compatibility | [Directives](#directives) |
 
 ---
 

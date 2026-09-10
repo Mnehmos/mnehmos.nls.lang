@@ -43,6 +43,8 @@ from .error_catalog import (
     ESEM009,
     ESEM012,
     ESEM013,
+    EVER001,
+    EVER002,
 )
 from .ir import (
     IRBind,
@@ -724,6 +726,64 @@ def check_module(nl_file: NLFile, *, file_token: str = "<source>") -> SemanticCh
     result.warnings.extend(control.warnings)
 
     table = _build_symbol_table(module, result, file_token)
+    # Declared language-spec revision (@nls, Issue #144): same major is
+    # compatible; a newer minor is a strict-only warning; a different
+    # major is fatal in every mode.
+    from . import SPEC_MAJOR, SPEC_VERSION
+
+    declared_revision = nl_file.module.spec_version
+    if declared_revision:
+        match = re.fullmatch(r"(\d+)\.(\d+)", declared_revision.strip())
+        if match is None:
+            result.errors.append(
+                Diagnostic(
+                    code=EVER001,
+                    file=file_token,
+                    line=None,
+                    col=None,
+                    message=(
+                        f"malformed @nls revision '{declared_revision}'; expected MAJOR.MINOR "
+                        f"such as {SPEC_VERSION}"
+                    ),
+                    hint="Write the spec revision as two numbers, e.g. @nls 0.1.",
+                )
+            )
+        else:
+            declared_major = int(match.group(1))
+            declared_minor = int(match.group(2))
+            spec_major, spec_minor = (int(part) for part in SPEC_VERSION.split("."))
+            if declared_major != spec_major:
+                result.errors.append(
+                    Diagnostic(
+                        code=EVER001,
+                        file=file_token,
+                        line=None,
+                        col=None,
+                        message=(
+                            f"@nls {declared_revision} is incompatible with spec major "
+                            f"{SPEC_MAJOR} supported by this toolchain"
+                        ),
+                        hint=(
+                            "Update the file to the supported revision or upgrade "
+                            "nlsc (`nlsc --version`)."
+                        ),
+                    )
+                )
+            elif declared_minor > spec_minor:
+                result.warnings.append(
+                    Diagnostic(
+                        code=EVER002,
+                        file=file_token,
+                        line=None,
+                        col=None,
+                        message=(
+                            f"@nls {declared_revision} is newer than the supported spec "
+                            f"revision {SPEC_VERSION}"
+                        ),
+                        hint="Upgrade nlsc or lower the declared revision.",
+                    )
+                )
+
     # Module names that compile to stdlib-shadowing filenames break
     # generated test/run imports (#142 example corpus footgun).
     import sys as _sys
