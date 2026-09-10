@@ -1065,6 +1065,34 @@ def find_unchecked_nodes(module: IRModule) -> list[Union[ForeignExpr, ForeignStm
     return blockers
 
 
+def operation_unchecked_nodes(op: IROperation) -> list[Union[ForeignExpr, ForeignStmt]]:
+    """Return foreign nodes in one operation that block checked emission."""
+    blockers: list[Union[ForeignExpr, ForeignStmt]] = []
+
+    def scan_expr(expr: IRExpr) -> None:
+        for node in iter_expr_nodes(expr):
+            if isinstance(node, ForeignExpr):
+                blockers.append(node)
+
+    for guard in op.guards:
+        scan_expr(guard.condition)
+    for stmt in iter_stmt_nodes(op.body):
+        if isinstance(stmt, ForeignStmt):
+            blockers.append(stmt)
+            continue
+        if isinstance(stmt, IRBind):
+            scan_expr(stmt.value)
+        elif isinstance(stmt, IRDiscard):
+            scan_expr(stmt.value)
+        elif isinstance(stmt, IRReturn):
+            scan_expr(stmt.value)
+        elif isinstance(stmt, IRBranch):
+            scan_expr(stmt.condition)
+    if op.result is not None and op.result.value is not None:
+        scan_expr(op.result.value)
+    return blockers
+
+
 def assert_checked_module(module: IRModule) -> None:
     """Refuse checked status for any module containing unresolved content.
 

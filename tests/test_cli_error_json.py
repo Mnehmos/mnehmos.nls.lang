@@ -551,6 +551,8 @@ RETURNS: 1
         "output": str(output_path),
         "lockfile": str(lock_path),
         "target": "python",
+        "scaffold": [],
+        "warnings": [],
         "line_count": output_path.read_text(encoding="utf-8").count("\n") + 1,
     }
 

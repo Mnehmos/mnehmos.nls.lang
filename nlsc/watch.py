@@ -49,12 +49,14 @@ class NLWatcher:
         quiet: bool = False,
         run_tests: bool = False,
         on_compile: Optional[Callable[..., None]] = None,
+        strict: bool = False,
     ):
         self.watch_path = Path(watch_path)
         self.debounce_ms = debounce_ms
         self.quiet = quiet
         self.run_tests = run_tests
         self.on_compile = on_compile
+        self.strict = strict
 
         # Track file modification times for debouncing
         self._last_compile: dict[Path, float] = {}
@@ -89,7 +91,11 @@ class NLWatcher:
         """
         from .parser import ParseError
         from .lockfile import generate_lockfile, write_lockfile
-        from .pipeline import parse_nl_path_auto, validate_semantics
+        from .pipeline import (
+            evaluate_executable_contract,
+            parse_nl_path_auto,
+            validate_semantics,
+        )
         from .stdlib_resolver import StdlibUseError
 
         error_msg = None
@@ -110,15 +116,31 @@ class NLWatcher:
                 self._notify_compile(path, False, error_msg, diagnostics)
                 return False
 
+            # Shared executable contract (Issue #190): strict watch refuses
+            # to emit artifacts from unresolved executable content.
+            scaffold_anlus: set[str] = set()
+            contract = evaluate_executable_contract(nl_file, file_token=str(path))
+            if contract.diagnostics and self.strict:
+                error_msg = "; ".join(
+                    diagnostic.message for diagnostic in contract.diagnostics
+                )
+                self._notify_compile(path, False, error_msg, contract.diagnostics)
+                return False
+            scaffold_anlus = contract.scaffold_anlus
+
             target = nl_file.module.target or "python"
             if target == "python":
-                generated_code = emit_python(nl_file, mode="mock")
+                generated_code = emit_python(
+                    nl_file, mode="mock", scaffold_anlus=scaffold_anlus or None
+                )
                 output_path = path.with_suffix(".py")
                 test_code = emit_tests(nl_file)
                 test_path = path.parent / f"test_{path.stem}.py"
                 py_compile_required = True
             elif target == "typescript":
-                generated_code = emit_typescript(nl_file)
+                generated_code = emit_typescript(
+                    nl_file, scaffold_anlus=scaffold_anlus or None
+                )
                 output_path = path.with_suffix(".ts")
                 test_code = emit_tests_typescript(nl_file)
                 test_path = path.parent / f"test_{path.stem}.ts"

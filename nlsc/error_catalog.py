@@ -39,6 +39,7 @@ EWATCH002 = "EWATCH002"
 EIR001 = "EIR001"
 EIR002 = "EIR002"
 EIR003 = "EIR003"
+EIR004 = "EIR004"
 
 
 @dataclass(frozen=True)
@@ -577,6 +578,20 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Rewrite the step with the supported core: literals, references, field/index access, calls, and binary/unary operators.",
             "Declare genuinely target-specific code with @literal so it is carried as a sanctioned foreign implementation.",
+        ),
+    ),
+    EIR004: ErrorDefinition(
+        code=EIR004,
+        title="Declared return type without an implementation",
+        summary="RETURNS names a result type but no value expression, and the type is not none/void, so emitting a default value would invent behavior the specification never stated.",
+        emitted_by=("verify", "compile", "run", "test", "watch", "ir"),
+        common_causes=(
+            "RETURNS contains a type name such as 'number' instead of the value to return.",
+            "The implementing LOGIC step is descriptive prose that never became executable.",
+        ),
+        next_steps=(
+            "Return the computed value (for example 'RETURNS: total') or declare 'RETURNS: none'.",
+            "Rewrite prose LOGIC steps as executable steps so the value is actually produced.",
         ),
     ),
     EIR003: ErrorDefinition(
