@@ -532,6 +532,7 @@ with causes and next steps.
 | `ESEM008` | DEPENDS contract | [ANLU Blocks](#anlu-blocks) |
 | `ESEM010` | Branch totality | [Bindings, branches, and guards](#bindings-branches-and-guards) |
 | `ESEM012` | Guard error identity | [Effects and failure contracts](#effects-and-failure-contracts) |
+| `ESEM013` | Module/file name shadows a host stdlib module | [File Structure](#file-structure) |
 
 ---
 
