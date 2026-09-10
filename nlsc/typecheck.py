@@ -370,6 +370,18 @@ class _OperationChecker:
             return UNKNOWN
         fields = self.table.records.get(base_type.name)
         if fields is None:
+            if base_type.name not in _PRIMITIVE_TYPES:
+                # A foreign/undeclared type reference: its fields are an
+                # explicit unknown in default mode; checked code must
+                # declare the contract.
+                self._warn(
+                    ESEM009,
+                    span,
+                    f"type '{base_type.render()}' is not declared in this module; "
+                    f"field '{field_name}' is unchecked",
+                    "Declare the @type (or import its contract) before checked use.",
+                )
+                return UNKNOWN
             self._error(
                 ESEM005,
                 span,

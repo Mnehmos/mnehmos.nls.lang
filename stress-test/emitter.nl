@@ -73,6 +73,7 @@ LOGIC:
   1. imports_needed = []
   2. has_any = any(('any' in (inp.type for inp in anlu.inputs) for anlu in nl_file.anlus))
   3. ordered = nl_file.dependency_order()
+  4. lines = [emit-anlu(anlu) for anlu in ordered]
 RETURNS: '\n'.join(lines)
 
 [emit-tests]
@@ -81,4 +82,5 @@ INPUTS:
   - nl_file: NLFile
 LOGIC:
   1. module_name = nl_file.module.name.replace('-', '_')
+  2. lines = [render-test(test) for test in nl_file.tests]
 RETURNS: '\n'.join(lines)
