@@ -628,7 +628,60 @@ def _extract_action(step: LogicStep) -> Optional[str]:
         # Descriptive text only - emit as single-line comment + placeholder to preserve indentation
         return f"{step.output_binding} = None  # TODO: {desc}"
 
+    # A complete call used for its effects (value discarded): the call,
+    # its guards, and its failures must still execute exactly once.
+    call_statement = _match_complete_call(desc)
+    if call_statement:
+        return call_statement
+
     # Not an assignment - purely descriptive
+    return None
+
+
+def _convert_anlu_refs(text: str) -> str:
+    """
+    Translate bracketed ANLU references to Python callable names.
+
+    ``[anlu-name](...)`` and kebab-case ``[anlu-name]`` (which cannot be
+    valid Python) become snake_case names; plain subscripts such as
+    ``items[x]`` are left untouched because they contain no dash and are
+    not followed by an argument list.
+    """
+
+    def snake(match: re.Match[str]) -> str:
+        return match.group(1).replace("-", "_")
+
+    converted = re.sub(rf"\[({ANLU_IDENTIFIER_PATTERN})\]\s*\(", lambda m: snake(m) + "(", text)
+    return re.sub(rf"\[({ANLU_IDENTIFIER_PATTERN}-[\w.-]*)\]", snake, converted)
+
+
+def _match_complete_call(desc: str) -> Optional[str]:
+    """
+    Return the Python expression when the text is exactly one complete call.
+
+    Recognizes ``[anlu-name](args)``, ``name(args)``, and ``obj.method(args)``
+    regardless of whether a return value is bound. Nested ANLU references
+    inside the argument list are converted too, and the candidate must parse
+    as a single Python call expression, so nested lists stay balanced.
+    Arbitrary prose never matches: anything that does not parse as exactly
+    one Call node returns None.
+    """
+    candidate = desc.strip()
+    if not candidate:
+        return None
+
+    bare_anlu = re.match(rf"^\[({ANLU_IDENTIFIER_PATTERN})\]$", candidate)
+    if bare_anlu:
+        return f"{bare_anlu.group(1).replace('-', '_')}()"
+
+    candidate = _convert_anlu_refs(candidate)
+
+    try:
+        tree = ast.parse(candidate, mode="eval")
+    except SyntaxError:
+        return None
+    if isinstance(tree.body, ast.Call):
+        return candidate
     return None
 
 
