@@ -760,6 +760,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#failure-sets-issue-198" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failure sets (Issue #198)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#foreign-reasons-stable-vocabulary" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1426,6 +1437,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#failure-sets-issue-198" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failure sets (Issue #198)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#foreign-reasons-stable-vocabulary" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1568,6 +1590,25 @@
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>(&lt;Name&gt;)                                   declared record type
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>(&lt;typeref&gt; optional)                       nullable / optional
 </span></code></pre></div>
+<h3 id="failure-sets-issue-198">Failure sets (Issue #198)<a class="headerlink" href="#failure-sets-issue-198" title="Permanent link">&para;</a></h3>
+<p>Every operation carries an analyzed <code>fails</code> set after lowering:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>(fails (fail ValueError code=MISSING "Token required" origin=guard)
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>       (fail ValueError "called" origin=callee)
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>       (fail unknown))
+</span></code></pre></div>
+<ul>
+<li><code>origin=guard</code> — raised by one of the operation's guards (typed
+  error, optional code, message preserved).</li>
+<li><code>origin=callee</code> — propagated from a called operation, transitively
+  and deterministically.</li>
+<li><code>(fail unknown)</code> — a conservative marker for foreign calls, method
+  calls, division/modulo, index access, and literal implementations. An
+  unknown external failure is never treated as an empty set, and pure
+  operations carry an analyzed-empty <code>(fails)</code> (<code>None</code> still means
+  <em>not analyzed</em>).</li>
+</ul>
+<p>Failure sets participate in lockfile semantic identity: changing a
+callee's guard payload invalidates its callers.</p>
 <h3 id="foreign-reasons-stable-vocabulary">Foreign reasons (stable vocabulary)<a class="headerlink" href="#foreign-reasons-stable-vocabulary" title="Permanent link">&para;</a></h3>
 <p><code>comprehension</code>, <code>generator-expression</code>, <code>ternary</code>, <code>fstring</code>, <code>raw-string</code>,
 <code>dict-literal</code>, <code>slice</code>, <code>star-args</code>, <code>lambda</code>, <code>tuple</code>, <code>walrus-or-slice</code>,
