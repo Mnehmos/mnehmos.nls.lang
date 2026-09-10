@@ -27,7 +27,7 @@ def test_should_fail_compile_when_emitted_python_is_syntactically_invalid(monkey
     """Compile should return non-zero when emitted Python cannot pass py_compile validation."""
     nl_file = _write_minimal_nl(tmp_path, stem="invalid_emission")
 
-    def _emit_invalid_python(_nl_file, mode="mock"):
+    def _emit_invalid_python(_nl_file, mode="mock", **kwargs):
         return "def broken(:\n    return 1\n"
 
     monkeypatch.setattr(cli, "emit_python", _emit_invalid_python)
@@ -51,7 +51,7 @@ def test_should_include_generated_file_context_when_py_compile_validation_fails(
     nl_file = _write_minimal_nl(tmp_path, stem="context_emission")
     expected_generated_path = str(nl_file.with_suffix(".py"))
 
-    def _emit_invalid_python(_nl_file, mode="mock"):
+    def _emit_invalid_python(_nl_file, mode="mock", **kwargs):
         return "if True print('missing colon')\n"
 
     monkeypatch.setattr(cli, "emit_python", _emit_invalid_python)
@@ -80,7 +80,7 @@ def test_should_succeed_compile_when_emitted_python_is_valid(monkeypatch, tmp_pa
     """Compile should continue succeeding for valid emitted Python."""
     nl_file = _write_minimal_nl(tmp_path, stem="valid_emission")
 
-    def _emit_valid_python(_nl_file, mode="mock"):
+    def _emit_valid_python(_nl_file, mode="mock", **kwargs):
         return "def hello():\n    return 'ok'\n"
 
     monkeypatch.setattr(cli, "emit_python", _emit_valid_python)

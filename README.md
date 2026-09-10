@@ -153,6 +153,24 @@ def distance(p1: Point, p2: Point) -> float:
 
 `nlsc lsp --json` emits structured startup diagnostics for missing optional LSP dependencies (`ELSP001`) and server-start failures (`ELSP002`).
 
+### Strict vs. scaffold compilation (Issue #190)
+
+By default, LOGIC steps that describe work in prose still compile: the artifact
+is produced, the step becomes a visible `TODO` placeholder, and the module
+docstring is marked `Status: INCOMPLETE SCAFFOLD` so it can never be mistaken
+for a verified implementation. `nlsc compile`/`verify` print `EIR002`/`EIR004`
+warnings for each unresolved step.
+
+Add `--strict` to `compile`, `verify`, `run`, `test`, or `watch` to reject
+unresolved executable content up front — no runnable artifact, no invented
+return values (`RETURNS: number` alone is a declared type, not a zero), and
+prose edge cases mixed with executable conditions are refused:
+
+```bash
+nlsc compile src/payment.nl --strict   # fails until every step is executable
+nlsc ir src/payment.nl --strict        # same contract at the IR boundary
+```
+
 ### Global Options
 
 ```bash

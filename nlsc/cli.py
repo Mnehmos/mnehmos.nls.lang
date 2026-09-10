@@ -34,6 +34,7 @@ from .lockfile import generate_lockfile, write_lockfile, verify_lockfile
 from .sourcemap import generate_source_map
 from .ir import module_to_canonical, module_to_json
 from .lowering import LoweringError, lower_module
+from .pipeline import evaluate_executable_contract
 from .graph import (
     emit_mermaid,
     emit_dot,
@@ -213,13 +214,23 @@ def _resolve_target(nl_file: NLFile, requested_target: str | None) -> str:
 
 
 def _emit_target_code(
-    nl_file: NLFile, target: str
+    nl_file: NLFile, target: str, scaffold_anlus: set[str] | None = None
 ) -> tuple[str, str, str | None, str | None]:
     """Emit module and optional tests for the selected target."""
     if target == "python":
-        return emit_python(nl_file, mode="mock"), ".py", emit_tests(nl_file), ".py"
+        return (
+            emit_python(nl_file, mode="mock", scaffold_anlus=scaffold_anlus),
+            ".py",
+            emit_tests(nl_file),
+            ".py",
+        )
     if target == "typescript":
-        return emit_typescript(nl_file), ".ts", emit_tests_typescript(nl_file), ".ts"
+        return (
+            emit_typescript(nl_file, scaffold_anlus=scaffold_anlus),
+            ".ts",
+            emit_tests_typescript(nl_file),
+            ".ts",
+        )
     raise ValueError(f"Target '{target}' not yet supported")
 
 
@@ -632,10 +643,37 @@ def cmd_compile(args: argparse.Namespace) -> int:
     if not json_output:
         print(f"  {_check()} Resolved dependencies")
 
+    # Shared executable contract (Issue #190): strict mode refuses to emit
+    # runnable artifacts from unresolved executable content; scaffold mode
+    # compiles but marks the artifact and warns.
+    contract = evaluate_executable_contract(nl_file, file_token=str(source_path))
+    if contract.diagnostics and getattr(args, "strict", False):
+        if json_output:
+            return _emit_json("compile", contract.diagnostics, file=str(source_path))
+        print(f"  {_cross()} Executable contract errors (strict):", file=sys.stderr)
+        for diagnostic in contract.diagnostics:
+            location = f"Line {diagnostic.line}: " if diagnostic.line else ""
+            print(
+                f"    - {location}{diagnostic.message} [{diagnostic.code}]",
+                file=sys.stderr,
+            )
+            if diagnostic.hint:
+                print(f"      Hint: {diagnostic.hint}", file=sys.stderr)
+        return 1
+    scaffold = contract.scaffold_anlus or None
+    if contract.diagnostics and not json_output:
+        print(f"  {_cross()} Unresolved executable content (scaffold):", file=sys.stderr)
+        for diagnostic in contract.diagnostics:
+            location = f"Line {diagnostic.line}: " if diagnostic.line else ""
+            print(
+                f"    - {location}{diagnostic.message} [{diagnostic.code}]",
+                file=sys.stderr,
+            )
+
     target = _resolve_target(nl_file, getattr(args, "target", None))
     try:
         generated_code, output_suffix, test_code, test_suffix = _emit_target_code(
-            nl_file, target
+            nl_file, target, scaffold_anlus=scaffold
         )
     except ValueError as exc:
         if json_output:
@@ -737,6 +775,8 @@ def cmd_compile(args: argparse.Namespace) -> int:
             lockfile=str(lock_path),
             target=target,
             line_count=line_count,
+            scaffold=sorted(contract.scaffold_anlus),
+            warnings=[d.to_dict() for d in contract.diagnostics],
         )
     print(f"  {_check()} Updated {lock_path.name}")
 
@@ -815,9 +855,36 @@ def cmd_verify(args: argparse.Namespace) -> int:
             print(f"    - {validation_err}")
         return 1
 
+    # Shared executable contract (Issue #190): the same diagnostic set as
+    # compile/run/test/watch; strict fails, scaffold mode warns.
+    contract = evaluate_executable_contract(nl_file, file_token=str(source_path))
+    if contract.diagnostics and getattr(args, "strict", False):
+        if json_output:
+            return _emit_json("verify", contract.diagnostics, file=str(source_path))
+        print(f"  {_cross()} Executable contract errors (strict):")
+        for diagnostic in contract.diagnostics:
+            location = f"Line {diagnostic.line}: " if diagnostic.line else ""
+            print(
+                f"    - {location}{diagnostic.message} [{diagnostic.code}]",
+                file=sys.stderr,
+            )
+            if diagnostic.hint:
+                print(f"      Hint: {diagnostic.hint}", file=sys.stderr)
+        return 1
+
     if json_output:
         return _emit_json(
-            "verify", [], file=str(source_path), anlu_count=len(nl_file.anlus)
+            "verify",
+            [],
+            file=str(source_path),
+            anlu_count=len(nl_file.anlus),
+            warnings=[d.to_dict() for d in contract.diagnostics],
+        )
+    for diagnostic in contract.diagnostics:
+        location = f"Line {diagnostic.line}: " if diagnostic.line else ""
+        print(
+            f"  ! {location}{diagnostic.message} [{diagnostic.code}]",
+            file=sys.stderr,
         )
     print(f"  {_check()} All ANLUs valid")
     print("\nVerification passed!")
@@ -971,6 +1038,23 @@ def cmd_test(args: argparse.Namespace) -> int:
         for err in validation.dependency_errors:
             print(f"  - {_format_dependency_error(err)}", file=sys.stderr)
         return 1
+
+    # Shared executable contract (Issue #190).
+    if getattr(args, "strict", False):
+        contract = evaluate_executable_contract(nl_file, file_token=str(source_path))
+        if contract.diagnostics:
+            if json_output:
+                return _emit_json("test", contract.diagnostics, file=str(source_path))
+            print("Error: Executable contract errors (strict):", file=sys.stderr)
+            for diagnostic in contract.diagnostics:
+                location = (
+                    f"Line {diagnostic.line}: " if diagnostic.line else ""
+                )
+                print(
+                    f"  - {location}{diagnostic.message} [{diagnostic.code}]",
+                    file=sys.stderr,
+                )
+            return 1
 
     # Check for tests
     if not nl_file.tests:
@@ -1274,6 +1358,7 @@ def cmd_watch(args: argparse.Namespace) -> int:
     quiet = args.quiet
     run_tests = args.test
     debounce_ms = args.debounce
+    watch_strict = getattr(args, "strict", False)
 
     def on_compile(
         path: Path,
@@ -1304,6 +1389,7 @@ def cmd_watch(args: argparse.Namespace) -> int:
         quiet=quiet,
         run_tests=run_tests,
         on_compile=on_compile,
+        strict=watch_strict,
     )
 
     try:
@@ -1548,6 +1634,23 @@ def cmd_run(args: argparse.Namespace) -> int:
         for err in validation.dependency_errors:
             print(f"  - {_format_dependency_error(err)}", file=sys.stderr)
         return 1
+
+    # Shared executable contract (Issue #190).
+    if getattr(args, "strict", False):
+        contract = evaluate_executable_contract(nl_file, file_token=str(source_path))
+        if contract.diagnostics:
+            if json_output:
+                return _emit_json("run", contract.diagnostics, file=str(source_path))
+            print("Error: Executable contract errors (strict):", file=sys.stderr)
+            for diagnostic in contract.diagnostics:
+                location = (
+                    f"Line {diagnostic.line}: " if diagnostic.line else ""
+                )
+                print(
+                    f"  - {location}{diagnostic.message} [{diagnostic.code}]",
+                    file=sys.stderr,
+                )
+            return 1
 
     # Emit Python (target flag for future multi-target support)
     target = getattr(args, "target", "python")
@@ -2011,6 +2114,11 @@ The conversation is the programming. The .nl file is the receipt.
 
     # compile command
     compile_parser = subparsers.add_parser("compile", help="Compile .nl file")
+    compile_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Fail when executable content is unresolved (no scaffold output)",
+    )
     compile_parser.add_argument("file", help="Path to .nl file")
     compile_parser.add_argument(
         "-t",
@@ -2035,6 +2143,11 @@ The conversation is the programming. The .nl file is the receipt.
     # run command
     run_parser = subparsers.add_parser("run", help="Compile and execute .nl file")
     run_parser.add_argument("file", help="Path to .nl file")
+    run_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Refuse to execute when executable content is unresolved",
+    )
     run_parser.add_argument(
         "-k",
         "--keep",
@@ -2076,6 +2189,11 @@ The conversation is the programming. The .nl file is the receipt.
     ir_parser.add_argument("--output", "-o", help="Write canonical IR to a file")
     ir_parser.set_defaults(command="ir")
     verify_parser = subparsers.add_parser("verify", help="Verify .nl file")
+    verify_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Fail when executable content is unresolved (no scaffold pass)",
+    )
     verify_parser.add_argument("file", help="Path to .nl file")
     verify_parser.add_argument(
         "--json",
@@ -2124,6 +2242,11 @@ The conversation is the programming. The .nl file is the receipt.
     # test command
     test_parser = subparsers.add_parser("test", help="Run @test specifications")
     test_parser.add_argument("file", help="Path to .nl file")
+    test_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Refuse to run tests when executable content is unresolved",
+    )
     test_parser.add_argument(
         "-v", "--verbose", action="store_true", help="Verbose output"
     )
@@ -2188,6 +2311,11 @@ The conversation is the programming. The .nl file is the receipt.
         "--json",
         action="store_true",
         help="Emit structured JSON diagnostics for startup errors.",
+    )
+    watch_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Refuse to compile files with unresolved executable content",
     )
 
     # lock:check command

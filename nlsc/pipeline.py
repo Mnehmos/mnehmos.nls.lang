@@ -12,7 +12,10 @@ from pathlib import Path
 from .localization import ANLU_IDENTIFIER_PATTERN, normalize_localized_source
 from .parser import parse_nl_file, ParseError
 from .resolver import ResolutionError, resolve_dependencies
-from .schema import NLFile
+from .schema import ANLU, NLFile
+from .diagnostics import Diagnostic
+from .error_catalog import EIR002, EIR004
+from .ir import ForeignExpr, operation_unchecked_nodes
 from .stdlib_resolver import (
     ResolvedUse,
     bundled_default_major,
@@ -138,6 +141,126 @@ def validate_contract_fields(nl_file: NLFile) -> list[str]:
         if not anlu.returns:
             errors.append(f"{anlu.identifier}: Missing RETURNS")
     return errors
+
+
+# --------------------------------------------------------------------------
+# Executable contract (Issue #190)
+# --------------------------------------------------------------------------
+#
+# One shared boundary for strict verify/compile/run/test/watch: executable
+# content must lower to recognized constructs. In default (scaffold) mode the
+# same diagnostics are surfaced as warnings and the artifact is marked
+# incomplete; in strict mode they fail the command before any runnable
+# artifact or successful lockfile is produced.
+
+
+@dataclass
+class ExecutableContractResult:
+    """Result of the shared executable-contract evaluation."""
+
+    diagnostics: list[Diagnostic]
+    scaffold_anlus: set[str]
+
+    @property
+    def success(self) -> bool:
+        return not self.diagnostics
+
+
+def _edge_case_diagnostics(anlu: ANLU, file_token: str) -> list[Diagnostic]:
+    """Reject edge cases that mix executable conditions with prose behavior."""
+    from .lowering import lower_expression
+    from .ir import SourceSpan
+
+    diagnostics: list[Diagnostic] = []
+    for ec in anlu.edge_cases:
+        span = SourceSpan(anlu=anlu.identifier, line=anlu.line_number or None)
+        condition = lower_expression(ec.condition.strip(), span)
+        behavior_text = ec.behavior.strip()
+        behavior_candidate = behavior_text
+        if behavior_candidate.lower().startswith("return "):
+            behavior_candidate = behavior_candidate[7:]
+        behavior = lower_expression(behavior_candidate, span)
+        condition_ok = not isinstance(condition, ForeignExpr)
+        behavior_ok = not isinstance(behavior, ForeignExpr)
+        if condition_ok != behavior_ok:
+            diagnostics.append(
+                Diagnostic(
+                    code=EIR002,
+                    file=file_token,
+                    line=span.line,
+                    col=None,
+                    message=(
+                        f"{anlu.identifier}: edge case mixes executable and narrative "
+                        f"content: '{ec.condition.strip()}' -> '{behavior_text}'"
+                    ),
+                    hint="Make both sides executable (e.g. 'score > 100 -> 100') or keep both descriptive.",
+                )
+            )
+    return diagnostics
+
+
+def evaluate_executable_contract(
+    nl_file: NLFile, *, file_token: str = "<source>"
+) -> ExecutableContractResult:
+    """Evaluate the strict executable contract for every ANLU.
+
+    Returns the source-level diagnostics plus the set of ANLU identifiers
+    whose implementation still contains unresolved (scaffold) content.
+    """
+    from dataclasses import replace as _dc_replace
+
+    from .lowering import lower_anlu
+
+    diagnostics: list[Diagnostic] = []
+    scaffold: set[str] = set()
+    declared_types = {t.name for t in nl_file.module.types}
+
+    for anlu in nl_file.anlus:
+        operation, op_diagnostics = lower_anlu(anlu, declared_types)
+        diagnostics.extend(
+            _dc_replace(d, file=file_token) for d in op_diagnostics
+        )
+        if operation_unchecked_nodes(operation):
+            scaffold.add(anlu.identifier)
+
+        if (
+            operation.result is not None
+            and operation.result.declared_type is not None
+            and operation.result.value is None
+            and operation.result.declared_type.name not in ("void",)
+            and not operation.literal
+        ):
+            diagnostics.append(
+                Diagnostic(
+                    code=EIR004,
+                    file=file_token,
+                    line=anlu.line_number or None,
+                    col=None,
+                    message=(
+                        f"{anlu.identifier}: declared result type "
+                        f"'{operation.result.raw}' has no implementation expression; "
+                        "a default value would be invented"
+                    ),
+                    hint="Return the computed value (e.g. 'RETURNS: total') or declare 'RETURNS: none'.",
+                )
+            )
+            scaffold.add(anlu.identifier)
+
+        diagnostics.extend(_edge_case_diagnostics(anlu, file_token))
+
+    return ExecutableContractResult(diagnostics=diagnostics, scaffold_anlus=scaffold)
+
+
+def executable_contract_diagnostics(
+    nl_file: NLFile, *, file_token: str = "<source>"
+) -> list[Diagnostic]:
+    """Convenience wrapper returning just the contract diagnostics."""
+    return evaluate_executable_contract(nl_file, file_token=file_token).diagnostics
+
+
+def scaffold_anlus(nl_file: NLFile) -> set[str]:
+    """ANLU identifiers whose implementation contains unresolved content."""
+    return evaluate_executable_contract(nl_file).scaffold_anlus
 
 
 def validate_semantics(
