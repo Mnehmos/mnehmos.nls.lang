@@ -301,6 +301,48 @@ def _escape_docstring_text(text: str) -> str:
     return text.replace('"""', '\\"\\"\\"')
 
 
+# Error classes that exist in the Python runtime; anything else used as a
+# guard error type is generated into the module so the raise never hits an
+# undefined constructor (#198).
+PYTHON_BUILTIN_ERRORS = {
+    "ArithmeticError",
+    "AssertionError",
+    "AttributeError",
+    "Exception",
+    "IndexError",
+    "KeyError",
+    "LookupError",
+    "NotImplementedError",
+    "OverflowError",
+    "RuntimeError",
+    "TypeError",
+    "ValueError",
+    "ZeroDivisionError",
+}
+
+
+def collect_guard_error_types(nl_file: NLFile) -> list[str]:
+    """Distinct non-builtin guard error types, in first-use order."""
+    seen: list[str] = []
+    for anlu in nl_file.anlus:
+        for guard in anlu.guards:
+            error_type = (guard.error_type or "").strip()
+            if error_type and error_type not in PYTHON_BUILTIN_ERRORS and error_type not in seen:
+                seen.append(error_type)
+    return seen
+
+
+def emit_guard_error_classes(nl_file: NLFile) -> list[str]:
+    """Emit minimal error classes for non-builtin guard error types."""
+    lines: list[str] = []
+    for error_type in collect_guard_error_types(nl_file):
+        lines.append(f"class {error_type}(Exception):")
+        lines.append('    """Guard error raised by generated code."""')
+        lines.append("")
+        lines.append("")
+    return lines
+
+
 def emit_guards(anlu: ANLU) -> list[str]:
     """
     Generate guard validation code.
@@ -1038,6 +1080,12 @@ def emit_python(
         for imp in imports_needed:
             lines.append(imp)
         lines.append("")
+
+    # Guard error classes for non-builtin error types (#198): the raise
+    # sites must never reference undefined constructors.
+    guard_error_lines = emit_guard_error_classes(nl_file)
+    if guard_error_lines:
+        lines.extend(guard_error_lines)
 
     # Add user-specified imports
     # Standard library modules use regular import, custom modules are loaded in a

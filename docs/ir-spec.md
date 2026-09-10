@@ -72,6 +72,29 @@ number integer string boolean void any     primitives
 (<typeref> optional)                       nullable / optional
 ```
 
+### Failure sets (Issue #198)
+
+Every operation carries an analyzed ``fails`` set after lowering:
+
+```
+(fails (fail ValueError code=MISSING "Token required" origin=guard)
+       (fail ValueError "called" origin=callee)
+       (fail unknown))
+```
+
+- ``origin=guard`` — raised by one of the operation's guards (typed
+  error, optional code, message preserved).
+- ``origin=callee`` — propagated from a called operation, transitively
+  and deterministically.
+- ``(fail unknown)`` — a conservative marker for foreign calls, method
+  calls, division/modulo, index access, and literal implementations. An
+  unknown external failure is never treated as an empty set, and pure
+  operations carry an analyzed-empty ``(fails)`` (``None`` still means
+  *not analyzed*).
+
+Failure sets participate in lockfile semantic identity: changing a
+callee's guard payload invalidates its callers.
+
 ### Foreign reasons (stable vocabulary)
 
 `comprehension`, `generator-expression`, `ternary`, `fstring`, `raw-string`,

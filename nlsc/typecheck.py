@@ -40,6 +40,7 @@ from .error_catalog import (
     ESEM007,
     ESEM008,
     ESEM009,
+    ESEM012,
 )
 from .ir import (
     IRBind,
@@ -88,6 +89,30 @@ _BUILTIN_SIGNATURES: dict[str, tuple[tuple[str, ...], str]] = {
 
 _NUMERIC_TYPES = {"number", "integer"}
 _PRIMITIVE_TYPES = {"number", "integer", "string", "boolean", "void", "any"}
+
+# Error constructors available without declaration (union of the runtime
+# builtins the supported targets provide).
+_KNOWN_ERROR_TYPES = {
+    "ArithmeticError",
+    "AssertionError",
+    "AttributeError",
+    "Error",
+    "EvalError",
+    "Exception",
+    "IndexError",
+    "KeyError",
+    "LookupError",
+    "NotImplementedError",
+    "OverflowError",
+    "RangeError",
+    "ReferenceError",
+    "RuntimeError",
+    "SyntaxError",
+    "TypeError",
+    "URIError",
+    "ValueError",
+    "ZeroDivisionError",
+}
 
 
 def _snake(name: str) -> str:
@@ -690,6 +715,32 @@ def check_module(nl_file: NLFile, *, file_token: str = "<source>") -> SemanticCh
     declared_by_op = {anlu.identifier: _declared_depends(anlu) for anlu in nl_file.anlus}
 
     for operation in module.operations:
+        for guard in operation.guards:
+            if guard.error is None or guard.error.error_type is None:
+                continue
+            error_type = guard.error.error_type.strip()
+            if (
+                error_type
+                and error_type not in _KNOWN_ERROR_TYPES
+                and error_type not in table.records
+            ):
+                result.warnings.append(
+                    Diagnostic(
+                        code=ESEM012,
+                        file=file_token,
+                        line=operation.span.line if operation.span else None,
+                        col=None,
+                        message=(
+                            f"{operation.name}: guard error type '{error_type}' is "
+                            "not a builtin and not a declared @type"
+                        ),
+                        hint=(
+                            "Use a builtin error type or declare the error type; "
+                            "default compilation generates a minimal class."
+                        ),
+                    )
+                )
+
         checker = _OperationChecker(operation, table, result, file_token)
         inferred = checker.run()
 

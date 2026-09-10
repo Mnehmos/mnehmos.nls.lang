@@ -51,6 +51,7 @@ ESEM008 = "ESEM008"
 ESEM009 = "ESEM009"
 ESEM010 = "ESEM010"
 ESEM011 = "ESEM011"
+ESEM012 = "ESEM012"
 
 
 @dataclass(frozen=True)
@@ -561,6 +562,20 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Inspect the reported runtime message and the watched source file path.",
             "Fix the underlying environment or source issue, then save the file again to retrigger compilation.",
+        ),
+    ),
+    ESEM012: ErrorDefinition(
+        code=ESEM012,
+        title="Undeclared guard error type",
+        summary="A guard raises an error type that is neither a runtime builtin nor a declared @type, so checked code cannot prove the constructor exists.",
+        emitted_by=("verify", "compile", "run", "test", "watch"),
+        common_causes=(
+            "A typo in the error type name.",
+            "Relying on a Python class that the NLS module never imports or declares.",
+        ),
+        next_steps=(
+            "Use a builtin error type (ValueError, TypeError, ...) or declare a @type for the error.",
+            "Default compilation generates a minimal class so the raise still works.",
         ),
     ),
     ESEM010: ErrorDefinition(

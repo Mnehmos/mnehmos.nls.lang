@@ -576,6 +576,50 @@ class IRErrorSpec:
 
 
 @dataclass(frozen=True)
+class IRFailureSpec:
+    """One entry in an operation's inferred failure set (#198).
+
+    ``origin`` is ``guard`` (raised by a guard), ``callee`` (propagated
+    from a called operation), or ``unknown`` (a conservative marker for
+    foreign calls, methods, arithmetic/indexing primitives, or literal
+    implementations — never treated as an empty set).  ``error_type`` is
+    None only for unknown markers.
+    """
+
+    error_type: Optional[str] = None
+    code: Optional[str] = None
+    message: Optional[str] = None
+    origin: str = "guard"
+
+    def sort_key(self) -> tuple[str, str, str, str]:
+        return (
+            self.origin,
+            self.error_type or "",
+            self.code or "",
+            self.message or "",
+        )
+
+    def render(self) -> str:
+        if self.origin == "unknown":
+            return "(fail unknown)"
+        parts = [self.error_type or "Error"]
+        if self.code:
+            parts.append(f"code={self.code}")
+        if self.message is not None:
+            parts.append(json.dumps(self.message))
+        parts.append(f"origin={self.origin}")
+        return f"(fail {' '.join(parts)})"
+
+    def to_json(self) -> dict[str, object]:
+        return {
+            "type": self.error_type,
+            "code": self.code,
+            "message": self.message,
+            "origin": self.origin,
+        }
+
+
+@dataclass(frozen=True)
 class IRGuard:
     """Raise ``error`` unless ``condition`` holds; guards evaluate in order."""
 
@@ -858,7 +902,7 @@ class IROperation:
     # Contract slots populated by later passes.  None means *not analyzed* —
     # it is never implicit proof of purity or absence of failures.
     effects: Optional[dict[str, object]] = None
-    failures: Optional[tuple[object, ...]] = None
+    failures: Optional[tuple[IRFailureSpec, ...]] = None
     typestate: Optional[dict[str, object]] = None
 
     def render(self, indent: str = "  ") -> str:
@@ -884,7 +928,11 @@ class IROperation:
             ]
         data["span"] = self.span.to_json() if self.span else None
         data["effects"] = self.effects
-        data["failures"] = None if self.failures is None else [f for f in self.failures]
+        data["failures"] = (
+            None
+            if self.failures is None
+            else [failure.to_json() for failure in self.failures]
+        )
         data["typestate"] = self.typestate
         return data
 
@@ -955,6 +1003,9 @@ def _render_operation(
         lines.append(f"{indent}{op.result.render()}")
     if op.depends:
         lines.append(f"{indent}(depends {' '.join(op.depends)})")
+    if op.failures is not None:
+        inner = " ".join(failure.render() for failure in op.failures)
+        lines.append(f"{indent}(fails {inner})" if inner else f"{indent}(fails)")
     if op.literal is not None:
         lines.append(f"{indent}(literal {json.dumps(op.literal)})")
     for condition, behavior in op.edge_cases:

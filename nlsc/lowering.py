@@ -1045,7 +1045,7 @@ def lower_module(nl_file: NLFile, *, strict: bool = False) -> IRModule:
         operations.append(operation)
         diagnostics.extend(op_diagnostics)
 
-    return IRModule(
+    module = IRModule(
         module_name=nl_file.module.name,
         version=nl_file.module.version,
         target=nl_file.module.target,
@@ -1057,6 +1057,11 @@ def lower_module(nl_file: NLFile, *, strict: bool = False) -> IRModule:
         checked=False,
         source_path=nl_file.source_path,
     )
+
+    from .failures import populate_failure_sets
+
+    populate_failure_sets(module)
+    return module
 
 
 def check_module_eligibility(module: IRModule) -> list[Diagnostic]:
