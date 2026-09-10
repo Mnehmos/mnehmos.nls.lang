@@ -26,6 +26,7 @@ pass, but they are never treated as evidence that code is type-safe.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -41,6 +42,7 @@ from .error_catalog import (
     ESEM008,
     ESEM009,
     ESEM012,
+    ESEM013,
 )
 from .ir import (
     IRBind,
@@ -156,6 +158,10 @@ class _SymbolTable:
     # Names brought in via @imports; usable as explicit unknowns (their
     # signatures are not declared in NLS yet).
     imports: set[str] = field(default_factory=set)
+    # Top-level functions defined by @literal blocks: they exist in the
+    # emitted module, so calls to them are declared escapes rather than
+    # undeclared foreign calls (#202).
+    literal_functions: set[str] = field(default_factory=set)
 
     def resolve_operation(self, target: str) -> Optional[IROperation]:
         op = self.operations.get(target)
@@ -546,6 +552,13 @@ class _OperationChecker:
             return self._result_of(operation)
 
         target = expr.target
+        if target in self.table.literal_functions:
+            for arg in expr.args:
+                self.infer(arg, inferred_deps)
+            for _, value in expr.kwargs:
+                self.infer(value, inferred_deps)
+            return UNKNOWN
+
         if target in _BUILTIN_SIGNATURES:
             for arg in expr.args:
                 self.infer(arg, inferred_deps)
@@ -711,6 +724,34 @@ def check_module(nl_file: NLFile, *, file_token: str = "<source>") -> SemanticCh
     result.warnings.extend(control.warnings)
 
     table = _build_symbol_table(module, result, file_token)
+    # Module names that compile to stdlib-shadowing filenames break
+    # generated test/run imports (#142 example corpus footgun).
+    import sys as _sys
+
+    shadow_names = {nl_file.module.name.replace("-", "_")}
+    if nl_file.source_path:
+        from pathlib import Path as _Path
+
+        shadow_names.add(_Path(nl_file.source_path).stem)
+    for shadow in sorted(shadow_names & set(_sys.stdlib_module_names)):
+        result.warnings.append(
+            Diagnostic(
+                code=ESEM013,
+                file=file_token,
+                line=None,
+                col=None,
+                message=(
+                    f"'{shadow}' compiles to '{shadow}.py', which shadows a "
+                    "Python standard-library module and breaks generated "
+                    "test/run imports"
+                ),
+                hint="Rename the module or file to something project-specific.",
+            )
+        )
+
+    for literal in nl_file.literals:
+        for match in re.finditer(r"^def\s+([A-Za-z_]\w*)\s*\(", literal, re.MULTILINE):
+            table.literal_functions.add(match.group(1))
 
     declared_by_op = {anlu.identifier: _declared_depends(anlu) for anlu in nl_file.anlus}
 

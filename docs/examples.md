@@ -2,6 +2,30 @@
 
 Complete, working NLS examples demonstrating various features and patterns.
 
+## Feature corpus (`examples/features/`)
+
+Fourteen focused, strictly-verified examples — one per language feature. Each
+passes `nlsc verify --strict`, runs its committed lockfile through `nlsc ci`,
+and executes its `@main` block; the whole corpus is a regression suite
+(`tests/test_issue_142_examples.py`).
+
+| Example | Feature |
+| --- | --- |
+| [`guards.nl`](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/guards.nl) | Ordered guards, typed error identity, custom declared error types |
+| [`branches.nl`](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/branches.nl) | Total `IF/THEN/ELSE` branches, nested joins |
+| [`types_constraints.nl`](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/types_constraints.nl) | `@type` constraints, `@invariant`, construction enforcement |
+| [`optionals.nl`](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/optionals.nl) | Optional inputs and arity windows |
+| [`recursion.nl`](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/recursion.nl) | Self-recursion with total branches |
+| [`composition.nl`](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/composition.nl) | Cross-operation calls, DEPENDS contract, failure propagation |
+| [`edge_cases.nl`](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/edge_cases.nl) | `EDGE CASES` early returns |
+| [`equality.nl`](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/equality.nl) | Structural equality for lists and records |
+| [`text_tools.nl`](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/text_tools.nl) | String methods and comparisons |
+| [`literals.nl`](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/literals.nl) | `@literal python` escape hatch called from NLS logic |
+| [`imports.nl`](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/imports.nl) | `@imports` host-module calls |
+| [`fsm.nl`](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/fsm.nl) | FSM state markers for `nlsc graph` |
+| [`properties.nl`](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/properties.nl) | `@property` property-based specifications |
+| [`lists.nl`](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/lists.nl) | List construction, collection builtins, indexing |
+
 ## Basic Examples
 
 ### Calculator

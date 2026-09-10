@@ -310,6 +310,15 @@ jobs:
 
 ## Language Features
 
+### Feature Examples
+
+A strictly-verified example per language feature lives in
+[`examples/features/`](examples/features) — guards, total branches, types and
+invariants, recursion, composition, literals, imports, FSM markers,
+properties, and collections. The whole corpus is a regression suite
+(`tests/test_issue_142_examples.py`) and is catalogued in the
+[examples gallery](docs/examples.md#feature-corpus-examplesfeatures).
+
 ### ANLU Blocks (Functions)
 
 Branches are explicit and total when they produce a value:

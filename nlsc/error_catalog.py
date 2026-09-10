@@ -52,6 +52,7 @@ ESEM009 = "ESEM009"
 ESEM010 = "ESEM010"
 ESEM011 = "ESEM011"
 ESEM012 = "ESEM012"
+ESEM013 = "ESEM013"
 
 
 @dataclass(frozen=True)
@@ -604,6 +605,19 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Bind a fresh name for the new value.",
             "Keep augmented assignments for atomized legacy code or model mutation explicitly.",
+        ),
+    ),
+    ESEM013: ErrorDefinition(
+        code=ESEM013,
+        title="Module name shadows a host-language stdlib module",
+        summary="The module compiles to a filename that collides with a Python standard-library module (collections, json, math, ...), so generated tests and runs can import the wrong file.",
+        emitted_by=("verify", "compile", "run", "test", "watch"),
+        common_causes=(
+            "A module named like a stdlib package (collections, types, enum, ...).",
+            "Generated <module>.py lands on PYTHONPATH ahead of the standard library.",
+        ),
+        next_steps=(
+            "Rename the module to something project-specific (for example 'lists' instead of 'collections').",
         ),
     ),
     ESEM001: ErrorDefinition(
