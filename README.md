@@ -181,6 +181,13 @@ nlsc compile src/payment.nl --strict   # fails until every step is executable
 nlsc ir src/payment.nl --strict        # same contract at the IR boundary
 ```
 
+**Cross-target conformance (Issue #202):** the TypeScript backend emits a small
+NLS runtime (structural equality, NLS truthiness, Python-compatible
+division/modulo) and translates expressions through the target-neutral IR, so
+values, falsy empty lists, `ZeroDivisionError`, and guard error identities
+behave identically under Python and Node. The semantic test suite runs against
+both targets in CI, including `tsc --strict` validation of every fixture.
+
 ### Global Options
 
 ```bash
