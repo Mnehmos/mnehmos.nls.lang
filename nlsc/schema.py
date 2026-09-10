@@ -109,6 +109,9 @@ class LogicStep:
     state_name: Optional[str] = None
     output_binding: Optional[str] = None
     condition: Optional[str] = None
+    # ELSE arm text for IF/THEN/ELSE steps (Issue #196); raw form,
+    # including its own output binding arrow.
+    else_action: Optional[str] = None
 
     # Source location (1-based) for IR spans and diagnostics
     line_number: int = 0

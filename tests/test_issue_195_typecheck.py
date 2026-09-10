@@ -190,8 +190,7 @@ PURPOSE: recurse
 INPUTS:
   - n: number
 LOGIC:
-  1. IF n <= 1 THEN n -> result
-  2. a = [fib](n - 1)
+  1. IF n <= 1 THEN n -> result ELSE n + [fib](n - 1) -> result
 RETURNS: result
 DEPENDS: [fib]
 
@@ -299,8 +298,7 @@ PURPOSE: fib
 INPUTS:
   - n: number
 LOGIC:
-  1. IF n <= 1 THEN n -> result
-  2. a = [fib](n - 1)
+  1. IF n <= 1 THEN n -> result ELSE n + [fib](n - 1) -> result
 RETURNS: result
 """
     result = check_module(parse_nl_file(source))

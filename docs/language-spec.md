@@ -177,7 +177,12 @@ LOGIC:
 Steps can include:
 
 - **Output binding**: `-> variable`
-- **Conditionals**: `IF condition THEN action`
+- **Conditionals**: `IF condition THEN action` and total branches
+  `IF condition THEN action ELSE action`. A value bound in only one arm
+  of a branch cannot be used afterwards (ESEM010) — make the branch
+  total with `ELSE ... -> name` so every path defines it. Bindings are
+  immutable in checked code; rebinding the same name is rejected under
+  `--strict` (ESEM011).
 - **State markers**: `[state] action`
 
 ### EDGE CASES

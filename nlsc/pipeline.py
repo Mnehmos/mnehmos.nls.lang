@@ -53,7 +53,19 @@ def _source_contains_logic_output_bindings(source: str) -> bool:
     return bool(re.search(r"^\s*\d+\.\s+.+(?:->|→)\s+.+$", normalized, re.MULTILINE))
 
 
+_ELSE_STEP_PATTERN = re.compile(
+    r"^\s*\d+\.\s+IF\s+.+?\s+THEN\s+.+?\s+ELSE\s+.+$",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
+def _source_contains_else_steps(source: str) -> bool:
+    return bool(_ELSE_STEP_PATTERN.search(normalize_localized_source(source)))
+
+
 def _tree_sitter_parse_needs_fallback(source: str, nl_file: NLFile) -> bool:
+    if _source_contains_else_steps(source):
+        return True
     if not nl_file.anlus and _source_contains_anlu_header(source):
         return True
     if _source_contains_test_blocks(source) and not nl_file.tests:
