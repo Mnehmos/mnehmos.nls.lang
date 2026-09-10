@@ -1058,9 +1058,11 @@ def lower_module(nl_file: NLFile, *, strict: bool = False) -> IRModule:
         source_path=nl_file.source_path,
     )
 
+    from .effects import populate_effect_sets
     from .failures import populate_failure_sets
 
     populate_failure_sets(module)
+    populate_effect_sets(module)
     return module
 
 

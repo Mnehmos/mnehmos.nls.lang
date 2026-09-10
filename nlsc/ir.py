@@ -576,6 +576,37 @@ class IRErrorSpec:
 
 
 @dataclass(frozen=True)
+class IREffectSpec:
+    """One entry in an operation's inferred effect set (#197).
+
+    Conservative by design: with no effect surface syntax yet, the only
+    entries are ``unknown`` markers for anything that could touch the
+    world (foreign calls, method calls, literal implementations).  An
+    empty analyzed set means provably-world-free *structural* code;
+    ``None`` still means *not analyzed* — never an implicit proof of
+    purity.
+    """
+
+    kind: str = "unknown"  # reserved: read | write | unknown
+    resource: Optional[str] = None  # reserved for resource identities
+    origin: str = "call"  # call | literal | callee
+
+    def sort_key(self) -> tuple[str, str, str]:
+        return (self.kind, self.resource or "", self.origin)
+
+    def render(self) -> str:
+        parts = [self.kind]
+        if self.resource:
+            parts.append(self.resource)
+        if self.origin:
+            parts.append(f"origin={self.origin}")
+        return f"(effect {' '.join(parts)})"
+
+    def to_json(self) -> dict[str, object]:
+        return {"kind": self.kind, "resource": self.resource, "origin": self.origin}
+
+
+@dataclass(frozen=True)
 class IRFailureSpec:
     """One entry in an operation's inferred failure set (#198).
 
@@ -901,7 +932,7 @@ class IROperation:
 
     # Contract slots populated by later passes.  None means *not analyzed* —
     # it is never implicit proof of purity or absence of failures.
-    effects: Optional[dict[str, object]] = None
+    effects: Optional[tuple[IREffectSpec, ...]] = None
     failures: Optional[tuple[IRFailureSpec, ...]] = None
     typestate: Optional[dict[str, object]] = None
 
@@ -927,7 +958,9 @@ class IROperation:
                 {"condition": c, "behavior": b} for c, b in self.edge_cases
             ]
         data["span"] = self.span.to_json() if self.span else None
-        data["effects"] = self.effects
+        data["effects"] = (
+            None if self.effects is None else [e.to_json() for e in self.effects]
+        )
         data["failures"] = (
             None
             if self.failures is None
@@ -1003,6 +1036,11 @@ def _render_operation(
         lines.append(f"{indent}{op.result.render()}")
     if op.depends:
         lines.append(f"{indent}(depends {' '.join(op.depends)})")
+    if op.effects is not None:
+        inner_effects = " ".join(effect.render() for effect in op.effects)
+        lines.append(
+            f"{indent}(effects {inner_effects})" if inner_effects else f"{indent}(effects)"
+        )
     if op.failures is not None:
         inner = " ".join(failure.render() for failure in op.failures)
         lines.append(f"{indent}(fails {inner})" if inner else f"{indent}(fails)")

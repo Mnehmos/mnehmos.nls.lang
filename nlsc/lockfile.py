@@ -109,13 +109,15 @@ def semantic_anlu_canonical(
 
     if canonical is None:
         operation, _diagnostics = lower_anlu(anlu, declared_types)
-        # Populate own failure entries so a module-less hash matches the
-        # full-module path for dependency-free operations.
+        # Populate own failure/effect entries so a module-less hash
+        # matches the full-module path for dependency-free operations.
+        from .effects import populate_effect_sets
         from .failures import populate_failure_sets
         from .ir import IRModule as _IRModule
 
         wrapper = _IRModule(module_name=anlu.identifier, operations=(operation,))
         populate_failure_sets(wrapper)
+        populate_effect_sets(wrapper)
         canonical = SEMANTIC_HASH_SCHEME + "\n" + operation_semantic_canonical(operation)
 
     if module is not None:

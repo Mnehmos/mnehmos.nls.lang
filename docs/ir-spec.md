@@ -72,6 +72,20 @@ number integer string boolean void any     primitives
 (<typeref> optional)                       nullable / optional
 ```
 
+### Effect sets (Issue #197, conservative slice)
+
+Operations also carry an analyzed ``effects`` set: ``(effects)`` for
+purely structural code, or ``unknown`` markers for foreign calls, method
+calls, and literal implementations, propagated to callers:
+
+```
+(effects (effect unknown origin=call) (effect unknown origin=callee))
+```
+
+``kind`` and ``resource`` are reserved for the read/write
+resource-identity syntax in the full #197 slice; ``None`` still means
+*not analyzed* and is never an implicit proof of purity.
+
 ### Failure sets (Issue #198)
 
 Every operation carries an analyzed ``fails`` set after lowering:
