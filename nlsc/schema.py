@@ -110,6 +110,9 @@ class LogicStep:
     output_binding: Optional[str] = None
     condition: Optional[str] = None
 
+    # Source location (1-based) for IR spans and diagnostics
+    line_number: int = 0
+
     @property
     def is_independent(self) -> bool:
         """True if this step has no dependencies on other steps"""

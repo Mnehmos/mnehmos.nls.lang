@@ -85,6 +85,7 @@ nav:
     - Specification: language-spec.md
     - Type System: type-system.md
     - Core Semantics: core-semantics.md
+    - IR Specification: ir-spec.md
     - Examples: examples.md
   - Case Studies:
     - "Quicksort — An Honest Review": case-studies/quicksort.md

@@ -36,6 +36,9 @@ EASSOC003 = "EASSOC003"
 EASSOC004 = "EASSOC004"
 EWATCH001 = "EWATCH001"
 EWATCH002 = "EWATCH002"
+EIR001 = "EIR001"
+EIR002 = "EIR002"
+EIR003 = "EIR003"
 
 
 @dataclass(frozen=True)
@@ -215,6 +218,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
             "watch",
             "lock:check",
             "lock:update",
+            "ir",
         ),
         common_causes=(
             "A required directive or section is malformed or missing.",
@@ -244,6 +248,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
             "watch",
             "lock:check",
             "lock:update",
+            "ir",
         ),
         common_causes=(
             "`--parser treesitter` was requested, but the optional tree-sitter dependency is not installed.",
@@ -544,6 +549,48 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Inspect the reported runtime message and the watched source file path.",
             "Fix the underlying environment or source issue, then save the file again to retrigger compilation.",
+        ),
+    ),
+    EIR001: ErrorDefinition(
+        code=EIR001,
+        title="IR expression could not be tokenized",
+        summary="Lowering to the target-neutral IR found an expression whose text cannot be split into tokens, usually an unterminated string literal or an invalid character.",
+        emitted_by=("ir", "compile --strict-ir", "verify --strict-ir"),
+        common_causes=(
+            "A string literal is missing its closing quote.",
+            "The expression contains characters outside the supported token set.",
+        ),
+        next_steps=(
+            "Balance the quotes in the reported expression and rerun.",
+            "Move narrative text into PURPOSE or a descriptive note instead of an executable step.",
+        ),
+    ),
+    EIR002: ErrorDefinition(
+        code=EIR002,
+        title="IR lowering kept an unsupported construct as foreign",
+        summary="An executable construct is outside the structurally supported IR core, so lowering preserved it verbatim as a foreign node with a diagnostic instead of silently emitting placeholders.",
+        emitted_by=("ir", "compile --strict-ir", "verify --strict-ir"),
+        common_causes=(
+            "The expression uses comprehension, ternary, f-string, lambda, or dict-literal syntax.",
+            "A LOGIC step binds an output to narrative prose with no executable action.",
+        ),
+        next_steps=(
+            "Rewrite the step with the supported core: literals, references, field/index access, calls, and binary/unary operators.",
+            "Declare genuinely target-specific code with @literal so it is carried as a sanctioned foreign implementation.",
+        ),
+    ),
+    EIR003: ErrorDefinition(
+        code=EIR003,
+        title="Module not eligible for checked emission",
+        summary="A module containing foreign (structurally unresolved) nodes cannot be treated as checked IR; emitters must not consume it as if it had been validated.",
+        emitted_by=("ir", "compile --strict-ir"),
+        common_causes=(
+            "Lowering produced foreign expression or statement nodes (see EIR002).",
+            "A later pass requested checked status without resolving all foreign content.",
+        ),
+        next_steps=(
+            "Resolve the reported foreign nodes by rewriting or declaring them @literal.",
+            "Rerun lowering and confirm no EIR002 diagnostics remain before requesting checked emission.",
         ),
     ),
 }

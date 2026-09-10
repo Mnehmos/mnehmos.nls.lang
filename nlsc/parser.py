@@ -647,6 +647,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                         logic_step = parse_logic_step(
                             step_num, step_text, logic_assigns
                         )
+                        logic_step.line_number = line_num
                         current_anlu.logic_steps.append(logic_step)
                         # Update assigns tracker
                         for var in logic_step.assigns:

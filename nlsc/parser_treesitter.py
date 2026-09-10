@@ -501,6 +501,7 @@ def _parse_logic_item(
         state_name=state_name,
         output_binding=output_binding,
         condition=condition,
+        line_number=(logic_step_node.start_point[0] + 1) if logic_step_node else 0,
     )
 
 
