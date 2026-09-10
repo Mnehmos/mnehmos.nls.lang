@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Optional
 
 from . import __version__
+from .ir import IROperation
 from .schema import NLFile, ANLU
 
 
@@ -63,13 +64,65 @@ def hash_content(content: str) -> str:
     return f"sha256:{hashlib.sha256(content.encode('utf-8')).hexdigest()[:12]}"
 
 
-def hash_anlu(anlu: ANLU) -> str:
-    """Generate deterministic hash of an ANLU"""
-    # Create canonical representation
-    canonical = f"{anlu.identifier}|{anlu.purpose}|{anlu.returns}"
-    canonical += "|" + ",".join(f"{i.name}:{i.type}" for i in anlu.inputs)
-    canonical += "|" + ",".join(anlu.depends)
-    return hash_content(canonical)
+# Semantic hash scheme marker.  Lock entries written before this scheme
+# (#193) used a partial identifier/purpose/returns string and never
+# compare equal to sem2 hashes; verify treats them as stale and the next
+# compile or `nlsc lock:update` regenerates them.
+SEMANTIC_HASH_SCHEME = "sem2"
+
+
+def semantic_anlu_canonical(
+    anlu: ANLU, module: Optional[NLFile] = None
+) -> str:
+    """Deterministic canonical form of an ANLU's executable semantics.
+
+    Built on the target-neutral IR lowering (#194): ordered LOGIC control,
+    guards with error payloads, input constraints, edge cases, result
+    contract, literals, and declared dependencies.  Narrative text
+    (PURPOSE, free notes) and source line spans are excluded so
+    documentation edits and reformatting do not change semantic identity.
+
+    When ``module`` is provided, the contract signatures of declared
+    dependencies are appended, so changing a dependency's signature
+    invalidates its callers too.
+    """
+    from .ir import operation_semantic_canonical
+    from .lowering import lower_anlu
+
+    declared_types = {t.name for t in module.module.types} if module else set()
+    operation, _diagnostics = lower_anlu(anlu, declared_types)
+    canonical = SEMANTIC_HASH_SCHEME + "\n" + operation_semantic_canonical(operation)
+
+    if module is not None:
+        by_id = {other.identifier: other for other in module.anlus}
+        for dep in anlu.depends:
+            dep_id = dep.strip("[]")
+            dependency = by_id.get(dep_id)
+            if dependency is None or dependency.identifier == anlu.identifier:
+                continue
+            dep_op, _ = lower_anlu(dependency, declared_types)
+            signature = _render_dependency_signature(dep_op)
+            canonical += "\n(dep " + dep_id + " " + signature + ")"
+
+    return canonical
+
+
+def _render_dependency_signature(operation: IROperation) -> str:
+    """Contract part of an operation: params and result only."""
+    parts = [param.render() for param in operation.params]
+    if operation.result is not None:
+        parts.append(operation.result.render())
+    return " ".join(parts)
+
+
+def hash_anlu(anlu: ANLU, module: Optional[NLFile] = None) -> str:
+    """Generate deterministic semantic hash of an ANLU (#193).
+
+    Covers all executable semantics and contracts; see
+    ``semantic_anlu_canonical``.  Pass the enclosing ``module`` to make
+    the hash sensitive to the signatures of declared dependencies.
+    """
+    return hash_content(semantic_anlu_canonical(anlu, module))
 
 
 def extract_function_code(
@@ -136,7 +189,7 @@ def generate_lockfile(
         anlu_code = extract_function_code(generated_code, func_name, target=target)
 
         module_lock.anlus[anlu.identifier] = ANLULock(
-            source_hash=hash_anlu(anlu),
+            source_hash=hash_anlu(anlu, nl_file),
             output_hash=hash_content(anlu_code)
             if anlu_code
             else hash_content(func_name),
@@ -425,7 +478,7 @@ def verify_lockfile(lockfile: Lockfile, nl_file: NLFile) -> list[str]:
             errors.append(f"ANLU {anlu.identifier} not in lockfile")
             continue
 
-        current_hash = hash_anlu(anlu)
+        current_hash = hash_anlu(anlu, nl_file)
         if current_hash != anlu_lock.source_hash:
             errors.append(f"ANLU {anlu.identifier} has changed since lock")
 
@@ -469,7 +522,7 @@ def rebuild_from_lockfile(
 
     for anlu in nl_file.anlus:
         anlu_lock = mod_lock.anlus.get(anlu.identifier)
-        current_hash = hash_anlu(anlu)
+        current_hash = hash_anlu(anlu, nl_file)
 
         if (
             anlu_lock

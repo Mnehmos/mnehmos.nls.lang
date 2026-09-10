@@ -100,16 +100,18 @@ INPUTS:
   - b: number
 RETURNS: a + b
 """
+        # Semantic identity (#193): PURPOSE rewording alone stays
+        # 'unchanged'; changing the result expression is a real change.
         modified_nl = """\
 @module test
 @target python
 
 [add]
-PURPOSE: Add two numbers together
+PURPOSE: Add two numbers
 INPUTS:
   - a: number
   - b: number
-RETURNS: a + b
+RETURNS: a - b
 """
         # Generate lockfile from original
         nl_file_orig = parse_nl_file(original_nl)

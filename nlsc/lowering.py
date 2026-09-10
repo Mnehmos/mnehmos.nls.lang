@@ -910,6 +910,7 @@ def _lower_input(input_: Input) -> IRParam:
         name=input_.name,
         type_ref=type_ref_from_text(input_.type),
         optional=optional,
+        constraints=tuple(input_.constraints),
     )
 
 
