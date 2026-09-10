@@ -760,6 +760,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#effect-sets-issue-197-conservative-slice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Effect sets (Issue #197, conservative slice)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#failure-sets-issue-198" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1437,6 +1448,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#effect-sets-issue-197-conservative-slice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Effect sets (Issue #197, conservative slice)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#failure-sets-issue-198" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1590,11 +1612,20 @@
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>(&lt;Name&gt;)                                   declared record type
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>(&lt;typeref&gt; optional)                       nullable / optional
 </span></code></pre></div>
+<h3 id="effect-sets-issue-197-conservative-slice">Effect sets (Issue #197, conservative slice)<a class="headerlink" href="#effect-sets-issue-197-conservative-slice" title="Permanent link">&para;</a></h3>
+<p>Operations also carry an analyzed <code>effects</code> set: <code>(effects)</code> for
+purely structural code, or <code>unknown</code> markers for foreign calls, method
+calls, and literal implementations, propagated to callers:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>(effects (effect unknown origin=call) (effect unknown origin=callee))
+</span></code></pre></div>
+<p><code>kind</code> and <code>resource</code> are reserved for the read/write
+resource-identity syntax in the full #197 slice; <code>None</code> still means
+<em>not analyzed</em> and is never an implicit proof of purity.</p>
 <h3 id="failure-sets-issue-198">Failure sets (Issue #198)<a class="headerlink" href="#failure-sets-issue-198" title="Permanent link">&para;</a></h3>
 <p>Every operation carries an analyzed <code>fails</code> set after lowering:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>(fails (fail ValueError code=MISSING "Token required" origin=guard)
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>       (fail ValueError "called" origin=callee)
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>       (fail unknown))
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>(fails (fail ValueError code=MISSING "Token required" origin=guard)
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>       (fail ValueError "called" origin=callee)
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>       (fail unknown))
 </span></code></pre></div>
 <ul>
 <li><code>origin=guard</code> — raised by one of the operation's guards (typed
