@@ -347,9 +347,12 @@ def create_temp_workdir(prefix: str, *, preferred_root: Path | None = None) -> P
     candidates: list[Path] = []
 
     if env_root:
-        candidates.append(Path(env_root))
+        candidates.append(Path(env_root).resolve())
     if preferred_root is not None:
-        preferred_root = Path(preferred_root)
+        # Always work with absolute paths: consumers run subprocesses with
+        # cwd set to the temp dir, and a relative result would resolve
+        # against the wrong base (#145 walkthrough regression).
+        preferred_root = Path(preferred_root).resolve()
         candidates.extend(
             [
                 preferred_root / "build" / "nlsc_tmp",
@@ -387,4 +390,4 @@ def create_temp_workdir(prefix: str, *, preferred_root: Path | None = None) -> P
         except OSError:
             continue
 
-    return _create_unique_dir(Path(os.environ.get("TMP", os.getcwd())))
+    return _create_unique_dir(Path(os.environ.get("TMP", os.getcwd())).resolve())

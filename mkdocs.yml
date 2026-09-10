@@ -74,6 +74,7 @@ validation:
 
 nav:
   - Home: index.md
+  - 15-Minute Quickstart: quickstart.md
   - Getting Started: getting-started.md
   - Tutorials:
     - Overview: tutorials/index.md
