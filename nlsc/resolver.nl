@@ -16,5 +16,7 @@ LOGIC:
 RETURNS: result
 
 [success]
-PURPOSE: Success operation
-RETURNS: len(self.errors) == 0
+PURPOSE: Report whether resolution finished without errors
+INPUTS:
+  - errors: list of string
+RETURNS: len(errors) == 0
