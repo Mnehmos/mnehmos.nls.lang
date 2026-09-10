@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -635,6 +635,34 @@
     
   
     Core Semantics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ir-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    IR Specification
   
 
     
@@ -1852,9 +1880,9 @@
 <h3 id="regex-parser-canonical-ast">Regex Parser (Canonical AST)<a class="headerlink" href="#regex-parser-canonical-ast" title="Permanent link">&para;</a></h3>
 <p>The regex parser uses pattern matching to tokenize and parse <code>.nl</code> files.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Pattern examples from parser.py</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">ANLU_START</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;^\[([a-z][a-z0-9.-]*)\]\s*$&quot;</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">DIRECTIVE</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;^@(module|version|target|imports)&quot;</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">SECTION</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;^(PURPOSE|INPUTS|GUARDS|LOGIC|RETURNS|DEPENDS|EDGE CASES):&quot;</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">ANLU_START</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"^\[([a-z][a-z0-9.-]*)\]\s*$"</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">DIRECTIVE</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"^@(module|version|target|imports)"</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">SECTION</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"^(PURPOSE|INPUTS|GUARDS|LOGIC|RETURNS|DEPENDS|EDGE CASES):"</span>
 </span></code></pre></div>
 <p><strong>Pros:</strong></p>
 <ul>
@@ -1931,7 +1959,7 @@
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">resolve_dependencies</span><span class="p">(</span><span class="n">nl_file</span><span class="p">)</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">errors</span><span class="p">:</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">error</span><span class="o">.</span><span class="n">anlu_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">error</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">error</span><span class="o">.</span><span class="n">anlu_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">error</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
 <h2 id="code-emission">Code Emission<a class="headerlink" href="#code-emission" title="Permanent link">&para;</a></h2>
@@ -1946,7 +1974,7 @@
 </span></code></pre></div>
 <p>Becomes:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Add two numbers.&quot;&quot;&quot;</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="sd">"""Add two numbers."""</span>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
 </span></code></pre></div>
 <h3 id="type-dataclass">@type → Dataclass<a class="headerlink" href="#type-dataclass" title="Permanent link">&para;</a></h3>
@@ -1958,36 +1986,36 @@
 <p>Becomes:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nd">@dataclass</span>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">Point</span><span class="p">:</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Point type.&quot;&quot;&quot;</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="sd">"""Point type."""</span>
 </span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">x</span><span class="p">:</span> <span class="nb">float</span>
 </span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">y</span><span class="p">:</span> <span class="nb">float</span>
 </span></code></pre></div>
 <h3 id="guards-validation">GUARDS → Validation<a class="headerlink" href="#guards-validation" title="Permanent link">&para;</a></h3>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>GUARDS:
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  - divisor must not be zero -&gt; ValueError(&quot;Cannot divide by zero&quot;)
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  - divisor must not be zero -&gt; ValueError("Cannot divide by zero")
 </span></code></pre></div>
 <p>Becomes:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">if</span> <span class="n">divisor</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot divide by zero&quot;</span><span class="p">)</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Cannot divide by zero"</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
 <h2 id="lockfile">Lockfile<a class="headerlink" href="#lockfile" title="Permanent link">&para;</a></h2>
 <p>Lockfiles ensure reproducible builds:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># example.nl.lock</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.0&quot;</span>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nt">source_hash</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a1b2c3...&quot;</span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="nt">target_hash</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;d4e5f6...&quot;</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">"1.0"</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nt">source_hash</span><span class="p">:</span><span class="w"> </span><span class="s">"a1b2c3..."</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="nt">target_hash</span><span class="p">:</span><span class="w"> </span><span class="s">"d4e5f6..."</span>
 </span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="nt">anlus</span><span class="p">:</span>
 </span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span><span class="nt">add</span><span class="p">:</span>
-</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">    </span><span class="nt">hash</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;abc123...&quot;</span>
-</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">    </span><span class="nt">inputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;a:</span><span class="nv"> </span><span class="s">number&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;b:</span><span class="nv"> </span><span class="s">number&quot;</span><span class="p p-Indicator">]</span>
-</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">    </span><span class="nt">returns</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">b&quot;</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">    </span><span class="nt">hash</span><span class="p">:</span><span class="w"> </span><span class="s">"abc123..."</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">    </span><span class="nt">inputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"a:</span><span class="nv"> </span><span class="s">number"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"b:</span><span class="nv"> </span><span class="s">number"</span><span class="p p-Indicator">]</span>
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">    </span><span class="nt">returns</span><span class="p">:</span><span class="w"> </span><span class="s">"a</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">b"</span>
 </span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">  </span><span class="nt">multiply</span><span class="p">:</span>
-</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">    </span><span class="nt">hash</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;def456...&quot;</span>
-</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">    </span><span class="nt">inputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;a:</span><span class="nv"> </span><span class="s">number&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;b:</span><span class="nv"> </span><span class="s">number&quot;</span><span class="p p-Indicator">]</span>
-</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">    </span><span class="nt">returns</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a</span><span class="nv"> </span><span class="s">×</span><span class="nv"> </span><span class="s">b&quot;</span>
-</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="nt">llm_backend</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;mock&quot;</span>
-</span><span id="__span-10-15"><a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="nt">compiled_at</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2024-01-15T10:30:00Z&quot;</span>
+</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">    </span><span class="nt">hash</span><span class="p">:</span><span class="w"> </span><span class="s">"def456..."</span>
+</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">    </span><span class="nt">inputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"a:</span><span class="nv"> </span><span class="s">number"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"b:</span><span class="nv"> </span><span class="s">number"</span><span class="p p-Indicator">]</span>
+</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">    </span><span class="nt">returns</span><span class="p">:</span><span class="w"> </span><span class="s">"a</span><span class="nv"> </span><span class="s">×</span><span class="nv"> </span><span class="s">b"</span>
+</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="nt">llm_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"mock"</span>
+</span><span id="__span-10-15"><a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="nt">compiled_at</span><span class="p">:</span><span class="w"> </span><span class="s">"2024-01-15T10:30:00Z"</span>
 </span></code></pre></div>
 <p>The lockfile enables:</p>
 <ul>
@@ -2121,7 +2149,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "navigation.instant", "content.code.copy", "content.code.annotate", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

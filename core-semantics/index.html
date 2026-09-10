@@ -16,14 +16,14 @@
         <link rel="prev" href="../type-system/">
       
       
-        <link rel="next" href="../examples/">
+        <link rel="next" href="../ir-spec/">
       
       
         
       
       
       <link rel="icon" href="../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1184,6 +1184,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ir-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    IR Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2443,7 +2471,7 @@
 <h3 id="conditionals">Conditionals<a class="headerlink" href="#conditionals" title="Permanent link">&para;</a></h3>
 <p>NLS uses guard conditions for early exit:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>GUARDS:
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  - amount &gt; 0 -&gt; ValueError(&quot;Amount must be positive&quot;)
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  - amount &gt; 0 -&gt; ValueError("Amount must be positive")
 </span></code></pre></div>
 <p>For inline conditionals in LOGIC:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>3. IF discount_rate &gt; 0 THEN apply discount -&gt; final
@@ -2575,7 +2603,7 @@
 <p>NLS uses typed errors raised through guards.</p>
 <h3 id="guard-errors">Guard Errors<a class="headerlink" href="#guard-errors" title="Permanent link">&para;</a></h3>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>GUARDS:
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  - token must not be empty -&gt; AuthError(MISSING, &quot;Token required&quot;)
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  - token must not be empty -&gt; AuthError(MISSING, "Token required")
 </span></code></pre></div>
 <p><strong>Components:</strong>
 1. <strong>Error Type</strong>: <code>AuthError</code>, <code>ValueError</code>, <code>ValidationError</code>
@@ -2708,11 +2736,11 @@
 </table>
 <h3 id="guards">Guards<a class="headerlink" href="#guards" title="Permanent link">&para;</a></h3>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>GUARDS:
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>  - amount &gt; 0 -&gt; ValueError(&quot;Message&quot;)
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>  - amount &gt; 0 -&gt; ValueError("Message")
 </span></code></pre></div>
 <p>Becomes:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">amount</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Message&quot;</span><span class="p">)</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Message"</span><span class="p">)</span>
 </span></code></pre></div>
 <h3 id="logic-steps">Logic Steps<a class="headerlink" href="#logic-steps" title="Permanent link">&para;</a></h3>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>LOGIC:
@@ -2733,7 +2761,7 @@
 - Properties → <code>fast-check</code> tests</p>
 <h3 id="result-type-option">Result Type Option<a class="headerlink" href="#result-type-option" title="Permanent link">&para;</a></h3>
 <p>Future version may support:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>@config error_model = &quot;result&quot;
+<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>@config error_model = "result"
 </span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
 </span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>[divide]
 </span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>RETURNS: Result&lt;number, DivisionError&gt;
@@ -2830,7 +2858,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "navigation.instant", "content.code.copy", "content.code.annotate", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

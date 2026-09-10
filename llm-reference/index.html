@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -635,6 +635,34 @@
     
   
     Core Semantics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ir-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    IR Specification
   
 
     
@@ -2325,7 +2353,7 @@
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>  - param1: type
 </span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>  - param2: type, optional
 </span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>GUARDS:
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  - condition -&gt; ErrorType(&quot;message&quot;)
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  - condition -&gt; ErrorType("message")
 </span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>LOGIC:
 </span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>  1. First step description -&gt; variable1
 </span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>  2. Second step description -&gt; variable2
@@ -2423,9 +2451,9 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 </span></code></pre></div></p>
 <p><strong>With descriptions:</strong>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>INPUTS:
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>  - income: number, &quot;Annual income in dollars&quot;
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>  - rate: number, &quot;Tax rate as decimal between 0 and 1&quot;
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>  - token: string, required, &quot;The JWT to validate&quot;
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>  - income: number, "Annual income in dollars"
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>  - rate: number, "Tax rate as decimal between 0 and 1"
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>  - token: string, required, "The JWT to validate"
 </span></code></pre></div></p>
 <p><strong>Complex types:</strong>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>INPUTS:
@@ -2444,23 +2472,23 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 <p>Preconditions that must be true, with error mappings.</p>
 <p><strong>Basic guard:</strong>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>GUARDS:
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>  - amount must be positive -&gt; ValueError(&quot;Amount must be positive&quot;)
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>  - amount must be positive -&gt; ValueError("Amount must be positive")
 </span></code></pre></div></p>
 <p><strong>Multiple guards:</strong>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>GUARDS:
-</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>  - divisor must not be zero -&gt; ValueError(&quot;Cannot divide by zero&quot;)
-</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>  - rate must be between 0 and 1 -&gt; ValueError(&quot;Rate out of range&quot;)
-</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>  - user must be authenticated -&gt; AuthError(&quot;Not authenticated&quot;)
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>  - divisor must not be zero -&gt; ValueError("Cannot divide by zero")
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>  - rate must be between 0 and 1 -&gt; ValueError("Rate out of range")
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>  - user must be authenticated -&gt; AuthError("Not authenticated")
 </span></code></pre></div></p>
 <p><strong>With error codes:</strong>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>GUARDS:
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>  - token must not be empty -&gt; AuthError(MISSING_TOKEN, &quot;Token required&quot;)
-</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>  - token must be valid format -&gt; AuthError(INVALID_FORMAT, &quot;Malformed token&quot;)
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>  - token must not be empty -&gt; AuthError(MISSING_TOKEN, "Token required")
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>  - token must be valid format -&gt; AuthError(INVALID_FORMAT, "Malformed token")
 </span></code></pre></div></p>
 <p><strong>Arrow styles (both valid):</strong>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>GUARDS:
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>  - condition -&gt; Error(&quot;message&quot;)     # ASCII arrow
-</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>  - condition → Error(&quot;message&quot;)      # Unicode arrow
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>  - condition -&gt; Error("message")     # ASCII arrow
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>  - condition → Error("message")      # Unicode arrow
 </span></code></pre></div></p>
 <h3 id="logic-section-optional">LOGIC Section (Optional)<a class="headerlink" href="#logic-section-optional" title="Permanent link">&para;</a></h3>
 <p>Numbered steps describing the algorithm. Steps can bind values to variables.</p>
@@ -2517,7 +2545,7 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 <p><strong>Complex expressions:</strong>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>RETURNS: (base + tax) * quantity
 </span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>RETURNS: Order(id=new_id, items=validated_items, total=calculated_total)
-</span><span id="__span-24-3"><a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>RETURNS: {&quot;status&quot;: &quot;success&quot;, &quot;data&quot;: result}
+</span><span id="__span-24-3"><a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>RETURNS: {"status": "success", "data": result}
 </span></code></pre></div></p>
 <p><strong>Conditional returns:</strong>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>RETURNS: discounted if is_premium else base
@@ -2612,7 +2640,7 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 </span><span id="__span-34-3"><a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>  email: string, required
 </span><span id="__span-34-4"><a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a>  name: string
 </span><span id="__span-34-5"><a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a>  age: number, optional
-</span><span id="__span-34-6"><a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a>  role: string, &quot;User&#39;s role in the system&quot;
+</span><span id="__span-34-6"><a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a>  role: string, "User's role in the system"
 </span><span id="__span-34-7"><a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a>}
 </span></code></pre></div></p>
 <p><strong>With inheritance:</strong>
@@ -2650,8 +2678,8 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 </span><span id="__span-37-14"><a id="__codelineno-37-14" name="__codelineno-37-14" href="#__codelineno-37-14"></a>@test [is-empty] {
 </span><span id="__span-37-15"><a id="__codelineno-37-15" name="__codelineno-37-15" href="#__codelineno-37-15"></a>  is_empty([]) == True
 </span><span id="__span-37-16"><a id="__codelineno-37-16" name="__codelineno-37-16" href="#__codelineno-37-16"></a>  is_empty([1]) == False
-</span><span id="__span-37-17"><a id="__codelineno-37-17" name="__codelineno-37-17" href="#__codelineno-37-17"></a>  is_empty(&quot;&quot;) == True
-</span><span id="__span-37-18"><a id="__codelineno-37-18" name="__codelineno-37-18" href="#__codelineno-37-18"></a>  is_empty(&quot;hello&quot;) == False
+</span><span id="__span-37-17"><a id="__codelineno-37-17" name="__codelineno-37-17" href="#__codelineno-37-17"></a>  is_empty("") == True
+</span><span id="__span-37-18"><a id="__codelineno-37-18" name="__codelineno-37-18" href="#__codelineno-37-18"></a>  is_empty("hello") == False
 </span><span id="__span-37-19"><a id="__codelineno-37-19" name="__codelineno-37-19" href="#__codelineno-37-19"></a>}
 </span></code></pre></div>
 <h3 id="property-blocks">@property Blocks<a class="headerlink" href="#property-blocks" title="Permanent link">&para;</a></h3>
@@ -2692,7 +2720,7 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 </span><span id="__span-41-12"><a id="__codelineno-41-12" name="__codelineno-41-12" href="#__codelineno-41-12"></a>@invariant Order {
 </span><span id="__span-41-13"><a id="__codelineno-41-13" name="__codelineno-41-13" href="#__codelineno-41-13"></a>  len(items) &gt; 0
 </span><span id="__span-41-14"><a id="__codelineno-41-14" name="__codelineno-41-14" href="#__codelineno-41-14"></a>  total &gt;= 0
-</span><span id="__span-41-15"><a id="__codelineno-41-15" name="__codelineno-41-15" href="#__codelineno-41-15"></a>  status in [&quot;pending&quot;, &quot;processing&quot;, &quot;shipped&quot;, &quot;delivered&quot;]
+</span><span id="__span-41-15"><a id="__codelineno-41-15" name="__codelineno-41-15" href="#__codelineno-41-15"></a>  status in ["pending", "processing", "shipped", "delivered"]
 </span><span id="__span-41-16"><a id="__codelineno-41-16" name="__codelineno-41-16" href="#__codelineno-41-16"></a>}
 </span></code></pre></div>
 <hr />
@@ -2707,11 +2735,11 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 </span><span id="__span-42-7"><a id="__codelineno-42-7" name="__codelineno-42-7" href="#__codelineno-42-7"></a>import re
 </span><span id="__span-42-8"><a id="__codelineno-42-8" name="__codelineno-42-8" href="#__codelineno-42-8"></a>
 </span><span id="__span-42-9"><a id="__codelineno-42-9" name="__codelineno-42-9" href="#__codelineno-42-9"></a>def slugify(text: str) -&gt; str:
-</span><span id="__span-42-10"><a id="__codelineno-42-10" name="__codelineno-42-10" href="#__codelineno-42-10"></a>    &quot;&quot;&quot;Convert text to URL-friendly slug format.&quot;&quot;&quot;
+</span><span id="__span-42-10"><a id="__codelineno-42-10" name="__codelineno-42-10" href="#__codelineno-42-10"></a>    """Convert text to URL-friendly slug format."""
 </span><span id="__span-42-11"><a id="__codelineno-42-11" name="__codelineno-42-11" href="#__codelineno-42-11"></a>    text = text.lower().strip()
-</span><span id="__span-42-12"><a id="__codelineno-42-12" name="__codelineno-42-12" href="#__codelineno-42-12"></a>    text = re.sub(r&#39;\s+&#39;, &#39;-&#39;, text)
-</span><span id="__span-42-13"><a id="__codelineno-42-13" name="__codelineno-42-13" href="#__codelineno-42-13"></a>    text = re.sub(r&#39;[^a-z0-9-]&#39;, &#39;&#39;, text)
-</span><span id="__span-42-14"><a id="__codelineno-42-14" name="__codelineno-42-14" href="#__codelineno-42-14"></a>    return text.strip(&#39;-&#39;)
+</span><span id="__span-42-12"><a id="__codelineno-42-12" name="__codelineno-42-12" href="#__codelineno-42-12"></a>    text = re.sub(r'\s+', '-', text)
+</span><span id="__span-42-13"><a id="__codelineno-42-13" name="__codelineno-42-13" href="#__codelineno-42-13"></a>    text = re.sub(r'[^a-z0-9-]', '', text)
+</span><span id="__span-42-14"><a id="__codelineno-42-14" name="__codelineno-42-14" href="#__codelineno-42-14"></a>    return text.strip('-')
 </span><span id="__span-42-15"><a id="__codelineno-42-15" name="__codelineno-42-15" href="#__codelineno-42-15"></a>}
 </span></code></pre></div>
 <p><strong>When to use:</strong>
@@ -2753,7 +2781,7 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 </span><span id="__span-43-29"><a id="__codelineno-43-29" name="__codelineno-43-29" href="#__codelineno-43-29"></a>  - numerator: number
 </span><span id="__span-43-30"><a id="__codelineno-43-30" name="__codelineno-43-30" href="#__codelineno-43-30"></a>  - divisor: number
 </span><span id="__span-43-31"><a id="__codelineno-43-31" name="__codelineno-43-31" href="#__codelineno-43-31"></a>GUARDS:
-</span><span id="__span-43-32"><a id="__codelineno-43-32" name="__codelineno-43-32" href="#__codelineno-43-32"></a>  - divisor must not be zero -&gt; ValueError(&quot;Cannot divide by zero&quot;)
+</span><span id="__span-43-32"><a id="__codelineno-43-32" name="__codelineno-43-32" href="#__codelineno-43-32"></a>  - divisor must not be zero -&gt; ValueError("Cannot divide by zero")
 </span><span id="__span-43-33"><a id="__codelineno-43-33" name="__codelineno-43-33" href="#__codelineno-43-33"></a>RETURNS: numerator / divisor
 </span><span id="__span-43-34"><a id="__codelineno-43-34" name="__codelineno-43-34" href="#__codelineno-43-34"></a>
 </span><span id="__span-43-35"><a id="__codelineno-43-35" name="__codelineno-43-35" href="#__codelineno-43-35"></a>@test [add] {
@@ -2794,18 +2822,18 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 </span><span id="__span-44-19"><a id="__codelineno-44-19" name="__codelineno-44-19" href="#__codelineno-44-19"></a>[validate-token]
 </span><span id="__span-44-20"><a id="__codelineno-44-20" name="__codelineno-44-20" href="#__codelineno-44-20"></a>PURPOSE: Validate a JWT token and extract user information
 </span><span id="__span-44-21"><a id="__codelineno-44-21" name="__codelineno-44-21" href="#__codelineno-44-21"></a>INPUTS:
-</span><span id="__span-44-22"><a id="__codelineno-44-22" name="__codelineno-44-22" href="#__codelineno-44-22"></a>  - token: string, required, &quot;The JWT to validate&quot;
-</span><span id="__span-44-23"><a id="__codelineno-44-23" name="__codelineno-44-23" href="#__codelineno-44-23"></a>  - secret: string, required, &quot;Secret key for verification&quot;
+</span><span id="__span-44-22"><a id="__codelineno-44-22" name="__codelineno-44-22" href="#__codelineno-44-22"></a>  - token: string, required, "The JWT to validate"
+</span><span id="__span-44-23"><a id="__codelineno-44-23" name="__codelineno-44-23" href="#__codelineno-44-23"></a>  - secret: string, required, "Secret key for verification"
 </span><span id="__span-44-24"><a id="__codelineno-44-24" name="__codelineno-44-24" href="#__codelineno-44-24"></a>GUARDS:
-</span><span id="__span-44-25"><a id="__codelineno-44-25" name="__codelineno-44-25" href="#__codelineno-44-25"></a>  - token must not be empty -&gt; AuthError(MISSING_TOKEN, &quot;Token required&quot;)
-</span><span id="__span-44-26"><a id="__codelineno-44-26" name="__codelineno-44-26" href="#__codelineno-44-26"></a>  - token must be valid JWT format -&gt; AuthError(INVALID_FORMAT, &quot;Malformed token&quot;)
+</span><span id="__span-44-25"><a id="__codelineno-44-25" name="__codelineno-44-25" href="#__codelineno-44-25"></a>  - token must not be empty -&gt; AuthError(MISSING_TOKEN, "Token required")
+</span><span id="__span-44-26"><a id="__codelineno-44-26" name="__codelineno-44-26" href="#__codelineno-44-26"></a>  - token must be valid JWT format -&gt; AuthError(INVALID_FORMAT, "Malformed token")
 </span><span id="__span-44-27"><a id="__codelineno-44-27" name="__codelineno-44-27" href="#__codelineno-44-27"></a>LOGIC:
 </span><span id="__span-44-28"><a id="__codelineno-44-28" name="__codelineno-44-28" href="#__codelineno-44-28"></a>  1. Decode the token header without verification -&gt; header
 </span><span id="__span-44-29"><a id="__codelineno-44-29" name="__codelineno-44-29" href="#__codelineno-44-29"></a>  2. Verify the signature using the secret -&gt; is_valid
 </span><span id="__span-44-30"><a id="__codelineno-44-30" name="__codelineno-44-30" href="#__codelineno-44-30"></a>  3. IF not is_valid THEN raise AuthError
 </span><span id="__span-44-31"><a id="__codelineno-44-31" name="__codelineno-44-31" href="#__codelineno-44-31"></a>  4. Extract the payload claims -&gt; payload
 </span><span id="__span-44-32"><a id="__codelineno-44-32" name="__codelineno-44-32" href="#__codelineno-44-32"></a>  5. Check if token has expired -&gt; is_expired
-</span><span id="__span-44-33"><a id="__codelineno-44-33" name="__codelineno-44-33" href="#__codelineno-44-33"></a>  6. IF is_expired THEN raise AuthError(EXPIRED, &quot;Token has expired&quot;)
+</span><span id="__span-44-33"><a id="__codelineno-44-33" name="__codelineno-44-33" href="#__codelineno-44-33"></a>  6. IF is_expired THEN raise AuthError(EXPIRED, "Token has expired")
 </span><span id="__span-44-34"><a id="__codelineno-44-34" name="__codelineno-44-34" href="#__codelineno-44-34"></a>RETURNS: AuthToken(user_id=payload.sub, expires_at=payload.exp, scopes=payload.scopes)
 </span><span id="__span-44-35"><a id="__codelineno-44-35" name="__codelineno-44-35" href="#__codelineno-44-35"></a>DEPENDS: none
 </span><span id="__span-44-36"><a id="__codelineno-44-36" name="__codelineno-44-36" href="#__codelineno-44-36"></a>
@@ -2815,13 +2843,13 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 </span><span id="__span-44-40"><a id="__codelineno-44-40" name="__codelineno-44-40" href="#__codelineno-44-40"></a>  - user: User
 </span><span id="__span-44-41"><a id="__codelineno-44-41" name="__codelineno-44-41" href="#__codelineno-44-41"></a>  - required_role: string
 </span><span id="__span-44-42"><a id="__codelineno-44-42" name="__codelineno-44-42" href="#__codelineno-44-42"></a>GUARDS:
-</span><span id="__span-44-43"><a id="__codelineno-44-43" name="__codelineno-44-43" href="#__codelineno-44-43"></a>  - user must not be None -&gt; AuthError(&quot;User required&quot;)
-</span><span id="__span-44-44"><a id="__codelineno-44-44" name="__codelineno-44-44" href="#__codelineno-44-44"></a>  - user.role must equal required_role -&gt; AuthError(FORBIDDEN, &quot;Insufficient permissions&quot;)
+</span><span id="__span-44-43"><a id="__codelineno-44-43" name="__codelineno-44-43" href="#__codelineno-44-43"></a>  - user must not be None -&gt; AuthError("User required")
+</span><span id="__span-44-44"><a id="__codelineno-44-44" name="__codelineno-44-44" href="#__codelineno-44-44"></a>  - user.role must equal required_role -&gt; AuthError(FORBIDDEN, "Insufficient permissions")
 </span><span id="__span-44-45"><a id="__codelineno-44-45" name="__codelineno-44-45" href="#__codelineno-44-45"></a>RETURNS: True
 </span><span id="__span-44-46"><a id="__codelineno-44-46" name="__codelineno-44-46" href="#__codelineno-44-46"></a>DEPENDS: [validate-token]
 </span><span id="__span-44-47"><a id="__codelineno-44-47" name="__codelineno-44-47" href="#__codelineno-44-47"></a>
 </span><span id="__span-44-48"><a id="__codelineno-44-48" name="__codelineno-44-48" href="#__codelineno-44-48"></a>@test [require-role] {
-</span><span id="__span-44-49"><a id="__codelineno-44-49" name="__codelineno-44-49" href="#__codelineno-44-49"></a>  require_role(User(id=&quot;1&quot;, email=&quot;a@b.c&quot;, name=&quot;Test&quot;, role=&quot;admin&quot;), &quot;admin&quot;) == True
+</span><span id="__span-44-49"><a id="__codelineno-44-49" name="__codelineno-44-49" href="#__codelineno-44-49"></a>  require_role(User(id="1", email="a@b.c", name="Test", role="admin"), "admin") == True
 </span><span id="__span-44-50"><a id="__codelineno-44-50" name="__codelineno-44-50" href="#__codelineno-44-50"></a>}
 </span></code></pre></div>
 <h3 id="example-3-order-processing-with-fsm">Example 3: Order Processing with FSM<a class="headerlink" href="#example-3-order-processing-with-fsm" title="Permanent link">&para;</a></h3>
@@ -2853,8 +2881,8 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 </span><span id="__span-45-26"><a id="__codelineno-45-26" name="__codelineno-45-26" href="#__codelineno-45-26"></a>INPUTS:
 </span><span id="__span-45-27"><a id="__codelineno-45-27" name="__codelineno-45-27" href="#__codelineno-45-27"></a>  - order: Order
 </span><span id="__span-45-28"><a id="__codelineno-45-28" name="__codelineno-45-28" href="#__codelineno-45-28"></a>GUARDS:
-</span><span id="__span-45-29"><a id="__codelineno-45-29" name="__codelineno-45-29" href="#__codelineno-45-29"></a>  - order must not be None -&gt; ValueError(&quot;Order required&quot;)
-</span><span id="__span-45-30"><a id="__codelineno-45-30" name="__codelineno-45-30" href="#__codelineno-45-30"></a>  - order.items must not be empty -&gt; ValueError(&quot;Order must have items&quot;)
+</span><span id="__span-45-29"><a id="__codelineno-45-29" name="__codelineno-45-29" href="#__codelineno-45-29"></a>  - order must not be None -&gt; ValueError("Order required")
+</span><span id="__span-45-30"><a id="__codelineno-45-30" name="__codelineno-45-30" href="#__codelineno-45-30"></a>  - order.items must not be empty -&gt; ValueError("Order must have items")
 </span><span id="__span-45-31"><a id="__codelineno-45-31" name="__codelineno-45-31" href="#__codelineno-45-31"></a>LOGIC:
 </span><span id="__span-45-32"><a id="__codelineno-45-32" name="__codelineno-45-32" href="#__codelineno-45-32"></a>  1. [pending] Validate order details -&gt; validated_order
 </span><span id="__span-45-33"><a id="__codelineno-45-33" name="__codelineno-45-33" href="#__codelineno-45-33"></a>  2. [validating] Check inventory for all items -&gt; inventory_check
@@ -2864,8 +2892,8 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 </span><span id="__span-45-37"><a id="__codelineno-45-37" name="__codelineno-45-37" href="#__codelineno-45-37"></a>  6. [paid] IF payment.success THEN create shipment -&gt; shipment
 </span><span id="__span-45-38"><a id="__codelineno-45-38" name="__codelineno-45-38" href="#__codelineno-45-38"></a>  7. [shipped] Update order status to shipped -&gt; updated_order
 </span><span id="__span-45-39"><a id="__codelineno-45-39" name="__codelineno-45-39" href="#__codelineno-45-39"></a>EDGE CASES:
-</span><span id="__span-45-40"><a id="__codelineno-45-40" name="__codelineno-45-40" href="#__codelineno-45-40"></a>  - Inventory not available -&gt; return order with status &quot;backordered&quot;
-</span><span id="__span-45-41"><a id="__codelineno-45-41" name="__codelineno-45-41" href="#__codelineno-45-41"></a>  - Payment failed -&gt; return order with status &quot;payment_failed&quot;
+</span><span id="__span-45-40"><a id="__codelineno-45-40" name="__codelineno-45-40" href="#__codelineno-45-40"></a>  - Inventory not available -&gt; return order with status "backordered"
+</span><span id="__span-45-41"><a id="__codelineno-45-41" name="__codelineno-45-41" href="#__codelineno-45-41"></a>  - Payment failed -&gt; return order with status "payment_failed"
 </span><span id="__span-45-42"><a id="__codelineno-45-42" name="__codelineno-45-42" href="#__codelineno-45-42"></a>RETURNS: updated_order
 </span><span id="__span-45-43"><a id="__codelineno-45-43" name="__codelineno-45-43" href="#__codelineno-45-43"></a>DEPENDS: [validate-order], [check-inventory], [calculate-total]
 </span><span id="__span-45-44"><a id="__codelineno-45-44" name="__codelineno-45-44" href="#__codelineno-45-44"></a>
@@ -2873,8 +2901,8 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 </span><span id="__span-45-46"><a id="__codelineno-45-46" name="__codelineno-45-46" href="#__codelineno-45-46"></a>PURPOSE: Calculate order total including taxes and discounts
 </span><span id="__span-45-47"><a id="__codelineno-45-47" name="__codelineno-45-47" href="#__codelineno-45-47"></a>INPUTS:
 </span><span id="__span-45-48"><a id="__codelineno-45-48" name="__codelineno-45-48" href="#__codelineno-45-48"></a>  - items: list of OrderItem
-</span><span id="__span-45-49"><a id="__codelineno-45-49" name="__codelineno-45-49" href="#__codelineno-45-49"></a>  - tax_rate: number, &quot;Tax rate as decimal&quot;
-</span><span id="__span-45-50"><a id="__codelineno-45-50" name="__codelineno-45-50" href="#__codelineno-45-50"></a>  - discount: number, optional, &quot;Discount percentage&quot;
+</span><span id="__span-45-49"><a id="__codelineno-45-49" name="__codelineno-45-49" href="#__codelineno-45-49"></a>  - tax_rate: number, "Tax rate as decimal"
+</span><span id="__span-45-50"><a id="__codelineno-45-50" name="__codelineno-45-50" href="#__codelineno-45-50"></a>  - discount: number, optional, "Discount percentage"
 </span><span id="__span-45-51"><a id="__codelineno-45-51" name="__codelineno-45-51" href="#__codelineno-45-51"></a>LOGIC:
 </span><span id="__span-45-52"><a id="__codelineno-45-52" name="__codelineno-45-52" href="#__codelineno-45-52"></a>  1. Sum the price of all items -&gt; subtotal
 </span><span id="__span-45-53"><a id="__codelineno-45-53" name="__codelineno-45-53" href="#__codelineno-45-53"></a>  2. IF discount THEN apply discount percentage -&gt; discounted
@@ -3013,8 +3041,8 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 </span><span id="__span-46-3"><a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a>INPUTS:
 </span><span id="__span-46-4"><a id="__codelineno-46-4" name="__codelineno-46-4" href="#__codelineno-46-4"></a>  - email: string
 </span><span id="__span-46-5"><a id="__codelineno-46-5" name="__codelineno-46-5" href="#__codelineno-46-5"></a>GUARDS:
-</span><span id="__span-46-6"><a id="__codelineno-46-6" name="__codelineno-46-6" href="#__codelineno-46-6"></a>  - email must not be empty -&gt; ValueError(&quot;Email required&quot;)
-</span><span id="__span-46-7"><a id="__codelineno-46-7" name="__codelineno-46-7" href="#__codelineno-46-7"></a>  - email must contain @ symbol -&gt; ValueError(&quot;Invalid email format&quot;)
+</span><span id="__span-46-6"><a id="__codelineno-46-6" name="__codelineno-46-6" href="#__codelineno-46-6"></a>  - email must not be empty -&gt; ValueError("Email required")
+</span><span id="__span-46-7"><a id="__codelineno-46-7" name="__codelineno-46-7" href="#__codelineno-46-7"></a>  - email must contain @ symbol -&gt; ValueError("Invalid email format")
 </span><span id="__span-46-8"><a id="__codelineno-46-8" name="__codelineno-46-8" href="#__codelineno-46-8"></a>RETURNS: True
 </span></code></pre></div>
 <h3 id="factory-function">Factory Function<a class="headerlink" href="#factory-function" title="Permanent link">&para;</a></h3>
@@ -3035,7 +3063,7 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 </span><span id="__span-48-2"><a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a>PURPOSE: Format a number as currency string
 </span><span id="__span-48-3"><a id="__codelineno-48-3" name="__codelineno-48-3" href="#__codelineno-48-3"></a>INPUTS:
 </span><span id="__span-48-4"><a id="__codelineno-48-4" name="__codelineno-48-4" href="#__codelineno-48-4"></a>  - amount: number
-</span><span id="__span-48-5"><a id="__codelineno-48-5" name="__codelineno-48-5" href="#__codelineno-48-5"></a>  - currency: string, optional, &quot;Currency code (default: USD)&quot;
+</span><span id="__span-48-5"><a id="__codelineno-48-5" name="__codelineno-48-5" href="#__codelineno-48-5"></a>  - currency: string, optional, "Currency code (default: USD)"
 </span><span id="__span-48-6"><a id="__codelineno-48-6" name="__codelineno-48-6" href="#__codelineno-48-6"></a>LOGIC:
 </span><span id="__span-48-7"><a id="__codelineno-48-7" name="__codelineno-48-7" href="#__codelineno-48-7"></a>  1. Round to two decimal places -&gt; rounded
 </span><span id="__span-48-8"><a id="__codelineno-48-8" name="__codelineno-48-8" href="#__codelineno-48-8"></a>  2. Format with thousands separator -&gt; formatted
@@ -3048,7 +3076,7 @@ Planned: <code>typescript</code>, <code>rust</code></p>
 </span><span id="__span-49-3"><a id="__codelineno-49-3" name="__codelineno-49-3" href="#__codelineno-49-3"></a>INPUTS:
 </span><span id="__span-49-4"><a id="__codelineno-49-4" name="__codelineno-49-4" href="#__codelineno-49-4"></a>  - numbers: list of number
 </span><span id="__span-49-5"><a id="__codelineno-49-5" name="__codelineno-49-5" href="#__codelineno-49-5"></a>GUARDS:
-</span><span id="__span-49-6"><a id="__codelineno-49-6" name="__codelineno-49-6" href="#__codelineno-49-6"></a>  - numbers must not be empty -&gt; ValueError(&quot;Cannot average empty list&quot;)
+</span><span id="__span-49-6"><a id="__codelineno-49-6" name="__codelineno-49-6" href="#__codelineno-49-6"></a>  - numbers must not be empty -&gt; ValueError("Cannot average empty list")
 </span><span id="__span-49-7"><a id="__codelineno-49-7" name="__codelineno-49-7" href="#__codelineno-49-7"></a>LOGIC:
 </span><span id="__span-49-8"><a id="__codelineno-49-8" name="__codelineno-49-8" href="#__codelineno-49-8"></a>  1. Sum all numbers -&gt; total
 </span><span id="__span-49-9"><a id="__codelineno-49-9" name="__codelineno-49-9" href="#__codelineno-49-9"></a>  2. Count the numbers -&gt; count
@@ -3267,7 +3295,7 @@ Planned: <code>typescript</code>, <code>rust</code></p>
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "navigation.instant", "content.code.copy", "content.code.annotate", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://mnehmos.github.io/mnehmos.nls.lang/examples/">
       
       
-        <link rel="prev" href="../core-semantics/">
+        <link rel="prev" href="../ir-spec/">
       
       
         <link rel="next" href="../case-studies/quicksort/">
@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -635,6 +635,34 @@
     
   
     Core Semantics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ir-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    IR Specification
   
 
     
@@ -1581,7 +1609,7 @@
 </span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>  - numerator: number
 </span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>  - divisor: number
 </span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>GUARDS:
-</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>  - divisor must not be zero -&gt; ValueError(&quot;Cannot divide by zero&quot;)
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>  - divisor must not be zero -&gt; ValueError("Cannot divide by zero")
 </span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>RETURNS: numerator / divisor
 </span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>
 </span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>[power]
@@ -1624,11 +1652,11 @@
 </span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>import re
 </span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
 </span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>def slugify(text: str) -&gt; str:
-</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    &quot;&quot;&quot;Convert text to URL-friendly slug format.&quot;&quot;&quot;
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    """Convert text to URL-friendly slug format."""
 </span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    text = text.lower().strip()
-</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    text = re.sub(r&#39;\s+&#39;, &#39;-&#39;, text)
-</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    text = re.sub(r&#39;[^a-z0-9-]&#39;, &#39;&#39;, text)
-</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    return text.strip(&#39;-&#39;)
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    text = re.sub(r'\s+', '-', text)
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    text = re.sub(r'[^a-z0-9-]', '', text)
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    return text.strip('-')
 </span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>}
 </span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>
 </span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>[truncate]
@@ -1636,11 +1664,11 @@
 </span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>INPUTS:
 </span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>  - text: string
 </span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>  - max_length: number
-</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>  - suffix: string, optional, &quot;Suffix to append (default: ...)&quot;
+</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>  - suffix: string, optional, "Suffix to append (default: ...)"
 </span><span id="__span-1-28"><a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>GUARDS:
-</span><span id="__span-1-29"><a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>  - max_length must be at least 1 -&gt; ValueError(&quot;Max length must be positive&quot;)
+</span><span id="__span-1-29"><a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>  - max_length must be at least 1 -&gt; ValueError("Max length must be positive")
 </span><span id="__span-1-30"><a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>LOGIC:
-</span><span id="__span-1-31"><a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>  1. Use suffix or default to &quot;...&quot; -&gt; actual_suffix
+</span><span id="__span-1-31"><a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>  1. Use suffix or default to "..." -&gt; actual_suffix
 </span><span id="__span-1-32"><a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>  2. IF text length &lt;= max_length THEN return text unchanged
 </span><span id="__span-1-33"><a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>  3. Calculate truncation point -&gt; cut_point
 </span><span id="__span-1-34"><a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>  4. Slice text and append suffix -&gt; result
@@ -1659,19 +1687,19 @@
 </span><span id="__span-1-47"><a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>RETURNS: text[::-1]
 </span><span id="__span-1-48"><a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>
 </span><span id="__span-1-49"><a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a>@test [slugify] {
-</span><span id="__span-1-50"><a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>  slugify(&quot;Hello World&quot;) == &quot;hello-world&quot;
-</span><span id="__span-1-51"><a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>  slugify(&quot;  Multiple   Spaces  &quot;) == &quot;multiple-spaces&quot;
-</span><span id="__span-1-52"><a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>  slugify(&quot;Special!@#Characters&quot;) == &quot;specialcharacters&quot;
+</span><span id="__span-1-50"><a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>  slugify("Hello World") == "hello-world"
+</span><span id="__span-1-51"><a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>  slugify("  Multiple   Spaces  ") == "multiple-spaces"
+</span><span id="__span-1-52"><a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>  slugify("Special!@#Characters") == "specialcharacters"
 </span><span id="__span-1-53"><a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a>}
 </span><span id="__span-1-54"><a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a>
 </span><span id="__span-1-55"><a id="__codelineno-1-55" name="__codelineno-1-55" href="#__codelineno-1-55"></a>@test [truncate] {
-</span><span id="__span-1-56"><a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a>  truncate(&quot;Hello World&quot;, 5) == &quot;He...&quot;
-</span><span id="__span-1-57"><a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a>  truncate(&quot;Hi&quot;, 10) == &quot;Hi&quot;
+</span><span id="__span-1-56"><a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a>  truncate("Hello World", 5) == "He..."
+</span><span id="__span-1-57"><a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a>  truncate("Hi", 10) == "Hi"
 </span><span id="__span-1-58"><a id="__codelineno-1-58" name="__codelineno-1-58" href="#__codelineno-1-58"></a>}
 </span><span id="__span-1-59"><a id="__codelineno-1-59" name="__codelineno-1-59" href="#__codelineno-1-59"></a>
 </span><span id="__span-1-60"><a id="__codelineno-1-60" name="__codelineno-1-60" href="#__codelineno-1-60"></a>@test [reverse] {
-</span><span id="__span-1-61"><a id="__codelineno-1-61" name="__codelineno-1-61" href="#__codelineno-1-61"></a>  reverse(&quot;hello&quot;) == &quot;olleh&quot;
-</span><span id="__span-1-62"><a id="__codelineno-1-62" name="__codelineno-1-62" href="#__codelineno-1-62"></a>  reverse(&quot;&quot;) == &quot;&quot;
+</span><span id="__span-1-61"><a id="__codelineno-1-61" name="__codelineno-1-61" href="#__codelineno-1-61"></a>  reverse("hello") == "olleh"
+</span><span id="__span-1-62"><a id="__codelineno-1-62" name="__codelineno-1-62" href="#__codelineno-1-62"></a>  reverse("") == ""
 </span><span id="__span-1-63"><a id="__codelineno-1-63" name="__codelineno-1-63" href="#__codelineno-1-63"></a>}
 </span></code></pre></div>
 <hr />
@@ -1710,7 +1738,7 @@
 </span><span id="__span-2-30"><a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a>@invariant Order {
 </span><span id="__span-2-31"><a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a>  len(items) &gt; 0
 </span><span id="__span-2-32"><a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a>  total &gt;= 0
-</span><span id="__span-2-33"><a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a>  status in [&quot;pending&quot;, &quot;confirmed&quot;, &quot;shipped&quot;, &quot;delivered&quot;, &quot;cancelled&quot;]
+</span><span id="__span-2-33"><a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a>  status in ["pending", "confirmed", "shipped", "delivered", "cancelled"]
 </span><span id="__span-2-34"><a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a>}
 </span><span id="__span-2-35"><a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a>
 </span><span id="__span-2-36"><a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a># Product Operations
@@ -1723,16 +1751,16 @@
 </span><span id="__span-2-43"><a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a>  - initial_stock: number, optional
 </span><span id="__span-2-44"><a id="__codelineno-2-44" name="__codelineno-2-44" href="#__codelineno-2-44"></a>  - category: string, optional
 </span><span id="__span-2-45"><a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a>GUARDS:
-</span><span id="__span-2-46"><a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a>  - price must be non-negative -&gt; ValueError(&quot;Price cannot be negative&quot;)
-</span><span id="__span-2-47"><a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a>RETURNS: Product(id=id, name=name, price=price, stock=initial_stock or 0, category=category or &quot;uncategorized&quot;)
+</span><span id="__span-2-46"><a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a>  - price must be non-negative -&gt; ValueError("Price cannot be negative")
+</span><span id="__span-2-47"><a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a>RETURNS: Product(id=id, name=name, price=price, stock=initial_stock or 0, category=category or "uncategorized")
 </span><span id="__span-2-48"><a id="__codelineno-2-48" name="__codelineno-2-48" href="#__codelineno-2-48"></a>
 </span><span id="__span-2-49"><a id="__codelineno-2-49" name="__codelineno-2-49" href="#__codelineno-2-49"></a>[update-stock]
 </span><span id="__span-2-50"><a id="__codelineno-2-50" name="__codelineno-2-50" href="#__codelineno-2-50"></a>PURPOSE: Update product stock level
 </span><span id="__span-2-51"><a id="__codelineno-2-51" name="__codelineno-2-51" href="#__codelineno-2-51"></a>INPUTS:
 </span><span id="__span-2-52"><a id="__codelineno-2-52" name="__codelineno-2-52" href="#__codelineno-2-52"></a>  - product: Product
-</span><span id="__span-2-53"><a id="__codelineno-2-53" name="__codelineno-2-53" href="#__codelineno-2-53"></a>  - quantity_change: number, &quot;Positive to add, negative to remove&quot;
+</span><span id="__span-2-53"><a id="__codelineno-2-53" name="__codelineno-2-53" href="#__codelineno-2-53"></a>  - quantity_change: number, "Positive to add, negative to remove"
 </span><span id="__span-2-54"><a id="__codelineno-2-54" name="__codelineno-2-54" href="#__codelineno-2-54"></a>GUARDS:
-</span><span id="__span-2-55"><a id="__codelineno-2-55" name="__codelineno-2-55" href="#__codelineno-2-55"></a>  - product.stock + quantity_change must be non-negative -&gt; ValueError(&quot;Insufficient stock&quot;)
+</span><span id="__span-2-55"><a id="__codelineno-2-55" name="__codelineno-2-55" href="#__codelineno-2-55"></a>  - product.stock + quantity_change must be non-negative -&gt; ValueError("Insufficient stock")
 </span><span id="__span-2-56"><a id="__codelineno-2-56" name="__codelineno-2-56" href="#__codelineno-2-56"></a>RETURNS: Product(id=product.id, name=product.name, price=product.price, stock=product.stock + quantity_change, category=product.category)
 </span><span id="__span-2-57"><a id="__codelineno-2-57" name="__codelineno-2-57" href="#__codelineno-2-57"></a>
 </span><span id="__span-2-58"><a id="__codelineno-2-58" name="__codelineno-2-58" href="#__codelineno-2-58"></a># Order Operations
@@ -1755,9 +1783,9 @@
 </span><span id="__span-2-75"><a id="__codelineno-2-75" name="__codelineno-2-75" href="#__codelineno-2-75"></a>PURPOSE: Calculate tax for order subtotal
 </span><span id="__span-2-76"><a id="__codelineno-2-76" name="__codelineno-2-76" href="#__codelineno-2-76"></a>INPUTS:
 </span><span id="__span-2-77"><a id="__codelineno-2-77" name="__codelineno-2-77" href="#__codelineno-2-77"></a>  - subtotal: number
-</span><span id="__span-2-78"><a id="__codelineno-2-78" name="__codelineno-2-78" href="#__codelineno-2-78"></a>  - tax_rate: number, &quot;Tax rate as decimal (e.g., 0.08 for 8%)&quot;
+</span><span id="__span-2-78"><a id="__codelineno-2-78" name="__codelineno-2-78" href="#__codelineno-2-78"></a>  - tax_rate: number, "Tax rate as decimal (e.g., 0.08 for 8%)"
 </span><span id="__span-2-79"><a id="__codelineno-2-79" name="__codelineno-2-79" href="#__codelineno-2-79"></a>GUARDS:
-</span><span id="__span-2-80"><a id="__codelineno-2-80" name="__codelineno-2-80" href="#__codelineno-2-80"></a>  - tax_rate must be between 0 and 1 -&gt; ValueError(&quot;Tax rate must be 0-1&quot;)
+</span><span id="__span-2-80"><a id="__codelineno-2-80" name="__codelineno-2-80" href="#__codelineno-2-80"></a>  - tax_rate must be between 0 and 1 -&gt; ValueError("Tax rate must be 0-1")
 </span><span id="__span-2-81"><a id="__codelineno-2-81" name="__codelineno-2-81" href="#__codelineno-2-81"></a>RETURNS: subtotal * tax_rate
 </span><span id="__span-2-82"><a id="__codelineno-2-82" name="__codelineno-2-82" href="#__codelineno-2-82"></a>
 </span><span id="__span-2-83"><a id="__codelineno-2-83" name="__codelineno-2-83" href="#__codelineno-2-83"></a>[create-order]
@@ -1768,18 +1796,18 @@
 </span><span id="__span-2-88"><a id="__codelineno-2-88" name="__codelineno-2-88" href="#__codelineno-2-88"></a>  - items: list of OrderItem
 </span><span id="__span-2-89"><a id="__codelineno-2-89" name="__codelineno-2-89" href="#__codelineno-2-89"></a>  - tax_rate: number
 </span><span id="__span-2-90"><a id="__codelineno-2-90" name="__codelineno-2-90" href="#__codelineno-2-90"></a>GUARDS:
-</span><span id="__span-2-91"><a id="__codelineno-2-91" name="__codelineno-2-91" href="#__codelineno-2-91"></a>  - items must not be empty -&gt; ValueError(&quot;Order must have items&quot;)
+</span><span id="__span-2-91"><a id="__codelineno-2-91" name="__codelineno-2-91" href="#__codelineno-2-91"></a>  - items must not be empty -&gt; ValueError("Order must have items")
 </span><span id="__span-2-92"><a id="__codelineno-2-92" name="__codelineno-2-92" href="#__codelineno-2-92"></a>LOGIC:
 </span><span id="__span-2-93"><a id="__codelineno-2-93" name="__codelineno-2-93" href="#__codelineno-2-93"></a>  1. Calculate subtotal -&gt; subtotal
 </span><span id="__span-2-94"><a id="__codelineno-2-94" name="__codelineno-2-94" href="#__codelineno-2-94"></a>  2. Calculate tax -&gt; tax
 </span><span id="__span-2-95"><a id="__codelineno-2-95" name="__codelineno-2-95" href="#__codelineno-2-95"></a>  3. Calculate total -&gt; total
-</span><span id="__span-2-96"><a id="__codelineno-2-96" name="__codelineno-2-96" href="#__codelineno-2-96"></a>RETURNS: Order(id=order_id, customer_id=customer_id, items=items, subtotal=subtotal, tax=tax, total=subtotal + tax, status=&quot;pending&quot;)
+</span><span id="__span-2-96"><a id="__codelineno-2-96" name="__codelineno-2-96" href="#__codelineno-2-96"></a>RETURNS: Order(id=order_id, customer_id=customer_id, items=items, subtotal=subtotal, tax=tax, total=subtotal + tax, status="pending")
 </span><span id="__span-2-97"><a id="__codelineno-2-97" name="__codelineno-2-97" href="#__codelineno-2-97"></a>DEPENDS: [calculate-order-subtotal], [calculate-order-tax]
 </span><span id="__span-2-98"><a id="__codelineno-2-98" name="__codelineno-2-98" href="#__codelineno-2-98"></a>
 </span><span id="__span-2-99"><a id="__codelineno-2-99" name="__codelineno-2-99" href="#__codelineno-2-99"></a># Tests
 </span><span id="__span-2-100"><a id="__codelineno-2-100" name="__codelineno-2-100" href="#__codelineno-2-100"></a>@test [calculate-item-total] {
-</span><span id="__span-2-101"><a id="__codelineno-2-101" name="__codelineno-2-101" href="#__codelineno-2-101"></a>  calculate_item_total(OrderItem(product_id=&quot;p1&quot;, quantity=2, unit_price=10.0)) == 20.0
-</span><span id="__span-2-102"><a id="__codelineno-2-102" name="__codelineno-2-102" href="#__codelineno-2-102"></a>  calculate_item_total(OrderItem(product_id=&quot;p2&quot;, quantity=1, unit_price=5.0)) == 5.0
+</span><span id="__span-2-101"><a id="__codelineno-2-101" name="__codelineno-2-101" href="#__codelineno-2-101"></a>  calculate_item_total(OrderItem(product_id="p1", quantity=2, unit_price=10.0)) == 20.0
+</span><span id="__span-2-102"><a id="__codelineno-2-102" name="__codelineno-2-102" href="#__codelineno-2-102"></a>  calculate_item_total(OrderItem(product_id="p2", quantity=1, unit_price=5.0)) == 5.0
 </span><span id="__span-2-103"><a id="__codelineno-2-103" name="__codelineno-2-103" href="#__codelineno-2-103"></a>}
 </span><span id="__span-2-104"><a id="__codelineno-2-104" name="__codelineno-2-104" href="#__codelineno-2-104"></a>
 </span><span id="__span-2-105"><a id="__codelineno-2-105" name="__codelineno-2-105" href="#__codelineno-2-105"></a>@test [calculate-order-tax] {
@@ -1818,7 +1846,7 @@
 </span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>@invariant Account {
 </span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>  balance &gt;= 0
 </span><span id="__span-3-23"><a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>  len(owner) &gt; 0
-</span><span id="__span-3-24"><a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>  account_type in [&quot;checking&quot;, &quot;savings&quot;, &quot;investment&quot;]
+</span><span id="__span-3-24"><a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>  account_type in ["checking", "savings", "investment"]
 </span><span id="__span-3-25"><a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>}
 </span><span id="__span-3-26"><a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>
 </span><span id="__span-3-27"><a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>[create-account]
@@ -1829,9 +1857,9 @@
 </span><span id="__span-3-32"><a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a>  - account_type: string, optional
 </span><span id="__span-3-33"><a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>  - initial_deposit: number, optional
 </span><span id="__span-3-34"><a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>GUARDS:
-</span><span id="__span-3-35"><a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a>  - owner_name must not be empty -&gt; ValueError(&quot;Owner name required&quot;)
-</span><span id="__span-3-36"><a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a>  - initial_deposit must be non-negative if provided -&gt; ValueError(&quot;Initial deposit cannot be negative&quot;)
-</span><span id="__span-3-37"><a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a>RETURNS: Account(id=account_id, owner=owner_name, balance=initial_deposit or 0, account_type=account_type or &quot;checking&quot;)
+</span><span id="__span-3-35"><a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a>  - owner_name must not be empty -&gt; ValueError("Owner name required")
+</span><span id="__span-3-36"><a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a>  - initial_deposit must be non-negative if provided -&gt; ValueError("Initial deposit cannot be negative")
+</span><span id="__span-3-37"><a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a>RETURNS: Account(id=account_id, owner=owner_name, balance=initial_deposit or 0, account_type=account_type or "checking")
 </span><span id="__span-3-38"><a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a>
 </span><span id="__span-3-39"><a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a>[deposit]
 </span><span id="__span-3-40"><a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a>PURPOSE: Add money to an account
@@ -1839,7 +1867,7 @@
 </span><span id="__span-3-42"><a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a>  - account: Account
 </span><span id="__span-3-43"><a id="__codelineno-3-43" name="__codelineno-3-43" href="#__codelineno-3-43"></a>  - amount: number
 </span><span id="__span-3-44"><a id="__codelineno-3-44" name="__codelineno-3-44" href="#__codelineno-3-44"></a>GUARDS:
-</span><span id="__span-3-45"><a id="__codelineno-3-45" name="__codelineno-3-45" href="#__codelineno-3-45"></a>  - amount must be positive -&gt; ValueError(&quot;Deposit amount must be positive&quot;)
+</span><span id="__span-3-45"><a id="__codelineno-3-45" name="__codelineno-3-45" href="#__codelineno-3-45"></a>  - amount must be positive -&gt; ValueError("Deposit amount must be positive")
 </span><span id="__span-3-46"><a id="__codelineno-3-46" name="__codelineno-3-46" href="#__codelineno-3-46"></a>RETURNS: Account(id=account.id, owner=account.owner, balance=account.balance + amount, account_type=account.account_type)
 </span><span id="__span-3-47"><a id="__codelineno-3-47" name="__codelineno-3-47" href="#__codelineno-3-47"></a>
 </span><span id="__span-3-48"><a id="__codelineno-3-48" name="__codelineno-3-48" href="#__codelineno-3-48"></a>[withdraw]
@@ -1848,8 +1876,8 @@
 </span><span id="__span-3-51"><a id="__codelineno-3-51" name="__codelineno-3-51" href="#__codelineno-3-51"></a>  - account: Account
 </span><span id="__span-3-52"><a id="__codelineno-3-52" name="__codelineno-3-52" href="#__codelineno-3-52"></a>  - amount: number
 </span><span id="__span-3-53"><a id="__codelineno-3-53" name="__codelineno-3-53" href="#__codelineno-3-53"></a>GUARDS:
-</span><span id="__span-3-54"><a id="__codelineno-3-54" name="__codelineno-3-54" href="#__codelineno-3-54"></a>  - amount must be positive -&gt; ValueError(&quot;Withdrawal amount must be positive&quot;)
-</span><span id="__span-3-55"><a id="__codelineno-3-55" name="__codelineno-3-55" href="#__codelineno-3-55"></a>  - amount must not exceed balance -&gt; ValueError(&quot;Insufficient funds&quot;)
+</span><span id="__span-3-54"><a id="__codelineno-3-54" name="__codelineno-3-54" href="#__codelineno-3-54"></a>  - amount must be positive -&gt; ValueError("Withdrawal amount must be positive")
+</span><span id="__span-3-55"><a id="__codelineno-3-55" name="__codelineno-3-55" href="#__codelineno-3-55"></a>  - amount must not exceed balance -&gt; ValueError("Insufficient funds")
 </span><span id="__span-3-56"><a id="__codelineno-3-56" name="__codelineno-3-56" href="#__codelineno-3-56"></a>RETURNS: Account(id=account.id, owner=account.owner, balance=account.balance - amount, account_type=account.account_type)
 </span><span id="__span-3-57"><a id="__codelineno-3-57" name="__codelineno-3-57" href="#__codelineno-3-57"></a>
 </span><span id="__span-3-58"><a id="__codelineno-3-58" name="__codelineno-3-58" href="#__codelineno-3-58"></a>[transfer]
@@ -1859,8 +1887,8 @@
 </span><span id="__span-3-62"><a id="__codelineno-3-62" name="__codelineno-3-62" href="#__codelineno-3-62"></a>  - to_account: Account
 </span><span id="__span-3-63"><a id="__codelineno-3-63" name="__codelineno-3-63" href="#__codelineno-3-63"></a>  - amount: number
 </span><span id="__span-3-64"><a id="__codelineno-3-64" name="__codelineno-3-64" href="#__codelineno-3-64"></a>GUARDS:
-</span><span id="__span-3-65"><a id="__codelineno-3-65" name="__codelineno-3-65" href="#__codelineno-3-65"></a>  - amount must be positive -&gt; ValueError(&quot;Transfer amount must be positive&quot;)
-</span><span id="__span-3-66"><a id="__codelineno-3-66" name="__codelineno-3-66" href="#__codelineno-3-66"></a>  - amount must not exceed from_account balance -&gt; ValueError(&quot;Insufficient funds&quot;)
+</span><span id="__span-3-65"><a id="__codelineno-3-65" name="__codelineno-3-65" href="#__codelineno-3-65"></a>  - amount must be positive -&gt; ValueError("Transfer amount must be positive")
+</span><span id="__span-3-66"><a id="__codelineno-3-66" name="__codelineno-3-66" href="#__codelineno-3-66"></a>  - amount must not exceed from_account balance -&gt; ValueError("Insufficient funds")
 </span><span id="__span-3-67"><a id="__codelineno-3-67" name="__codelineno-3-67" href="#__codelineno-3-67"></a>LOGIC:
 </span><span id="__span-3-68"><a id="__codelineno-3-68" name="__codelineno-3-68" href="#__codelineno-3-68"></a>  1. Withdraw from source account -&gt; updated_from
 </span><span id="__span-3-69"><a id="__codelineno-3-69" name="__codelineno-3-69" href="#__codelineno-3-69"></a>  2. Deposit to destination account -&gt; updated_to
@@ -1877,24 +1905,24 @@
 </span><span id="__span-3-80"><a id="__codelineno-3-80" name="__codelineno-3-80" href="#__codelineno-3-80"></a>PURPOSE: Calculate interest for savings account
 </span><span id="__span-3-81"><a id="__codelineno-3-81" name="__codelineno-3-81" href="#__codelineno-3-81"></a>INPUTS:
 </span><span id="__span-3-82"><a id="__codelineno-3-82" name="__codelineno-3-82" href="#__codelineno-3-82"></a>  - account: Account
-</span><span id="__span-3-83"><a id="__codelineno-3-83" name="__codelineno-3-83" href="#__codelineno-3-83"></a>  - annual_rate: number, &quot;Annual interest rate as decimal&quot;
-</span><span id="__span-3-84"><a id="__codelineno-3-84" name="__codelineno-3-84" href="#__codelineno-3-84"></a>  - days: number, &quot;Number of days&quot;
+</span><span id="__span-3-83"><a id="__codelineno-3-83" name="__codelineno-3-83" href="#__codelineno-3-83"></a>  - annual_rate: number, "Annual interest rate as decimal"
+</span><span id="__span-3-84"><a id="__codelineno-3-84" name="__codelineno-3-84" href="#__codelineno-3-84"></a>  - days: number, "Number of days"
 </span><span id="__span-3-85"><a id="__codelineno-3-85" name="__codelineno-3-85" href="#__codelineno-3-85"></a>GUARDS:
-</span><span id="__span-3-86"><a id="__codelineno-3-86" name="__codelineno-3-86" href="#__codelineno-3-86"></a>  - account.account_type must be &quot;savings&quot; -&gt; ValueError(&quot;Interest only for savings accounts&quot;)
-</span><span id="__span-3-87"><a id="__codelineno-3-87" name="__codelineno-3-87" href="#__codelineno-3-87"></a>  - annual_rate must be non-negative -&gt; ValueError(&quot;Rate cannot be negative&quot;)
-</span><span id="__span-3-88"><a id="__codelineno-3-88" name="__codelineno-3-88" href="#__codelineno-3-88"></a>  - days must be positive -&gt; ValueError(&quot;Days must be positive&quot;)
+</span><span id="__span-3-86"><a id="__codelineno-3-86" name="__codelineno-3-86" href="#__codelineno-3-86"></a>  - account.account_type must be "savings" -&gt; ValueError("Interest only for savings accounts")
+</span><span id="__span-3-87"><a id="__codelineno-3-87" name="__codelineno-3-87" href="#__codelineno-3-87"></a>  - annual_rate must be non-negative -&gt; ValueError("Rate cannot be negative")
+</span><span id="__span-3-88"><a id="__codelineno-3-88" name="__codelineno-3-88" href="#__codelineno-3-88"></a>  - days must be positive -&gt; ValueError("Days must be positive")
 </span><span id="__span-3-89"><a id="__codelineno-3-89" name="__codelineno-3-89" href="#__codelineno-3-89"></a>LOGIC:
 </span><span id="__span-3-90"><a id="__codelineno-3-90" name="__codelineno-3-90" href="#__codelineno-3-90"></a>  1. Calculate daily rate -&gt; daily_rate
 </span><span id="__span-3-91"><a id="__codelineno-3-91" name="__codelineno-3-91" href="#__codelineno-3-91"></a>  2. Calculate interest -&gt; interest
 </span><span id="__span-3-92"><a id="__codelineno-3-92" name="__codelineno-3-92" href="#__codelineno-3-92"></a>RETURNS: account.balance * (annual_rate / 365) * days
 </span><span id="__span-3-93"><a id="__codelineno-3-93" name="__codelineno-3-93" href="#__codelineno-3-93"></a>
 </span><span id="__span-3-94"><a id="__codelineno-3-94" name="__codelineno-3-94" href="#__codelineno-3-94"></a>@test [deposit] {
-</span><span id="__span-3-95"><a id="__codelineno-3-95" name="__codelineno-3-95" href="#__codelineno-3-95"></a>  deposit(Account(id=&quot;1&quot;, owner=&quot;Alice&quot;, balance=100, account_type=&quot;checking&quot;), 50).balance == 150
-</span><span id="__span-3-96"><a id="__codelineno-3-96" name="__codelineno-3-96" href="#__codelineno-3-96"></a>  deposit(Account(id=&quot;2&quot;, owner=&quot;Bob&quot;, balance=0, account_type=&quot;savings&quot;), 100).balance == 100
+</span><span id="__span-3-95"><a id="__codelineno-3-95" name="__codelineno-3-95" href="#__codelineno-3-95"></a>  deposit(Account(id="1", owner="Alice", balance=100, account_type="checking"), 50).balance == 150
+</span><span id="__span-3-96"><a id="__codelineno-3-96" name="__codelineno-3-96" href="#__codelineno-3-96"></a>  deposit(Account(id="2", owner="Bob", balance=0, account_type="savings"), 100).balance == 100
 </span><span id="__span-3-97"><a id="__codelineno-3-97" name="__codelineno-3-97" href="#__codelineno-3-97"></a>}
 </span><span id="__span-3-98"><a id="__codelineno-3-98" name="__codelineno-3-98" href="#__codelineno-3-98"></a>
 </span><span id="__span-3-99"><a id="__codelineno-3-99" name="__codelineno-3-99" href="#__codelineno-3-99"></a>@test [withdraw] {
-</span><span id="__span-3-100"><a id="__codelineno-3-100" name="__codelineno-3-100" href="#__codelineno-3-100"></a>  withdraw(Account(id=&quot;1&quot;, owner=&quot;Alice&quot;, balance=100, account_type=&quot;checking&quot;), 30).balance == 70
+</span><span id="__span-3-100"><a id="__codelineno-3-100" name="__codelineno-3-100" href="#__codelineno-3-100"></a>  withdraw(Account(id="1", owner="Alice", balance=100, account_type="checking"), 30).balance == 70
 </span><span id="__span-3-101"><a id="__codelineno-3-101" name="__codelineno-3-101" href="#__codelineno-3-101"></a>}
 </span><span id="__span-3-102"><a id="__codelineno-3-102" name="__codelineno-3-102" href="#__codelineno-3-102"></a>
 </span><span id="__span-3-103"><a id="__codelineno-3-103" name="__codelineno-3-103" href="#__codelineno-3-103"></a>@property [deposit] {
@@ -1932,7 +1960,7 @@
 </span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>}
 </span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>
 </span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>@invariant Task {
-</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>  status in [&quot;pending&quot;, &quot;in_progress&quot;, &quot;review&quot;, &quot;completed&quot;, &quot;cancelled&quot;]
+</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>  status in ["pending", "in_progress", "review", "completed", "cancelled"]
 </span><span id="__span-4-23"><a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>  priority &gt;= 1
 </span><span id="__span-4-24"><a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>  priority &lt;= 5
 </span><span id="__span-4-25"><a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>}
@@ -1945,8 +1973,8 @@
 </span><span id="__span-4-32"><a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a>  - description: string, optional
 </span><span id="__span-4-33"><a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>  - priority: number, optional
 </span><span id="__span-4-34"><a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a>GUARDS:
-</span><span id="__span-4-35"><a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a>  - title must not be empty -&gt; ValueError(&quot;Task title required&quot;)
-</span><span id="__span-4-36"><a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a>RETURNS: Task(id=task_id, title=title, description=description or &quot;&quot;, status=&quot;pending&quot;, assignee=None, priority=priority or 3, due_date=None)
+</span><span id="__span-4-35"><a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a>  - title must not be empty -&gt; ValueError("Task title required")
+</span><span id="__span-4-36"><a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a>RETURNS: Task(id=task_id, title=title, description=description or "", status="pending", assignee=None, priority=priority or 3, due_date=None)
 </span><span id="__span-4-37"><a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a>
 </span><span id="__span-4-38"><a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a>[assign-task]
 </span><span id="__span-4-39"><a id="__codelineno-4-39" name="__codelineno-4-39" href="#__codelineno-4-39"></a>PURPOSE: Assign a task to a team member
@@ -1954,8 +1982,8 @@
 </span><span id="__span-4-41"><a id="__codelineno-4-41" name="__codelineno-4-41" href="#__codelineno-4-41"></a>  - task: Task
 </span><span id="__span-4-42"><a id="__codelineno-4-42" name="__codelineno-4-42" href="#__codelineno-4-42"></a>  - assignee: string
 </span><span id="__span-4-43"><a id="__codelineno-4-43" name="__codelineno-4-43" href="#__codelineno-4-43"></a>GUARDS:
-</span><span id="__span-4-44"><a id="__codelineno-4-44" name="__codelineno-4-44" href="#__codelineno-4-44"></a>  - task.status must be &quot;pending&quot; or &quot;in_progress&quot; -&gt; ValueError(&quot;Cannot assign completed task&quot;)
-</span><span id="__span-4-45"><a id="__codelineno-4-45" name="__codelineno-4-45" href="#__codelineno-4-45"></a>  - assignee must not be empty -&gt; ValueError(&quot;Assignee required&quot;)
+</span><span id="__span-4-44"><a id="__codelineno-4-44" name="__codelineno-4-44" href="#__codelineno-4-44"></a>  - task.status must be "pending" or "in_progress" -&gt; ValueError("Cannot assign completed task")
+</span><span id="__span-4-45"><a id="__codelineno-4-45" name="__codelineno-4-45" href="#__codelineno-4-45"></a>  - assignee must not be empty -&gt; ValueError("Assignee required")
 </span><span id="__span-4-46"><a id="__codelineno-4-46" name="__codelineno-4-46" href="#__codelineno-4-46"></a>RETURNS: Task(id=task.id, title=task.title, description=task.description, status=task.status, assignee=assignee, priority=task.priority, due_date=task.due_date)
 </span><span id="__span-4-47"><a id="__codelineno-4-47" name="__codelineno-4-47" href="#__codelineno-4-47"></a>
 </span><span id="__span-4-48"><a id="__codelineno-4-48" name="__codelineno-4-48" href="#__codelineno-4-48"></a>[start-task]
@@ -1963,26 +1991,26 @@
 </span><span id="__span-4-50"><a id="__codelineno-4-50" name="__codelineno-4-50" href="#__codelineno-4-50"></a>INPUTS:
 </span><span id="__span-4-51"><a id="__codelineno-4-51" name="__codelineno-4-51" href="#__codelineno-4-51"></a>  - task: Task
 </span><span id="__span-4-52"><a id="__codelineno-4-52" name="__codelineno-4-52" href="#__codelineno-4-52"></a>GUARDS:
-</span><span id="__span-4-53"><a id="__codelineno-4-53" name="__codelineno-4-53" href="#__codelineno-4-53"></a>  - task.status must be &quot;pending&quot; -&gt; ValueError(&quot;Task must be pending to start&quot;)
-</span><span id="__span-4-54"><a id="__codelineno-4-54" name="__codelineno-4-54" href="#__codelineno-4-54"></a>  - task.assignee must not be None -&gt; ValueError(&quot;Task must be assigned before starting&quot;)
-</span><span id="__span-4-55"><a id="__codelineno-4-55" name="__codelineno-4-55" href="#__codelineno-4-55"></a>RETURNS: Task(id=task.id, title=task.title, description=task.description, status=&quot;in_progress&quot;, assignee=task.assignee, priority=task.priority, due_date=task.due_date)
+</span><span id="__span-4-53"><a id="__codelineno-4-53" name="__codelineno-4-53" href="#__codelineno-4-53"></a>  - task.status must be "pending" -&gt; ValueError("Task must be pending to start")
+</span><span id="__span-4-54"><a id="__codelineno-4-54" name="__codelineno-4-54" href="#__codelineno-4-54"></a>  - task.assignee must not be None -&gt; ValueError("Task must be assigned before starting")
+</span><span id="__span-4-55"><a id="__codelineno-4-55" name="__codelineno-4-55" href="#__codelineno-4-55"></a>RETURNS: Task(id=task.id, title=task.title, description=task.description, status="in_progress", assignee=task.assignee, priority=task.priority, due_date=task.due_date)
 </span><span id="__span-4-56"><a id="__codelineno-4-56" name="__codelineno-4-56" href="#__codelineno-4-56"></a>
 </span><span id="__span-4-57"><a id="__codelineno-4-57" name="__codelineno-4-57" href="#__codelineno-4-57"></a>[complete-task]
 </span><span id="__span-4-58"><a id="__codelineno-4-58" name="__codelineno-4-58" href="#__codelineno-4-58"></a>PURPOSE: Mark task as completed
 </span><span id="__span-4-59"><a id="__codelineno-4-59" name="__codelineno-4-59" href="#__codelineno-4-59"></a>INPUTS:
 </span><span id="__span-4-60"><a id="__codelineno-4-60" name="__codelineno-4-60" href="#__codelineno-4-60"></a>  - task: Task
 </span><span id="__span-4-61"><a id="__codelineno-4-61" name="__codelineno-4-61" href="#__codelineno-4-61"></a>GUARDS:
-</span><span id="__span-4-62"><a id="__codelineno-4-62" name="__codelineno-4-62" href="#__codelineno-4-62"></a>  - task.status must be &quot;in_progress&quot; or &quot;review&quot; -&gt; ValueError(&quot;Task must be in progress or review&quot;)
-</span><span id="__span-4-63"><a id="__codelineno-4-63" name="__codelineno-4-63" href="#__codelineno-4-63"></a>RETURNS: Task(id=task.id, title=task.title, description=task.description, status=&quot;completed&quot;, assignee=task.assignee, priority=task.priority, due_date=task.due_date)
+</span><span id="__span-4-62"><a id="__codelineno-4-62" name="__codelineno-4-62" href="#__codelineno-4-62"></a>  - task.status must be "in_progress" or "review" -&gt; ValueError("Task must be in progress or review")
+</span><span id="__span-4-63"><a id="__codelineno-4-63" name="__codelineno-4-63" href="#__codelineno-4-63"></a>RETURNS: Task(id=task.id, title=task.title, description=task.description, status="completed", assignee=task.assignee, priority=task.priority, due_date=task.due_date)
 </span><span id="__span-4-64"><a id="__codelineno-4-64" name="__codelineno-4-64" href="#__codelineno-4-64"></a>
 </span><span id="__span-4-65"><a id="__codelineno-4-65" name="__codelineno-4-65" href="#__codelineno-4-65"></a>[estimate-task-time]
 </span><span id="__span-4-66"><a id="__codelineno-4-66" name="__codelineno-4-66" href="#__codelineno-4-66"></a>PURPOSE: Calculate expected time using PERT formula
 </span><span id="__span-4-67"><a id="__codelineno-4-67" name="__codelineno-4-67" href="#__codelineno-4-67"></a>INPUTS:
 </span><span id="__span-4-68"><a id="__codelineno-4-68" name="__codelineno-4-68" href="#__codelineno-4-68"></a>  - estimate: TimeEstimate
 </span><span id="__span-4-69"><a id="__codelineno-4-69" name="__codelineno-4-69" href="#__codelineno-4-69"></a>GUARDS:
-</span><span id="__span-4-70"><a id="__codelineno-4-70" name="__codelineno-4-70" href="#__codelineno-4-70"></a>  - estimate.optimistic must be positive -&gt; ValueError(&quot;Optimistic must be positive&quot;)
-</span><span id="__span-4-71"><a id="__codelineno-4-71" name="__codelineno-4-71" href="#__codelineno-4-71"></a>  - estimate.realistic must be &gt;= optimistic -&gt; ValueError(&quot;Realistic must be &gt;= optimistic&quot;)
-</span><span id="__span-4-72"><a id="__codelineno-4-72" name="__codelineno-4-72" href="#__codelineno-4-72"></a>  - estimate.pessimistic must be &gt;= realistic -&gt; ValueError(&quot;Pessimistic must be &gt;= realistic&quot;)
+</span><span id="__span-4-70"><a id="__codelineno-4-70" name="__codelineno-4-70" href="#__codelineno-4-70"></a>  - estimate.optimistic must be positive -&gt; ValueError("Optimistic must be positive")
+</span><span id="__span-4-71"><a id="__codelineno-4-71" name="__codelineno-4-71" href="#__codelineno-4-71"></a>  - estimate.realistic must be &gt;= optimistic -&gt; ValueError("Realistic must be &gt;= optimistic")
+</span><span id="__span-4-72"><a id="__codelineno-4-72" name="__codelineno-4-72" href="#__codelineno-4-72"></a>  - estimate.pessimistic must be &gt;= realistic -&gt; ValueError("Pessimistic must be &gt;= realistic")
 </span><span id="__span-4-73"><a id="__codelineno-4-73" name="__codelineno-4-73" href="#__codelineno-4-73"></a>RETURNS: (estimate.optimistic + 4 * estimate.realistic + estimate.pessimistic) / 6
 </span><span id="__span-4-74"><a id="__codelineno-4-74" name="__codelineno-4-74" href="#__codelineno-4-74"></a>
 </span><span id="__span-4-75"><a id="__codelineno-4-75" name="__codelineno-4-75" href="#__codelineno-4-75"></a>[prioritize-tasks]
@@ -2034,10 +2062,10 @@
 </span><span id="__span-5-31"><a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>  - email: string
 </span><span id="__span-5-32"><a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>  - password: string
 </span><span id="__span-5-33"><a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a>GUARDS:
-</span><span id="__span-5-34"><a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>  - email must not be empty -&gt; ValueError(&quot;Email required&quot;)
-</span><span id="__span-5-35"><a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>  - email must contain @ symbol -&gt; ValueError(&quot;Invalid email format&quot;)
-</span><span id="__span-5-36"><a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>  - password must not be empty -&gt; ValueError(&quot;Password required&quot;)
-</span><span id="__span-5-37"><a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>  - password must be at least 8 characters -&gt; ValueError(&quot;Password too short&quot;)
+</span><span id="__span-5-34"><a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>  - email must not be empty -&gt; ValueError("Email required")
+</span><span id="__span-5-35"><a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>  - email must contain @ symbol -&gt; ValueError("Invalid email format")
+</span><span id="__span-5-36"><a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>  - password must not be empty -&gt; ValueError("Password required")
+</span><span id="__span-5-37"><a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>  - password must be at least 8 characters -&gt; ValueError("Password too short")
 </span><span id="__span-5-38"><a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>RETURNS: True
 </span><span id="__span-5-39"><a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>
 </span><span id="__span-5-40"><a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>[generate-token]
@@ -2047,7 +2075,7 @@
 </span><span id="__span-5-44"><a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a>  - secret: string
 </span><span id="__span-5-45"><a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a>  - expiry_hours: number, optional
 </span><span id="__span-5-46"><a id="__codelineno-5-46" name="__codelineno-5-46" href="#__codelineno-5-46"></a>GUARDS:
-</span><span id="__span-5-47"><a id="__codelineno-5-47" name="__codelineno-5-47" href="#__codelineno-5-47"></a>  - user.is_active must be True -&gt; AuthError(&quot;User account is inactive&quot;)
+</span><span id="__span-5-47"><a id="__codelineno-5-47" name="__codelineno-5-47" href="#__codelineno-5-47"></a>  - user.is_active must be True -&gt; AuthError("User account is inactive")
 </span><span id="__span-5-48"><a id="__codelineno-5-48" name="__codelineno-5-48" href="#__codelineno-5-48"></a>LOGIC:
 </span><span id="__span-5-49"><a id="__codelineno-5-49" name="__codelineno-5-49" href="#__codelineno-5-49"></a>  1. Set expiry to expiry_hours or default 24 -&gt; hours
 </span><span id="__span-5-50"><a id="__codelineno-5-50" name="__codelineno-5-50" href="#__codelineno-5-50"></a>  2. Calculate expiration timestamp -&gt; expires_at
@@ -2061,7 +2089,7 @@
 </span><span id="__span-5-58"><a id="__codelineno-5-58" name="__codelineno-5-58" href="#__codelineno-5-58"></a>  - token: string
 </span><span id="__span-5-59"><a id="__codelineno-5-59" name="__codelineno-5-59" href="#__codelineno-5-59"></a>  - secret: string
 </span><span id="__span-5-60"><a id="__codelineno-5-60" name="__codelineno-5-60" href="#__codelineno-5-60"></a>GUARDS:
-</span><span id="__span-5-61"><a id="__codelineno-5-61" name="__codelineno-5-61" href="#__codelineno-5-61"></a>  - token must not be empty -&gt; AuthError(MISSING_TOKEN, &quot;Token required&quot;)
+</span><span id="__span-5-61"><a id="__codelineno-5-61" name="__codelineno-5-61" href="#__codelineno-5-61"></a>  - token must not be empty -&gt; AuthError(MISSING_TOKEN, "Token required")
 </span><span id="__span-5-62"><a id="__codelineno-5-62" name="__codelineno-5-62" href="#__codelineno-5-62"></a>LOGIC:
 </span><span id="__span-5-63"><a id="__codelineno-5-63" name="__codelineno-5-63" href="#__codelineno-5-63"></a>  1. Decode token with secret -&gt; payload
 </span><span id="__span-5-64"><a id="__codelineno-5-64" name="__codelineno-5-64" href="#__codelineno-5-64"></a>  2. Check if token has expired -&gt; is_expired
@@ -2075,8 +2103,8 @@
 </span><span id="__span-5-72"><a id="__codelineno-5-72" name="__codelineno-5-72" href="#__codelineno-5-72"></a>  - user: User
 </span><span id="__span-5-73"><a id="__codelineno-5-73" name="__codelineno-5-73" href="#__codelineno-5-73"></a>  - required_role: string
 </span><span id="__span-5-74"><a id="__codelineno-5-74" name="__codelineno-5-74" href="#__codelineno-5-74"></a>GUARDS:
-</span><span id="__span-5-75"><a id="__codelineno-5-75" name="__codelineno-5-75" href="#__codelineno-5-75"></a>  - user must not be None -&gt; AuthError(&quot;Authentication required&quot;)
-</span><span id="__span-5-76"><a id="__codelineno-5-76" name="__codelineno-5-76" href="#__codelineno-5-76"></a>  - user.role must equal required_role -&gt; AuthError(FORBIDDEN, &quot;Insufficient permissions&quot;)
+</span><span id="__span-5-75"><a id="__codelineno-5-75" name="__codelineno-5-75" href="#__codelineno-5-75"></a>  - user must not be None -&gt; AuthError("Authentication required")
+</span><span id="__span-5-76"><a id="__codelineno-5-76" name="__codelineno-5-76" href="#__codelineno-5-76"></a>  - user.role must equal required_role -&gt; AuthError(FORBIDDEN, "Insufficient permissions")
 </span><span id="__span-5-77"><a id="__codelineno-5-77" name="__codelineno-5-77" href="#__codelineno-5-77"></a>RETURNS: True
 </span><span id="__span-5-78"><a id="__codelineno-5-78" name="__codelineno-5-78" href="#__codelineno-5-78"></a>
 </span><span id="__span-5-79"><a id="__codelineno-5-79" name="__codelineno-5-79" href="#__codelineno-5-79"></a>[authenticate]
@@ -2096,11 +2124,11 @@
 </span><span id="__span-5-93"><a id="__codelineno-5-93" name="__codelineno-5-93" href="#__codelineno-5-93"></a>DEPENDS: [validate-credentials], [generate-token]
 </span><span id="__span-5-94"><a id="__codelineno-5-94" name="__codelineno-5-94" href="#__codelineno-5-94"></a>
 </span><span id="__span-5-95"><a id="__codelineno-5-95" name="__codelineno-5-95" href="#__codelineno-5-95"></a>@test [validate-credentials] {
-</span><span id="__span-5-96"><a id="__codelineno-5-96" name="__codelineno-5-96" href="#__codelineno-5-96"></a>  validate_credentials(&quot;user@example.com&quot;, &quot;password123&quot;) == True
+</span><span id="__span-5-96"><a id="__codelineno-5-96" name="__codelineno-5-96" href="#__codelineno-5-96"></a>  validate_credentials("user@example.com", "password123") == True
 </span><span id="__span-5-97"><a id="__codelineno-5-97" name="__codelineno-5-97" href="#__codelineno-5-97"></a>}
 </span><span id="__span-5-98"><a id="__codelineno-5-98" name="__codelineno-5-98" href="#__codelineno-5-98"></a>
 </span><span id="__span-5-99"><a id="__codelineno-5-99" name="__codelineno-5-99" href="#__codelineno-5-99"></a>@test [require-role] {
-</span><span id="__span-5-100"><a id="__codelineno-5-100" name="__codelineno-5-100" href="#__codelineno-5-100"></a>  require_role(User(id=&quot;1&quot;, email=&quot;a@b.c&quot;, name=&quot;Admin&quot;, role=&quot;admin&quot;, is_active=True), &quot;admin&quot;) == True
+</span><span id="__span-5-100"><a id="__codelineno-5-100" name="__codelineno-5-100" href="#__codelineno-5-100"></a>  require_role(User(id="1", email="a@b.c", name="Admin", role="admin", is_active=True), "admin") == True
 </span><span id="__span-5-101"><a id="__codelineno-5-101" name="__codelineno-5-101" href="#__codelineno-5-101"></a>}
 </span></code></pre></div>
 <hr />
@@ -2203,7 +2231,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "navigation.instant", "content.code.copy", "content.code.annotate", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

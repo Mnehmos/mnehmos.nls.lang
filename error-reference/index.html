@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -635,6 +635,34 @@
     
   
     Core Semantics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ir-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    IR Specification
   
 
     
@@ -3297,7 +3325,7 @@
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>@target python       # Add this after @module
 </span></code></pre></div></p>
 <h3 id="invalid-module-name">Invalid Module Name<a class="headerlink" href="#invalid-module-name" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>ParseError: Invalid module name: &#39;My-Module&#39;
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>ParseError: Invalid module name: 'My-Module'
 </span></code></pre></div>
 <p><strong>Cause:</strong> Module names must be lowercase snake_case.</p>
 <p><strong>Valid names:</strong>
@@ -3311,7 +3339,7 @@
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>@module module name   # No spaces
 </span></code></pre></div></p>
 <h3 id="invalid-anlu-identifier">Invalid ANLU Identifier<a class="headerlink" href="#invalid-anlu-identifier" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>ParseError: Invalid ANLU identifier: &#39;CalculateTax&#39;
+<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>ParseError: Invalid ANLU identifier: 'CalculateTax'
 </span></code></pre></div>
 <p><strong>Cause:</strong> ANLU names must be kebab-case (lowercase with hyphens).</p>
 <p><strong>Valid identifiers:</strong>
@@ -3325,7 +3353,7 @@
 </span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>[123-function]        # Cannot start with number
 </span></code></pre></div></p>
 <h3 id="missing-purpose">Missing PURPOSE<a class="headerlink" href="#missing-purpose" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>ParseError: ANLU &#39;calculate-tax&#39; missing required PURPOSE section
+<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>ParseError: ANLU 'calculate-tax' missing required PURPOSE section
 </span></code></pre></div>
 <p><strong>Cause:</strong> Every ANLU must have a PURPOSE.</p>
 <p><strong>Fix:</strong>
@@ -3337,7 +3365,7 @@
 </span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>RETURNS: income * rate
 </span></code></pre></div></p>
 <h3 id="missing-returns">Missing RETURNS<a class="headerlink" href="#missing-returns" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>ParseError: ANLU &#39;validate-user&#39; missing required RETURNS section
+<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>ParseError: ANLU 'validate-user' missing required RETURNS section
 </span></code></pre></div>
 <p><strong>Cause:</strong> Every ANLU must have a RETURNS section.</p>
 <p><strong>Fix:</strong>
@@ -3348,7 +3376,7 @@
 </span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>RETURNS: True         # Add this
 </span></code></pre></div></p>
 <h3 id="invalid-section-name">Invalid Section Name<a class="headerlink" href="#invalid-section-name" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>ParseError: Unknown section &#39;OUTPUT:&#39; in ANLU &#39;process-order&#39;
+<div class="language-text highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>ParseError: Unknown section 'OUTPUT:' in ANLU 'process-order'
 </span></code></pre></div>
 <p><strong>Cause:</strong> Using an invalid section keyword.</p>
 <p><strong>Valid sections:</strong>
@@ -3368,7 +3396,7 @@
 <div class="language-text highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>@type User {
 </span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>  id: string
 </span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>  email: string
-</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>}                     # Don&#39;t forget the closing brace
+</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>}                     # Don't forget the closing brace
 </span></code></pre></div></p>
 <h3 id="unclosed-test-block">Unclosed Test Block<a class="headerlink" href="#unclosed-test-block" title="Permanent link">&para;</a></h3>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>ParseError: Unclosed @test block starting at line 30
@@ -3378,10 +3406,10 @@
 <div class="language-text highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>@test [add] {
 </span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>  add(1, 2) == 3
 </span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>  add(0, 0) == 0
-</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>}                     # Don&#39;t forget the closing brace
+</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>}                     # Don't forget the closing brace
 </span></code></pre></div></p>
 <h3 id="invalid-input-syntax">Invalid Input Syntax<a class="headerlink" href="#invalid-input-syntax" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>ParseError: Invalid input definition: &#39;amount number&#39;
+<div class="language-text highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>ParseError: Invalid input definition: 'amount number'
 </span></code></pre></div>
 <p><strong>Cause:</strong> Missing colon between name and type.</p>
 <p><strong>Fix:</strong>
@@ -3389,18 +3417,18 @@
 </span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>  - amount: number    # Include the colon
 </span></code></pre></div></p>
 <h3 id="invalid-guard-syntax">Invalid Guard Syntax<a class="headerlink" href="#invalid-guard-syntax" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>ParseError: Invalid guard: &#39;amount positive&#39;
+<div class="language-text highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>ParseError: Invalid guard: 'amount positive'
 </span></code></pre></div>
 <p><strong>Cause:</strong> Guards must follow the pattern: <code>condition -&gt; Error("message")</code></p>
 <p><strong>Fix:</strong>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>GUARDS:
-</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>  - amount must be positive -&gt; ValueError(&quot;Amount must be positive&quot;)
+</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>  - amount must be positive -&gt; ValueError("Amount must be positive")
 </span></code></pre></div></p>
 <hr />
 <h2 id="resolution-errors">Resolution Errors<a class="headerlink" href="#resolution-errors" title="Permanent link">&para;</a></h2>
 <p>Resolution errors occur during dependency validation.</p>
 <h3 id="dependency-not-found">Dependency Not Found<a class="headerlink" href="#dependency-not-found" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>ResolutionError: ANLU &#39;process-order&#39; depends on unknown ANLU &#39;validate-order&#39;
+<div class="language-text highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>ResolutionError: ANLU 'process-order' depends on unknown ANLU 'validate-order'
 </span></code></pre></div>
 <p><strong>Cause:</strong> The <code>DEPENDS</code> section references an ANLU that doesn't exist.</p>
 <p><strong>Fix options:</strong></p>
@@ -3480,7 +3508,7 @@
 <li>Project: create <code>.nls/stdlib/v1/...</code></li>
 </ul>
 <h3 id="self-dependency">Self Dependency<a class="headerlink" href="#self-dependency" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>ResolutionError: ANLU &#39;recursive-func&#39; cannot depend on itself
+<div class="language-text highlight"><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>ResolutionError: ANLU 'recursive-func' cannot depend on itself
 </span></code></pre></div>
 <p><strong>Cause:</strong> An ANLU lists itself in DEPENDS.</p>
 <p><strong>Fix:</strong> Remove self-reference from DEPENDS. For recursive functions, implement in a <code>@literal</code> block.</p>
@@ -3488,7 +3516,7 @@
 <h2 id="emission-errors">Emission Errors<a class="headerlink" href="#emission-errors" title="Permanent link">&para;</a></h2>
 <p>Emission errors occur during code generation.</p>
 <h3 id="invalid-return-expression">Invalid Return Expression<a class="headerlink" href="#invalid-return-expression" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>EmissionWarning: Return expression &#39;the calculated total&#39; is descriptive,
+<div class="language-text highlight"><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>EmissionWarning: Return expression 'the calculated total' is descriptive,
 </span><span id="__span-32-2"><a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>generating NotImplementedError stub
 </span></code></pre></div>
 <p><strong>Cause:</strong> RETURNS contains natural language instead of code.</p>
@@ -3504,7 +3532,7 @@
 </span></code></pre></div></p>
 <p><strong>Fix:</strong> Use concrete expressions or implement in <code>@literal</code> block.</p>
 <h3 id="unknown-type">Unknown Type<a class="headerlink" href="#unknown-type" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-35-1"><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>EmissionWarning: Unknown type &#39;UserData&#39;, using &#39;Any&#39;
+<div class="language-text highlight"><pre><span></span><code><span id="__span-35-1"><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>EmissionWarning: Unknown type 'UserData', using 'Any'
 </span></code></pre></div>
 <p><strong>Cause:</strong> Using a type that isn't defined.</p>
 <p><strong>Fix:</strong> Define the type:
@@ -3514,7 +3542,7 @@
 </span><span id="__span-36-4"><a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a>}
 </span></code></pre></div></p>
 <h3 id="invalid-constraint-value">Invalid Constraint Value<a class="headerlink" href="#invalid-constraint-value" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-37-1"><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>EmissionWarning: Invalid constraint &#39;min: abc&#39;, ignoring
+<div class="language-text highlight"><pre><span></span><code><span id="__span-37-1"><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>EmissionWarning: Invalid constraint 'min: abc', ignoring
 </span></code></pre></div>
 <p><strong>Cause:</strong> Non-numeric value for numeric constraint.</p>
 <p><strong>Fix:</strong>
@@ -3533,7 +3561,7 @@
 <p><strong>Example ANLU:</strong>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-40-1"><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>[deposit]
 </span><span id="__span-40-2"><a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>GUARDS:
-</span><span id="__span-40-3"><a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>  - amount must be positive -&gt; ValueError(&quot;Amount must be positive&quot;)
+</span><span id="__span-40-3"><a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>  - amount must be positive -&gt; ValueError("Amount must be positive")
 </span></code></pre></div></p>
 <p><strong>Fix in calling code:</strong>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-41-1"><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="c1"># Wrong</span>
@@ -3555,11 +3583,11 @@
 </span><span id="__span-43-3"><a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>}
 </span></code></pre></div></p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-44-1"><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a><span class="c1"># This raises ValueError</span>
-</span><span id="__span-44-2"><a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a><span class="n">account</span> <span class="o">=</span> <span class="n">Account</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="n">balance</span><span class="o">=-</span><span class="mi">100</span><span class="p">)</span>
+</span><span id="__span-44-2"><a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a><span class="n">account</span> <span class="o">=</span> <span class="n">Account</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"1"</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">"Alice"</span><span class="p">,</span> <span class="n">balance</span><span class="o">=-</span><span class="mi">100</span><span class="p">)</span>
 </span></code></pre></div>
 <p><strong>Fix:</strong> Validate data before creating objects.</p>
 <h3 id="notimplementederror">NotImplementedError<a class="headerlink" href="#notimplementederror" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-45-1"><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a><span class="ne">NotImplementedError</span><span class="p">:</span> <span class="n">TODO</span><span class="p">:</span> <span class="n">Implement</span> <span class="s1">&#39;the optimal result based on criteria&#39;</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-45-1"><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a><span class="ne">NotImplementedError</span><span class="p">:</span> <span class="n">TODO</span><span class="p">:</span> <span class="n">Implement</span> <span class="s1">'the optimal result based on criteria'</span>
 </span></code></pre></div>
 <p><strong>Cause:</strong> RETURNS contained descriptive text that couldn't be compiled.</p>
 <p><strong>Fix options:</strong></p>
@@ -3582,7 +3610,7 @@
 <hr />
 <h2 id="lockfile-errors">Lockfile Errors<a class="headerlink" href="#lockfile-errors" title="Permanent link">&para;</a></h2>
 <h3 id="lockfile-out-of-date">Lockfile Out of Date<a class="headerlink" href="#lockfile-out-of-date" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-48-1"><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>LockfileError: ANLU &#39;calculate-tax&#39; has changed since lock
+<div class="language-text highlight"><pre><span></span><code><span id="__span-48-1"><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>LockfileError: ANLU 'calculate-tax' has changed since lock
 </span></code></pre></div>
 <p><strong>Cause:</strong> Source file changed without recompiling.</p>
 <p><strong>Fix:</strong>
@@ -3610,7 +3638,7 @@
 </span></code></pre></div>
 <p><strong>Cause:</strong> Requested tree-sitter parser without installing it.</p>
 <p><strong>Fix:</strong>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-54-1"><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;nlsc[treesitter]&quot;</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-54-1"><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"nlsc[treesitter]"</span>
 </span></code></pre></div></p>
 <h3 id="watch-directory-error">Watch Directory Error<a class="headerlink" href="#watch-directory-error" title="Permanent link">&para;</a></h3>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-55-1"><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>Error: Not a directory: src/file.nl
@@ -3743,7 +3771,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "navigation.instant", "content.code.copy", "content.code.annotate", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
