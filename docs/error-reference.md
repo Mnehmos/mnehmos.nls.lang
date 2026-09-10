@@ -12,6 +12,9 @@ Use the CLI to get the extended explanation for any code:
 nlsc explain EPARSE001
 ```
 
+The [Language Specification's diagnostics index](language-spec.md#diagnostics-index)
+maps each code family to the language rule it enforces.
+
 | Code | Commands | Meaning |
 | --- | --- | --- |
 | `ECLI001` | `init`, `compile`, `verify`, `run`, `test`, `graph`, `atomize`, `diff`, `lsp`, `assoc`, `watch`, `lock:check`, `lock:update`, `unknown-subcommand` | CLI argument parsing failed before command dispatch while `--json` was active. |
