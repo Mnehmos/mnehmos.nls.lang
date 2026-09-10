@@ -74,6 +74,17 @@ def _word_replacements(text: str) -> str:
     return text
 
 
+def _route_declared_constructors(text: str) -> str:
+    """Rewrite declared-type constructor calls to their factories (#202)."""
+    for type_name in sorted(_DECLARED_TYPES):
+        text = re.sub(
+            re.compile("\\b" + re.escape(type_name) + r"\s*\("),
+            f"make_{type_name}(",
+            text,
+        )
+    return text
+
+
 def _translate_expression(expression: str) -> str:
     stripped = expression.strip()
     structural = _translate_structural_expression(stripped)
@@ -85,7 +96,8 @@ def _translate_expression(expression: str) -> str:
     translated = _translate_list_comprehension(translated)
     translated = _translate_len_calls(translated)
     translated = _translate_ternary(translated)
-    return _map_outside_strings(translated, _word_replacements)
+    translated = _map_outside_strings(translated, _word_replacements)
+    return _route_declared_constructors(translated)
 
 
 _NLS_RUNTIME_PRELUDE = """// NLS runtime helpers: structural equality, NLS truthiness, and
@@ -329,6 +341,31 @@ def _render_ts_expr(expr: IRExpr, min_prec: int = 0) -> Optional[str]:
         if expr.anlu:
             return f"{expr.target.replace('-', '_')}({all_args})"
         target = expr.target
+        if target[:1].isupper() and target in _DECLARED_TYPES:
+            # Constructor of a declared record: route to its validating
+            # factory with arguments in field order (#202).
+            field_order = _DECLARED_TYPES[target]
+            kwarg_values: dict[str, str] = {}
+            for name, value in expr.kwargs:
+                rendered_kw = _render_ts_expr(value, 0)
+                if rendered_kw is None:
+                    return None
+                kwarg_values[name] = rendered_kw
+            ordered: list[str] = []
+            positional = list(args)
+            used_kwargs: set[str] = set()
+            for field_name in field_order:
+                if field_name in kwarg_values:
+                    ordered.append(kwarg_values[field_name])
+                    used_kwargs.add(field_name)
+                elif positional:
+                    ordered.append(positional.pop(0))
+            for leftover_name in kwarg_values:
+                if leftover_name not in used_kwargs:
+                    return None
+            if positional:
+                return None
+            return f"make_{target}({', '.join(ordered)})"
         builtin_map = {
             "len": "__nls_len",
             "sum": "__nls_sum",
@@ -487,6 +524,77 @@ def _split_top_level_plus(expression: str) -> list[str]:
     return [part for part in parts if part]
 
 
+# Declared @type names for the current emission; constructor calls to
+# these route to their validating factories (#202).  Full plumbing of
+# module context through every translate call arrives with the
+# checked-IR emitter migration.
+_DECLARED_TYPES: dict[str, list[str]] = {}
+
+
+def _emit_type_factory(
+    type_def: TypeDefinition, invariant: Optional[Invariant] = None
+) -> list[str]:
+    """Emit a validating constructor factory for a record type (#202).
+
+    Mirrors the Python dataclass ``__post_init__`` semantics: required /
+    non-negative / positive / min / max constraint checks and invariant
+    conditions throw ``ValueError`` with the same messages as Python.
+    """
+    name = type_def.name
+    lines = [f"export function make_{name}("]
+    params: list[str] = []
+    for field in type_def.fields:
+        optional = any(c.lower().strip() == "optional" for c in field.constraints)
+        marker = "?" if optional else ""
+        ts_type = _python_type_to_typescript(field.to_python_type())
+        params.append(f"  {field.name}{marker}: {ts_type}")
+    lines.append(",\n".join(params))
+    lines.append(f"): {name} {{")
+
+    def check(condition: str, message: str) -> None:
+        lines.append(f"  if ({condition}) {{")
+        lines.append(f'    throw new ValueError("{message}");')
+        lines.append("  }")
+
+    for field in type_def.fields:
+        for constraint in field.constraints:
+            lowered = constraint.lower().strip()
+            if lowered == "required":
+                check(
+                    f"!__nls_truthy({field.name})",
+                    f"{field.name} is required",
+                )
+            elif lowered == "non-negative":
+                check(f"{field.name} < 0", f"{field.name} must be non-negative")
+            elif lowered == "positive":
+                check(f"{field.name} <= 0", f"{field.name} must be positive")
+            elif lowered.startswith("min:"):
+                bound = lowered.split(":", 1)[1].strip()
+                if bound.replace(".", "", 1).isdigit() or (
+                    bound.startswith("-") and bound[1:].replace(".", "", 1).isdigit()
+                ):
+                    check(f"{field.name} < {bound}", f"{field.name} must be at least {bound}")
+            elif lowered.startswith("max:"):
+                bound = lowered.split(":", 1)[1].strip()
+                if bound.replace(".", "", 1).isdigit() or (
+                    bound.startswith("-") and bound[1:].replace(".", "", 1).isdigit()
+                ):
+                    check(f"{field.name} > {bound}", f"{field.name} must be at most {bound}")
+
+    if invariant is not None:
+        for condition in invariant.conditions:
+            translated = _translate_expression(condition)
+            check(
+                f"!__nls_truthy({translated})",
+                f"Invariant violated: {condition}",
+            )
+
+    body = ", ".join(field.name for field in type_def.fields)
+    lines.append(f"  return {{ {body} }};")
+    lines.append("}")
+    return lines
+
+
 def _emit_type_definition(
     type_def: TypeDefinition, invariant: Optional[Invariant] = None
 ) -> str:
@@ -554,6 +662,23 @@ TYPESCRIPT_BUILTIN_ERRORS = {
 
 
 def collect_guard_error_types(nl_file: NLFile) -> list[str]:
+    collected = _collect_guard_error_types_raw(nl_file)
+    # Factory checks (#202) raise ValueError for constraint/invariant
+    # violations, mirroring the Python dataclass behavior.
+    has_factory_checks = any(
+        any(field.constraints for field in type_def.fields)
+        or any(
+            inv.type_name == type_def.name and inv.conditions
+            for inv in nl_file.invariants
+        )
+        for type_def in nl_file.module.types
+    )
+    if has_factory_checks and "ValueError" not in collected:
+        collected.append("ValueError")
+    return collected
+
+
+def _collect_guard_error_types_raw(nl_file: NLFile) -> list[str]:
     """Distinct non-builtin guard error types, in first-use order."""
     seen: list[str] = []
     for anlu in nl_file.anlus:
@@ -831,8 +956,15 @@ def emit_typescript(
         lines.extend(guard_error_runtime)
 
     invariant_map = {inv.type_name: inv for inv in nl_file.invariants}
+    _DECLARED_TYPES.clear()
+    _DECLARED_TYPES.update({t.name: [f.name for f in t.fields] for t in nl_file.module.types})
     for type_def in _order_types(nl_file.module.types):
         lines.append(_emit_type_definition(type_def, invariant_map.get(type_def.name)))
+        lines.append("")
+        # Validating constructor factories (#202): construction-time
+        # constraint and invariant checks, identical to the Python
+        # dataclass __post_init__ behavior.
+        lines.extend(_emit_type_factory(type_def, invariant_map.get(type_def.name)))
         lines.append("")
 
     for anlu in nl_file.dependency_order():

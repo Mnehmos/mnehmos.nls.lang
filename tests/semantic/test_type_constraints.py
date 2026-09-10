@@ -15,7 +15,7 @@ from .runners import PythonRunner
 class TestTypeConstraintSemantics:
     """Type constraints must be enforced at construction time."""
 
-    def test_min_constraint_enforced(self, python_runner: PythonRunner):
+    def test_min_constraint_enforced(self, runner: PythonRunner):
         """min: constraint rejects values below threshold."""
         source = """\
 @module test
@@ -25,25 +25,25 @@ class TestTypeConstraintSemantics:
   quantity: number, min: 1
 }
 """
-        code = python_runner.compile(source)
+        code = runner.compile(source)
 
         # Valid: quantity >= 1
-        result = python_runner.create_instance(code, "Order", {"quantity": 5})
+        result = runner.create_instance(code, "Order", {"quantity": 5})
         assert result.success
         assert result.return_value.quantity == 5
 
-        result = python_runner.create_instance(code, "Order", {"quantity": 1})
+        result = runner.create_instance(code, "Order", {"quantity": 1})
         assert result.success
 
         # Invalid: quantity < 1
-        result = python_runner.create_instance(code, "Order", {"quantity": 0})
+        result = runner.create_instance(code, "Order", {"quantity": 0})
         assert not result.success
         assert result.exception_type == "ValueError"
 
-        result = python_runner.create_instance(code, "Order", {"quantity": -5})
+        result = runner.create_instance(code, "Order", {"quantity": -5})
         assert not result.success
 
-    def test_max_constraint_enforced(self, python_runner: PythonRunner):
+    def test_max_constraint_enforced(self, runner: PythonRunner):
         """max: constraint rejects values above threshold."""
         source = """\
 @module test
@@ -53,21 +53,21 @@ class TestTypeConstraintSemantics:
   value: number, max: 100
 }
 """
-        code = python_runner.compile(source)
+        code = runner.compile(source)
 
         # Valid: value <= 100
-        result = python_runner.create_instance(code, "Percentage", {"value": 50})
+        result = runner.create_instance(code, "Percentage", {"value": 50})
         assert result.success
 
-        result = python_runner.create_instance(code, "Percentage", {"value": 100})
+        result = runner.create_instance(code, "Percentage", {"value": 100})
         assert result.success
 
         # Invalid: value > 100
-        result = python_runner.create_instance(code, "Percentage", {"value": 101})
+        result = runner.create_instance(code, "Percentage", {"value": 101})
         assert not result.success
         assert result.exception_type == "ValueError"
 
-    def test_required_constraint_enforced(self, python_runner: PythonRunner):
+    def test_required_constraint_enforced(self, runner: PythonRunner):
         """required constraint rejects empty/None values."""
         source = """\
 @module test
@@ -77,19 +77,19 @@ class TestTypeConstraintSemantics:
   name: string, required
 }
 """
-        code = python_runner.compile(source)
+        code = runner.compile(source)
 
         # Valid: non-empty string
-        result = python_runner.create_instance(code, "User", {"name": "Alice"})
+        result = runner.create_instance(code, "User", {"name": "Alice"})
         assert result.success
         assert result.return_value.name == "Alice"
 
         # Invalid: empty string
-        result = python_runner.create_instance(code, "User", {"name": ""})
+        result = runner.create_instance(code, "User", {"name": ""})
         assert not result.success
         assert result.exception_type == "ValueError"
 
-    def test_positive_constraint_enforced(self, python_runner: PythonRunner):
+    def test_positive_constraint_enforced(self, runner: PythonRunner):
         """positive constraint rejects zero and negative values."""
         source = """\
 @module test
@@ -99,21 +99,21 @@ class TestTypeConstraintSemantics:
   amount: number, positive
 }
 """
-        code = python_runner.compile(source)
+        code = runner.compile(source)
 
         # Valid: positive
-        result = python_runner.create_instance(code, "Price", {"amount": 10.50})
+        result = runner.create_instance(code, "Price", {"amount": 10.50})
         assert result.success
 
         # Invalid: zero
-        result = python_runner.create_instance(code, "Price", {"amount": 0})
+        result = runner.create_instance(code, "Price", {"amount": 0})
         assert not result.success
 
         # Invalid: negative
-        result = python_runner.create_instance(code, "Price", {"amount": -5})
+        result = runner.create_instance(code, "Price", {"amount": -5})
         assert not result.success
 
-    def test_non_negative_constraint_enforced(self, python_runner: PythonRunner):
+    def test_non_negative_constraint_enforced(self, runner: PythonRunner):
         """non-negative constraint allows zero but rejects negative."""
         source = """\
 @module test
@@ -123,21 +123,21 @@ class TestTypeConstraintSemantics:
   value: number, non-negative
 }
 """
-        code = python_runner.compile(source)
+        code = runner.compile(source)
 
         # Valid: positive
-        result = python_runner.create_instance(code, "Balance", {"value": 100})
+        result = runner.create_instance(code, "Balance", {"value": 100})
         assert result.success
 
         # Valid: zero
-        result = python_runner.create_instance(code, "Balance", {"value": 0})
+        result = runner.create_instance(code, "Balance", {"value": 0})
         assert result.success
 
         # Invalid: negative
-        result = python_runner.create_instance(code, "Balance", {"value": -1})
+        result = runner.create_instance(code, "Balance", {"value": -1})
         assert not result.success
 
-    def test_multiple_constraints(self, python_runner: PythonRunner):
+    def test_multiple_constraints(self, runner: PythonRunner):
         """Multiple constraints on same field are all enforced."""
         source = """\
 @module test
@@ -147,22 +147,22 @@ class TestTypeConstraintSemantics:
   score: number, min: 1, max: 5
 }
 """
-        code = python_runner.compile(source)
+        code = runner.compile(source)
 
         # Valid: 1 <= score <= 5
         for score in [1, 2, 3, 4, 5]:
-            result = python_runner.create_instance(code, "Rating", {"score": score})
+            result = runner.create_instance(code, "Rating", {"score": score})
             assert result.success, f"score={score} should be valid"
 
         # Invalid: below min
-        result = python_runner.create_instance(code, "Rating", {"score": 0})
+        result = runner.create_instance(code, "Rating", {"score": 0})
         assert not result.success
 
         # Invalid: above max
-        result = python_runner.create_instance(code, "Rating", {"score": 6})
+        result = runner.create_instance(code, "Rating", {"score": 6})
         assert not result.success
 
-    def test_invariant_enforced_at_construction(self, python_runner: PythonRunner):
+    def test_invariant_enforced_at_construction(self, runner: PythonRunner):
         """@invariant conditions are checked when object is created."""
         source = """\
 @module test
@@ -176,22 +176,22 @@ class TestTypeConstraintSemantics:
   balance >= 0
 }
 """
-        code = python_runner.compile(source)
+        code = runner.compile(source)
 
         # Valid: satisfies invariant
-        result = python_runner.create_instance(code, "Account", {"balance": 100})
+        result = runner.create_instance(code, "Account", {"balance": 100})
         assert result.success
         assert result.return_value.balance == 100
 
-        result = python_runner.create_instance(code, "Account", {"balance": 0})
+        result = runner.create_instance(code, "Account", {"balance": 0})
         assert result.success
 
         # Invalid: violates invariant
-        result = python_runner.create_instance(code, "Account", {"balance": -50})
+        result = runner.create_instance(code, "Account", {"balance": -50})
         assert not result.success
         assert "Invariant violated" in result.exception_message
 
-    def test_multiple_invariants(self, python_runner: PythonRunner):
+    def test_multiple_invariants(self, runner: PythonRunner):
         """Multiple @invariant conditions are all enforced."""
         source = """\
 @module test
@@ -207,23 +207,23 @@ class TestTypeConstraintSemantics:
   high >= low
 }
 """
-        code = python_runner.compile(source)
+        code = runner.compile(source)
 
         # Valid: both invariants satisfied
-        result = python_runner.create_instance(code, "Range", {"low": 5, "high": 10})
+        result = runner.create_instance(code, "Range", {"low": 5, "high": 10})
         assert result.success
 
         # Invalid: low < 0
-        result = python_runner.create_instance(code, "Range", {"low": -1, "high": 10})
+        result = runner.create_instance(code, "Range", {"low": -1, "high": 10})
         assert not result.success
         assert "Invariant violated" in result.exception_message
 
         # Invalid: high < low
-        result = python_runner.create_instance(code, "Range", {"low": 10, "high": 5})
+        result = runner.create_instance(code, "Range", {"low": 10, "high": 5})
         assert not result.success
         assert "Invariant violated" in result.exception_message
 
-    def test_constraints_with_multiple_fields(self, python_runner: PythonRunner):
+    def test_constraints_with_multiple_fields(self, runner: PythonRunner):
         """Types with multiple constrained fields validate all fields."""
         source = """\
 @module test
@@ -235,31 +235,31 @@ class TestTypeConstraintSemantics:
   unit_price: number, non-negative
 }
 """
-        code = python_runner.compile(source)
+        code = runner.compile(source)
 
         # Valid: all constraints satisfied
-        result = python_runner.create_instance(
+        result = runner.create_instance(
             code, "LineItem",
             {"description": "Widget", "quantity": 2, "unit_price": 9.99}
         )
         assert result.success
 
         # Invalid: empty description
-        result = python_runner.create_instance(
+        result = runner.create_instance(
             code, "LineItem",
             {"description": "", "quantity": 2, "unit_price": 9.99}
         )
         assert not result.success
 
         # Invalid: quantity < 1
-        result = python_runner.create_instance(
+        result = runner.create_instance(
             code, "LineItem",
             {"description": "Widget", "quantity": 0, "unit_price": 9.99}
         )
         assert not result.success
 
         # Invalid: negative price
-        result = python_runner.create_instance(
+        result = runner.create_instance(
             code, "LineItem",
             {"description": "Widget", "quantity": 2, "unit_price": -1}
         )
