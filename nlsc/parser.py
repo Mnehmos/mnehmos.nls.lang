@@ -472,6 +472,8 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
     main_brace_depth = 0
     # Track variable assignments for dataflow analysis
     logic_assigns: dict[str, int] = {}
+    # Track step-number identities per ANLU (#192)
+    logic_step_lines: dict[int, int] = {}
 
     for line_num, line in enumerate(lines, start=1):
         # Normalize matching to allow leading indentation in embedded strings.
@@ -604,6 +606,7 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             )
             # Reset dataflow tracking for new ANLU
             logic_assigns = {}
+            logic_step_lines = {}
             current_section = None
             continue
 
@@ -676,6 +679,18 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                     if current_section == "logic":
                         step_num = int(numbered_match.group(1))
                         step_text = numbered_match.group(2)
+                        # Step numbers are node identities (#192): a
+                        # duplicate would silently collapse graph nodes.
+                        if step_num in logic_step_lines:
+                            raise ParseError(
+                                f"Duplicate LOGIC step number {step_num} in "
+                                f"[{current_anlu.identifier}] "
+                                f"(first defined at line {logic_step_lines[step_num]}, "
+                                f"repeated at line {line_num})",
+                                line_num,
+                                line,
+                            )
+                        logic_step_lines[step_num] = line_num
                         # Keep raw logic for backwards compatibility
                         current_anlu.logic.append(step_text)
                         # Parse with dataflow extraction

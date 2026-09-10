@@ -603,8 +603,22 @@ def _parse_anlu_block(node: "Node", source: bytes) -> ANLU:
                 guards.append(_parse_guard_item(item, source))
 
         elif child.type == "logic_section":
+            step_lines: dict[int, int] = {}
             for item in _get_children_by_type(child, "logic_item"):
                 step = _parse_logic_item(item, source, logic_assigns)
+                # Step numbers are node identities (#192): a duplicate
+                # would silently collapse graph nodes.
+                step_line = item.start_point[0] + 1
+                if step.number in step_lines:
+                    raise ParseError(
+                        f"Duplicate LOGIC step number {step.number} in "
+                        f"[{identifier}] "
+                        f"(first defined at line {step_lines[step.number]}, "
+                        f"repeated at line {step_line})",
+                        step_line,
+                        step.description,
+                    )
+                step_lines[step.number] = step_line
                 logic_steps.append(step)
                 logic.append(step.description)
                 # Update assigns tracker
