@@ -221,6 +221,41 @@ nlsc watch src/ --test
 nlsc diff src/api.nl --full
 ```
 
+### CI gate: `nlsc ci` (Issue #149)
+
+`nlsc ci` is the automation-native front door: non-interactive, **strict by
+default** (any scaffold content, contract drift, or fatal semantic error
+fails), and requires a **current lockfile** that it never rewrites. Optional
+stages compile with reproducibility verification (the regenerated output
+must reproduce the lockfile's recorded target hash) and run `@test` blocks:
+
+```bash
+nlsc ci src/app.nl                  # strict gate + lockfile freshness
+nlsc ci src/app.nl --compile        # + compile & verify reproducible hash
+nlsc ci src/app.nl --compile --test # + run @test specifications
+nlsc ci src/app.nl --json           # structured results for CI tooling
+nlsc compile src/app.nl --frozen-lockfile  # plain compile, lock never rewritten
+```
+
+Exit codes are stable: **0** success, **1** any diagnostic (parse, strict
+gate, stale/missing/tampered lockfile, failing tests). Run `nlsc compile`
+once and commit the `.nl.lock` file — `nlsc ci` requires it, npm-ci style.
+
+```yaml
+# .github/workflows/nls.yml
+name: NLS CI
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install nlsc
+      - run: nlsc ci src/app.nl --compile --test
+```
+
 ## GitHub Action
 
 Use the NLS Compiler Action in your CI/CD pipelines for zero-config validation:
