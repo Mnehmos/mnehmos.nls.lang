@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://mnehmos.github.io/mnehmos.nls.lang/ir-spec/">
+        <link rel="canonical" href="https://mnehmos.github.io/mnehmos.nls.lang/versioning/">
       
       
-        <link rel="prev" href="../core-semantics/">
+        <link rel="prev" href="../cli-reference/">
       
       
-        <link rel="next" href="../examples/">
+        <link rel="next" href="../llm-reference/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>IR Specification - NLS Compiler</title>
+        <title>Versioning & Compatibility - NLS Compiler</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#nls-target-neutral-ir-specification" class="md-skip">
+        <a href="#versioning-and-compatibility-guarantees" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              IR Specification
+              Versioning & Compatibility
             
           </span>
         </div>
@@ -541,8 +541,6 @@
       
   
   
-    
-  
   
   
     
@@ -555,11 +553,13 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
@@ -580,7 +580,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -679,37 +679,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    IR Specification
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../ir-spec/" class="md-nav__link">
         
   
   
@@ -725,153 +698,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#design-rules" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Design rules
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#canonical-text-grammar" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Canonical text grammar
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Canonical text grammar">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#values" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Values
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#type-references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Type references
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#effect-sets-issue-197-conservative-slice" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Effect sets (Issue #197, conservative slice)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#failure-sets-issue-198" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Failure sets (Issue #198)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#foreign-reasons-stable-vocabulary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Foreign reasons (stable vocabulary)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#node-identity-and-spans" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Node identity and spans
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#json-form" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        JSON form
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#extension-and-version-policy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Extension and version policy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-lowers-today" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What lowers today
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1005,8 +831,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -1017,13 +845,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
         
           
           <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
@@ -1044,7 +870,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1087,10 +913,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../versioning/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Versioning & Compatibility
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1106,6 +959,81 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#declaring-a-revision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Declaring a revision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compatibility-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compatibility rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-counts-as-a-breaking-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What counts as a breaking change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upgrade-guidance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrade guidance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-changes-are-recorded" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where changes are recorded
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1458,10 +1386,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#design-rules" class="md-nav__link">
+  <a href="#declaring-a-revision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Design rules
+        Declaring a revision
       
     </span>
   </a>
@@ -1469,82 +1397,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#canonical-text-grammar" class="md-nav__link">
+  <a href="#compatibility-rules" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Canonical text grammar
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Canonical text grammar">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#values" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Values
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#type-references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Type references
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#effect-sets-issue-197-conservative-slice" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Effect sets (Issue #197, conservative slice)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#failure-sets-issue-198" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Failure sets (Issue #198)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#foreign-reasons-stable-vocabulary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Foreign reasons (stable vocabulary)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#node-identity-and-spans" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Node identity and spans
+        Compatibility rules
       
     </span>
   </a>
@@ -1552,10 +1408,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#json-form" class="md-nav__link">
+  <a href="#what-counts-as-a-breaking-change" class="md-nav__link">
     <span class="md-ellipsis">
       
-        JSON form
+        What counts as a breaking change
       
     </span>
   </a>
@@ -1563,10 +1419,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#extension-and-version-policy" class="md-nav__link">
+  <a href="#upgrade-guidance" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Extension and version policy
+        Upgrade guidance
       
     </span>
   </a>
@@ -1574,10 +1430,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-lowers-today" class="md-nav__link">
+  <a href="#where-changes-are-recorded" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What lowers today
+        Where changes are recorded
       
     </span>
   </a>
@@ -1604,174 +1460,117 @@
   
 
 
-<h1 id="nls-target-neutral-ir-specification">NLS Target-Neutral IR Specification<a class="headerlink" href="#nls-target-neutral-ir-specification" title="Permanent link">&para;</a></h1>
-<p>Status: <strong>experimental, version 0.1</strong> — the IR boundary described in issue #194 under the emitter-abstraction plan (#147). It is the interchange format between the surface language and every backend, designed to be readable by LLMs and by people who do not read code for a living.</p>
-<ul>
-<li>Schema module: <code>nlsc/ir.py</code></li>
-<li>Deterministic lowering: <code>nlsc/lowering.py</code> (shared by both parser backends)</li>
-<li>CLI: <code>nlsc ir &lt;file.nl&gt;</code> (canonical text), <code>nlsc ir &lt;file.nl&gt; --json</code> (JSON form)</li>
-</ul>
-<h2 id="design-rules">Design rules<a class="headerlink" href="#design-rules" title="Permanent link">&para;</a></h2>
-<ol>
-<li><strong>Target-neutral.</strong> The same <code>.nl</code> source lowers to byte-identical IR regardless of <code>@target</code>. Python-ness stops at the IR boundary.</li>
-<li><strong>Deterministic.</strong> Same source in, same canonical text out — stable node ids, stable ordering, no addresses or hashes that depend on run environment.</li>
-<li><strong>Honest about gaps.</strong> Anything outside the supported core becomes an explicit <code>foreign</code> node plus a diagnostic (<code>EIR001</code>/<code>EIR002</code>). Lowering never silently drops work, invents placeholder values, or guesses that the last binding is the return value.</li>
-<li><strong>Unchecked ≠ checked.</strong> Lowering produces an <em>unchecked</em> module (<code>checked: false</code>). A module containing foreign nodes is never eligible for checked emission (<code>EIR003</code>). Unfilled contract slots (<code>effects</code>, <code>failures</code>, <code>typestate</code>) mean <em>not analyzed</em> — they are never implicit proof of purity or safety.</li>
-<li><strong>Narrative is preserved.</strong> PURPOSE text, descriptive LOGIC notes, and EDGE CASES ride along as attached narrative (<code>purpose</code>, <code>note</code>, <code>edge-case</code>) and never become executable statements.</li>
-</ol>
-<h2 id="canonical-text-grammar">Canonical text grammar<a class="headerlink" href="#canonical-text-grammar" title="Permanent link">&para;</a></h2>
-<p>The canonical form is an S-expression dialect — minimal punctuation, one statement per line, trivially parseable and diffable.</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>;; nls-ir 0.1 target-neutral module=&lt;name&gt; [version=&lt;version&gt;]
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>(imports &lt;name&gt;...)
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>(uses &lt;domain&gt;...)
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>(type &lt;Name&gt; [extends &lt;Base&gt;]
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  (field &lt;name&gt; &lt;typeref&gt; ["constraint"...] ["description"]))
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>(op &lt;anlu-name&gt; [(line &lt;n&gt;)]
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  (purpose "...")
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  (param &lt;name&gt; &lt;typeref&gt; [optional])
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  (guard &lt;expr&gt; -&gt; (error &lt;Type&gt; [code=&lt;code&gt;] ["message"]))
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>  (body
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    (bind &lt;name&gt; &lt;expr&gt;)                          ;; step=&lt;n&gt; line=&lt;n&gt; comment
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    (bind &lt;name&gt; &lt;expr&gt; aug=&lt;op&gt;)
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    (expr &lt;expr&gt;)                                 ;; value discarded, effects kept
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    (branch &lt;expr&gt;
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>      ( ...then stmts... )
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>      [else ( ...else stmts... )])
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    (loop while &lt;expr&gt; ( ...body... ))
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    (note "narrative text")
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    (foreign-stmt reason=&lt;why&gt; "raw text"))
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  (result [(type &lt;typeref&gt;)] [(value &lt;expr&gt;)])
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>  (depends &lt;anlu-name&gt;...)
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>  (literal "verbatim target implementation")
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>  (edge-case "condition" -&gt; "behavior"))
-</span></code></pre></div>
-<h3 id="values">Values<a class="headerlink" href="#values" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>(lit 42)                        number, raw token preserved
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>(lit "True and False")          string, exact decoded text; source token kept on the node
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>(lit True) (lit False) (lit None)
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>(ref &lt;name&gt;)                    local binding / parameter reference
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>(get &lt;expr&gt; &lt;field&gt;)            field access
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>(at &lt;expr&gt; &lt;expr&gt;)              index access
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>(list &lt;expr&gt;...)                list construction
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>(binary &lt;op&gt; &lt;l&gt; &lt;r&gt;)           op: add sub mul div floor_div mod pow
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>                                eq ne lt le gt ge and or is is_not in not_in
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>(unary neg|not &lt;expr&gt;)
-</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>(call &lt;name&gt; [&lt;args&gt;] [(kw &lt;expr&gt;)...])            builtin/foreign/constructor call
-</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>(anlu &lt;kebab-name&gt; [&lt;args&gt;])                       ANLU call, kebab name verbatim
-</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>(method &lt;base&gt; .&lt;name&gt; [&lt;args&gt;])                   method call, structural
-</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>(foreign reason=&lt;why&gt; "raw text")                  outside the supported core
-</span></code></pre></div>
-<h3 id="type-references">Type references<a class="headerlink" href="#type-references" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>number integer string boolean void any     primitives
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>(list &lt;typeref&gt;)                           list of X
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>(&lt;Name&gt;)                                   declared record type
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>(&lt;typeref&gt; optional)                       nullable / optional
-</span></code></pre></div>
-<h3 id="effect-sets-issue-197-conservative-slice">Effect sets (Issue #197, conservative slice)<a class="headerlink" href="#effect-sets-issue-197-conservative-slice" title="Permanent link">&para;</a></h3>
-<p>Operations also carry an analyzed <code>effects</code> set: <code>(effects)</code> for
-purely structural code, or <code>unknown</code> markers for foreign calls, method
-calls, and literal implementations, propagated to callers:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>(effects (effect unknown origin=call) (effect unknown origin=callee))
-</span></code></pre></div>
-<p><code>kind</code> and <code>resource</code> are reserved for the read/write
-resource-identity syntax in the full #197 slice; <code>None</code> still means
-<em>not analyzed</em> and is never an implicit proof of purity.</p>
-<h3 id="failure-sets-issue-198">Failure sets (Issue #198)<a class="headerlink" href="#failure-sets-issue-198" title="Permanent link">&para;</a></h3>
-<p>Every operation carries an analyzed <code>fails</code> set after lowering:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>(fails (fail ValueError code=MISSING "Token required" origin=guard)
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>       (fail ValueError "called" origin=callee)
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>       (fail unknown))
-</span></code></pre></div>
-<ul>
-<li><code>origin=guard</code> — raised by one of the operation's guards (typed
-  error, optional code, message preserved).</li>
-<li><code>origin=callee</code> — propagated from a called operation, transitively
-  and deterministically.</li>
-<li><code>(fail unknown)</code> — a conservative marker for foreign calls, method
-  calls, division/modulo, index access, and literal implementations. An
-  unknown external failure is never treated as an empty set, and pure
-  operations carry an analyzed-empty <code>(fails)</code> (<code>None</code> still means
-  <em>not analyzed</em>).</li>
-</ul>
-<p>Failure sets participate in lockfile semantic identity: changing a
-callee's guard payload invalidates its callers.</p>
-<h3 id="foreign-reasons-stable-vocabulary">Foreign reasons (stable vocabulary)<a class="headerlink" href="#foreign-reasons-stable-vocabulary" title="Permanent link">&para;</a></h3>
-<p><code>comprehension</code>, <code>generator-expression</code>, <code>ternary</code>, <code>fstring</code>, <code>raw-string</code>,
-<code>dict-literal</code>, <code>slice</code>, <code>star-args</code>, <code>lambda</code>, <code>tuple</code>, <code>walrus-or-slice</code>,
-<code>multiple-statements</code>, <code>augmented-binding</code>, <code>call-on-non-name</code>,
-<code>positional-after-keyword</code>, <code>prose</code>, <code>tokenize-error</code>, <code>unexpected-token</code>,
-<code>trailing-tokens</code>, <code>unexpected-end</code>, <code>keyword-&lt;word&gt;</code>.</p>
-<h2 id="node-identity-and-spans">Node identity and spans<a class="headerlink" href="#node-identity-and-spans" title="Permanent link">&para;</a></h2>
-<p>Every value and statement node carries:</p>
-<ul>
-<li>a <strong>stable id</strong> — a structural path like <code>checkout.step1.value.left</code>, derived purely from the lowered shape, never from run state;</li>
-<li>a <strong>source span</strong> — <code>{anlu, line, step}</code> identifying the ANLU, the source line, and the originating LOGIC step (when applicable).</li>
-</ul>
-<p>Diagnostics produced during lowering always carry the span's line, so a tool can point back at the exact numbered step.</p>
-<h2 id="json-form">JSON form<a class="headerlink" href="#json-form" title="Permanent link">&para;</a></h2>
-<p><code>module_to_json()</code> (and <code>nlsc ir --json</code>) emits the same content as a
-deterministic JSON document: every node is an object with a <code>kind</code>
-discriminator, ids, and spans. Keys are sorted; the payload embeds the
-canonical text for convenience (<code>canonical</code>) so LLM round-trips can pick
-either representation.</p>
-<h2 id="extension-and-version-policy">Extension and version policy<a class="headerlink" href="#extension-and-version-policy" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>IR_SCHEMA_VERSION</code> is <code>"0.1"</code> and appears in every serialized form (<code>;; nls-ir 0.1</code>, <code>"ir_version": "0.1"</code>).</li>
-<li><strong>Additive changes</strong> (new optional node fields, new foreign reasons, new normalized operators) bump the minor version; consumers must ignore unknown fields and unknown reasons.</li>
-<li><strong>Breaking changes</strong> (removing/renaming node kinds, changing canonical text of existing nodes) bump the major version and require a migration note here.</li>
-<li>Later passes (type checking #195, control checks #196, effects #197, failure sets #198) fill the reserved contract slots and may <em>add</em> node kinds; they must not reinterpret existing ones.</li>
-<li>The checked-emission gate (<code>EIR003</code>) is the enforcement point: backends that consume IR (see #202) must refuse unchecked modules.</li>
-</ul>
-<h2 id="what-lowers-today">What lowers today<a class="headerlink" href="#what-lowers-today" title="Permanent link">&para;</a></h2>
+<h1 id="versioning-and-compatibility-guarantees">Versioning and Compatibility Guarantees<a class="headerlink" href="#versioning-and-compatibility-guarantees" title="Permanent link">&para;</a></h1>
+<p>NLS versions two things independently:</p>
 <table>
 <thead>
 <tr>
-<th>Surface</th>
-<th>IR</th>
+<th>Version</th>
+<th>Where it lives</th>
+<th>What it means</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>LOGIC</code> step <code>x = expr</code></td>
-<td><code>bind</code></td>
+<td><strong>Toolchain version</strong></td>
+<td><code>nlsc --version</code>, PyPI</td>
+<td>The compiler's own release (currently 0.2.x).</td>
 </tr>
 <tr>
-<td>Step <code>action -&gt; binding</code></td>
-<td><code>bind</code></td>
-</tr>
-<tr>
-<td>Step <code>name += expr</code></td>
-<td><code>bind</code> with <code>aug</code></td>
-</tr>
-<tr>
-<td>Step <code>[anlu](args)</code> (value unused)</td>
-<td><code>expr</code> statement (effects preserved)</td>
-</tr>
-<tr>
-<td>Step <code>IF c THEN action</code></td>
-<td><code>branch</code> with <code>then</code> region</td>
-</tr>
-<tr>
-<td>GUARDS bullet</td>
-<td><code>guard</code> with normalized error identity</td>
-</tr>
-<tr>
-<td>RETURNS expression / type</td>
-<td><code>result</code> with <code>value</code> and/or <code>type</code> slots</td>
-</tr>
-<tr>
-<td>Descriptive step (no binding)</td>
-<td><code>note</code></td>
-</tr>
-<tr>
-<td>Anything else executable</td>
-<td><code>foreign</code> node + <code>EIR001</code>/<code>EIR002</code> diagnostic</td>
+<td><strong>Language-spec revision</strong></td>
+<td><code>nlsc --version</code>, declared per file with <code>@nls</code></td>
+<td>The surface language + semantics contract (currently <strong>0.1</strong>).</td>
 </tr>
 </tbody>
 </table>
-<p>Not yet lowered (tracked in follow-up issues): loops (<code>loop</code> region is
-reserved), EDGE CASES as executable regions (#190/#196), <code>@test</code>/<code>@property</code>
-bodies, <code>@main</code> blocks.</p>
+<h2 id="declaring-a-revision">Declaring a revision<a class="headerlink" href="#declaring-a-revision" title="Permanent link">&para;</a></h2>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>@module billing
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>@nls 0.1
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>@version 1.0.0        # your module's own version, unrelated
+</span></code></pre></div>
+<p><code>@nls</code> is optional; a file without it is treated as targeting the current
+revision. <code>@version</code> remains your module's semantic version.</p>
+<h2 id="compatibility-rules">Compatibility rules<a class="headerlink" href="#compatibility-rules" title="Permanent link">&para;</a></h2>
+<p>Given a toolchain supporting spec revision <code>MAJOR.MINOR</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Declared <code>@nls</code></th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>same <code>MAJOR.MINOR</code></td>
+<td>Compatible — no diagnostic.</td>
+</tr>
+<tr>
+<td>same major, newer minor (e.g. <code>0.2</code> on a <code>0.1</code> toolchain)</td>
+<td><code>EVER002</code> — <strong>strict-only warning</strong>; the file may use features this compiler does not implement. <code>nlsc ci</code> fails.</td>
+</tr>
+<tr>
+<td>different major (e.g. <code>1.0</code>)</td>
+<td><code>EVER001</code> — <strong>always fatal</strong>; semantics cannot be guaranteed.</td>
+</tr>
+<tr>
+<td>malformed (e.g. <code>@nls latest</code>)</td>
+<td><code>EVER001</code> — always fatal.</td>
+</tr>
+</tbody>
+</table>
+<p>Older minor revisions within the same major are compatible: the spec is
+additive within a major line.</p>
+<h2 id="what-counts-as-a-breaking-change">What counts as a breaking change<a class="headerlink" href="#what-counts-as-a-breaking-change" title="Permanent link">&para;</a></h2>
+<p><strong>Spec revision bump — MAJOR</strong> (files may stop compiling):</p>
+<ul>
+<li>removing or renaming syntax, sections, directives, or operators;</li>
+<li>changing the meaning of an existing construct;</li>
+<li>turning previously accepted input into a fatal error (e.g. a construct
+  moving from "foreign pass-through" to "rejected");</li>
+<li>changing the semantics of emitted code for existing programs.</li>
+</ul>
+<p><strong>Spec revision bump — MINOR</strong> (existing files keep working):</p>
+<ul>
+<li>new syntax, directives, or section keywords;</li>
+<li>new diagnostics for cases that previously produced broken output — when
+  the old behavior was never a valid program;</li>
+<li>new constraint names, builtins, or type forms;</li>
+<li>widening what strict mode accepts.</li>
+</ul>
+<p><strong>Toolchain-only release</strong> (no spec bump):</p>
+<ul>
+<li>emitter output changes that preserve behavior (formatting, helper names);</li>
+<li>new commands, flags, JSON fields, or error catalog entries that do not
+  change meaning of existing programs;</li>
+<li>performance, packaging, and documentation changes.</li>
+</ul>
+<p>Two deliberate nuances beyond plain semver:</p>
+<ol>
+<li><strong>Checker tightening is major.</strong> Promoting a warning to a fatal error
+   breaks files that previously verified; that is a spec-level change.</li>
+<li><strong>Lockfile hash-scheme changes are toolchain releases with a documented
+   migration.</strong> Semantic-hash revisions (like the <code>sem2</code> scheme) invalidate
+   old lock entries conservatively; the next <code>nlsc compile</code> or
+   <code>nlsc lock:update</code> regenerates them. No spec bump is implied, because
+   program meaning is unchanged.</li>
+</ol>
+<h2 id="upgrade-guidance">Upgrade guidance<a class="headerlink" href="#upgrade-guidance" title="Permanent link">&para;</a></h2>
+<ol>
+<li><code>nlsc --version</code> prints both the toolchain and the supported spec revision.</li>
+<li>Files declaring a newer spec revision warn under <code>--strict</code>; run
+   <code>nlsc ci</code> after upgrading to catch anything the new toolchain tightened.</li>
+<li><code>nlsc diff &lt;file&gt;</code> compares against the committed lockfile, so semantic
+   changes caused by an upgrade surface exactly where they happened.</li>
+</ol>
+<h2 id="where-changes-are-recorded">Where changes are recorded<a class="headerlink" href="#where-changes-are-recorded" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Language-spec changes</strong> (surface syntax, semantics, diagnostics
+  severity): the <code>Spec</code> section of the <a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/CHANGELOG.md">CHANGELOG</a>.</li>
+<li><strong>Toolchain changes</strong> (commands, flags, emitters, tooling): the
+  <code>Toolchain</code> section of the same changelog.</li>
+<li>The spec itself is revised in <a href="../language-spec/">language-spec.md</a>, which
+  carries its revision header and the diagnostics index.</li>
+</ul>
 
 
 

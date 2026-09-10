@@ -1439,6 +1439,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Versioning & Compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../llm-reference/" class="md-nav__link">
         
   
@@ -2295,6 +2323,12 @@ content (see <a href="#unsupported-and-out-of-scope">Unsupported and out of scop
 <li><strong>Comments</strong> — Lines starting with <code>#</code></li>
 </ol>
 <h2 id="directives">Directives<a class="headerlink" href="#directives" title="Permanent link">&para;</a></h2>
+<p><code>@nls MAJOR.MINOR</code> declares the language-spec revision the file targets
+(Issue #144). It is optional; without it the file is treated as targeting the
+current revision. Compatibility rules live in
+<a href="../versioning/">Versioning &amp; Compatibility</a>: same major is compatible, a
+newer minor warns under strict (<code>EVER002</code>), a different major is fatal
+(<code>EVER001</code>).</p>
 <h3 id="module"><code>@module</code><a class="headerlink" href="#module" title="Permanent link">&para;</a></h3>
 <p><strong>Required.</strong> Declares the module name.</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>@module calculator
@@ -2801,6 +2835,11 @@ with causes and next steps.</p>
 <td><code>ESEM013</code></td>
 <td>Module/file name shadows a host stdlib module</td>
 <td><a href="#file-structure">File Structure</a></td>
+</tr>
+<tr>
+<td><code>EVER001</code>, <code>EVER002</code></td>
+<td>Declared <code>@nls</code> revision compatibility</td>
+<td><a href="#directives">Directives</a></td>
 </tr>
 </tbody>
 </table>
