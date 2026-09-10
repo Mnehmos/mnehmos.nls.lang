@@ -410,6 +410,11 @@ def emit_body_from_logic(anlu: ANLU) -> str:
                 lines.append(f"        {action}")
             else:
                 lines.append(f"        pass  # {step.description}")
+
+            # Generate the ELSE arm when the step is a total branch
+            if step.else_action:
+                lines.append("    else:")
+                lines.append(f"        {_else_action_line(step)}")
         else:
             # Non-conditional step
             action = _extract_action(step)
@@ -569,6 +574,30 @@ def _convert_type_return(returns_expr: str, anlu: ANLU) -> str:
 
     # Otherwise return as-is (might be a valid expression)
     return returns_expr
+
+
+def _else_action_line(step: LogicStep) -> Optional[str]:
+    """Emit the ELSE arm of an IF/THEN/ELSE step as a Python action line."""
+    if not step.else_action:
+        return None
+    raw = step.else_action.strip()
+    binding = step.output_binding
+    binding_match = re.search(
+        rf"\s*(?:→|->)\s*({IDENTIFIER_PATTERN})$", raw
+    )
+    if binding_match:
+        binding = binding_match.group(1)
+        raw = raw[: binding_match.start()].strip()
+    arm_step = LogicStep(
+        number=step.number,
+        description=raw,
+        assigns=[binding] if binding else [],
+        output_binding=binding,
+    )
+    action = _extract_action(arm_step)
+    if action:
+        return action
+    return f"pass  # {step.else_action}"
 
 
 def _extract_action(step: LogicStep) -> Optional[str]:

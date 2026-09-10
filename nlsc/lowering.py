@@ -771,11 +771,26 @@ def _lower_step(
             diagnostics=diagnostics,
             context=f"{anlu.identifier} step {step.number} IF condition",
         )
+        else_stmts: tuple[IRStmt, ...] = ()
+        if step.else_action:
+            else_raw = step.else_action.strip()
+            else_binding = step.output_binding
+            binding_match = re.search(
+                rf"\s*(?:→|->)\s*({IDENTIFIER_PATTERN})$", else_raw
+            )
+            if binding_match:
+                else_binding = binding_match.group(1)
+                else_raw = else_raw[: binding_match.start()].strip()
+            else_stmts = tuple(
+                _lower_action(
+                    anlu, else_raw, else_binding, span, strict, diagnostics
+                )
+            )
         return [
             IRBranch(
                 condition=condition,
                 then_body=tuple(action_stmts),
-                otherwise=(),
+                otherwise=else_stmts,
                 span=span,
             )
         ]

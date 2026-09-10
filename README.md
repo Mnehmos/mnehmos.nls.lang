@@ -261,6 +261,16 @@ jobs:
 
 ### ANLU Blocks (Functions)
 
+Branches are explicit and total when they produce a value:
+
+```nl
+IF flag THEN 1 -> x ELSE 0 -> x
+```
+
+A binding that exists on only one path is rejected before either backend
+runs — no silent `UnboundLocalError`/`ReferenceError` — and rebound names
+fail `--strict` because checked bindings are immutable.
+
 ```nl
 [function-name]
 PURPOSE: What this function does

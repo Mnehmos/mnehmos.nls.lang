@@ -49,6 +49,8 @@ ESEM006 = "ESEM006"
 ESEM007 = "ESEM007"
 ESEM008 = "ESEM008"
 ESEM009 = "ESEM009"
+ESEM010 = "ESEM010"
+ESEM011 = "ESEM011"
 
 
 @dataclass(frozen=True)
@@ -559,6 +561,34 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Inspect the reported runtime message and the watched source file path.",
             "Fix the underlying environment or source issue, then save the file again to retrigger compilation.",
+        ),
+    ),
+    ESEM010: ErrorDefinition(
+        code=ESEM010,
+        title="Value defined on only one branch path",
+        summary="A binding created inside one branch arm is used after the branch, so generated code would raise an unbound-name error whenever the other path runs.",
+        emitted_by=("verify", "compile", "run", "test", "watch"),
+        common_causes=(
+            "An IF step binds a value with no ELSE arm and RETURNS or a later step reads it.",
+            "Two separate IF steps each bind part of a value instead of one IF/THEN/ELSE.",
+        ),
+        next_steps=(
+            "Make the branch total with IF ... THEN ... -> name ELSE ... -> name.",
+            "Or move the use inside the same branch arm.",
+        ),
+    ),
+    ESEM011: ErrorDefinition(
+        code=ESEM011,
+        title="Illegal rebinding of an immutable binding",
+        summary="A LOGIC step assigns to a name that is already defined; checked NLS bindings are immutable.",
+        emitted_by=("verify", "compile", "run", "test", "watch"),
+        common_causes=(
+            "Reusing a variable name for a new value instead of a new name.",
+            "Accumulator-style mutation that the language does not model yet.",
+        ),
+        next_steps=(
+            "Bind a fresh name for the new value.",
+            "Keep augmented assignments for atomized legacy code or model mutation explicitly.",
         ),
     ),
     ESEM001: ErrorDefinition(

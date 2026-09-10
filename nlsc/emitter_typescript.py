@@ -258,22 +258,89 @@ def _emit_edge_cases(anlu: ANLU) -> list[str]:
     return lines
 
 
+def _multi_bound_names(anlu: ANLU) -> set[str]:
+    """Names bound more than once (rebounds or joined branch arms).
+
+    These must be declared with ``let`` at function scope; ``const``
+    inside a block would not escape the branch or would collide.
+    """
+    counts: dict[str, int] = {}
+    for step in anlu.logic_steps:
+        for name in step.assigns:
+            counts[name] = counts.get(name, 0) + 1
+        # A total branch joins the same binding in both arms of one step.
+        if step.else_action and step.output_binding:
+            match = re.search(
+                rf"\s*(?:→|->)\s*({IDENTIFIER_PATTERN})$", step.else_action.strip()
+            )
+            if match and match.group(1) == step.output_binding:
+                counts[step.output_binding] = counts.get(step.output_binding, 0) + 1
+    return {name for name, count in counts.items() if count > 1}
+
+
+def _else_action_line(
+    step: LogicStep,
+    multi_bound: Optional[set[str]] = None,
+    hoisted: Optional[set[str]] = None,
+) -> Optional[str]:
+    """Emit the ELSE arm of an IF/THEN/ELSE step as a TypeScript action."""
+    if not step.else_action:
+        return None
+    raw = step.else_action.strip()
+    binding = step.output_binding
+    binding_match = re.search(
+        rf"\s*(?:→|->)\s*({IDENTIFIER_PATTERN})$", raw
+    )
+    if binding_match:
+        binding = binding_match.group(1)
+        raw = raw[: binding_match.start()].strip()
+    arm_step = LogicStep(
+        number=step.number,
+        description=raw,
+        assigns=[binding] if binding else [],
+        output_binding=binding,
+    )
+    action = _extract_action(arm_step, multi_bound, hoisted)
+    if action:
+        return action
+    return None
+
+
 def _emit_body(anlu: ANLU) -> str:
     lines: list[str] = []
     lines.extend(_emit_edge_cases(anlu))
     lines.extend(_emit_guard_lines(anlu))
 
+    multi_bound = _multi_bound_names(anlu)
+    hoisted: set[str] = set()
+
     for step in anlu.logic_steps:
         if step.condition:
             condition = _translate_expression(step.condition)
+            # A total branch that joins a value needs the binding declared
+            # at function scope before the if/else arms assign it.
+            joined = (
+                step.output_binding
+                if step.else_action
+                and step.output_binding in multi_bound
+                else None
+            )
+            if joined and joined not in hoisted:
+                lines.append(f"  let {joined};")
+                hoisted.add(joined)
             lines.append(f"  if ({condition}) {{")
-            action = _extract_action(step)
+            action = _extract_action(step, multi_bound, hoisted)
             if action:
                 lines.append(f"    {action}")
+            if step.else_action:
+                lines.append("  } else {")
+                else_action = _else_action_line(step, multi_bound, hoisted)
+                if else_action:
+                    lines.append(f"    {else_action}")
             lines.append("  }")
             continue
 
-        action = _extract_action(step)
+        action = _extract_action(step, multi_bound, hoisted)
         if action:
             lines.append(f"  {action}")
 
@@ -285,16 +352,33 @@ def _emit_body(anlu: ANLU) -> str:
     return "\n".join(lines)
 
 
-def _extract_action(step: LogicStep) -> Optional[str]:
+def _extract_action(
+    step: LogicStep,
+    multi_bound: Optional[set[str]] = None,
+    hoisted: Optional[set[str]] = None,
+) -> Optional[str]:
     desc = normalize_expression_text(step.description.strip())
     assignment_match = re.match(rf"^({IDENTIFIER_PATTERN})\s*=\s*(.+)$", desc)
     if assignment_match:
         variable_name, expression = assignment_match.groups()
-        return f"const {variable_name} = {_translate_expression(expression)};"
+        translated = _translate_expression(expression)
+        if multi_bound and variable_name in multi_bound:
+            if hoisted is not None and variable_name in hoisted:
+                return f"{variable_name} = {translated};"
+            if hoisted is not None:
+                hoisted.add(variable_name)
+                return f"let {variable_name} = {translated};"
+        return f"const {variable_name} = {translated};"
 
     expr = _desc_to_expression(desc)
     if step.output_binding:
         if expr:
+            if multi_bound and step.output_binding in multi_bound:
+                if hoisted is not None and step.output_binding in hoisted:
+                    return f"{step.output_binding} = {expr};"
+                if hoisted is not None:
+                    hoisted.add(step.output_binding)
+                    return f"let {step.output_binding} = {expr};"
             return f"const {step.output_binding} = {expr};"
         return f"const {step.output_binding} = undefined;"
     if expr:
@@ -304,6 +388,11 @@ def _extract_action(step: LogicStep) -> Optional[str]:
 
 def _desc_to_expression(desc: str) -> Optional[str]:
     translated = _translate_expression(desc)
+    if re.fullmatch(
+        r"-?\d+(?:\.\d+)?|'[^']*'|\"[^\"]*\"|True|False|None",
+        translated,
+    ):
+        return translated
     if re.match(rf"^({IDENTIFIER_PATTERN})\s*\(.*\)$", translated):
         return translated
     if translated.startswith("[") and translated.endswith("]"):

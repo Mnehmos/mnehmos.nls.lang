@@ -311,6 +311,7 @@ def parse_logic_step(
     state_name = None
     output_binding = None
     condition = None
+    else_action = None
 
     working_text = normalize_expression_text(text.strip())
 
@@ -323,7 +324,28 @@ def parse_logic_step(
             state_name = candidate_state
             working_text = remainder
 
-    # 2. Parse → variable or -> variable output binding (at end)
+    # 2. Parse IF condition THEN [action] [ELSE action] first so arm
+    # bindings are not mistaken for the step's trailing binding.
+    if_else_match = re.match(
+        r"^IF\s+(.+?)\s+THEN\s+(.+?)\s+ELSE\s+(.+)$",
+        working_text,
+        re.IGNORECASE,
+    )
+    if if_else_match:
+        condition = if_else_match.group(1).strip()
+        working_text = if_else_match.group(2).strip()
+        else_action = if_else_match.group(3).strip()
+        uses.extend(extract_variables(condition))
+    else:
+        if_match = re.match(
+            r"^IF\s+(.+?)\s+THEN\s+(.+)$", working_text, re.IGNORECASE
+        )
+        if if_match:
+            condition = if_match.group(1).strip()
+            working_text = if_match.group(2).strip()
+            uses.extend(extract_variables(condition))
+
+    # 3. Parse → variable or -> variable output binding (at end)
     output_match = re.search(rf"\s*(?:→|->)\s*({IDENTIFIER_PATTERN})$", working_text)
     if output_match:
         output_binding = output_match.group(1)
@@ -331,13 +353,24 @@ def parse_logic_step(
         # Output binding is also an assignment
         assigns.append(output_binding)
 
-    # 3. Parse IF condition THEN syntax
-    if_match = re.match(r"^IF\s+(.+?)\s+THEN\s+(.+)$", working_text, re.IGNORECASE)
-    if if_match:
-        condition = if_match.group(1).strip()
-        working_text = if_match.group(2).strip()
-        # Extract variables from condition too
-        uses.extend(extract_variables(condition))
+    # The ELSE arm carries its own binding/assignment for dataflow.
+    if else_action is not None:
+        else_binding_match = re.search(
+            rf"\s*(?:→|->)\s*({IDENTIFIER_PATTERN})$", else_action
+        )
+        if else_binding_match:
+            else_text = else_action[: else_binding_match.start()].strip()
+            assigns.append(else_binding_match.group(1))
+        else:
+            else_text = else_action
+        else_assign_match = re.match(
+            rf"^({IDENTIFIER_PATTERN})\s*=\s*(.+)$", else_text
+        )
+        if else_assign_match:
+            assigns.append(else_assign_match.group(1))
+            uses.extend(extract_variables(else_assign_match.group(2)))
+        else:
+            uses.extend(extract_variables(else_text))
 
     # 4. Check for assignment pattern: var = expression
     assignment_match = re.match(rf"^({IDENTIFIER_PATTERN})\s*=\s*(.+)$", working_text)
@@ -352,7 +385,8 @@ def parse_logic_step(
         # No assignment - just extract any variables mentioned
         uses.extend(extract_variables(working_text))
 
-    # Remove duplicates from uses while preserving order
+    # Remove duplicates from assigns and uses while preserving order
+    assigns = list(dict.fromkeys(assigns))
     seen = set()
     unique_uses = []
     for var in uses:
@@ -379,6 +413,7 @@ def parse_logic_step(
         state_name=state_name,
         output_binding=output_binding,
         condition=condition,
+        else_action=else_action,
     )
 
 

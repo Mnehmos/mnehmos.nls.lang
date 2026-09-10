@@ -679,6 +679,12 @@ def check_module(nl_file: NLFile, *, file_token: str = "<source>") -> SemanticCh
     result = SemanticCheckResult()
     module = lower_module(nl_file)
 
+    from .controlflow import check_control
+
+    control = check_control(module, file_token=file_token)
+    result.errors.extend(control.errors)
+    result.warnings.extend(control.warnings)
+
     table = _build_symbol_table(module, result, file_token)
 
     declared_by_op = {anlu.identifier: _declared_depends(anlu) for anlu in nl_file.anlus}
