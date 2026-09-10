@@ -770,6 +770,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#feature-corpus-examplesfeatures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feature corpus (examples/features/)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#basic-examples" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1442,6 +1453,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#feature-corpus-examplesfeatures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feature corpus (examples/features/)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#basic-examples" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1602,6 +1624,77 @@
 
 <h1 id="examples-gallery">Examples Gallery<a class="headerlink" href="#examples-gallery" title="Permanent link">&para;</a></h1>
 <p>Complete, working NLS examples demonstrating various features and patterns.</p>
+<h2 id="feature-corpus-examplesfeatures">Feature corpus (<code>examples/features/</code>)<a class="headerlink" href="#feature-corpus-examplesfeatures" title="Permanent link">&para;</a></h2>
+<p>Fourteen focused, strictly-verified examples — one per language feature. Each
+passes <code>nlsc verify --strict</code>, runs its committed lockfile through <code>nlsc ci</code>,
+and executes its <code>@main</code> block; the whole corpus is a regression suite
+(<code>tests/test_issue_142_examples.py</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Example</th>
+<th>Feature</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/guards.nl"><code>guards.nl</code></a></td>
+<td>Ordered guards, typed error identity, custom declared error types</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/branches.nl"><code>branches.nl</code></a></td>
+<td>Total <code>IF/THEN/ELSE</code> branches, nested joins</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/types_constraints.nl"><code>types_constraints.nl</code></a></td>
+<td><code>@type</code> constraints, <code>@invariant</code>, construction enforcement</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/optionals.nl"><code>optionals.nl</code></a></td>
+<td>Optional inputs and arity windows</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/recursion.nl"><code>recursion.nl</code></a></td>
+<td>Self-recursion with total branches</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/composition.nl"><code>composition.nl</code></a></td>
+<td>Cross-operation calls, DEPENDS contract, failure propagation</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/edge_cases.nl"><code>edge_cases.nl</code></a></td>
+<td><code>EDGE CASES</code> early returns</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/equality.nl"><code>equality.nl</code></a></td>
+<td>Structural equality for lists and records</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/text_tools.nl"><code>text_tools.nl</code></a></td>
+<td>String methods and comparisons</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/literals.nl"><code>literals.nl</code></a></td>
+<td><code>@literal python</code> escape hatch called from NLS logic</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/imports.nl"><code>imports.nl</code></a></td>
+<td><code>@imports</code> host-module calls</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/fsm.nl"><code>fsm.nl</code></a></td>
+<td>FSM state markers for <code>nlsc graph</code></td>
+</tr>
+<tr>
+<td><a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/properties.nl"><code>properties.nl</code></a></td>
+<td><code>@property</code> property-based specifications</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/features/lists.nl"><code>lists.nl</code></a></td>
+<td>List construction, collection builtins, indexing</td>
+</tr>
+</tbody>
+</table>
 <h2 id="basic-examples">Basic Examples<a class="headerlink" href="#basic-examples" title="Permanent link">&para;</a></h2>
 <h3 id="calculator">Calculator<a class="headerlink" href="#calculator" title="Permanent link">&para;</a></h3>
 <p>A simple arithmetic calculator demonstrating basic ANLUs, guards, and tests.</p>
