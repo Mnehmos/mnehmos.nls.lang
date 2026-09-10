@@ -160,6 +160,13 @@ class ANLU:
         satisfied by earlier layers.  This is a *layering*, not a proof
         of safe concurrency: effect, alias, and failure constraints are
         checked separately (see ``nlsc.parallel``, Issue #199).
+
+        Every step appears exactly once (#192): if programmatically
+        constructed steps form a cycle that can never become ready, the
+        stuck steps are appended as a final layer instead of being
+        silently dropped. Parsed sources cannot produce cycles because
+        step dependencies only reference earlier steps, and duplicate
+        step numbers are rejected at parse time.
         """
         if not self.logic_steps:
             return []
@@ -177,10 +184,12 @@ class ANLU:
                     ready.append(num)
 
             if not ready:
-                # Circular dependency or error - break to avoid infinite loop
+                # Unresolvable cycle in a programmatically constructed
+                # graph: keep the stuck nodes visible in a final layer.
+                groups.append(sorted(remaining))
                 break
 
-            groups.append(ready)
+            groups.append(sorted(ready))
             for num in ready:
                 completed.add(num)
                 del remaining[num]
