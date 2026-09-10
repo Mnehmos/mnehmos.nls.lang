@@ -152,11 +152,14 @@ class ANLU:
     # Metadata
     line_number: int = 0
 
-    def parallel_groups(self) -> list[list[int]]:
+    def dependency_layers(self) -> list[list[int]]:
         """
-        Return groups of step numbers that can execute in parallel.
-        Each group contains steps that have all their dependencies satisfied
-        by previous groups.
+        Return data-dependency layers of step numbers.
+
+        Each layer holds steps whose declared data dependencies are all
+        satisfied by earlier layers.  This is a *layering*, not a proof
+        of safe concurrency: effect, alias, and failure constraints are
+        checked separately (see ``nlsc.parallel``, Issue #199).
         """
         if not self.logic_steps:
             return []
@@ -183,6 +186,17 @@ class ANLU:
                 del remaining[num]
 
         return groups
+
+    def parallel_groups(self) -> list[list[int]]:
+        """Deprecated alias for :meth:`dependency_layers` (Issue #199).
+
+        The old name claimed parallel executability from data
+        dependencies alone; the layers it returns are data-dependency
+        layers.  Use :meth:`dependency_layers` plus
+        ``nlsc.parallel.analyze_parallel_eligibility`` for concurrency
+        claims.
+        """
+        return self.dependency_layers()
 
     def fsm_states(self) -> list[str]:
         """Return list of state names from LOGIC steps (FSM nodes)"""

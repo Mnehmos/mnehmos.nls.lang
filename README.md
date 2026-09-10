@@ -210,6 +210,9 @@ nlsc graph src/order.nl --format mermaid
 
 # Visualize dataflow for specific function
 nlsc graph src/order.nl --anlu process-order --dataflow
+# Dataflow diagrams show dependency layers labeled with checked parallel
+# eligibility: a layer is 'parallel-eligible' only when effect, alias,
+# and failure constraints certify its steps independent (Issue #199).
 
 # Watch directory and run tests on changes
 nlsc watch src/ --test

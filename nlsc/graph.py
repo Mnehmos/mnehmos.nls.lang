@@ -165,12 +165,24 @@ def emit_dataflow_ascii(anlu: ANLU) -> str:
         lines.append("(no LOGIC steps)")
         return "\n".join(lines)
 
-    # Get parallel groups
-    groups = anlu.parallel_groups()
+    # Data-dependency layers with checked parallel eligibility (#199):
+    # a layer is only labeled parallel-eligible when effect, alias, and
+    # failure constraints certify its steps independent.
+    from .parallel import analyze_parallel_eligibility
 
-    for i, group in enumerate(groups):
-        lines.append(f"\nPhase {i + 1} (parallel):")
-        for step_num in group:
+    report = analyze_parallel_eligibility(anlu)
+
+    for i, layer in enumerate(report.layers):
+        if len(layer.steps) > 1 and layer.eligible:
+            heading = f"Layer {i + 1} (parallel-eligible)"
+        elif len(layer.steps) > 1:
+            heading = f"Layer {i + 1} (sequential required)"
+        else:
+            heading = f"Layer {i + 1}"
+        lines.append(f"\n{heading}:")
+        for note in layer.notes:
+            lines.append(f"  blocked: {note}")
+        for step_num in layer.steps:
             step = next((s for s in anlu.logic_steps if s.number == step_num), None)
             if step:
                 assigns = ", ".join(step.assigns) if step.assigns else "-"
