@@ -36,11 +36,18 @@ class ModuleLock:
 
 @dataclass
 class TargetLock:
-    """Lock entry for a generated target file"""
+    """Lock entry for a generated target file
+
+    ``semantics_version`` records the backend semantics/capability marker
+    that produced the artifact (see ``nlsc.capabilities``); a mismatch
+    means the emitter's contract changed and the artifact must be
+    regenerated (#202).
+    """
 
     file: str
     hash: str
     lines: int
+    semantics_version: str = ""
 
 
 @dataclass
@@ -318,8 +325,13 @@ def generate_lockfile(
 
     # Lock target
     output_lines = generated_code.count("\n") + 1
+    from .capabilities import emitter_semantics_version
+
     lockfile.targets[target] = TargetLock(
-        file=output_path, hash=hash_content(generated_code), lines=output_lines
+        file=output_path,
+        hash=hash_content(generated_code),
+        lines=output_lines,
+        semantics_version=emitter_semantics_version(target),
     )
 
     return lockfile
@@ -361,6 +373,8 @@ def write_lockfile(lockfile: Lockfile, path: Path) -> None:
         lines.append(f"    file: {target_lock.file}")
         lines.append(f"    hash: {target_lock.hash}")
         lines.append(f"    lines: {target_lock.lines}")
+        if target_lock.semantics_version:
+            lines.append(f"    semantics_version: {target_lock.semantics_version}")
 
     path.write_text("\n".join(lines), encoding="utf-8")
 
@@ -513,6 +527,8 @@ def read_lockfile(path: Path) -> Optional[Lockfile]:
                         lockfile.targets[current_module_name].lines = (
                             int(value) if value else 0
                         )
+                    elif key == "semantics_version":
+                        lockfile.targets[current_module_name].semantics_version = value
                     else:
                         return None
                 else:
@@ -600,6 +616,24 @@ def verify_lockfile(lockfile: Lockfile, nl_file: NLFile) -> list[str]:
             errors.append(f"ANLU {anlu.identifier} has changed since lock")
 
     return errors
+
+
+def target_semantics_mismatch(lockfile: Lockfile, target: str) -> Optional[str]:
+    """Return the locked emitter semantics marker when it disagrees.
+
+    ``None`` means the lock is compatible: either it records the same
+    marker the current emitter advertises, or it predates markers
+    entirely (empty string), which is treated as compatible so older
+    lockfiles keep compiling (#202).
+    """
+    from .capabilities import emitter_semantics_version
+
+    target_lock = lockfile.targets.get(target)
+    if target_lock is None or not target_lock.semantics_version:
+        return None
+    if target_lock.semantics_version == emitter_semantics_version(target):
+        return None
+    return target_lock.semantics_version
 
 
 @dataclass

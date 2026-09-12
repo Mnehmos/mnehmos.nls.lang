@@ -29,6 +29,7 @@ from .error_catalog import (
     ELOCK001,
     ELOCK002,
     ELOCK003,
+    ELOCK004,
     ELSP001,
     ELSP002,
     EASSOC001,
@@ -518,6 +519,25 @@ def lockfile_write_diagnostic(path: Path, exc: OSError, *, command: str) -> Diag
         col=None,
         message=f"Failed to write lockfile: {path} ({exc})",
         hint=f"Check the destination path and filesystem permissions, then rerun `nlsc {command}`.",
+    )
+
+
+def lockfile_semantics_diagnostic(
+    path: Path, *, target: str, locked_version: str, current_version: str
+) -> Diagnostic:
+    return Diagnostic(
+        code=ELOCK004,
+        file=str(path),
+        line=None,
+        col=None,
+        message=(
+            f"lockfile records emitter semantics '{locked_version}' for target "
+            f"'{target}', but this compiler emits '{current_version}'"
+        ),
+        hint=(
+            "Regenerate the lockfile with `nlsc compile` and commit it; "
+            "the emitter contract changed."
+        ),
     )
 
 

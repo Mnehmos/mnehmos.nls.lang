@@ -74,6 +74,7 @@ from .diagnostics import (
     init_unknown_template_diagnostic,
     init_target_path_diagnostic,
     lockfile_outdated_diagnostics,
+    lockfile_semantics_diagnostic,
     lockfile_unavailable_diagnostic,
     lockfile_write_diagnostic,
     lsp_dependencies_unavailable_diagnostic,
@@ -891,8 +892,10 @@ def cmd_compile(args: argparse.Namespace) -> int:
 
     # Generate lockfile. Under --frozen-lockfile (#149) the existing lock
     # must be current, is never rewritten, and the regenerated output must
-    # reproduce its recorded target hash.
+    # reproduce its recorded target hash. A recorded emitter semantics
+    # marker must also match the current backend (#202).
     from .lockfile import hash_content as _hash_content
+    from .lockfile import target_semantics_mismatch as _semantics_mismatch
 
     lock_path = source_path.with_suffix(".nl.lock")
     frozen = getattr(args, "frozen_lockfile", False)
@@ -918,6 +921,21 @@ def cmd_compile(args: argparse.Namespace) -> int:
                 "and commit the updated lockfile.",
                 file=sys.stderr,
             )
+            return 1
+        locked_semantics = _semantics_mismatch(existing_lock, target)
+        if locked_semantics is not None:
+            from .capabilities import emitter_semantics_version as _esv
+
+            diagnostic = lockfile_semantics_diagnostic(
+                lock_path,
+                target=target,
+                locked_version=locked_semantics,
+                current_version=_esv(target),
+            )
+            if json_output:
+                return _emit_json("compile", [diagnostic], file=str(source_path))
+            print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+            print(f"Hint: {diagnostic.hint}", file=sys.stderr)
             return 1
         target_lock = existing_lock.targets.get(target)
         if target_lock is not None and _hash_content(generated_code) != target_lock.hash:
@@ -2164,7 +2182,7 @@ def cmd_ci(args: argparse.Namespace) -> int:
     compile with reproducibility verification -> optional tests.  Any
     diagnostic fails the run with exit code 1; success is exit code 0.
     """
-    from .lockfile import hash_content, verify_lockfile
+    from .lockfile import hash_content, target_semantics_mismatch, verify_lockfile
 
     source_path = Path(args.file)
     json_output = getattr(args, "json", False)
@@ -2253,9 +2271,27 @@ def cmd_ci(args: argparse.Namespace) -> int:
         return _fail(
             "lockfile", lockfile_outdated_diagnostics(source_path, nl_file, stale)
         )
+    target = _resolve_target(nl_file, getattr(args, "target", None))
+    # Lock identity includes the emitter semantics marker (#202): a lock
+    # written by a different backend revision is not current, even when
+    # the source hashes still agree.
+    locked_semantics = target_semantics_mismatch(existing_lock, target)
+    if locked_semantics is not None:
+        from .capabilities import emitter_semantics_version as _esv
+
+        return _fail(
+            "lockfile",
+            [
+                lockfile_semantics_diagnostic(
+                    lock_path,
+                    target=target,
+                    locked_version=locked_semantics,
+                    current_version=_esv(target),
+                )
+            ],
+        )
     stages["lockfile"] = "current"
 
-    target = _resolve_target(nl_file, getattr(args, "target", None))
     if getattr(args, "compile", False):
         capability_exit = _capability_gate(
             nl_file,

@@ -22,6 +22,21 @@ from .diagnostics import Diagnostic
 from .error_catalog import ETARGET002
 from .schema import NLFile
 
+# Backend semantics/capability version per target.  Bump when emitted
+# behavior or the runtime contract changes (new helpers, different error
+# identities, changed truthiness/equality semantics, capability flips):
+# lockfile identity includes this marker, so stale artifacts are detected
+# instead of trusted (#202).
+EMITTER_SEMANTICS_VERSION: dict[str, str] = {
+    "python": "py-1",
+    "typescript": "ts-1",
+}
+
+
+def emitter_semantics_version(target: str) -> str:
+    return EMITTER_SEMANTICS_VERSION.get(target, "unknown")
+
+
 # feature name -> supported by target
 TARGET_CAPABILITIES: dict[str, dict[str, bool]] = {
     "python": {

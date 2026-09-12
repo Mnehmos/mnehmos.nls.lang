@@ -66,6 +66,13 @@ Two deliberate nuances beyond plain semver:
    old lock entries conservatively; the next `nlsc compile` or
    `nlsc lock:update` regenerates them. No spec bump is implied, because
    program meaning is unchanged.
+3. **Emitter contract changes bump a semantics marker.** Each locked target
+   records a `semantics_version` naming the backend revision that produced
+   it. Changing what an emitter generates for unchanged input (helper
+   names, runtime prelude, validation shape) bumps that marker; frozen
+   compiles and `nlsc ci --compile` then require a regenerated lockfile
+   (`ELOCK004`) even though the artifact hash scheme is untouched.
+   Lockfiles written before markers existed stay compatible.
 
 ## Upgrade guidance
 
