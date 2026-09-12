@@ -235,6 +235,48 @@ def _emit_target_code(
     raise ValueError(f"Target '{target}' not yet supported")
 
 
+def _capability_gate(
+    nl_file: NLFile,
+    target: str,
+    source_path: Path,
+    *,
+    command: str,
+    json_output: bool,
+    strict: bool,
+) -> int | None:
+    """Enforce the target capability matrix (#202).
+
+    Returns an exit code when the target cannot represent the file's
+    content; None when emission may proceed (warnings already printed).
+    """
+    from .capabilities import capability_diagnostics
+
+    fatal, warnings = capability_diagnostics(
+        nl_file, target, file_token=str(source_path)
+    )
+    if fatal:
+        if json_output:
+            return _emit_json(command, fatal, file=str(source_path))
+        print(f"Error: target '{target}' cannot represent this file:", file=sys.stderr)
+        for diagnostic in fatal:
+            print(f"  - {diagnostic.message} [{diagnostic.code}]", file=sys.stderr)
+            if diagnostic.hint:
+                print(f"    Hint: {diagnostic.hint}", file=sys.stderr)
+        return 1
+    if warnings:
+        if strict:
+            if json_output:
+                return _emit_json(command, warnings, file=str(source_path))
+            print("Error: capability warnings (strict):", file=sys.stderr)
+            for diagnostic in warnings:
+                print(f"  - {diagnostic.message} [{diagnostic.code}]", file=sys.stderr)
+            return 1
+        if not json_output:
+            for diagnostic in warnings:
+                print(f"  ! {diagnostic.message} [{diagnostic.code}]", file=sys.stderr)
+    return None
+
+
 def _validate_target_output(target: str, output_path: Path) -> tuple[bool, str | None]:
     """Validate emitted output when a validator is available."""
     if target == "python":
@@ -689,6 +731,16 @@ def cmd_compile(args: argparse.Namespace) -> int:
         )
 
     target = _resolve_target(nl_file, getattr(args, "target", None))
+    capability_exit = _capability_gate(
+        nl_file,
+        target,
+        source_path,
+        command="compile",
+        json_output=json_output,
+        strict=getattr(args, "strict", False),
+    )
+    if capability_exit is not None:
+        return capability_exit
     try:
         generated_code, output_suffix, test_code, test_suffix = _emit_target_code(
             nl_file, target, scaffold_anlus=scaffold
@@ -1575,6 +1627,16 @@ def cmd_lock_update(args: argparse.Namespace) -> int:
         return 1
 
     target = _resolve_target(nl_file, None)
+    capability_exit = _capability_gate(
+        nl_file,
+        target,
+        source_path,
+        command="lock:update",
+        json_output=json_output,
+        strict=True,
+    )
+    if capability_exit is not None:
+        return capability_exit
     output_suffix = ".py" if target == "python" else ".ts"
     output_path = source_path.with_suffix(output_suffix)
     if not output_path.exists():
@@ -2010,6 +2072,16 @@ def cmd_ci(args: argparse.Namespace) -> int:
 
     target = _resolve_target(nl_file, getattr(args, "target", None))
     if getattr(args, "compile", False):
+        capability_exit = _capability_gate(
+            nl_file,
+            target,
+            source_path,
+            command="ci",
+            json_output=json_output,
+            strict=True,
+        )
+        if capability_exit is not None:
+            return capability_exit
         try:
             generated_code, output_suffix, test_code, test_suffix = _emit_target_code(
                 nl_file, target

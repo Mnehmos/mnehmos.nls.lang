@@ -4,11 +4,20 @@ ANLU Schema - Data structures for Natural Language Units
 These dataclasses represent the parsed structure of .nl files.
 """
 
+import re
 from dataclasses import dataclass, field
 from typing import Optional
 from enum import Enum
 
 from .localization import normalize_expression_text, normalize_type_text
+
+# String literals are removed before any operator heuristic scans an
+# expression: text inside quotes is data, not code (#202).
+_STRING_LITERAL = re.compile(r"(?:'[^'\\]*(?:\\.[^'\\]*)*'|\"[^\"\\]*(?:\\.[^\"\\]*)*\")")
+
+
+def _strip_string_literals(text: str) -> str:
+    return _STRING_LITERAL.sub("", text)
 
 
 class InputType(Enum):
@@ -364,19 +373,24 @@ class ANLU:
                     # Check if assignment is arithmetic
                     if "=" in desc:
                         expr = desc.split("=", 1)[1].strip()
-                        if any(op in expr for op in ["+", "-", "*", "/", "×", "÷"]):
+                        # A pure string literal is a string; its contents
+                        # must not satisfy the operator heuristics below.
+                        if _STRING_LITERAL.fullmatch(expr):
+                            return "str"
+                        expr_code = _strip_string_literals(expr)
+                        if any(op in expr_code for op in ["+", "-", "*", "/", "×", "÷"]):
                             return "float"
                         # Check if it's a function call that might return a number
                         if (
-                            "sum(" in expr
-                            or "len(" in expr
-                            or "max(" in expr
-                            or "min(" in expr
+                            "sum(" in expr_code
+                            or "len(" in expr_code
+                            or "max(" in expr_code
+                            or "min(" in expr_code
                         ):
                             return "float"
                         # Check if it looks like a boolean expression
                         if any(
-                            op in expr
+                            op in expr_code
                             for op in [
                                 ">",
                                 "<",
@@ -393,7 +407,7 @@ class ANLU:
                         # Check if it's a constructor call (Type(...))
                         import re
 
-                        ctor_match = re.match(r"([A-Z][a-zA-Z0-9_]*)\s*\(", expr)
+                        ctor_match = re.match(r"([A-Z][a-zA-Z0-9_]*)\s*\(", expr_code)
                         if ctor_match:
                             return ctor_match.group(1)
                         # Check if it's an empty list []

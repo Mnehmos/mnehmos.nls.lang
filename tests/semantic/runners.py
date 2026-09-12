@@ -108,6 +108,28 @@ def _namespaceify(value: Any) -> Any:
     return value
 
 
+_STRIP_TYPES_SUPPORTED: bool | None = None
+
+
+def _strip_types_supported() -> bool:
+    """Probe once whether this Node can execute TypeScript directly."""
+    global _STRIP_TYPES_SUPPORTED
+    import subprocess
+
+    if _STRIP_TYPES_SUPPORTED is None:
+        try:
+            probe = subprocess.run(
+                ["node", "--experimental-strip-types", "-e", "process.exit(0)"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            _STRIP_TYPES_SUPPORTED = probe.returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            _STRIP_TYPES_SUPPORTED = False
+    return _STRIP_TYPES_SUPPORTED
+
+
 def node_available() -> bool:
     """True when a Node.js runtime can execute compiled TypeScript."""
     import shutil
@@ -144,12 +166,53 @@ class TypeScriptRunner:
             module_path = Path(tmp) / "module.ts"
             module_path.write_text(code + "\n" + driver, encoding="utf-8")
             try:
-                completed = subprocess.run(
-                    ["node", "--experimental-strip-types", str(module_path)],
-                    capture_output=True,
-                    text=True,
-                    timeout=30,
-                )
+                if _strip_types_supported():
+                    completed = subprocess.run(
+                        ["node", "--experimental-strip-types", str(module_path)],
+                        capture_output=True,
+                        text=True,
+                        timeout=30,
+                    )
+                else:
+                    # Node too old for native TypeScript execution: emit
+                    # JavaScript with tsc first, keeping conformance tests
+                    # runnable on older runtimes (Node >= 22.6 strips types
+                    # natively; CI uses Node 22).
+                    import shutil as _shutil
+
+                    npx = _shutil.which("npx")
+                    if npx is None:
+                        return ExecutionResult.from_exception(
+                            RuntimeError(
+                                "node lacks --experimental-strip-types and npx "
+                                "is unavailable for the tsc fallback"
+                            )
+                        )
+                    js_dir = Path(tmp) / "js"
+                    tsc = subprocess.run(
+                        [
+                            npx, "-y", "-p", "typescript", "tsc",
+                            "--target", "es2020", "--module", "commonjs",
+                            "--skipLibCheck", "--outDir", str(js_dir),
+                            str(module_path),
+                        ],
+                        capture_output=True,
+                        text=True,
+                        timeout=120,
+                    )
+                    if tsc.returncode != 0:
+                        return ExecutionResult.from_exception(
+                            RuntimeError(
+                                "tsc fallback failed: "
+                                + (tsc.stdout + tsc.stderr).strip()[:500]
+                            )
+                        )
+                    completed = subprocess.run(
+                        ["node", str(js_dir / "module.js")],
+                        capture_output=True,
+                        text=True,
+                        timeout=30,
+                    )
             except (OSError, subprocess.TimeoutExpired) as exc:
                 return ExecutionResult.from_exception(RuntimeError(f"node failed: {exc}"))
 
@@ -187,7 +250,8 @@ class TypeScriptRunner:
             + args_literal
             + " as any[];\n"
             + "try {\n"
-            + f"  const __nls_value = {function}(...__nls_args);\n"
+            + f"  const __nls_fn: any = {function};\n"
+            + "  const __nls_value = __nls_fn(...__nls_args);\n"
             + "  const __nls_out = __nls_value === undefined ? null : __nls_value;\n"
             + '  console.log("__NLS_RESULT__" + JSON.stringify({ ok: true, value: __nls_out }));\n'
             + "} catch (e) {\n"
