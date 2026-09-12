@@ -32,8 +32,15 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- `FOR each` LOGIC loop steps are a Python-only capability (Issue #202):
+  the TypeScript backend used to emit the step verbatim
+  (`FOR each item IN items: total = total + item;`), which `tsc` rejects,
+  while compile exited 0. Compiling such a file to TypeScript now fails
+  with `ETARGET002` and writes no artifact. The TypeScript semantics marker
+  moves to `ts-2`, so existing `ts-1` locks must be regenerated
+  (`ELOCK004`).
 - Emitter semantics markers in lock identity (Issue #202): every locked
-  target records a `semantics_version` (`py-1`, `ts-1`) naming the backend
+  target records a `semantics_version` (`py-1`, `ts-2`) naming the backend
   semantics revision that produced it, and `nlsc compile --frozen-lockfile`
   / `nlsc ci --compile` refuse a mismatched marker with `ELOCK004` plus a
   regenerate-and-commit hint. Lockfiles without a marker stay compatible.
