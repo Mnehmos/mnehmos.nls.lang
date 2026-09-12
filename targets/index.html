@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://mnehmos.github.io/mnehmos.nls.lang/getting-started/">
+        <link rel="canonical" href="https://mnehmos.github.io/mnehmos.nls.lang/targets/">
       
       
-        <link rel="prev" href="../quickstart/">
+        <link rel="prev" href="../architecture/">
       
       
-        <link rel="next" href="../tutorials/">
+        <link rel="next" href="../nl-grammar.ebnf">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Getting Started - NLS Compiler</title>
+        <title>Emission Targets - NLS Compiler</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#getting-started" class="md-skip">
+        <a href="#emission-targets" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Getting Started
+              Emission Targets
             
           </span>
         </div>
@@ -313,37 +313,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Getting Started
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
@@ -359,153 +332,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Installation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#initialize-a-project" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Initialize a Project
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#your-first-nl-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Your First .nl File
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#compile-to-python" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Compile to Python
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#run-the-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run the Tests
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#use-the-generated-code" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Use the Generated Code
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next Steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#workflow-tips" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Workflow Tips
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Workflow Tips">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#watch-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Watch Mode
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#visualize-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Visualize Dependencies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#see-what-changed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See What Changed
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1374,8 +1200,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -1386,13 +1214,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
           <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
@@ -1413,7 +1239,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1540,10 +1366,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../targets/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Emission Targets
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1559,6 +1412,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#registered-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registered targets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#capability-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability gaps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rust-target-design-intent-gated-no-timeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rust target — design intent (gated, no timeline)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1626,10 +1532,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#registered-targets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation
+        Registered targets
       
     </span>
   </a>
@@ -1637,10 +1543,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#initialize-a-project" class="md-nav__link">
+  <a href="#capability-gaps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Initialize a Project
+        Capability gaps
       
     </span>
   </a>
@@ -1648,107 +1554,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#your-first-nl-file" class="md-nav__link">
+  <a href="#rust-target-design-intent-gated-no-timeline" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Your First .nl File
+        Rust target — design intent (gated, no timeline)
       
     </span>
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#compile-to-python" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Compile to Python
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#run-the-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run the Tests
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#use-the-generated-code" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Use the Generated Code
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next Steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#workflow-tips" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Workflow Tips
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Workflow Tips">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#watch-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Watch Mode
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#visualize-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Visualize Dependencies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#see-what-changed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See What Changed
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1772,119 +1584,134 @@
   
 
 
-<h1 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h1>
-<p>This guide will walk you through installing NLS and creating your first compiled specification.</p>
-<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">From PyPI</label><label for="__tabbed_1_2">With Tree-sitter Parser</label><label for="__tabbed_1_3">Development Setup</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>nlsc
-</span></code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"nlsc[treesitter]"</span>
-</span></code></pre></div>
-<p>The tree-sitter parser provides faster parsing and better error recovery.</p>
-</div>
-<div class="tabbed-block">
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Mnehmos/mnehmos.nls.lang.git
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">cd</span><span class="w"> </span>mnehmos.nls.lang
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[dev,treesitter]"</span>
-</span></code></pre></div>
-</div>
-</div>
-</div>
-<h2 id="initialize-a-project">Initialize a Project<a class="headerlink" href="#initialize-a-project" title="Permanent link">&para;</a></h2>
-<p>Create a new NLS project with the proper folder structure:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>nlsc<span class="w"> </span>init<span class="w"> </span>my-project
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">cd</span><span class="w"> </span>my-project
-</span></code></pre></div>
-<p>This creates:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>my-project/
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>├── nl.config.yaml    # Project configuration
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>├── src/              # Source .nl files
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>│   └── __init__.py
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>└── tests/            # Generated tests
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    └── __init__.py
-</span></code></pre></div>
-<h2 id="your-first-nl-file">Your First .nl File<a class="headerlink" href="#your-first-nl-file" title="Permanent link">&para;</a></h2>
-<p>Create <code>src/calculator.nl</code>:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>@module calculator
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>@target python
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>[add]
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>PURPOSE: Add two numbers together
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>INPUTS:
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>  - a: number
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>  - b: number
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>RETURNS: a + b
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
-</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>[divide]
-</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>PURPOSE: Divide two numbers safely
-</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>INPUTS:
-</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>  - numerator: number
-</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>  - divisor: number
-</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>GUARDS:
-</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>  - divisor must not be zero -&gt; ValueError("Cannot divide by zero")
-</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>RETURNS: numerator / divisor
-</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>
-</span><span id="__span-5-20"><a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>@test [add] {
-</span><span id="__span-5-21"><a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>  add(2, 3) == 5
-</span><span id="__span-5-22"><a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>  add(-1, 1) == 0
-</span><span id="__span-5-23"><a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>}
-</span></code></pre></div>
-<h2 id="compile-to-python">Compile to Python<a class="headerlink" href="#compile-to-python" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>nlsc<span class="w"> </span>compile<span class="w"> </span>src/calculator.nl
-</span></code></pre></div>
-<p>Output:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Compiling src/calculator.nl (parser: regex)...
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  ✓ Parsed 2 ANLUs
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  ✓ Resolved dependencies
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  ✓ Generated calculator.py (25 lines)
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  ✓ Generated test_calculator.py
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>  ✓ Updated calculator.nl.lock
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>Compilation complete!
-</span></code></pre></div>
-<h2 id="run-the-tests">Run the Tests<a class="headerlink" href="#run-the-tests" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>nlsc<span class="w"> </span><span class="nb">test</span><span class="w"> </span>src/calculator.nl
-</span></code></pre></div>
-<p>Output:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Running 2 test cases from src/calculator.nl...
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>  • [add]: 2 cases
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>✓ All 2 tests passed!
-</span></code></pre></div>
-<h2 id="use-the-generated-code">Use the Generated Code<a class="headerlink" href="#use-the-generated-code" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.calculator</span><span class="w"> </span><span class="kn">import</span> <span class="n">add</span><span class="p">,</span> <span class="n">divide</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">result</span> <span class="o">=</span> <span class="n">add</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># 5</span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">ratio</span> <span class="o">=</span> <span class="n">divide</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># 5.0</span>
-</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
-</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="k">try</span><span class="p">:</span>
-</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>    <span class="n">divide</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>  <span class="c1"># "Cannot divide by zero"</span>
-</span></code></pre></div>
-<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong><a href="../cli-reference/">CLI Reference</a></strong> — Learn all 8 nlsc commands</li>
-<li><strong><a href="../language-spec/">Language Specification</a></strong> — Full syntax reference</li>
-<li><strong><a href="../architecture/">Architecture</a></strong> — How the compiler works</li>
-</ul>
-<h2 id="workflow-tips">Workflow Tips<a class="headerlink" href="#workflow-tips" title="Permanent link">&para;</a></h2>
-<h3 id="watch-mode">Watch Mode<a class="headerlink" href="#watch-mode" title="Permanent link">&para;</a></h3>
-<p>Automatically recompile on file changes:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>nlsc<span class="w"> </span>watch<span class="w"> </span>src/<span class="w"> </span>--test
-</span></code></pre></div>
-<h3 id="visualize-dependencies">Visualize Dependencies<a class="headerlink" href="#visualize-dependencies" title="Permanent link">&para;</a></h3>
-<p>Generate Mermaid diagrams:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>nlsc<span class="w"> </span>graph<span class="w"> </span>src/calculator.nl<span class="w"> </span>--format<span class="w"> </span>mermaid
-</span></code></pre></div>
-<h3 id="see-what-changed">See What Changed<a class="headerlink" href="#see-what-changed" title="Permanent link">&para;</a></h3>
-<p>View differences since last compile:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>nlsc<span class="w"> </span>diff<span class="w"> </span>src/calculator.nl
-</span></code></pre></div>
+<h1 id="emission-targets">Emission targets<a class="headerlink" href="#emission-targets" title="Permanent link">&para;</a></h1>
+<p>NLS compiles a checked module to a target language through a registered
+emitter. This page records what exists, what is gated, and what a new
+target requires.</p>
+<h2 id="registered-targets">Registered targets<a class="headerlink" href="#registered-targets" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Target</th>
+<th>Status</th>
+<th>Semantics marker</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>python</code></td>
+<td>supported</td>
+<td><code>py-3</code></td>
+<td>Reference semantics; <code>nlsc run</code> executes Python only.</td>
+</tr>
+<tr>
+<td><code>typescript</code></td>
+<td>supported</td>
+<td><code>ts-2</code></td>
+<td><code>tsc --strict</code> + Node conformance in CI; <code>@literal</code>, <code>@main</code>, <code>@property</code>, and <code>FOR each</code> LOGIC loops are capability gaps (see below).</td>
+</tr>
+<tr>
+<td><code>rust</code></td>
+<td><strong>not implemented</strong> — design only</td>
+<td>—</td>
+<td>Tracked in <a href="https://github.com/Mnehmos/mnehmos.nls.lang/issues/24">#24</a>. <code>@target rust</code> parses (the directive is recognized), but compilation fails with <code>ETARGET001</code> before any emission.</td>
+</tr>
+</tbody>
+</table>
+<p><code>nlsc compile --target</code> accepts exactly the registered targets, and
+<code>nlsc explain ETARGET002</code> documents the capability-gap diagnostic.</p>
+<h2 id="capability-gaps">Capability gaps<a class="headerlink" href="#capability-gaps" title="Permanent link">&para;</a></h2>
+<p>A registered target declares which features it can represent
+(<code>nlsc/targets.py</code>). Compiling a file that uses an unsupported feature
+fails with <code>ETARGET002</code> <strong>before</strong> anything is written: dropped program
+content is fatal in every mode, while dropped test coverage (<code>@property</code>)
+is strict-only.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Python</th>
+<th>TypeScript</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>@literal</code> blocks</td>
+<td>yes</td>
+<td>no (fatal)</td>
+</tr>
+<tr>
+<td><code>@main</code> block</td>
+<td>yes</td>
+<td>no (fatal)</td>
+</tr>
+<tr>
+<td><code>FOR each</code> LOGIC loop steps</td>
+<td>yes</td>
+<td>no (fatal)</td>
+</tr>
+<tr>
+<td><code>@property</code> specifications</td>
+<td>yes</td>
+<td>no (strict-only)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="rust-target-design-intent-gated-no-timeline">Rust target — design intent (gated, no timeline)<a class="headerlink" href="#rust-target-design-intent-gated-no-timeline" title="Permanent link">&para;</a></h2>
+<h1 id="24-is-not-started-when-it-is-picked-up-the-expected-shape-is">24 is not started. When it is picked up, the expected shape is:<a class="headerlink" href="#24-is-not-started-when-it-is-picked-up-the-expected-shape-is" title="Permanent link">&para;</a></h1>
+<table>
+<thead>
+<tr>
+<th>NLS construct</th>
+<th>Rust mapping (design intent)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>number</code> / <code>integer</code></td>
+<td><code>f64</code> / <code>i64</code></td>
+</tr>
+<tr>
+<td><code>string</code> / <code>boolean</code></td>
+<td><code>String</code> / <code>bool</code></td>
+</tr>
+<tr>
+<td><code>list of T</code></td>
+<td><code>Vec&lt;T&gt;</code> (borrowed <code>&amp;[T]</code> for read-only parameters)</td>
+</tr>
+<tr>
+<td>records (<code>@type</code>)</td>
+<td><code>struct</code> with a validating <code>new</code> constructor mirroring the Python/TypeScript factory behavior</td>
+</tr>
+<tr>
+<td><code>RETURNS: none</code></td>
+<td><code>()</code></td>
+</tr>
+<tr>
+<td>Guards</td>
+<td><code>Result&lt;T, E&gt;</code> with generated error types, or <code>panic!</code> only where the spec declares an unrecoverable error</td>
+</tr>
+<tr>
+<td><code>@literal</code> / <code>@main</code></td>
+<td>Rust has no sanctioned escape hatch yet; both would be capability gaps until designed</td>
+</tr>
+<tr>
+<td>Structural equality / truthiness</td>
+<td>Rust has neither; a runtime helper layer (like TypeScript's <code>__nls_eq</code> / <code>__nls_truthy</code>) must exist before emission can claim conformance</td>
+</tr>
+</tbody>
+</table>
+<p>Two hard prerequisites before an implementation PR: the checked IR
+pipeline's remaining semantics issues (#197, #200, #207) so the target
+does not freeze unverified semantics, and the #202 conformance harness
+(a <code>RustRunner</code> in <code>tests/semantic/runners.py</code>) so divergence is caught
+the way it was for TypeScript.</p>
+<h2 id="adding-a-target">Adding a target<a class="headerlink" href="#adding-a-target" title="Permanent link">&para;</a></h2>
+<p>Third-party targets register a <code>TargetEmitter</code> (<code>nlsc/targets.py</code>) either
+in-process or through the <code>nlsc.targets</code> entry-point group — no parser,
+resolver, or CLI edits. See
+<a href="../architecture/#adding-a-new-target">architecture.md</a> for the checklist.</p>
 
 
 

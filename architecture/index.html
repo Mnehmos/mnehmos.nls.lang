@@ -16,7 +16,7 @@
         <link rel="prev" href="../design/issue-209-osprey-feasibility/">
       
       
-        <link rel="next" href="../nl-grammar.ebnf">
+        <link rel="next" href="../targets/">
       
       
         
@@ -1688,6 +1688,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../targets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Emission Targets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../nl-grammar.ebnf" class="md-nav__link">
         
   
@@ -2304,7 +2332,11 @@ and stay compatible.</p>
 <ol>
 <li>Create <code>emitter_&lt;target&gt;.py</code></li>
 <li>Implement <code>emit_&lt;target&gt;(nl_file: NLFile) -&gt; str</code></li>
-<li>Register in <code>cli.py</code> compile command</li>
+<li>Register a <code>TargetEmitter</code> in <code>nlsc/targets.py</code> (<code>register_target</code>) —
+   capabilities, fatal classification, semantics marker, suffixes, and an
+   optional output validator. Third-party packages can instead publish an
+   <code>nlsc.targets</code> entry point; the CLI, capability matrix, and lockfile
+   identity pick it up without core edits (#147).</li>
 </ol>
 <h3 id="adding-a-new-parser-feature">Adding a New Parser Feature<a class="headerlink" href="#adding-a-new-parser-feature" title="Permanent link">&para;</a></h3>
 <ol>
