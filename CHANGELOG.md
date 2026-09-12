@@ -28,6 +28,11 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- `nlsc assoc --desktop` generates Linux integration files (a desktop
+  entry with Verify/Compile/Test actions and the `text/x-nls` MIME
+  definition) from any platform; the OS integration guide now covers
+  Windows context-menu snippets, macOS Quick Actions, and Linux
+  file-manager integration (Issue #91).
 - `nlsc init --template {basic,library,service,cli}` — working project
   scaffolds (Issue #92): example specs that pass strict verification,
   compile, and run their tests; `nls.toml`, a README, and a CI workflow

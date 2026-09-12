@@ -39,6 +39,10 @@ nlsc assoc          # System-wide (requires admin)
 
 Then right-click any `.nl` file → **Open with** → select the NLS launcher and check "Always use this app".
 
+For macOS and Linux (MIME type, desktop actions, context menus), see the
+[OS integration guide](docs/os-integration.md); `nlsc assoc --desktop`
+generates the Linux integration files from any platform.
+
 ## Quick Start
 
 > **[15-Minute Quickstart](docs/quickstart.md)** — build a real shipping-quote
