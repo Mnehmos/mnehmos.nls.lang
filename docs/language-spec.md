@@ -92,7 +92,7 @@ Domain-to-path mapping is deterministic:
 
 * `math.core` → `v{major}/math/core.nl`
 
-If the domain cannot be resolved, compilation fails with a stable error code (see [`docs/error-reference.md`](docs/error-reference.md)).
+If the domain cannot be resolved, compilation fails with a stable error code (see [`docs/error-reference.md`](docs/error-reference.md)). Domains can also come from local package dependencies (`@use <package>.<domain>`); see [docs/packages.md](packages.md).
 
 ### Edit Provenance (normative reference)
 

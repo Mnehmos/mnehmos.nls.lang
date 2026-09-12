@@ -346,7 +346,7 @@ def stdlib_use_diagnostic(path: Path, error: StdlibUseError) -> Diagnostic:
         line=line,
         col=1 if line is not None else None,
         message=str(error),
-        hint="Add the module under an stdlib root or pass --stdlib-path.",
+        hint="Add the module under a stdlib root (or the matching package root for package domains), or pass --stdlib-path.",
     )
 
 
@@ -389,6 +389,21 @@ def dependency_error_diagnostics(
             )
         )
     return diagnostics
+
+
+def package_error_diagnostic(path: Path, error: "object") -> Diagnostic:
+    """Diagnostic for a PackageError (issues #146/#27) without importing pkg."""
+    code = getattr(error, "code", "EPKG001")
+    message = getattr(error, "message", str(error))
+    hint = getattr(error, "hint", "Fix the package manifest and rerun.")
+    return Diagnostic(
+        code=code,
+        file=str(path),
+        line=None,
+        col=None,
+        message=message,
+        hint=hint,
+    )
 
 
 def contract_error_diagnostics(path: Path, errors: list[str]) -> list[Diagnostic]:

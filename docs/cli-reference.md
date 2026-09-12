@@ -333,6 +333,20 @@ Example success payload:
 
 ---
 
+### `nlsc install`
+
+```
+nlsc install [path] [--check] [--json]
+```
+
+Resolves the local package dependencies declared in `nls.pkg.json`
+(`#146`), checks their versions against the manifest constraints, and
+writes a content-hashed `nls.pkg.lock`. `--check` verifies the lock
+instead of writing it and exits 1 with `EPKG004` when it is stale — use it
+as a CI gate. `path` defaults to the current directory and walks up to the
+nearest project root when the directory itself has no manifest. See
+[packages.md](packages.md).
+
 ### `nlsc watch`
 
 Watch a directory for `.nl` file changes and automatically recompile.

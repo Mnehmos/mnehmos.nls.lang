@@ -108,6 +108,7 @@ nav:
     - "Issue #209 — Osprey Feasibility": design/issue-209-osprey-feasibility.md
     - Architecture: architecture.md
     - Emission Targets: targets.md
+    - Packages: packages.md
     - Formal Grammar: nl-grammar.ebnf
 
 extra:

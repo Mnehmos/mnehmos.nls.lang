@@ -141,6 +141,57 @@ def stdlib_search_roots(
     return [r for r in roots if r.exists() and r.is_dir()]
 
 
+def resolve_use_in_package(
+    *,
+    domain_spec: str,
+    package_name: str,
+    package_root: Path,
+    remainder: str,
+    major: int,
+) -> ResolvedUse:
+    """Resolve ``@use <package>.<domain>`` inside a dependency root (#146).
+
+    The package name is the namespace prefix; ``remainder`` is the domain
+    path inside the package (empty means the package itself is not a
+    domain and is rejected).
+    """
+    if not remainder:
+        raise StdlibUseError(
+            code=EUSE001,
+            domain_spec=domain_spec,
+            domain=package_name,
+            major=major,
+            candidate_relpath="",
+            attempted_roots=[package_root],
+            message=(
+                f"Missing stdlib domain: {domain_spec} "
+                f"(use a domain inside package '{package_name}')"
+            ),
+        )
+    full_domain = f"{package_name}.{remainder}"
+    candidate_rel = domain_to_relpath(major=major, domain=remainder)
+    candidate = package_root / candidate_rel
+    if candidate.exists() and candidate.is_file():
+        return ResolvedUse(
+            domain=full_domain,
+            major=major,
+            candidate_relpath=candidate_rel,
+            path=candidate,
+        )
+    raise StdlibUseError(
+        code=EUSE001,
+        domain_spec=domain_spec,
+        domain=full_domain,
+        major=major,
+        candidate_relpath=candidate_rel,
+        attempted_roots=[package_root],
+        message=(
+            f"Missing stdlib domain: {domain_spec} "
+            f"(package '{package_name}' at {package_root})"
+        ),
+    )
+
+
 def resolve_use(
     *,
     domain_spec: str,

@@ -41,6 +41,8 @@ EASSOC004 = "EASSOC004"
 EPKG001 = "EPKG001"
 EPKG002 = "EPKG002"
 EPKG003 = "EPKG003"
+EPKG004 = "EPKG004"
+EPKG005 = "EPKG005"
 EWATCH001 = "EWATCH001"
 EWATCH002 = "EWATCH002"
 EIR001 = "EIR001"
@@ -563,6 +565,33 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Update the dependency or relax the constraint in `nls.pkg.json`.",
             "Rerun `nlsc install` to refresh the lockfile.",
+        ),
+    ),
+    EPKG004: ErrorDefinition(
+        code=EPKG004,
+        title="Package lockfile out of date",
+        summary="`nlsc install --check` found that a dependency's content, version, or path no longer matches `nls.pkg.lock`.",
+        emitted_by=("install",),
+        common_causes=(
+            "A dependency directory changed after the lock was written.",
+            "The manifest gained or removed a dependency without reinstalling.",
+        ),
+        next_steps=(
+            "Run `nlsc install` to refresh `nls.pkg.lock` and commit it.",
+            "Review the drift list before committing to confirm the changes are expected.",
+        ),
+    ),
+    EPKG005: ErrorDefinition(
+        code=EPKG005,
+        title="Package lockfile write failed",
+        summary="`nlsc install` resolved the manifest but could not write `nls.pkg.lock` to disk.",
+        emitted_by=("install",),
+        common_causes=(
+            "The project directory is not writable.",
+            "The lockfile is held open by another process or the disk is full.",
+        ),
+        next_steps=(
+            "Check the project directory's permissions and free space, then rerun `nlsc install`.",
         ),
     ),
     ELSP001: ErrorDefinition(
