@@ -54,6 +54,7 @@ ESEM010 = "ESEM010"
 ESEM011 = "ESEM011"
 ESEM012 = "ESEM012"
 ESEM013 = "ESEM013"
+EFMT001 = "EFMT001"
 EVER001 = "EVER001"
 EVER002 = "EVER002"
 
@@ -250,6 +251,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
             "lock:update",
             "ir",
             "lint",
+            "fmt",
         ),
         common_causes=(
             "A required directive or section is malformed or missing.",
@@ -281,6 +283,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
             "lock:update",
             "ir",
             "lint",
+            "fmt",
         ),
         common_causes=(
             "`--parser treesitter` was requested, but the optional tree-sitter dependency is not installed.",
@@ -636,6 +639,20 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         ),
         next_steps=(
             "Rename the module to something project-specific (for example 'lists' instead of 'collections').",
+        ),
+    ),
+    EFMT001: ErrorDefinition(
+        code=EFMT001,
+        title="File cannot be safely formatted",
+        summary="Formatting would change the module's structure or the reformatted text does not parse, so `nlsc fmt` left the file unchanged.",
+        emitted_by=("fmt",),
+        common_causes=(
+            "The file contains syntax the line-based formatter cannot reorder safely.",
+            "A parse error appears only after blank-line or section normalization.",
+        ),
+        next_steps=(
+            "Fix the reported issue in the file and rerun `nlsc fmt`.",
+            "Report a minimal reproducer if the file looks valid.",
         ),
     ),
     EVER001: ErrorDefinition(

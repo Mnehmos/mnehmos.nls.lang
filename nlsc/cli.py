@@ -84,6 +84,7 @@ from .diagnostics import (
 )
 from .error_catalog import (
     ECLI001,
+    EFMT001,
     EEXPLAIN001,
     EEXEC001,
     ELOCK002,
@@ -2310,6 +2311,119 @@ def cmd_lint(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_fmt(args: argparse.Namespace) -> int:
+    """Canonical formatting for .nl files (Issue #95)."""
+    import difflib
+
+    from .formatting import format_source
+
+    json_output = getattr(args, "json", False)
+    check_only = getattr(args, "check", False)
+    show_diff = getattr(args, "diff", False)
+
+    target = Path(args.file)
+    if not target.exists():
+        diagnostic = missing_file_diagnostic(target)
+        if json_output:
+            return _emit_json("fmt", [diagnostic], file=str(target))
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
+        return 1
+
+    sources = sorted(target.rglob("*.nl")) if target.is_dir() else [target]
+
+    diagnostics: list[Diagnostic] = []
+    changed_files: list[str] = []
+    formatted_count = 0
+    for source_path in sources:
+        try:
+            original = source_path.read_text(encoding="utf-8")
+        except OSError as exc:
+            diagnostics.append(
+                Diagnostic(
+                    code=EFMT001,
+                    file=str(source_path),
+                    line=None,
+                    col=None,
+                    message=f"could not read file: {exc}",
+                    hint="Check the path and permissions.",
+                )
+            )
+            continue
+
+        result = format_source(original)
+        if not result.safe:
+            diagnostics.append(
+                Diagnostic(
+                    code=EFMT001,
+                    file=str(source_path),
+                    line=None,
+                    col=None,
+                    message=f"cannot safely format: {result.reason}",
+                    hint="The file is left unchanged; fix the reported issue and rerun.",
+                )
+            )
+            continue
+        if not result.changed:
+            continue
+
+        changed_files.append(str(source_path))
+        if show_diff:
+            diff = difflib.unified_diff(
+                original.splitlines(keepends=True),
+                result.text.splitlines(keepends=True),
+                fromfile=str(source_path),
+                tofile=f"{source_path} (formatted)",
+            )
+            print("".join(diff), end="")
+        if not check_only and not show_diff:
+            try:
+                source_path.write_text(result.text, encoding="utf-8", newline="")
+            except OSError as exc:
+                diagnostics.append(
+                    Diagnostic(
+                        code=EFMT001,
+                        file=str(source_path),
+                        line=None,
+                        col=None,
+                        message=f"could not write formatted file: {exc}",
+                        hint="Check file permissions.",
+                    )
+                )
+                continue
+            formatted_count += 1
+
+    if json_output:
+        return _emit_json(
+            "fmt",
+            diagnostics,
+            status_code=1 if diagnostics else 0,
+            file=str(target),
+            files=len(sources),
+            changed=changed_files,
+            formatted=formatted_count,
+            check=check_only,
+        )
+    for diagnostic in diagnostics:
+        print(f"{diagnostic.file}: {diagnostic.message} [{diagnostic.code}]", file=sys.stderr)
+    if diagnostics:
+        return 1
+    if check_only:
+        if changed_files:
+            for name in changed_files:
+                print(f"needs formatting: {name}")
+            print(f"{len(changed_files)} file(s) need formatting")
+            return 1
+        print(f"All {len(sources)} file(s) are formatted")
+        return 0
+    if show_diff:
+        return 0
+    if formatted_count:
+        print(f"Formatted {formatted_count} file(s)")
+    else:
+        print(f"All {len(sources)} file(s) already formatted")
+    return 0
+
+
 def cmd_assoc(args: argparse.Namespace) -> int:
     """Install Windows file association for .nl files"""
     json_output = getattr(args, "json", False)
@@ -2679,6 +2793,23 @@ The conversation is the programming. The .nl file is the receipt.
         "--list-rules", action="store_true", help="List every lint rule and exit"
     )
     lint_parser.set_defaults(command="lint")
+
+    fmt_parser = subparsers.add_parser(
+        "fmt", help="Format .nl files into canonical layout (Issue #95)"
+    )
+    fmt_parser.add_argument("file", help="Input .nl file or directory")
+    fmt_parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Exit 1 when any file needs formatting (no writes)",
+    )
+    fmt_parser.add_argument(
+        "--diff", action="store_true", help="Show what would change (no writes)"
+    )
+    fmt_parser.add_argument(
+        "--json", action="store_true", help="Emit structured JSON results."
+    )
+    fmt_parser.set_defaults(command="fmt")
     verify_parser = subparsers.add_parser("verify", help="Verify .nl file")
     verify_parser.add_argument(
         "--strict",
@@ -2904,6 +3035,8 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_ci(args)
     elif args.command == "lint":
         return cmd_lint(args)
+    elif args.command == "fmt":
+        return cmd_fmt(args)
     elif args.command == "verify":
         return cmd_verify(args)
     elif args.command == "explain":
