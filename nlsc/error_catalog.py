@@ -56,6 +56,8 @@ ESEM011 = "ESEM011"
 ESEM012 = "ESEM012"
 ESEM013 = "ESEM013"
 EFMT001 = "EFMT001"
+EPROV001 = "EPROV001"
+EPROV002 = "EPROV002"
 EVER001 = "EVER001"
 EVER002 = "EVER002"
 
@@ -653,6 +655,34 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         ),
         next_steps=(
             "Rename the module to something project-specific (for example 'lists' instead of 'collections').",
+        ),
+    ),
+    EPROV001: ErrorDefinition(
+        code=EPROV001,
+        title="Provenance review pending",
+        summary="The spec's provenance sidecar marks it as pending review (typically LLM-authored), and the CI gate refuses to pass unreviewed specifications.",
+        emitted_by=("ci",),
+        common_causes=(
+            "An LLM-authored revision was recorded with status 'pending'.",
+            "The human review step has not happened yet.",
+        ),
+        next_steps=(
+            "Review the specification, then run `nlsc provenance <file> --status accepted`.",
+            "See docs/provenance.md for the full workflow.",
+        ),
+    ),
+    EPROV002: ErrorDefinition(
+        code=EPROV002,
+        title="Provenance record invalid",
+        summary="The provenance sidecar is malformed or uses unknown source/status values, so trust cannot be evaluated.",
+        emitted_by=("provenance", "ci"),
+        common_causes=(
+            "Hand-edited JSON with a typo or missing field.",
+            "An unknown status or source type was recorded.",
+        ),
+        next_steps=(
+            "Fix the sidecar or delete it with `nlsc provenance <file> --clear`.",
+            "See docs/provenance.md for the format.",
         ),
     ),
     EFMT001: ErrorDefinition(

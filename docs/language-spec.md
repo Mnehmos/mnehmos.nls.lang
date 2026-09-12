@@ -567,6 +567,7 @@ with causes and next steps.
 | `ESEM013` | Module/file name shadows a host stdlib module | [File Structure](#file-structure) |
 | `EVER001`, `EVER002` | Declared `@nls` revision compatibility | [Directives](#directives) |
 | `ELINT001`–`ELINT012` | Intent quality (`nlsc lint`; warnings unless `--strict`) | [Semantics](#semantics-what-the-compiler-guarantees) |
+| `EPROV001`, `EPROV002` | Edit provenance review gate (`nlsc ci`; see [provenance](provenance.md)) | [Semantics](#semantics-what-the-compiler-guarantees) |
 
 ---
 

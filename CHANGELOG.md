@@ -28,6 +28,13 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- `nlsc provenance <file>` — edit provenance (Issue #93): record whether
+  a revision came from a human, LLM, or tool with an optional model and
+  conversation id, read/clear the sidecar (`<file>.nl.provenance.json`,
+  committed as an audit trail), and gate CI on review: a `pending`
+  (typically LLM-authored) revision fails `nlsc ci` with `EPROV001`
+  until a human runs `--status accepted`; malformed sidecars fail with
+  `EPROV002`. Format and workflow documented in `docs/provenance.md`.
 - `nlsc assoc --desktop` generates Linux integration files (a desktop
   entry with Verify/Compile/Test actions and the `text/x-nls` MIME
   definition) from any platform; the OS integration guide now covers
