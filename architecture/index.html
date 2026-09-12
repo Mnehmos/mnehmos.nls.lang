@@ -1567,6 +1567,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#emitter-semantics-markers-issue-202" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Emitter semantics markers (Issue #202)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1892,6 +1903,17 @@
     <span class="md-ellipsis">
       
         Semantic hashes (Issue #193)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#emitter-semantics-markers-issue-202" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Emitter semantics markers (Issue #202)
       
     </span>
   </a>
@@ -2238,6 +2260,16 @@ identifier/purpose/returns hashes) never compare equal to new hashes. On
 first <code>nlsc compile</code> or <code>nlsc lock:update</code> after upgrading, every legacy
 entry is conservatively reported as changed and regenerated — stale cached
 bodies are never reused.</p>
+<h3 id="emitter-semantics-markers-issue-202">Emitter semantics markers (Issue #202)<a class="headerlink" href="#emitter-semantics-markers-issue-202" title="Permanent link">&para;</a></h3>
+<p>Each locked target also records a <code>semantics_version</code> marker (for example
+<code>py-1</code>, <code>ts-1</code>) naming the backend semantics revision that produced the
+artifact. The marker is part of the lock's identity: <code>nlsc compile
+--frozen-lockfile</code> and <code>nlsc ci --compile</code> refuse a lockfile whose marker
+differs from the current emitter with <code>ELOCK004</code>, even when the source and
+the regenerated output hash still agree. Bump the marker in
+<code>nlsc/capabilities.py</code> whenever an emitter changes the code it produces for
+unchanged input. Lockfiles written before markers existed have no marker
+and stay compatible.</p>
 <hr />
 <h2 id="extension-points">Extension Points<a class="headerlink" href="#extension-points" title="Permanent link">&para;</a></h2>
 <h3 id="adding-a-new-target">Adding a New Target<a class="headerlink" href="#adding-a-new-target" title="Permanent link">&para;</a></h3>

@@ -1665,6 +1665,13 @@ additive within a major line.</p>
    old lock entries conservatively; the next <code>nlsc compile</code> or
    <code>nlsc lock:update</code> regenerates them. No spec bump is implied, because
    program meaning is unchanged.</li>
+<li><strong>Emitter contract changes bump a semantics marker.</strong> Each locked target
+   records a <code>semantics_version</code> naming the backend revision that produced
+   it. Changing what an emitter generates for unchanged input (helper
+   names, runtime prelude, validation shape) bumps that marker; frozen
+   compiles and <code>nlsc ci --compile</code> then require a regenerated lockfile
+   (<code>ELOCK004</code>) even though the artifact hash scheme is untouched.
+   Lockfiles written before markers existed stay compatible.</li>
 </ol>
 <h2 id="upgrade-guidance">Upgrade guidance<a class="headerlink" href="#upgrade-guidance" title="Permanent link">&para;</a></h2>
 <ol>

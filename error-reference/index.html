@@ -1420,6 +1420,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#elock004-emitter-semantics-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ELOCK004 - Emitter semantics changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#elsp001-lsp-optional-dependencies-unavailable" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2587,6 +2598,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#elock004-emitter-semantics-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ELOCK004 - Emitter semantics changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#elsp001-lsp-optional-dependencies-unavailable" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3337,6 +3359,11 @@ maps each code family to the language rule it enforces.</p>
 <td>A generated <code>.nl.lock</code> file could not be written to disk.</td>
 </tr>
 <tr>
+<td><code>ELOCK004</code></td>
+<td><code>compile</code>, <code>ci</code></td>
+<td>A frozen lockfile records an emitter semantics marker the current backend no longer matches.</td>
+</tr>
+<tr>
 <td><code>ELSP001</code></td>
 <td><code>lsp</code></td>
 <td><code>nlsc lsp</code> could not import the optional language-server dependencies.</td>
@@ -3451,6 +3478,9 @@ maps each code family to the language rule it enforces.</p>
 <h3 id="elock003-lockfile-write-failed"><code>ELOCK003</code> - Lockfile write failed<a class="headerlink" href="#elock003-lockfile-write-failed" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc compile --json</code> or <code>nlsc lock:update --json</code> successfully reaches the lockfile generation step but cannot write the <code>.nl.lock</code> file.</p>
 <p><strong>Fix:</strong> Check the destination path, permissions, file locks, and free space, then rerun the command.</p>
+<h3 id="elock004-emitter-semantics-changed"><code>ELOCK004</code> - Emitter semantics changed<a class="headerlink" href="#elock004-emitter-semantics-changed" title="Permanent link">&para;</a></h3>
+<p>Raised when <code>nlsc compile --frozen-lockfile</code> or <code>nlsc ci --compile</code> reads a lockfile whose <code>semantics_version</code> marker for the target no longer matches the current backend. The marker changes when an emitter's code-generation contract changes, so the locked artifact can no longer be trusted even if the source is untouched. Lockfiles written before markers existed have no marker and remain compatible.</p>
+<p><strong>Fix:</strong> Regenerate the lockfile with <code>nlsc compile &lt;file&gt;</code>, review the output diff, and commit the updated <code>.nl.lock</code>.</p>
 <h3 id="elsp001-lsp-optional-dependencies-unavailable"><code>ELSP001</code> - LSP optional dependencies unavailable<a class="headerlink" href="#elsp001-lsp-optional-dependencies-unavailable" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc lsp</code> cannot import the optional dependencies that back the language server, such as <code>pygls</code> or <code>lsprotocol</code>.</p>
 <p><strong>Fix:</strong> Install the extras with <code>pip install nlsc[lsp]</code>, then rerun <code>nlsc lsp</code> in the same environment.</p>
