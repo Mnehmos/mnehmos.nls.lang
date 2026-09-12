@@ -2862,6 +2862,11 @@ block checked emission (<code>EIR003</code>):</p>
 <td><code>RETURNS: number</code> alone</td>
 <td><code>EIR004</code>; return the value or <code>none</code></td>
 </tr>
+<tr>
+<td>ANLU with no result contract</td>
+<td><code>[checkout]</code> with no <code>RETURNS</code></td>
+<td><code>EIR005</code>; declare the value, <code>none</code>, or implement it with <code>@literal</code></td>
+</tr>
 </tbody>
 </table>
 <h3 id="target-capability-matrix">Target capability matrix<a class="headerlink" href="#target-capability-matrix" title="Permanent link">&para;</a></h3>
@@ -2962,12 +2967,12 @@ with causes and next steps.</p>
 <tbody>
 <tr>
 <td><code>EPARSE001</code></td>
-<td>Surface syntax, step numbering (duplicate step numbers name both lines)</td>
+<td>Surface syntax (including sections the grammar cannot parse, reported as unparsed content), step numbering (duplicate step numbers name both lines)</td>
 <td><a href="#logic">LOGIC</a>, <a href="#anlu-blocks">ANLU Blocks</a></td>
 </tr>
 <tr>
-<td><code>EIR001</code>–<code>EIR004</code></td>
-<td>Structural lowering: tokenization, foreign constructs, declared-type returns</td>
+<td><code>EIR001</code>–<code>EIR005</code></td>
+<td>Structural lowering: tokenization, foreign constructs, declared-type returns, missing result contract</td>
 <td><a href="#unsupported-and-out-of-scope">Unsupported and out of scope</a></td>
 </tr>
 <tr>

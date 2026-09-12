@@ -3434,8 +3434,8 @@ maps each code family to the language rule it enforces.</p>
 <p>Raised when <code>nlsc atomize --json</code> hits an unexpected read/extract/write failure, such as an invalid output path.</p>
 <p><strong>Fix:</strong> Check the output path and filesystem permissions, then rerun <code>nlsc atomize &lt;file&gt;</code>.</p>
 <h3 id="eparse001-parse-error"><code>EPARSE001</code> - Parse error<a class="headerlink" href="#eparse001-parse-error" title="Permanent link">&para;</a></h3>
-<p>Raised when the parser rejects the <code>.nl</code> source, including watch-triggered recompiles after <code>nlsc watch</code> has already started.</p>
-<p><strong>Fix:</strong> Use the reported line number, correct the syntax, then rerun <code>nlsc verify &lt;file&gt;</code>.</p>
+<p>Raised when the parser rejects the <code>.nl</code> source, including watch-triggered recompiles after <code>nlsc watch</code> has already started. Sources reported as unparsed content were recovered by the tree-sitter grammar into an <code>ERROR</code> node: the message quotes the offending text instead of dropping the section, which would silently strip an ANLU's INPUTS, LOGIC, and RETURNS.</p>
+<p><strong>Fix:</strong> Use the reported line number, correct the syntax, then rerun <code>nlsc verify &lt;file&gt;</code>. Rewrite sections the message quotes using the documented spelling (for example <code>list of number</code> rather than <code>list[number]</code>).</p>
 <h3 id="eparse002-parser-backend-unavailable"><code>EPARSE002</code> - Parser backend unavailable<a class="headerlink" href="#eparse002-parser-backend-unavailable" title="Permanent link">&para;</a></h3>
 <p>Raised when a parser bootstrap step fails before the command can parse the source, starting with <code>--parser treesitter</code> when tree-sitter support is unavailable.</p>
 <p><strong>Fix:</strong> Install the optional backend with <code>pip install nlsc[treesitter]</code>, or rerun with <code>--parser auto</code> or <code>--parser regex</code>.</p>
