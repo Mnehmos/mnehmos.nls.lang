@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Callable, Optional
+from typing import TYPE_CHECKING, Callable, Optional
 
 from .localization import (
     ANLU_IDENTIFIER_PATTERN,
@@ -12,7 +12,15 @@ from .localization import (
     normalize_expression_text,
 )
 from .ir import IRExpr
-from .schema import ANLU, Input, Invariant, LogicStep, NLFile, TypeDefinition
+from .schema import (
+    ANLU,
+    FOR_EACH_STEP_RE,
+    Input,
+    Invariant,
+    LogicStep,
+    NLFile,
+    TypeDefinition,
+)
 
 
 def _python_type_to_typescript(py_type: str) -> str:
@@ -528,6 +536,9 @@ def _split_top_level_plus(expression: str) -> list[str]:
 # these route to their validating factories (#202).  Full plumbing of
 # module context through every translate call arrives with the
 # checked-IR emitter migration.
+if TYPE_CHECKING:
+    from .ir import IRGuard, IRStmt
+
 _DECLARED_TYPES: dict[str, list[str]] = {}
 
 
@@ -723,17 +734,26 @@ def _emit_guard_lines(anlu: ANLU) -> list[str]:
         condition = _translate_expression(guard.condition)
         error_type = guard.error_type or "Error"
         error_message = guard.error_message or "Guard condition failed"
-        message_literal = json.dumps(error_message)
-        code_literal = json.dumps(guard.error_code) if guard.error_code else None
         lines.append(f"  if (!__nls_truthy({condition})) {{")
-        if code_literal is not None:
-            lines.append(
-                f"    throw new {error_type}({message_literal}, {code_literal});"
-            )
-        else:
-            lines.append(f"    throw new {error_type}({message_literal});")
+        lines.extend(_ts_guard_raise_lines(error_type, error_message, guard.error_code, "    "))
         lines.append("  }")
     return lines
+
+
+def _ts_guard_raise_lines(
+    error_type: str, error_message: str, error_code: Optional[str], indent: str
+) -> list[str]:
+    """Throw lines for one failed guard.
+
+    Shared by the prose and IR render paths so their shape cannot drift.
+    """
+    message_literal = json.dumps(error_message)
+    if error_code:
+        code_literal = json.dumps(error_code)
+        return [
+            f"{indent}throw new {error_type}({message_literal}, {code_literal});"
+        ]
+    return [f"{indent}throw new {error_type}({message_literal});"]
 
 
 def _emit_edge_cases(anlu: ANLU) -> list[str]:
@@ -805,7 +825,202 @@ def _else_action_line(
     return None
 
 
+def _ir_multi_bound_names(stmts: tuple) -> set[str]:
+    """Names bound more than once across the lowered statement tree.
+
+    Mirrors ``_multi_bound_names`` from IR structure instead of prose
+    steps: a name bound in both arms of a branch counts twice, so
+    branch-joined values are declared with ``let`` at function scope.
+    """
+    from .ir import IRBind, IRBranch
+
+    counts: dict[str, int] = {}
+
+    def walk(block: tuple) -> None:
+        for stmt in block:
+            if isinstance(stmt, IRBind):
+                counts[stmt.name] = counts.get(stmt.name, 0) + 1
+            elif isinstance(stmt, IRBranch):
+                walk(stmt.then_body)
+                walk(stmt.otherwise)
+
+    walk(stmts)
+    return {name for name, count in counts.items() if count > 1}
+
+
+def _render_ts_stmt(
+    stmt: "IRStmt",
+    indent: str,
+    multi_bound: set[str],
+    hoisted: set[str],
+) -> Optional[list[str]]:
+    """Render one lowered IR statement as TypeScript lines (#202).
+
+    Returns None for statements without a structural TypeScript rendering
+    (``ForeignStmt``, loop notes); the caller falls back to the legacy
+    prose path for that ANLU.
+    """
+    from .ir import IRBind, IRBranch, IRDiscard, IRNote
+
+    if isinstance(stmt, IRBind):
+        value = _render_ts_expr(stmt.value)
+        if value is None:
+            return None
+        if stmt.name in multi_bound:
+            if stmt.name in hoisted:
+                return [f"{indent}{stmt.name} = {value};"]
+            hoisted.add(stmt.name)
+            return [f"{indent}let {stmt.name} = {value};"]
+        return [f"{indent}const {stmt.name} = {value};"]
+    if isinstance(stmt, IRDiscard):
+        value = _render_ts_expr(stmt.value)
+        if value is None:
+            return None
+        return [f"{indent}{value};"]
+    if isinstance(stmt, IRNote):
+        # A FOR-each loop step lowered as a narrative note (the IR has no
+        # loop region yet, #196): the capability gate refuses loop steps on
+        # this target anyway, so never render one as a silent comment.
+        if FOR_EACH_STEP_RE.match(stmt.text.strip()):
+            return None
+        return [f"{indent}// {stmt.text}"]
+    if isinstance(stmt, IRBranch):
+        from .ir import IRBind
+
+        condition = _render_ts_expr(stmt.condition)
+        if condition is None:
+            return None
+        lines: list[str] = []
+        # A value joined by both arms must be declared before the branch.
+        then_binds = {s.name for s in stmt.then_body if isinstance(s, IRBind)}
+        else_binds = {s.name for s in stmt.otherwise if isinstance(s, IRBind)}
+        for joined in sorted(then_binds & else_binds):
+            if joined in multi_bound and joined not in hoisted:
+                lines.append(f"{indent}let {joined};")
+                hoisted.add(joined)
+        lines.append(f"{indent}if (__nls_truthy({condition})) {{")
+        then_lines = _render_ts_block(
+            stmt.then_body, indent + "  ", multi_bound, hoisted
+        )
+        if then_lines is None:
+            return None
+        lines.extend(then_lines)
+        if stmt.otherwise:
+            lines.append(f"{indent}}} else {{")
+            else_lines = _render_ts_block(
+                stmt.otherwise, indent + "  ", multi_bound, hoisted
+            )
+            if else_lines is None:
+                return None
+            lines.extend(else_lines)
+        lines.append(f"{indent}}}")
+        return lines
+    return None
+
+
+def _render_ts_block(
+    stmts: tuple,
+    indent: str,
+    multi_bound: set[str],
+    hoisted: set[str],
+) -> Optional[list[str]]:
+    """Render a statement region; None when any statement is unrenderable."""
+    lines: list[str] = []
+    for stmt in stmts:
+        rendered = _render_ts_stmt(stmt, indent, multi_bound, hoisted)
+        if rendered is None:
+            return None
+        lines.extend(rendered)
+    return lines
+
+
+def _emit_ir_guard_ts(guard: "IRGuard") -> Optional[str]:
+    """Render one lowered guard; same shape as the prose path."""
+    from .ir import IRGuard
+
+    assert isinstance(guard, IRGuard)
+    condition = _render_ts_expr(guard.condition)
+    if condition is None:
+        return None
+    error = guard.error
+    error_type = error.error_type if error else "Error"
+    error_message = (
+        error.message if error and error.message else "Guard condition failed"
+    )
+    lines = [f"  if (!__nls_truthy({condition})) {{"]
+    lines.extend(
+        _ts_guard_raise_lines(
+            error_type, error_message, error.code if error else None, "    "
+        )
+    )
+    lines.append("  }")
+    return "\n".join(lines)
+
+
+def _emit_body_from_ir(anlu: ANLU) -> Optional[str]:
+    """Render the ANLU body from its lowered IR (#202).
+
+    Used whenever the operation lowered with no foreign nodes.  Returns
+    None when any node is foreign or the result needs the legacy
+    default-value handling; the prose path keeps scaffold output working
+    unchanged.
+    """
+    from .ir import IRBind, IRRef, iter_stmt_nodes, operation_unchecked_nodes
+    from .lowering import lower_anlu
+
+    operation, _diagnostics = lower_anlu(anlu, set(_DECLARED_TYPES))
+    if operation_unchecked_nodes(operation):
+        return None
+
+    lines: list[str] = _emit_edge_cases(anlu)
+    for guard in operation.guards:
+        rendered = _emit_ir_guard_ts(guard)
+        if rendered is None:
+            return None
+        lines.append(rendered)
+
+    multi_bound = _ir_multi_bound_names(operation.body)
+    body_lines = _render_ts_block(operation.body, "  ", multi_bound, set())
+    if body_lines is None:
+        return None
+    lines.extend(body_lines)
+
+    result = operation.result
+    if result is not None and result.value is not None:
+        value = result.value
+        if isinstance(value, IRRef):
+            # A result naming something never bound in this operation is
+            # the type-word default case; the legacy return handling owns
+            # that (it maps type words to default values).
+            bound = {param.name for param in operation.params}
+            bound.update(
+                stmt.name
+                for stmt in iter_stmt_nodes(operation.body)
+                if isinstance(stmt, IRBind)
+            )
+            if value.name not in bound:
+                return None
+        rendered = _render_ts_expr(value)
+        if rendered is None:
+            return None
+        lines.append(f"  return {rendered};")
+    else:
+        # Declared type only, void, or narrative RETURNS: the exact legacy
+        # return handling applies (invented defaults stay scaffold-visible).
+        return_expr = _translate_return_expression(anlu, anlu.returns)
+        if return_expr is None:
+            lines.append("  return;")
+        else:
+            lines.append(f"  return {return_expr};")
+
+    return "\n".join(lines)
+
+
 def _emit_body(anlu: ANLU) -> str:
+    body = _emit_body_from_ir(anlu)
+    if body is not None:
+        return body
+
     lines: list[str] = []
     lines.extend(_emit_edge_cases(anlu))
     lines.extend(_emit_guard_lines(anlu))

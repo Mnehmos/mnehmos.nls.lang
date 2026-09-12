@@ -145,6 +145,28 @@ RETURNS: a / b
     assert failure.exception_code is None
 
 
+def test_branch_joined_value_matches_on_both_targets(runner):
+    """A value produced by both arms of a total branch reads identically."""
+    source = """@module branch_join
+[pick]
+PURPOSE: pick a value
+INPUTS:
+  - flag: boolean
+  - n: number
+LOGIC:
+  1. IF flag THEN n + 1 -> value ELSE n - 1 -> value
+RETURNS: value
+"""
+    code = runner.compile(source)
+    truthy = runner.execute(code, "pick", (True, 10))
+    assert truthy.success
+    assert truthy.return_value == 11
+
+    falsy = runner.execute(code, "pick", (False, 10))
+    assert falsy.success
+    assert falsy.return_value == 9
+
+
 def test_modulo_by_zero_matches_on_both_targets(runner):
     source = """@module mod_zero
 [rem]

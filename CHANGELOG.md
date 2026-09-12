@@ -36,6 +36,13 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- The TypeScript emitter also renders checked ANLU bodies from the
+  target-neutral IR (Issue #202): guards, `const`/`let` bindings, `__nls_truthy`
+  branches with hoisted joined values, and the result value all render from
+  lowered IR statement nodes; foreign content keeps the legacy prose path.
+  A value assigned in both arms of a branch now correctly hoists as `let`
+  (the legacy path emitted block-scoped `const`s that `tsc` rejects). The
+  TypeScript semantics marker `ts-2` covers both this and the loop gating.
 - The Python emitter renders checked ANLU bodies from the target-neutral
   IR (Issue #202): guards, bindings, augmented assignments, total
   branches, and the result value are emitted from the same lowered
