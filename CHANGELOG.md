@@ -21,8 +21,12 @@ see what affects their `.nl` files and what only affects tooling. See
   explicit foreign content, rejected under `--strict` (`EIR002`). *(0.1)*
 - `@nls MAJOR.MINOR` directive declares the spec revision; mismatches are
   `EVER001` (fatal) / `EVER002` (strict-only). *(0.1)*
-- New diagnostics: `EIR001`–`EIR004`, `ESEM001`–`ESEM013`, `EVER001`–`EVER002`
+- New diagnostics: `EIR001`–`EIR005`, `ESEM001`–`ESEM013`, `EVER001`–`EVER002`
   with a diagnostics index in the language spec.
+- An ANLU with no `RETURNS` has no result contract: it is unresolved
+  executable content (`EIR005`) rather than a stub that compiles clean.
+  Implementing an ANLU with a `@literal` block still satisfies the
+  contract. *(0.1)*
 - Guard error types must be builtins or declared `@type`s (`ESEM012`);
   non-builtin error classes are generated on both targets.
 
@@ -33,6 +37,13 @@ see what affects their `.nl` files and what only affects tooling. See
   semantics revision that produced it, and `nlsc compile --frozen-lockfile`
   / `nlsc ci --compile` refuse a mismatched marker with `ELOCK004` plus a
   regenerate-and-commit hint. Lockfiles without a marker stay compatible.
+- No silently truncated ANLU blocks (Issue #202): when the tree-sitter
+  grammar recovers from a section it cannot parse, the text used to sit in
+  an unvisited `ERROR` node, so the ANLU's INPUTS, LOGIC, and RETURNS
+  disappeared and the emitter wrote an empty function. Truncated ANLU
+  blocks now fail with `EPARSE001` ("Unparsed content: ...") naming the
+  text, while grammar gaps that precede every ANLU (`@nls`, `@use`, dotted
+  `@imports`) keep the documented regex fallback.
 - `nlsc graph --anlu <name> --control` — execution-path view (Issue #192):
   nodes in source order including effect-only steps, `true`/`false`
   labeled branch edges carrying their conditions, loop back edges

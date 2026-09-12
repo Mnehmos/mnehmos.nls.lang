@@ -706,6 +706,74 @@ def _parse_literal_block(node: "Node", source: bytes) -> str:
     return ""
 
 
+def _first_error_node(node: "Node") -> Optional["Node"]:
+    """Return the first ERROR/MISSING node inside ``node`` in source order."""
+    found: Optional["Node"] = None
+
+    def visit(current: "Node") -> None:
+        nonlocal found
+        if found is not None:
+            return
+        if current.type == "ERROR" or current.is_missing:
+            found = current
+            return
+        if not current.has_error:
+            return
+        for child in current.children:
+            visit(child)
+
+    visit(node)
+    return found
+
+
+def _recovered_error_node(root: "Node") -> Optional["Node"]:
+    """Find a grammar error that truncated recognized ANLU content (#202).
+
+    The grammar recovers from input it cannot parse by parking the text in
+    an ``ERROR`` node.  The section walkers only visit recognized children,
+    so an unrecognized INPUTS line used to drop an ANLU's INPUTS, LOGIC, and
+    RETURNS without a single diagnostic — the emitter then produced an empty
+    function that looked complete.
+
+    Errors that precede every ANLU (grammar gaps for ``@nls``, ``@use``, and
+    dotted ``@imports``) are left to the caller's regex fallback, which
+    parses those directives canonically.  An error *inside* or *after* a
+    recognized ANLU block means an ANLU's contract was cut short.
+    """
+    seen_anlu_block = False
+    for child in root.children:
+        if child.type == "anlu_block":
+            if child.has_error:
+                return _first_error_node(child)
+            seen_anlu_block = True
+            continue
+        if child.type == "ERROR" or child.is_missing:
+            if seen_anlu_block:
+                return child
+            return None
+    return None
+
+
+def _raise_on_recovered_errors(root: "Node", source: bytes) -> None:
+    """Report a truncating grammar error as a ParseError."""
+    node = _recovered_error_node(root)
+    if node is None:
+        return
+
+    line = node.start_point[0] + 1
+    text = source[node.start_byte : node.end_byte].decode("utf-8", "replace")
+    lines = [chunk.strip() for chunk in text.splitlines() if chunk.strip()]
+    snippet = " | ".join(lines[:2])
+    if len(snippet) > 80:
+        snippet = snippet[:77] + "..."
+    line_text = lines[0] if lines else ""
+    raise ParseError(
+        f"Unparsed content: {snippet!r}",
+        line,
+        line_text,
+    )
+
+
 def parse_nl_file_treesitter(source: str, source_path: Optional[str] = None) -> NLFile:
     """
     Parse a .nl file source string into an NLFile AST using tree-sitter.
@@ -768,6 +836,7 @@ def parse_nl_file_treesitter(source: str, source_path: Optional[str] = None) -> 
     tree = parser.parse(source_bytes)
 
     root = tree.root_node
+    _raise_on_recovered_errors(root, source_bytes)
 
     # Parse module directives using the shared regex path for parity with the
     # regex parser, including validation for @imports and support for @use.
