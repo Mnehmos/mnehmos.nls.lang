@@ -1431,6 +1431,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#epkg001-package-manifest-missing-or-malformed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EPKG001 - Package manifest missing or malformed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#epkg004-package-lockfile-out-of-date" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EPKG004 - Package lockfile out of date
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#elsp001-lsp-optional-dependencies-unavailable" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2323,6 +2345,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Packages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../nl-grammar.ebnf" class="md-nav__link">
         
   
@@ -2658,6 +2708,28 @@
     <span class="md-ellipsis">
       
         ELOCK004 - Emitter semantics changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#epkg001-package-manifest-missing-or-malformed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EPKG001 - Package manifest missing or malformed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#epkg004-package-lockfile-out-of-date" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EPKG004 - Package lockfile out of date
       
     </span>
   </a>
@@ -3279,7 +3351,7 @@
 <h1 id="error-reference">Error Reference<a class="headerlink" href="#error-reference" title="Permanent link">&para;</a></h1>
 <p>Complete guide to NLS errors, their causes, and how to fix them.</p>
 <h2 id="active-cli-error-codes">Active CLI Error Codes<a class="headerlink" href="#active-cli-error-codes" title="Permanent link">&para;</a></h2>
-<p>These are the stable error codes currently emitted by <code>nlsc init</code>, <code>nlsc atomize</code>, <code>nlsc compile</code>, <code>nlsc verify</code>, <code>nlsc run</code>, <code>nlsc graph</code>, <code>nlsc diff</code>, <code>nlsc test</code>, <code>nlsc watch</code>, <code>nlsc lock:check</code>, <code>nlsc lock:update</code>, <code>nlsc lsp</code>, and <code>nlsc assoc</code>.</p>
+<p>These are the stable error codes currently emitted by <code>nlsc init</code>, <code>nlsc atomize</code>, <code>nlsc compile</code>, <code>nlsc verify</code>, <code>nlsc run</code>, <code>nlsc graph</code>, <code>nlsc diff</code>, <code>nlsc test</code>, <code>nlsc watch</code>, <code>nlsc lock:check</code>, <code>nlsc lock:update</code>, <code>nlsc lsp</code>, <code>nlsc install</code>, and <code>nlsc assoc</code>.</p>
 <p>Use the CLI to get the extended explanation for any code:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>nlsc<span class="w"> </span>explain<span class="w"> </span>EPARSE001
 </span></code></pre></div>
@@ -3368,6 +3440,31 @@ maps each code family to the language rule it enforces.</p>
 <td><code>ECONTRACT001</code></td>
 <td><code>verify</code></td>
 <td>An ANLU is missing a required contract field such as <code>PURPOSE</code> or <code>RETURNS</code>.</td>
+</tr>
+<tr>
+<td><code>EPKG001</code></td>
+<td><code>install</code></td>
+<td>The package manifest is missing, malformed, or has an invalid dependency entry.</td>
+</tr>
+<tr>
+<td><code>EPKG002</code></td>
+<td><code>install</code></td>
+<td>A declared dependency path does not exist.</td>
+</tr>
+<tr>
+<td><code>EPKG003</code></td>
+<td><code>install</code></td>
+<td>A dependency's version does not satisfy the manifest constraint.</td>
+</tr>
+<tr>
+<td><code>EPKG004</code></td>
+<td><code>install</code></td>
+<td><code>nlsc install --check</code> found the package lock out of date.</td>
+</tr>
+<tr>
+<td><code>EPKG005</code></td>
+<td><code>install</code></td>
+<td>The package lockfile could not be written to disk.</td>
 </tr>
 <tr>
 <td><code>ETARGET001</code></td>
@@ -3537,6 +3634,12 @@ maps each code family to the language rule it enforces.</p>
 <h3 id="elock004-emitter-semantics-changed"><code>ELOCK004</code> - Emitter semantics changed<a class="headerlink" href="#elock004-emitter-semantics-changed" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc compile --frozen-lockfile</code> or <code>nlsc ci --compile</code> reads a lockfile whose <code>semantics_version</code> marker for the target no longer matches the current backend. The marker changes when an emitter's code-generation contract changes, so the locked artifact can no longer be trusted even if the source is untouched. Lockfiles written before markers existed have no marker and remain compatible.</p>
 <p><strong>Fix:</strong> Regenerate the lockfile with <code>nlsc compile &lt;file&gt;</code>, review the output diff, and commit the updated <code>.nl.lock</code>.</p>
+<h3 id="epkg001-package-manifest-missing-or-malformed"><code>EPKG001</code> - Package manifest missing or malformed<a class="headerlink" href="#epkg001-package-manifest-missing-or-malformed" title="Permanent link">&para;</a></h3>
+<p>Raised by <code>nlsc install</code> when <code>nls.pkg.json</code> is missing, is not valid JSON, or carries an invalid dependency entry (empty or absolute path, unsupported version constraint). See <a href="../packages/">packages.md</a>.</p>
+<p><strong>Fix:</strong> Correct the manifest and rerun <code>nlsc install</code>.</p>
+<h3 id="epkg004-package-lockfile-out-of-date"><code>EPKG004</code> - Package lockfile out of date<a class="headerlink" href="#epkg004-package-lockfile-out-of-date" title="Permanent link">&para;</a></h3>
+<p>Raised by <code>nlsc install --check</code> when a dependency's content or version no longer matches <code>nls.pkg.lock</code>.</p>
+<p><strong>Fix:</strong> Run <code>nlsc install</code> to refresh the lockfile and commit it.</p>
 <h3 id="elsp001-lsp-optional-dependencies-unavailable"><code>ELSP001</code> - LSP optional dependencies unavailable<a class="headerlink" href="#elsp001-lsp-optional-dependencies-unavailable" title="Permanent link">&para;</a></h3>
 <p>Raised when <code>nlsc lsp</code> cannot import the optional dependencies that back the language server, such as <code>pygls</code> or <code>lsprotocol</code>.</p>
 <p><strong>Fix:</strong> Install the extras with <code>pip install nlsc[lsp]</code>, then rerun <code>nlsc lsp</code> in the same environment.</p>
