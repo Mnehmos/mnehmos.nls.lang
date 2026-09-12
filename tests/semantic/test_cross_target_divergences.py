@@ -98,6 +98,53 @@ RETURNS: numerator / divisor
     assert failure.exception_message == "Cannot divide by zero"
 
 
+def test_coded_guard_failure_identity_matches_on_both_targets(runner):
+    """A declared error code is part of the failure identity on both targets.
+
+    The audit required guard error *codes* to be executable, not just
+    emitter strings: type, message, and code must all cross the runner
+    boundary identically.
+    """
+    source = """@module coded_identity
+[withdraw]
+PURPOSE: withdraw money
+INPUTS:
+  - balance: number
+  - amount: number
+GUARDS:
+  - balance >= amount -> InsufficientFunds(INSUFFICIENT, "Balance too low")
+RETURNS: balance - amount
+"""
+    code = runner.compile(source)
+    ok = runner.execute(code, "withdraw", (100, 30))
+    assert ok.success
+    assert ok.return_value == 70
+
+    failure = runner.execute(code, "withdraw", (10, 30))
+    assert not failure.success
+    assert failure.exception_type == "InsufficientFunds"
+    assert failure.exception_message == "Balance too low"
+    assert failure.exception_code == "INSUFFICIENT"
+
+
+def test_uncoded_guard_has_no_error_code_on_both_targets(runner):
+    source = """@module uncoded
+[divide]
+PURPOSE: safe divide
+INPUTS:
+  - a: number
+  - b: number
+GUARDS:
+  - b != 0 -> ValueError("Cannot divide by zero")
+RETURNS: a / b
+"""
+    code = runner.compile(source)
+    failure = runner.execute(code, "divide", (1, 0))
+    assert not failure.success
+    assert failure.exception_type == "ValueError"
+    assert failure.exception_code is None
+
+
 def test_modulo_by_zero_matches_on_both_targets(runner):
     source = """@module mod_zero
 [rem]

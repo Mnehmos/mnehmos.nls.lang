@@ -28,7 +28,11 @@ from .schema import NLFile
 # lockfile identity includes this marker, so stale artifacts are detected
 # instead of trusted (#202).
 EMITTER_SEMANTICS_VERSION: dict[str, str] = {
-    "python": "py-1",
+    # py-2: coded guards raise with `.code` attached and the message as the
+    # sole argument, so error identity (type, code, message) is uniform
+    # across targets (#202).
+    "python": "py-2",
+    # ts-2: FOR-each LOGIC loop steps became an explicit capability gap.
     "typescript": "ts-2",
 }
 

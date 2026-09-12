@@ -386,7 +386,9 @@ These contracts participate in lockfile semantic hashes: changing a guard
 message or adding a foreign call invalidates the affected entries and their
 callers. Portability: guard failures raise the same `ValueError`-style
 identity with the same message on Python and TypeScript; non-builtin error
-types get generated classes on both targets.
+types get generated classes on both targets. A declared error code is part
+of that identity and is observable as `.code` on the raised error on both
+targets.
 
 ### Execution and analysis are separate
 

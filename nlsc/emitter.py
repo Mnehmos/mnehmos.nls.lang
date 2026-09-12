@@ -375,11 +375,15 @@ def emit_guards(anlu: ANLU) -> list[str]:
         # Generate the if-not check
         lines.append(f"    if not ({condition}):")
 
-        # Generate the raise statement
+        # Generate the raise statement. A declared error code travels as a
+        # `.code` attribute so the identity (type, code, message) is
+        # observable identically on every target (#202).
         if guard.error_code:
             lines.append(
-                f"        raise {error_type}({guard.error_code!r}, {error_message!r})"
+                f"        __nls_error = {error_type}({error_message!r})"
             )
+            lines.append(f"        __nls_error.code = {guard.error_code!r}")
+            lines.append("        raise __nls_error")
         else:
             lines.append(f"        raise {error_type}({error_message!r})")
 
