@@ -653,7 +653,7 @@ def test_unknown_subcommand_with_json_reports_structured_diagnostic() -> None:
             "file": "<cli>",
             "line": None,
             "col": None,
-            "message": "argument command: invalid choice: 'frobnicate' (choose from init, compile, run, ir, ci, lint, fmt, verify, explain, graph, test, atomize, diff, dif, watch, lock:check, lock:update, lsp, assoc)",
+            "message": "argument command: invalid choice: 'frobnicate' (choose from init, compile, run, ir, ci, lint, fmt, verify, explain, graph, test, atomize, diff, dif, watch, lock:check, lock:update, lsp, provenance, assoc)",
             "hint": "Rerun the command with --help to inspect the required arguments and valid options.",
         }
     ]

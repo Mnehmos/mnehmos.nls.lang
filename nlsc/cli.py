@@ -91,6 +91,8 @@ from .error_catalog import (
     EEXEC001,
     ELOCK002,
     EPARSE002,
+    EPROV001,
+    EPROV002,
     ETARGET001,
     EVALIDATE001,
     E_RUN,
@@ -2174,6 +2176,43 @@ def cmd_ci(args: argparse.Namespace) -> int:
         return _fail("gate", blocking)
     stages["gate"] = "passed"
 
+    # Provenance trust gate (Issue #93): an LLM-proposed spec marked
+    # pending must be reviewed (status accepted) before CI passes.
+    from .provenance import provenance_path as _provenance_path
+    from .provenance import read_provenance as _read_provenance
+
+    provenance_file = _provenance_path(source_path)
+    provenance_record, provenance_error = _read_provenance(provenance_file)
+    if provenance_error:
+        diagnostic = Diagnostic(
+            code=EPROV002,
+            file=str(provenance_file),
+            line=None,
+            col=None,
+            message=provenance_error,
+            hint="Fix or delete the sidecar; see docs/provenance.md for the format.",
+        )
+        return _fail("provenance", [diagnostic])
+    if provenance_record is not None and provenance_record.status == "pending":
+        diagnostic = Diagnostic(
+            code=EPROV001,
+            file=str(provenance_file),
+            line=None,
+            col=None,
+            message=(
+                f"provenance status is 'pending' "
+                f"(source: {provenance_record.source_type}); review required"
+            ),
+            hint=(
+                "Review the spec, then run "
+                f"`nlsc provenance {source_path} --status accepted` to unlock CI."
+            ),
+        )
+        return _fail("provenance", [diagnostic])
+    stages["provenance"] = (
+        provenance_record.status if provenance_record is not None else "unrecorded"
+    )
+
     # Frozen lockfile: it must exist and be current; CI never rewrites it.
     lock_path = source_path.with_suffix(".nl.lock")
     existing_lock = read_lockfile(lock_path)
@@ -2568,6 +2607,136 @@ def _write_desktop_integration(args: argparse.Namespace, json_output: bool) -> i
         "text-x-nls.xml to ~/.local/share/mime/packages/, then run "
         "`update-mime-database ~/.local/share/mime` and "
         "`update-desktop-database ~/.local/share/applications`."
+    )
+    return 0
+
+
+def cmd_provenance(args: argparse.Namespace) -> int:
+    """Read or write edit provenance for a .nl file (Issue #93)."""
+    from .provenance import (
+        VALID_SOURCES,
+        VALID_STATUSES,
+        Provenance,
+        guess_changes,
+        provenance_path,
+        read_provenance,
+        validation_errors,
+        write_provenance,
+    )
+
+    source_path = Path(args.file)
+    json_output = getattr(args, "json", False)
+    if not source_path.exists():
+        diagnostic = missing_file_diagnostic(source_path)
+        if json_output:
+            return _emit_json("provenance", [diagnostic], file=str(source_path))
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
+        return 1
+
+    sidecar = provenance_path(source_path)
+    source_type = getattr(args, "source", None)
+    status = getattr(args, "status", None)
+
+    def _fail(message: str, hint: str) -> int:
+        diagnostic = Diagnostic(
+            code=EPROV002,
+            file=str(sidecar),
+            line=None,
+            col=None,
+            message=message,
+            hint=hint,
+        )
+        if json_output:
+            return _emit_json("provenance", [diagnostic], file=str(source_path))
+        print(f"Error [{diagnostic.code}]: {message}", file=sys.stderr)
+        print(hint, file=sys.stderr)
+        return 1
+
+    if source_type is None and status is None and not getattr(args, "clear", False):
+        record, error = read_provenance(sidecar)
+        if error:
+            return _fail(error, "Fix or delete the sidecar file and retry.")
+        if record is None:
+            if json_output:
+                return _emit_json(
+                    "provenance", [], file=str(source_path), recorded=False, provenance=None
+                )
+            print(f"No provenance recorded for {source_path}")
+            return 0
+        if json_output:
+            return _emit_json(
+                "provenance",
+                [],
+                file=str(source_path),
+                recorded=True,
+                provenance=record.to_json(),
+            )
+        print(json.dumps(record.to_json(), indent=2, sort_keys=True))
+        return 0
+
+    if getattr(args, "clear", False):
+        if sidecar.exists():
+            try:
+                sidecar.unlink()
+            except OSError as exc:
+                return _fail(f"could not remove sidecar: {exc}", "Check permissions.")
+        if json_output:
+            return _emit_json(
+                "provenance", [], file=str(source_path), recorded=False, cleared=True
+            )
+        print(f"Cleared provenance for {source_path.name}")
+        return 0
+
+    if source_type is not None and source_type not in VALID_SOURCES:
+        return _fail(
+            f"unknown source type '{source_type}'",
+            f"Choose one of: {', '.join(VALID_SOURCES)}.",
+        )
+    if status is not None and status not in VALID_STATUSES:
+        return _fail(
+            f"unknown status '{status}'",
+            f"Choose one of: {', '.join(VALID_STATUSES)}.",
+        )
+
+    existing, error = read_provenance(sidecar)
+    if error:
+        return _fail(error, "Fix or delete the sidecar file and retry.")
+    if existing is None:
+        existing = Provenance(file=source_path.name, source_type=source_type or "tool")
+    if source_type is not None:
+        existing.source_type = source_type
+    if status is not None:
+        existing.status = status
+        if status == "accepted":
+            existing.human_review = "accepted"
+    if getattr(args, "model", None) is not None:
+        existing.model = args.model
+    if getattr(args, "conversation", None) is not None:
+        existing.conversation_id = args.conversation
+    if not existing.changes:
+        existing.changes = guess_changes(source_path)
+
+    problems = validation_errors(existing)
+    if problems:
+        return _fail("; ".join(problems), "Fix the reported fields and retry.")
+
+    try:
+        write_provenance(existing, sidecar)
+    except OSError as exc:
+        return _fail(f"could not write sidecar: {exc}", "Check permissions.")
+
+    if json_output:
+        return _emit_json(
+            "provenance",
+            [],
+            file=str(source_path),
+            recorded=True,
+            sidecar=str(sidecar),
+            provenance=existing.to_json(),
+        )
+    print(
+        f"Recorded provenance for {source_path.name}: "
+        f"{existing.source_type}/{existing.status} -> {sidecar.name}"
     )
     return 0
 
@@ -3149,6 +3318,32 @@ The conversation is the programming. The .nl file is the receipt.
     )
 
     # assoc command (Windows only)
+    provenance_parser = subparsers.add_parser(
+        "provenance", help="Read or write edit provenance for a .nl file"
+    )
+    provenance_parser.add_argument("file", help="Input .nl file")
+    provenance_parser.add_argument(
+        "--source",
+        choices=["human", "llm", "tool"],
+        help="Who authored the current revision",
+    )
+    provenance_parser.add_argument(
+        "--status",
+        choices=["draft", "pending", "accepted", "rejected"],
+        help="Review status (pending blocks nlsc ci until accepted)",
+    )
+    provenance_parser.add_argument("--model", help="Model identifier for LLM edits")
+    provenance_parser.add_argument(
+        "--conversation", help="Conversation or session id for LLM edits"
+    )
+    provenance_parser.add_argument(
+        "--clear", action="store_true", help="Remove the provenance sidecar"
+    )
+    provenance_parser.add_argument(
+        "--json", action="store_true", help="Emit structured JSON output."
+    )
+    provenance_parser.set_defaults(command="provenance")
+
     assoc_parser = subparsers.add_parser(
         "assoc", help="Install Windows file association for .nl files"
     )
@@ -3228,6 +3423,8 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_lock_update(args)
     elif args.command == "lsp":
         return cmd_lsp(args)
+    elif args.command == "provenance":
+        return cmd_provenance(args)
     elif args.command == "assoc":
         return cmd_assoc(args)
 

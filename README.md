@@ -159,6 +159,7 @@ def distance(p1: Point, p2: Point) -> float:
 | `nlsc lint <file\|dir>`  | Intent-quality lint rules (`--strict` for CI) |
 | `nlsc fmt <file\|dir>`   | Canonical formatting (`--check`/`--diff` for CI) |
 | `nlsc ci <file>`         | CI gate: strict semantics + frozen lockfile |
+| `nlsc provenance <file>` | Record/review edit provenance (LLM vs human) |
 | `nlsc graph <file>`      | Generate dependency diagrams           |
 | `nlsc diff <file>`       | Show changes since last compile        |
 | `nlsc watch <dir>`       | Continuous compilation on file changes |

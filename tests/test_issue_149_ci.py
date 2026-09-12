@@ -134,6 +134,7 @@ def test_ci_json_reports_stages(tmp_path, capsys):
     assert payload["stages"] == {
         "parse": "passed",
         "gate": "passed",
+        "provenance": "unrecorded",
         "lockfile": "current",
     }
 
