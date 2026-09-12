@@ -28,6 +28,12 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- Performance: fixed quadratic dependency resolution (a 2000-ANLU compile
+  went from 470 s to 4 s), bulk lockfile hashing lowers the module once
+  per file instead of once per ANLU, and function extraction from emitted
+  code is a single pass. Benchmark harness in `benchmarks/`, budgets in
+  `tests/test_performance_budgets.py`, results documented in
+  `docs/performance.md` and tracked as a CI artifact.
 - `nlsc run --sandbox [--timeout N]` — isolated interpreter with an audit
   hook blocking process execution, networking, native interop, and
   filesystem writes outside the run directory (defense in depth, not a

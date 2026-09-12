@@ -93,6 +93,7 @@ nav:
   - Reference:
     - CLI Commands: cli-reference.md
     - Security Model: security.md
+    - Performance: performance.md
     - Versioning & Compatibility: versioning.md
     - LLM Reference: llm-reference.md
     - Error Reference: error-reference.md

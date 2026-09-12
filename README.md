@@ -345,6 +345,14 @@ and a different major fails everywhere (`EVER001`). Spec changes and
 toolchain changes are tracked separately in the
 [CHANGELOG](CHANGELOG.md).
 
+### Performance
+
+Compile time is ~1 ms per ANLU plus interpreter startup; 2000-ANLU modules
+compile in ~4 s with linear scaling. Measured tables, limits, and known
+bottlenecks live in [docs/performance.md](docs/performance.md); reproduce
+them with `python benchmarks/run_benchmarks.py`, which CI also runs and
+tracks as an artifact.
+
 ### Feature Examples
 
 A strictly-verified example per language feature lives in
