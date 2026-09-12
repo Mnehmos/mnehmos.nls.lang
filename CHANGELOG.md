@@ -28,6 +28,11 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- `nlsc run --sandbox [--timeout N]` — isolated interpreter with an audit
+  hook blocking process execution, networking, native interop, and
+  filesystem writes outside the run directory (defense in depth, not a
+  security boundary). Security model, trust levels, and disclosure policy
+  documented in `docs/security.md`.
 - `nlsc ci` — strict gate + frozen lockfile, with reproducible-compile
   verification and optional test execution (`--compile --test`).
 - `nlsc compile --frozen-lockfile` — verifies a current lock and never

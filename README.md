@@ -315,6 +315,21 @@ jobs:
 
 ## Language Features
 
+### Security
+
+`.nl` files are code: `verify`/`ir`/`graph`/`compile` never execute them,
+while `run`/`test` do. For untrusted input:
+
+```bash
+nlsc run untrusted.nl --sandbox --timeout 5
+```
+
+`--sandbox` blocks process execution, networking, native interop, and
+writes outside the run directory in an isolated interpreter — defense in
+depth, **not** a security boundary (use containers/VMs for hostile input).
+Trust levels, the sandbox's honest limits, the threat model, and the
+responsible-disclosure policy live in [docs/security.md](docs/security.md).
+
 ### Versioning
 
 Declare the language-spec revision your file targets and get compatibility

@@ -1828,6 +1828,7 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     # Check for common main patterns
     main_candidates = ["main", "run", "start"]
+    found_entry_point: str | None = None
     for candidate in main_candidates:
         # Also check with underscores since we normalize hyphens
         candidate_normalized = candidate.replace("-", "_")
@@ -1843,6 +1844,7 @@ def cmd_run(args: argparse.Namespace) -> int:
                     f"sys.path.insert(0, {safe_path}); "
                     f"from {module_name} import {candidate_normalized}; {candidate_normalized}()",
                 ]
+                found_entry_point = candidate_normalized
                 if verbose:
                     print(f"Found entry point: {candidate}")
                 break
@@ -1851,14 +1853,44 @@ def cmd_run(args: argparse.Namespace) -> int:
         break
 
     # Execute
+    sandboxed = getattr(args, "sandbox", False)
+    run_timeout: float | None = None
     try:
-        # Preserve existing PYTHONPATH if present
-        env = os.environ.copy()
-        existing_pythonpath = env.get("PYTHONPATH", "")
-        pythonpath_parts = [str(temp_dir), str(source_root)]
-        if existing_pythonpath:
-            pythonpath_parts.append(existing_pythonpath)
-        env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
+        if sandboxed:
+            from .sandbox import (
+                DEFAULT_SANDBOX_TIMEOUT_SECONDS,
+                sandbox_command,
+                sandbox_env,
+                write_sandbox_runner,
+            )
+
+            runner_path = write_sandbox_runner(
+                temp_dir,
+                source_root=source_root,
+                module_name=module_name,
+                module_path=py_path,
+                entry_point=found_entry_point,
+            )
+            run_args = sandbox_command(runner_path)
+            env = sandbox_env()
+            timeout_value = getattr(args, "timeout", None)
+            run_timeout = (
+                float(timeout_value)
+                if timeout_value is not None
+                else float(DEFAULT_SANDBOX_TIMEOUT_SECONDS)
+            )
+            if verbose:
+                print(
+                    f"Sandboxed run (timeout {run_timeout:.0f}s): {run_args[1:]}"
+                )
+        else:
+            # Preserve existing PYTHONPATH if present
+            env = os.environ.copy()
+            existing_pythonpath = env.get("PYTHONPATH", "")
+            pythonpath_parts = [str(temp_dir), str(source_root)]
+            if existing_pythonpath:
+                pythonpath_parts.append(existing_pythonpath)
+            env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
 
         proc = subprocess.run(
             run_args,
@@ -1866,6 +1898,7 @@ def cmd_run(args: argparse.Namespace) -> int:
             env=env,
             capture_output=True,
             text=True,
+            timeout=run_timeout,
         )
 
         # Output stdout
@@ -1880,6 +1913,23 @@ def cmd_run(args: argparse.Namespace) -> int:
                 print(translated_stderr, end="", file=sys.stderr)
 
         exit_code = proc.returncode
+    except subprocess.TimeoutExpired:
+        message = (
+            f"sandbox timeout exceeded ({run_timeout:.0f}s); raise it with "
+            "--timeout SECONDS"
+        )
+        if json_output:
+            diagnostic = Diagnostic(
+                code=EEXEC001,
+                file=str(source_path),
+                line=None,
+                col=None,
+                message=message,
+                hint="Increase --timeout or run without --sandbox for trusted files.",
+            )
+            return _emit_json("run", [diagnostic], file=str(source_path))
+        print(f"Error: {message}", file=sys.stderr)
+        exit_code = 1
     except Exception as e:
         if json_output:
             diagnostic = Diagnostic(
@@ -2435,6 +2485,20 @@ The conversation is the programming. The .nl file is the receipt.
         "--strict",
         action="store_true",
         help="Refuse to execute when executable content is unresolved",
+    )
+    run_parser.add_argument(
+        "--sandbox",
+        action="store_true",
+        help=(
+            "Run in an isolated interpreter with a blocking audit hook "
+            "(defense in depth, not a security boundary)"
+        ),
+    )
+    run_parser.add_argument(
+        "--timeout",
+        type=float,
+        metavar="SECONDS",
+        help="Sandbox wall-clock limit (default: 30)",
     )
     run_parser.add_argument(
         "-k",
