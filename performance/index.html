@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://mnehmos.github.io/mnehmos.nls.lang/versioning/">
+        <link rel="canonical" href="https://mnehmos.github.io/mnehmos.nls.lang/performance/">
       
       
-        <link rel="prev" href="../performance/">
+        <link rel="prev" href="../security/">
       
       
-        <link rel="next" href="../llm-reference/">
+        <link rel="next" href="../versioning/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Versioning & Compatibility - NLS Compiler</title>
+        <title>Performance - NLS Compiler</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#versioning-and-compatibility-guarantees" class="md-skip">
+        <a href="#performance" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Versioning & Compatibility
+              Performance
             
           </span>
         </div>
@@ -941,34 +941,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../performance/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Performance
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -988,7 +960,7 @@
   <span class="md-ellipsis">
     
   
-    Versioning & Compatibility
+    Performance
   
 
     
@@ -1006,7 +978,7 @@
   <span class="md-ellipsis">
     
   
-    Versioning & Compatibility
+    Performance
   
 
     
@@ -1032,10 +1004,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#declaring-a-revision" class="md-nav__link">
+  <a href="#methodology" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Declaring a revision
+        Methodology
       
     </span>
   </a>
@@ -1043,10 +1015,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#compatibility-rules" class="md-nav__link">
+  <a href="#measured-throughput" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Compatibility rules
+        Measured throughput
       
     </span>
   </a>
@@ -1054,10 +1026,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-counts-as-a-breaking-change" class="md-nav__link">
+  <a href="#limits-and-what-happens-at-them" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What counts as a breaking change
+        Limits and what happens at them
       
     </span>
   </a>
@@ -1065,10 +1037,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#upgrade-guidance" class="md-nav__link">
+  <a href="#known-bottlenecks-and-their-fixes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Upgrade guidance
+        Known bottlenecks (and their fixes)
       
     </span>
   </a>
@@ -1076,10 +1048,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#where-changes-are-recorded" class="md-nav__link">
+  <a href="#improving-performance" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Where changes are recorded
+        Improving performance
       
     </span>
   </a>
@@ -1090,6 +1062,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Versioning & Compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1442,10 +1442,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#declaring-a-revision" class="md-nav__link">
+  <a href="#methodology" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Declaring a revision
+        Methodology
       
     </span>
   </a>
@@ -1453,10 +1453,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#compatibility-rules" class="md-nav__link">
+  <a href="#measured-throughput" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Compatibility rules
+        Measured throughput
       
     </span>
   </a>
@@ -1464,10 +1464,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-counts-as-a-breaking-change" class="md-nav__link">
+  <a href="#limits-and-what-happens-at-them" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What counts as a breaking change
+        Limits and what happens at them
       
     </span>
   </a>
@@ -1475,10 +1475,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#upgrade-guidance" class="md-nav__link">
+  <a href="#known-bottlenecks-and-their-fixes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Upgrade guidance
+        Known bottlenecks (and their fixes)
       
     </span>
   </a>
@@ -1486,10 +1486,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#where-changes-are-recorded" class="md-nav__link">
+  <a href="#improving-performance" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Where changes are recorded
+        Improving performance
       
     </span>
   </a>
@@ -1516,117 +1516,168 @@
   
 
 
-<h1 id="versioning-and-compatibility-guarantees">Versioning and Compatibility Guarantees<a class="headerlink" href="#versioning-and-compatibility-guarantees" title="Permanent link">&para;</a></h1>
-<p>NLS versions two things independently:</p>
-<table>
-<thead>
-<tr>
-<th>Version</th>
-<th>Where it lives</th>
-<th>What it means</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Toolchain version</strong></td>
-<td><code>nlsc --version</code>, PyPI</td>
-<td>The compiler's own release (currently 0.2.x).</td>
-</tr>
-<tr>
-<td><strong>Language-spec revision</strong></td>
-<td><code>nlsc --version</code>, declared per file with <code>@nls</code></td>
-<td>The surface language + semantics contract (currently <strong>0.1</strong>).</td>
-</tr>
-</tbody>
-</table>
-<h2 id="declaring-a-revision">Declaring a revision<a class="headerlink" href="#declaring-a-revision" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>@module billing
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>@nls 0.1
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>@version 1.0.0        # your module's own version, unrelated
+<h1 id="performance">Performance<a class="headerlink" href="#performance" title="Permanent link">&para;</a></h1>
+<p>What to expect from the compiler, how to measure it yourself, and the
+known limits and bottlenecks. Everything here is measured, not estimated.</p>
+<h2 id="methodology">Methodology<a class="headerlink" href="#methodology" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>benchmarks/run_benchmarks.py<span class="w">            </span><span class="c1"># markdown table</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>python<span class="w"> </span>benchmarks/run_benchmarks.py<span class="w"> </span>--json<span class="w">     </span><span class="c1"># machine-readable</span>
 </span></code></pre></div>
-<p><code>@nls</code> is optional; a file without it is treated as targeting the current
-revision. <code>@version</code> remains your module's semantic version.</p>
-<h2 id="compatibility-rules">Compatibility rules<a class="headerlink" href="#compatibility-rules" title="Permanent link">&para;</a></h2>
-<p>Given a toolchain supporting spec revision <code>MAJOR.MINOR</code>:</p>
+<p>Each stage runs repeatedly and the reported number is the <strong>median</strong>
+wall-clock time in-process, with the module parsed fresh per run. The
+table below was measured on a Windows machine (Python 3.12, tree-sitter
+parser) — compare numbers within a machine, never across them. CI runs
+the same script and uploads the JSON results as an artifact so trends are
+visible over time, and <code>tests/test_performance_budgets.py</code> fails the
+build on order-of-magnitude regressions.</p>
+<h2 id="measured-throughput">Measured throughput<a class="headerlink" href="#measured-throughput" title="Permanent link">&para;</a></h2>
+<p>Synthetic modules of arithmetic operations with guards and branch steps:</p>
 <table>
 <thead>
 <tr>
-<th>Declared <code>@nls</code></th>
-<th>Result</th>
+<th>ANLUs</th>
+<th>parse + lower</th>
+<th>semantic gate</th>
+<th>emit Python</th>
+<th>emit TypeScript</th>
+<th>canonical IR</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>same <code>MAJOR.MINOR</code></td>
-<td>Compatible — no diagnostic.</td>
+<td>10</td>
+<td>5.6 ms</td>
+<td>5.5 ms</td>
+<td>3.7 ms</td>
+<td>2.5 ms</td>
+<td>2.2 ms</td>
 </tr>
 <tr>
-<td>same major, newer minor (e.g. <code>0.2</code> on a <code>0.1</code> toolchain)</td>
-<td><code>EVER002</code> — <strong>strict-only warning</strong>; the file may use features this compiler does not implement. <code>nlsc ci</code> fails.</td>
+<td>50</td>
+<td>23 ms</td>
+<td>27 ms</td>
+<td>20 ms</td>
+<td>15 ms</td>
+<td>12 ms</td>
 </tr>
 <tr>
-<td>different major (e.g. <code>1.0</code>)</td>
-<td><code>EVER001</code> — <strong>always fatal</strong>; semantics cannot be guaranteed.</td>
+<td>200</td>
+<td>99 ms</td>
+<td>136 ms</td>
+<td>87 ms</td>
+<td>66 ms</td>
+<td>55 ms</td>
 </tr>
 <tr>
-<td>malformed (e.g. <code>@nls latest</code>)</td>
-<td><code>EVER001</code> — always fatal.</td>
+<td>2000</td>
+<td>~1.0 s</td>
+<td>~1.3 s</td>
+<td>~0.9 s</td>
+<td>~0.7 s</td>
+<td>~0.6 s</td>
 </tr>
 </tbody>
 </table>
-<p>Older minor revisions within the same major are compatible: the spec is
-additive within a major line.</p>
-<h2 id="what-counts-as-a-breaking-change">What counts as a breaking change<a class="headerlink" href="#what-counts-as-a-breaking-change" title="Permanent link">&para;</a></h2>
-<p><strong>Spec revision bump — MAJOR</strong> (files may stop compiling):</p>
+<p>Scaling is linear in file size. The repository's largest real example
+(<code>examples/workflow_engine.nl</code>, 67 ANLUs, heavy prose and foreign
+expressions) lowers in <strong>36 ms</strong> and passes the full semantic gate in
+<strong>39 ms</strong>.</p>
+<p>User-visible CLI wall times (include interpreter startup):</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>File</th>
+<th>Wall time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>nlsc verify</code></td>
+<td>workflow_engine.nl (67 ANLUs)</td>
+<td>~0.39 s</td>
+</tr>
+<tr>
+<td><code>nlsc compile</code></td>
+<td>workflow_engine.nl</td>
+<td>~0.48 s</td>
+</tr>
+<tr>
+<td><code>nlsc compile</code></td>
+<td>synthetic 2000 ANLUs</td>
+<td>~4 s</td>
+</tr>
+</tbody>
+</table>
+<p>Rough rule of thumb: <strong>compile time ≈ 1 ms per ANLU plus ~0.25 s of
+interpreter startup</strong>, so even very large generated modules (thousands of
+ANLUs) compile in seconds.</p>
+<h2 id="limits-and-what-happens-at-them">Limits and what happens at them<a class="headerlink" href="#limits-and-what-happens-at-them" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Limit</th>
+<th>Behavior when exceeded</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>File size / ANLU count</td>
+<td>No hard limit; linear scaling. A 2000-ANLU module compiles in ~4 s.</td>
+</tr>
+<tr>
+<td>Recursion depth</td>
+<td>Python's default (~1000 frames) applies to generated code. <code>nlsc run</code> reports a source-mapped <code>RecursionError</code> and exits 1 — a diagnostic, not a crash.</td>
+</tr>
+<tr>
+<td><code>@use</code> / <code>@imports</code> count</td>
+<td>No hard limit; resolution is linear over search roots.</td>
+</tr>
+<tr>
+<td>Duplicate LOGIC step numbers</td>
+<td>Rejected at parse time with both source lines (<code>EPARSE001</code>) — never silently merged.</td>
+</tr>
+<tr>
+<td>Duplicate or colliding identifiers</td>
+<td>Rejected (<code>ESEM007</code>) before emission.</td>
+</tr>
+<tr>
+<td>Untrusted input resources</td>
+<td>Analysis is CPU/memory-bound but never executes file content; use <code>nlsc run --sandbox</code> with <code>--timeout</code> (see <a href="../security/">security model</a>).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="known-bottlenecks-and-their-fixes">Known bottlenecks (and their fixes)<a class="headerlink" href="#known-bottlenecks-and-their-fixes" title="Permanent link">&para;</a></h2>
 <ul>
-<li>removing or renaming syntax, sections, directives, or operators;</li>
-<li>changing the meaning of an existing construct;</li>
-<li>turning previously accepted input into a fatal error (e.g. a construct
-  moving from "foreign pass-through" to "rejected");</li>
-<li>changing the semantics of emitted code for existing programs.</li>
+<li><strong>Quadratic dependency resolution</strong> — <em>fixed</em>. The topological sort
+  rescanned every ANLU per node with dataclass equality in list
+  membership; a 2000-ANLU compile took <strong>470 s</strong>. It now builds reverse
+  edges once: the same compile takes <strong>4 s</strong>, and 1000 ANLUs run in
+  2.5 s (linear).</li>
+<li><strong>Per-ANLU module re-lowering in lockfile hashing</strong> — <em>fixed</em>. Semantic
+  hashes lowered the whole module once per ANLU (O(n²)); <code>hash_anlus()</code>
+  lowers once per file and all lock/diff/verify/rebuild consumers use it.</li>
+<li><strong>Per-ANLU function extraction from emitted code</strong> — <em>fixed</em>. Lockfile
+  generation ran a DOTALL regex over the entire output per ANLU;
+  <code>extract_all_function_code()</code> scans once.</li>
 </ul>
-<p><strong>Spec revision bump — MINOR</strong> (existing files keep working):</p>
+<p>Remaining costs to know about:</p>
 <ul>
-<li>new syntax, directives, or section keywords;</li>
-<li>new diagnostics for cases that previously produced broken output — when
-  the old behavior was never a valid program;</li>
-<li>new constraint names, builtins, or type forms;</li>
-<li>widening what strict mode accepts.</li>
+<li><strong>The module is lowered twice per compile</strong> (once for the semantic
+  gate, once for lockfile hashes). Both are linear; caching a single
+  lowering would roughly halve the non-startup cost of <code>compile</code>.</li>
+<li><strong><code>nlsc ci --compile</code> with the tsc fallback</strong> (Node without native type
+  stripping) shells out to <code>tsc</code> once per run — allow a few seconds.
+  CI uses Node 22 native stripping.</li>
+<li><strong>TypeScript emission of large <code>foreign</code> expressions</strong> relies on the
+  legacy translator; deep nesting there is regex-bound rather than IR-bound.</li>
 </ul>
-<p><strong>Toolchain-only release</strong> (no spec bump):</p>
-<ul>
-<li>emitter output changes that preserve behavior (formatting, helper names);</li>
-<li>new commands, flags, JSON fields, or error catalog entries that do not
-  change meaning of existing programs;</li>
-<li>performance, packaging, and documentation changes.</li>
-</ul>
-<p>Two deliberate nuances beyond plain semver:</p>
-<ol>
-<li><strong>Checker tightening is major.</strong> Promoting a warning to a fatal error
-   breaks files that previously verified; that is a spec-level change.</li>
-<li><strong>Lockfile hash-scheme changes are toolchain releases with a documented
-   migration.</strong> Semantic-hash revisions (like the <code>sem2</code> scheme) invalidate
-   old lock entries conservatively; the next <code>nlsc compile</code> or
-   <code>nlsc lock:update</code> regenerates them. No spec bump is implied, because
-   program meaning is unchanged.</li>
-</ol>
-<h2 id="upgrade-guidance">Upgrade guidance<a class="headerlink" href="#upgrade-guidance" title="Permanent link">&para;</a></h2>
-<ol>
-<li><code>nlsc --version</code> prints both the toolchain and the supported spec revision.</li>
-<li>Files declaring a newer spec revision warn under <code>--strict</code>; run
-   <code>nlsc ci</code> after upgrading to catch anything the new toolchain tightened.</li>
-<li><code>nlsc diff &lt;file&gt;</code> compares against the committed lockfile, so semantic
-   changes caused by an upgrade surface exactly where they happened.</li>
-</ol>
-<h2 id="where-changes-are-recorded">Where changes are recorded<a class="headerlink" href="#where-changes-are-recorded" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Language-spec changes</strong> (surface syntax, semantics, diagnostics
-  severity): the <code>Spec</code> section of the <a href="https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/CHANGELOG.md">CHANGELOG</a>.</li>
-<li><strong>Toolchain changes</strong> (commands, flags, emitters, tooling): the
-  <code>Toolchain</code> section of the same changelog.</li>
-<li>The spec itself is revised in <a href="../language-spec/">language-spec.md</a>, which
-  carries its revision header and the diagnostics index.</li>
-</ul>
+<h2 id="improving-performance">Improving performance<a class="headerlink" href="#improving-performance" title="Permanent link">&para;</a></h2>
+<p>The dominant startup cost in every CLI invocation is Python interpreter
+startup (~250 ms); for repeated CI checks, prefer running several files
+per process (<code>nlsc ci</code> per file is cheap relative to startup). If you hit
+a genuine slowdown, reproduce it with <code>benchmarks/run_benchmarks.py</code>
+before and after and include both tables in the issue.</p>
 
 
 
