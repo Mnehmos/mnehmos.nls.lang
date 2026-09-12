@@ -114,10 +114,13 @@ def _get_hover_content(nl_file: NLFile, symbol: SymbolLocation) -> str | None:
         return f"**Type Reference:** `{name}`\n\n_Definition not found in this file_"
 
     elif kind == "directive":
+        from ..targets import registered_target_names
+
+        supported_targets = ", ".join(f"`{name}`" for name in registered_target_names())
         directives = {
             "@module": "**@module** - Declares the module name for this NLS file.\n\n```nl\n@module my-module-name\n```",
             "@version": "**@version** - Specifies the semantic version of this module.\n\n```nl\n@version 1.0.0\n```",
-            "@target": "**@target** - Specifies the compilation target language.\n\nSupported: `python`, `typescript`, `rust`\n\n```nl\n@target python\n```",
+            "@target": f"**@target** - Specifies the compilation target language.\n\nSupported: {supported_targets}\n\n```nl\n@target python\n```",
             "@type": "**@type** - Defines a custom data type with fields.\n\n```nl\n@type MyType {\n  field_name: type, constraints\n}\n```",
             "@test": "**@test** - Defines a property-based test block.\n\n```nl\n@test test-name {\n  GIVEN: initial conditions\n  WHEN: action\n  THEN: expected result\n}\n```",
             "@property": "**@property** - Defines an invariant property that must hold.\n\n```nl\n@property property-name {\n  FOR_ALL: x: Type\n  ASSERT: condition\n}\n```",

@@ -38,6 +38,9 @@ EASSOC001 = "EASSOC001"
 EASSOC002 = "EASSOC002"
 EASSOC003 = "EASSOC003"
 EASSOC004 = "EASSOC004"
+EPKG001 = "EPKG001"
+EPKG002 = "EPKG002"
+EPKG003 = "EPKG003"
 EWATCH001 = "EWATCH001"
 EWATCH002 = "EWATCH002"
 EIR001 = "EIR001"
@@ -518,6 +521,48 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Regenerate the lockfile with `nlsc compile <file>` and commit the updated `.nl.lock`.",
             "Review the regenerated output diff before committing; the emitter contract changed.",
+        ),
+    ),
+    EPKG001: ErrorDefinition(
+        code=EPKG001,
+        title="Package manifest missing or malformed",
+        summary="`nlsc install` could not load `nls.pkg.json`: the file is missing, is not valid JSON, or does not match the `nls.pkg/1` schema.",
+        emitted_by=("install",),
+        common_causes=(
+            "The project has no `nls.pkg.json` at its root.",
+            "The manifest has invalid JSON, a non-semver version, or a dependency without a path.",
+        ),
+        next_steps=(
+            "Create or fix `nls.pkg.json` using the documented shape in docs/packages.md.",
+            "Rerun `nlsc install` after correcting the manifest.",
+        ),
+    ),
+    EPKG002: ErrorDefinition(
+        code=EPKG002,
+        title="Package dependency path missing",
+        summary="A dependency declared in `nls.pkg.json` points at a path that does not exist.",
+        emitted_by=("install",),
+        common_causes=(
+            "The dependency directory was never cloned or was moved.",
+            "The path in the manifest is relative to the wrong directory.",
+        ),
+        next_steps=(
+            "Check out the dependency at the declared path, or fix the manifest entry.",
+            "Paths are resolved relative to the manifest's directory.",
+        ),
+    ),
+    EPKG003: ErrorDefinition(
+        code=EPKG003,
+        title="Package version unsatisfied",
+        summary="A resolved dependency's declared version does not satisfy the manifest's semver constraint.",
+        emitted_by=("install",),
+        common_causes=(
+            "The dependency was updated past the constraint (for example `^1.2.0` with version 2.0.0).",
+            "The manifest constraint is stale relative to the checked-out dependency.",
+        ),
+        next_steps=(
+            "Update the dependency or relax the constraint in `nls.pkg.json`.",
+            "Rerun `nlsc install` to refresh the lockfile.",
         ),
     ),
     ELSP001: ErrorDefinition(

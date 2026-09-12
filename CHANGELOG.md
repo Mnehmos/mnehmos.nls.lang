@@ -36,6 +36,18 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- Target docs and gating (Issue #24): `docs/targets.md` records the
+  registered targets, capability gaps, the Rust design-intent mapping, and
+  the two prerequisites for the Rust port; the LSP `@target` hover now
+  lists the targets from the registry instead of claiming Rust support.
+- Target emitter registry (Issue #147): backends are `TargetEmitter`
+  registrations (`nlsc/targets.py`) carrying emit/validate functions,
+  capability support plus fatal classification, and the semantics marker;
+  the CLI, capability matrix, and lockfile identity all read the registry,
+  and third-party targets load from the `nlsc.targets` entry-point group.
+  Python and TypeScript register through the same public API, proving a
+  plugin needs no core edits; registry values are byte-identical to the
+  previous hardcoded constants (markers stay `py-3`/`ts-2`).
 - Osprey feasibility study (Issue #209): `docs/design/issue-209-osprey-feasibility.md`
   records the version-pinned compatibility matrix (direct / adapter /
   blocked per semantic item), the reproducible probe-harness procedure, and

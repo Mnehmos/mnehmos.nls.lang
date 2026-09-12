@@ -305,12 +305,25 @@ def generate_lockfile(
     # Lock each ANLU with its generated code. One lowering for the whole
     # file: hashing per-ANLU re-lowered the module each time (#151).
     anlu_hashes = hash_anlus(nl_file)
-    function_code = extract_all_function_code(generated_code, target=target)
+    # Per-function code comes from the target registry (#147): a plugin
+    # target supplies its own extractor, and a target without one records
+    # the function-name hash instead of guessing with a foreign dialect.
+    from .targets import get_target
+
+    target_entry = get_target(target)
+    extractor = target_entry.extract_function_code if target_entry else None
+    function_code = (
+        extract_all_function_code(generated_code, target=target)
+        if extractor is not None
+        else {}
+    )
     for anlu in nl_file.anlus:
         func_name = anlu.python_name
-        anlu_code = function_code.get(func_name) or extract_function_code(
-            generated_code, func_name, target=target
-        )
+        anlu_code = ""
+        if extractor is not None:
+            anlu_code = function_code.get(func_name) or extractor(
+                generated_code, func_name
+            )
 
         module_lock.anlus[anlu.identifier] = ANLULock(
             source_hash=anlu_hashes[anlu.identifier],

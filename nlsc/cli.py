@@ -19,7 +19,6 @@ Commands:
 import argparse
 import json
 import os
-import py_compile
 import subprocess
 import sys
 from pathlib import Path
@@ -29,7 +28,6 @@ from . import SPEC_VERSION, __version__
 from .parser import ParseError
 from .schema import NLFile
 from .emitter import emit_python, emit_tests
-from .emitter_typescript import emit_tests_typescript, emit_typescript
 from .lockfile import generate_lockfile, write_lockfile, verify_lockfile
 from .sourcemap import generate_source_map
 from .ir import module_to_canonical, module_to_json
@@ -223,25 +221,28 @@ def _resolve_target(nl_file: NLFile, requested_target: str | None) -> str:
     return requested_target or nl_file.module.target or "python"
 
 
+def _registered_target_choices() -> list[str]:
+    """Argparse choices for --target: every registered emitter (#147)."""
+    from .targets import registered_target_names
+
+    return registered_target_names()
+
+
 def _emit_target_code(
     nl_file: NLFile, target: str, scaffold_anlus: set[str] | None = None
 ) -> tuple[str, str, str | None, str | None]:
-    """Emit module and optional tests for the selected target."""
-    if target == "python":
-        return (
-            emit_python(nl_file, mode="mock", scaffold_anlus=scaffold_anlus),
-            ".py",
-            emit_tests(nl_file),
-            ".py",
+    """Emit module and optional tests for the selected target (#147 registry)."""
+    from .targets import get_target, registered_target_names
+
+    entry = get_target(target)
+    if entry is None:
+        raise ValueError(
+            f"Target '{target}' is not supported. Registered targets: "
+            f"{', '.join(registered_target_names())}"
         )
-    if target == "typescript":
-        return (
-            emit_typescript(nl_file, scaffold_anlus=scaffold_anlus),
-            ".ts",
-            emit_tests_typescript(nl_file),
-            ".ts",
-        )
-    raise ValueError(f"Target '{target}' not yet supported")
+    module_code = entry.emit_module(nl_file, scaffold_anlus=scaffold_anlus)
+    test_code = entry.emit_tests(nl_file) if entry.emit_tests else None
+    return module_code, entry.module_suffix, test_code, entry.test_suffix
 
 
 def _capability_gate(
@@ -287,13 +288,14 @@ def _capability_gate(
 
 
 def _validate_target_output(target: str, output_path: Path) -> tuple[bool, str | None]:
-    """Validate emitted output when a validator is available."""
-    if target == "python":
-        try:
-            py_compile.compile(str(output_path), doraise=True)
-        except py_compile.PyCompileError as exc:
-            return False, str(exc)
-    return True, None
+    """Validate emitted output when the target registry provides a validator."""
+    from .targets import get_target
+
+    entry = get_target(target)
+    if entry is None or entry.validate_output is None:
+        return True, None
+    error = entry.validate_output(str(output_path))
+    return (error is None), error
 
 
 def set_parser_backend(backend: str) -> None:
@@ -863,12 +865,12 @@ def cmd_compile(args: argparse.Namespace) -> int:
                 file=str(output_path),
                 line=None,
                 col=None,
-                message=f"py_compile validation failed for {output_path}: {validation_error}",
+                message=f"output validation failed for {output_path}: {validation_error}",
                 hint="Inspect the generated output and compiler logic.",
             )
             return _emit_json("compile", [diagnostic], file=str(source_path))
         print(
-            f"  {_cross()} py_compile validation failed for {output_path}: {validation_error}",
+            f"  {_cross()} output validation failed for {output_path}: {validation_error}",
             file=sys.stderr,
         )
         return 1
@@ -1753,7 +1755,25 @@ def cmd_lock_update(args: argparse.Namespace) -> int:
     )
     if capability_exit is not None:
         return capability_exit
-    output_suffix = ".py" if target == "python" else ".ts"
+    from .targets import get_target as _get_target
+
+    suffix_entry = _get_target(target)
+    if suffix_entry is None:
+        diagnostic = Diagnostic(
+            code=ETARGET001,
+            file=str(source_path),
+            line=None,
+            col=None,
+            message=f"Target '{target}' is not supported",
+            hint="Select a registered target (see `nlsc compile --help`).",
+        )
+        if json_output:
+            return _emit_json("lock:update", [diagnostic], file=str(source_path))
+        print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+        if diagnostic.hint:
+            print(f"Hint: {diagnostic.hint}", file=sys.stderr)
+        return 1
+    output_suffix = suffix_entry.module_suffix
     output_path = source_path.with_suffix(output_suffix)
     if not output_path.exists():
         if not json_output:
@@ -3115,7 +3135,7 @@ The conversation is the programming. The .nl file is the receipt.
     compile_parser.add_argument(
         "-t",
         "--target",
-        choices=["python", "typescript"],
+        choices=_registered_target_choices(),
         default=None,
         help="Target language (defaults to @target in source, or python if omitted)",
     )

@@ -5,7 +5,6 @@ Watches .nl files and recompiles on save.
 """
 
 import time
-import py_compile
 from inspect import signature
 from datetime import datetime
 from pathlib import Path
@@ -17,9 +16,11 @@ from .diagnostics import (
     parse_error_diagnostic,
     stdlib_use_diagnostic,
 )
-from .emitter import emit_python, emit_tests
-from .emitter_typescript import emit_tests_typescript, emit_typescript
 from .error_catalog import ETARGET001, EVALIDATE001, EWATCH002
+
+
+class OutputValidationError(Exception):
+    """Emitted artifact failed the target's own validator."""
 
 
 def is_nl_file(path: Path) -> bool:
@@ -140,22 +141,21 @@ class NLWatcher:
                 error_msg = "; ".join(d.message for d in cap_blocking)
                 self._notify_compile(path, False, error_msg, cap_blocking)
                 return False
-            if target == "python":
-                generated_code = emit_python(
-                    nl_file, mode="mock", scaffold_anlus=scaffold_anlus or None
-                )
-                output_path = path.with_suffix(".py")
-                test_code = emit_tests(nl_file)
-                test_path = path.parent / f"test_{path.stem}.py"
-                py_compile_required = True
-            elif target == "typescript":
-                generated_code = emit_typescript(
+            from .targets import get_target as _get_target
+
+            target_entry = _get_target(target)
+            if target_entry is not None:
+                generated_code = target_entry.emit_module(
                     nl_file, scaffold_anlus=scaffold_anlus or None
                 )
-                output_path = path.with_suffix(".ts")
-                test_code = emit_tests_typescript(nl_file)
-                test_path = path.parent / f"test_{path.stem}.ts"
-                py_compile_required = False
+                output_path = path.with_suffix(target_entry.module_suffix)
+                test_code = (
+                    target_entry.emit_tests(nl_file) if target_entry.emit_tests else None
+                )
+                test_path = path.parent / (
+                    f"test_{path.stem}{target_entry.test_suffix}"
+                )
+                output_validator = target_entry.validate_output
             else:
                 error_msg = f"Target '{target}' not yet supported"
                 diagnostics = [
@@ -172,8 +172,10 @@ class NLWatcher:
                 return False
 
             output_path.write_text(generated_code, encoding="utf-8")
-            if py_compile_required:
-                py_compile.compile(str(output_path), doraise=True)
+            if output_validator is not None:
+                validation_error = output_validator(str(output_path))
+                if validation_error is not None:
+                    raise OutputValidationError(validation_error)
 
             # Generate tests if present
             if nl_file.tests and test_code:
@@ -202,7 +204,7 @@ class NLWatcher:
                 f"{diagnostics[0].code} domain={e.domain} major={e.major} "
                 f"candidate_relpath={e.candidate_relpath} attempted_roots={attempted}"
             )
-        except py_compile.PyCompileError as e:
+        except OutputValidationError as e:
             output_label = (
                 output_path if output_path is not None else path.with_suffix(".py")
             )
@@ -212,7 +214,7 @@ class NLWatcher:
                     file=str(output_label),
                     line=None,
                     col=None,
-                    message=f"py_compile validation failed for {output_label}: {e}",
+                    message=f"output validation failed for {output_label}: {e}",
                     hint="Inspect the generated output and compiler logic.",
                 )
             ]
