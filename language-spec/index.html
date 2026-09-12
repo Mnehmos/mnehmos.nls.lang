@@ -2898,6 +2898,11 @@ content is fatal in every mode; dropped test coverage is strict-only.</p>
 <td><strong>no</strong> — strict-only warning</td>
 </tr>
 <tr>
+<td><code>FOR each</code> LOGIC loop steps</td>
+<td>yes</td>
+<td><strong>no</strong> — fatal to compile</td>
+</tr>
+<tr>
 <td><code>@test</code> blocks, guards, constraints, invariants, edge cases</td>
 <td>yes</td>
 <td>yes</td>
@@ -2914,7 +2919,7 @@ content is fatal in every mode; dropped test coverage is strict-only.</p>
 </thead>
 <tbody>
 <tr>
-<td>Loops in LOGIC (<code>WHILE</code>/<code>FOR</code> steps; the IR has a reserved loop region)</td>
+<td>Full loop semantics in LOGIC (<code>WHILE</code>/<code>FOR</code> steps; the IR has a reserved loop region). <code>FOR each ... IN ...: action</code> steps already emit real Python loops and are gated off TypeScript; <code>WHILE</code> steps are only converted inside <code>@main</code></td>
 <td>#196 follow-up</td>
 </tr>
 <tr>
