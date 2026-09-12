@@ -41,6 +41,7 @@ maps each code family to the language rule it enforces.
 | `ELOCK001` | `lock:check` | `nlsc lock:check` could not load the `.nl.lock` file because it is missing or malformed. |
 | `ELOCK002` | `lock:check` | `nlsc lock:check` found source content that no longer matches the lockfile. |
 | `ELOCK003` | `compile`, `lock:update` | A generated `.nl.lock` file could not be written to disk. |
+| `ELOCK004` | `compile`, `ci` | A frozen lockfile records an emitter semantics marker the current backend no longer matches. |
 | `ELSP001` | `lsp` | `nlsc lsp` could not import the optional language-server dependencies. |
 | `ELSP002` | `lsp` | `nlsc lsp` loaded but failed while starting the requested transport. |
 | `EASSOC001` | `assoc` | `nlsc assoc` was run on a non-Windows platform. |
@@ -195,6 +196,12 @@ Raised when `nlsc lock:check --json` finds ANLUs that no longer match the curren
 Raised when `nlsc compile --json` or `nlsc lock:update --json` successfully reaches the lockfile generation step but cannot write the `.nl.lock` file.
 
 **Fix:** Check the destination path, permissions, file locks, and free space, then rerun the command.
+
+### `ELOCK004` - Emitter semantics changed
+
+Raised when `nlsc compile --frozen-lockfile` or `nlsc ci --compile` reads a lockfile whose `semantics_version` marker for the target no longer matches the current backend. The marker changes when an emitter's code-generation contract changes, so the locked artifact can no longer be trusted even if the source is untouched. Lockfiles written before markers existed have no marker and remain compatible.
+
+**Fix:** Regenerate the lockfile with `nlsc compile <file>`, review the output diff, and commit the updated `.nl.lock`.
 
 ### `ELSP001` - LSP optional dependencies unavailable
 

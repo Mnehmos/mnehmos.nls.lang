@@ -28,6 +28,11 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- Emitter semantics markers in lock identity (Issue #202): every locked
+  target records a `semantics_version` (`py-1`, `ts-1`) naming the backend
+  semantics revision that produced it, and `nlsc compile --frozen-lockfile`
+  / `nlsc ci --compile` refuse a mismatched marker with `ELOCK004` plus a
+  regenerate-and-commit hint. Lockfiles without a marker stay compatible.
 - `nlsc graph --anlu <name> --control` — execution-path view (Issue #192):
   nodes in source order including effect-only steps, `true`/`false`
   labeled branch edges carrying their conditions, loop back edges
