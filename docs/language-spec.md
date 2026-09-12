@@ -499,6 +499,19 @@ block checked emission (`EIR003`):
 | Prose with executable intent | `Process payment -> pay` | `EIR002`; rewrite as a call or `@literal` |
 | Declared return type without a value | `RETURNS: number` alone | `EIR004`; return the value or `none` |
 
+### Target capability matrix
+
+Compiling to a target that cannot represent content fails explicitly
+(`ETARGET002`) instead of silently dropping it (#202). Dropped program
+content is fatal in every mode; dropped test coverage is strict-only.
+
+| Feature | Python | TypeScript |
+| --- | --- | --- |
+| `@literal` blocks | yes | **no** — fatal to compile |
+| `@main` block | yes | **no** — fatal to compile |
+| `@property` specifications | yes | **no** — strict-only warning |
+| `@test` blocks, guards, constraints, invariants, edge cases | yes | yes |
+
 ### Not yet implemented (tracked)
 
 | Feature | Tracking |

@@ -130,6 +130,16 @@ class NLWatcher:
             scaffold_anlus = gate.scaffold
 
             target = nl_file.module.target or "python"
+            from .capabilities import capability_diagnostics
+
+            cap_fatal, cap_warnings = capability_diagnostics(
+                nl_file, target, file_token=str(path)
+            )
+            cap_blocking = cap_fatal + (cap_warnings if self.strict else [])
+            if cap_blocking:
+                error_msg = "; ".join(d.message for d in cap_blocking)
+                self._notify_compile(path, False, error_msg, cap_blocking)
+                return False
             if target == "python":
                 generated_code = emit_python(
                     nl_file, mode="mock", scaffold_anlus=scaffold_anlus or None

@@ -187,6 +187,11 @@ nlsc compile src/payment.nl --strict   # fails until every step is executable
 nlsc ir src/payment.nl --strict        # same contract at the IR boundary
 ```
 
+Compiling to a target that cannot represent your content fails explicitly
+(no silent drops): `@literal` and `@main` are Python-target features, and
+`nlsc compile -t typescript` refuses them with `ETARGET002` rather than
+emitting a program that calls undefined functions.
+
 **Cross-target conformance (Issue #202):** the TypeScript backend emits a small
 NLS runtime (structural equality, NLS truthiness, Python-compatible
 division/modulo) and translates expressions through the target-neutral IR, so

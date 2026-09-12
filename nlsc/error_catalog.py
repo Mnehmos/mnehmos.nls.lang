@@ -20,6 +20,7 @@ E_RESOLUTION = "E_RESOLUTION"
 ETEST001 = "ETEST001"
 ECONTRACT001 = "ECONTRACT001"
 ETARGET001 = "ETARGET001"
+ETARGET002 = "ETARGET002"
 EVALIDATE001 = "EVALIDATE001"
 E_RUN = "E_RUN"
 EEXEC001 = "EEXEC001"
@@ -68,6 +69,19 @@ class ErrorDefinition:
 
 
 ERROR_CATALOG: dict[str, ErrorDefinition] = {
+    ETARGET002: ErrorDefinition(
+        code=ETARGET002,
+        title="Target cannot represent requested content",
+        summary="Compiling to this target would silently drop content it cannot express (for example @literal blocks or an @main entry point on the TypeScript target).",
+        emitted_by=("compile", "ci", "watch", "lock:update"),
+        common_causes=(
+            "A file uses @literal blocks but is compiled to a target that does not emit them.",
+            "An @main block is requested on a target without a main-block emitter.",
+        ),
+        next_steps=(
+            "Compile with the target that supports the content, or restructure it into supported constructs.",
+        ),
+    ),
     ECLI001: ErrorDefinition(
         code=ECLI001,
         title="CLI usage error",

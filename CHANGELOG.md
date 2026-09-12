@@ -51,6 +51,14 @@ see what affects their `.nl` files and what only affects tooling. See
   vanish).
 - `@literal`-defined functions are declared escapes callable from NLS
   logic; module/file names shadowing stdlib modules warn (`ESEM013`).
+- Target capability matrix: compiling `@literal` blocks or `@main` to a
+  target that cannot represent them fails explicitly (`ETARGET002`)
+  instead of silently dropping content; dropped `@property` coverage is
+  strict-only. `@nls` spec revisions with `EVER001`/`EVER002` checks.
+- Return-type inference no longer scans text inside string literals as
+  code (a `RETURNS: x` bound to `"True and False"` was typed `bool`).
+- The TypeScript conformance runner falls back to `tsc`-emitted
+  JavaScript on Node versions without native type stripping.
 - `examples/features/` — 14 strictly-verified feature examples, each with a
   committed lockfile, run as a regression suite in CI.
 - Docs: 15-minute quickstart (verified by tests), refreshed language spec
