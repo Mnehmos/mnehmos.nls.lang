@@ -68,6 +68,7 @@ from .diagnostics import (
     graph_format_diagnostic,
     init_directory_creation_diagnostic,
     init_file_write_diagnostic,
+    init_unknown_template_diagnostic,
     init_target_path_diagnostic,
     lockfile_outdated_diagnostics,
     lockfile_unavailable_diagnostic,
@@ -490,7 +491,25 @@ def cmd_explain(args: argparse.Namespace) -> int:
 
 def cmd_init(args: argparse.Namespace) -> int:
     """Initialize a new NLS project"""
+    from .templates import TEMPLATES, render_template
+
     json_output = getattr(args, "json", False)
+
+    if getattr(args, "list_templates", False):
+        if json_output:
+            return _emit_json(
+                "init",
+                [],
+                templates=[
+                    {"name": t.name, "description": t.description}
+                    for t in TEMPLATES.values()
+                ],
+            )
+        print("Available project templates:")
+        for template in TEMPLATES.values():
+            print(f"  {template.name:<8} {template.description}")
+        return 0
+
     raw_path = getattr(args, "path", ".")
 
     if raw_path is None or not str(raw_path).strip():
@@ -623,18 +642,65 @@ validation:
         else:
             existing_entries.append(str(init_path.relative_to(project_dir)))
 
+    # Template files (Issue #92)
+    template_name = getattr(args, "template", "basic") or "basic"
+    template = TEMPLATES.get(template_name)
+    if template is None:
+        diagnostic = init_unknown_template_diagnostic(
+            template_name, sorted(TEMPLATES)
+        )
+        if json_output:
+            return _emit_json("init", [diagnostic], path=str(project_dir))
+        print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+        if diagnostic.hint:
+            print(diagnostic.hint, file=sys.stderr)
+        return 1
+
+    if not template.is_default_scaffold:
+        project_name = project_dir.name or "nls-project"
+        for relative_path, content in render_template(template, project_name).items():
+            target_path = project_dir / relative_path
+            if target_path.exists():
+                existing_entries.append(relative_path)
+                if not json_output:
+                    print(f"  • {relative_path} already exists")
+                continue
+            try:
+                target_path.parent.mkdir(parents=True, exist_ok=True)
+                target_path.write_text(content, encoding="utf-8")
+            except OSError as exc:
+                diagnostic = init_file_write_diagnostic(target_path, exc)
+                if json_output:
+                    return _emit_json("init", [diagnostic], path=str(project_dir))
+                print(
+                    f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr
+                )
+                if diagnostic.hint:
+                    print(diagnostic.hint, file=sys.stderr)
+                return 1
+            created_entries.append(relative_path)
+            if not json_output:
+                print(f"  {_check()} Created {relative_path}")
+
     if json_output:
         return _emit_json(
             "init",
             [],
             path=str(project_dir),
+            template=template_name,
             created=created_entries,
             existing=existing_entries,
         )
 
     print("\nNLS project initialized! Next steps:")
-    print("  1. Create a .nl file in src/")
-    print("  2. Run: nlsc compile src/your-file.nl")
+    if template.is_default_scaffold:
+        print("  1. Create a .nl file in src/")
+        print("  2. Run: nlsc compile src/your-file.nl")
+    else:
+        print(f"  Template: {template_name} — {template.description}")
+        print("  1. Run: nlsc verify src/ --strict")
+        print("  2. Run: nlsc test src/*.nl")
+        print("  3. Run: nlsc ci src/*.nl --compile --test")
 
     return 0
 
@@ -2651,6 +2717,16 @@ The conversation is the programming. The .nl file is the receipt.
     init_parser = subparsers.add_parser("init", help="Initialize NLS project")
     init_parser.add_argument(
         "path", nargs="?", default=".", help="Project directory (default: current)"
+    )
+    init_parser.add_argument(
+        "--template",
+        default="basic",
+        help="Project template (see --list-templates)",
+    )
+    init_parser.add_argument(
+        "--list-templates",
+        action="store_true",
+        help="List available project templates and exit",
     )
     init_parser.add_argument(
         "--json",
