@@ -36,6 +36,10 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- Osprey feasibility study (Issue #209): `docs/design/issue-209-osprey-feasibility.md`
+  records the version-pinned compatibility matrix (direct / adapter /
+  blocked per semantic item), the reproducible probe-harness procedure, and
+  a provisional no-go ADR with explicit revisit conditions.
 - `nlsc ir --check` validates a spec against the IR with no backend
   involved (Issue #147): the shared semantic gate plus checked-emission
   eligibility (`EIR003` blockers), an `eligible` flag in the JSON payload,
