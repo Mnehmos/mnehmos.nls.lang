@@ -25,6 +25,7 @@ from .error_catalog import (
     EFILE001,
     EGRAPH001,
     EGRAPH002,
+    EGRAPH003,
     ELOCK001,
     ELOCK002,
     ELOCK003,
@@ -421,6 +422,24 @@ def graph_format_diagnostic(path: Path, anlu: object, output_format: str) -> Dia
         col=1 if line is not None else None,
         message=f"Format '{output_format}' is not supported for ANLU dataflow graphs",
         hint="Use --format mermaid or --format ascii when selecting --anlu.",
+    )
+
+
+def graph_control_requires_anlu_diagnostic(
+    path: Path, dataflow_requested: bool
+) -> Diagnostic:
+    if dataflow_requested:
+        message = "--control and --dataflow are separate views; choose one"
+    else:
+        message = "The control-flow view requires --anlu"
+    return Diagnostic(
+        code=EGRAPH003,
+        file=str(path),
+        line=None,
+        col=None,
+        message=message,
+        hint="Run `nlsc graph <file> --anlu <name> --control` for execution paths, "
+        "or `--dataflow` for value dependencies.",
     )
 
 

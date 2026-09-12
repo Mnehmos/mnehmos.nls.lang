@@ -39,6 +39,8 @@ from .graph import (
     emit_mermaid,
     emit_dot,
     emit_ascii,
+    emit_controlflow_ascii,
+    emit_controlflow_mermaid,
     emit_dataflow_mermaid,
     emit_dataflow_ascii,
     emit_fsm_mermaid,
@@ -65,6 +67,7 @@ from .diagnostics import (
     dependency_error_diagnostics,
     explain_unknown_code_diagnostic,
     graph_anlu_not_found_diagnostic,
+    graph_control_requires_anlu_diagnostic,
     graph_format_diagnostic,
     init_directory_creation_diagnostic,
     init_file_write_diagnostic,
@@ -1110,7 +1113,16 @@ def cmd_graph(args: argparse.Namespace) -> int:
     output_format = args.format or "mermaid"
     anlu_id = args.anlu
     dataflow = args.dataflow
+    control = getattr(args, "control", False)
     graph_kind = "dependency"
+
+    if control and (not anlu_id or dataflow):
+        diagnostic = graph_control_requires_anlu_diagnostic(source_path, dataflow)
+        if json_output:
+            return _emit_json("graph", [diagnostic], file=str(source_path))
+        print(f"Error: {diagnostic.message} [{diagnostic.code}]", file=sys.stderr)
+        print(f"Error: {diagnostic.hint}", file=sys.stderr)
+        return 1
 
     # If specific ANLU requested
     if anlu_id:
@@ -1126,7 +1138,23 @@ def cmd_graph(args: argparse.Namespace) -> int:
         # Check if ANLU has FSM states
         has_fsm = bool(anlu.fsm_states())
 
-        if output_format == "mermaid":
+        if control:
+            # Execution-path view: source order, effect-only steps, and
+            # labeled branch edges (Issue #192).
+            if output_format == "mermaid":
+                graph_kind = "control"
+                output = emit_controlflow_mermaid(anlu)
+            elif output_format == "ascii":
+                graph_kind = "control"
+                output = emit_controlflow_ascii(anlu)
+            else:
+                diagnostic = graph_format_diagnostic(source_path, anlu, output_format)
+                if json_output:
+                    return _emit_json("graph", [diagnostic], file=str(source_path))
+                print(f"Error: {diagnostic.message}", file=sys.stderr)
+                print(f"Error: {diagnostic.hint}", file=sys.stderr)
+                return 1
+        elif output_format == "mermaid":
             if has_fsm and not dataflow:
                 graph_kind = "fsm"
                 output = emit_fsm_mermaid(anlu)
@@ -3167,6 +3195,12 @@ The conversation is the programming. The .nl file is the receipt.
     # graph command
     graph_parser = subparsers.add_parser(
         "graph", help="Visualize dependencies and dataflow"
+    )
+    graph_parser.add_argument(
+        "--control",
+        action="store_true",
+        help="Show execution paths for --anlu (source order, effect-only "
+        "steps, labeled branch edges); requires --anlu",
     )
     graph_parser.add_argument("file", help="Path to .nl file")
     graph_parser.add_argument(
