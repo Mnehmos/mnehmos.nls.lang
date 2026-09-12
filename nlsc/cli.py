@@ -78,6 +78,7 @@ from .diagnostics import (
     lsp_dependencies_unavailable_diagnostic,
     lsp_startup_failure_diagnostic,
     missing_file_diagnostic,
+    package_error_diagnostic,
     parse_error_diagnostic,
     parser_backend_unavailable_diagnostic,
     run_execution_failure_diagnostic,
@@ -92,6 +93,8 @@ from .error_catalog import (
     EEXPLAIN001,
     EEXEC001,
     ELOCK002,
+    EPKG004,
+    EPKG005,
     EPARSE002,
     EPROV001,
     EPROV002,
@@ -103,6 +106,7 @@ from .error_catalog import (
     known_error_codes,
 )
 from .lockfile import read_lockfile
+from .pkg import PackageError
 from .watch import NLWatcher, format_timestamp
 import platform
 import shutil
@@ -749,6 +753,14 @@ def cmd_compile(args: argparse.Namespace) -> int:
             source_path,
             cli_stdlib_paths=getattr(args, "stdlib_path", None),
         )
+    except PackageError as e:
+        diagnostic = package_error_diagnostic(source_path, e)
+        if json_output:
+            return _emit_json("compile", [diagnostic], file=str(source_path))
+        print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+        if diagnostic.hint:
+            print(f"Hint: {diagnostic.hint}", file=sys.stderr)
+        return 1
     except StdlibUseError as e:
         if json_output:
             return _emit_json(
@@ -1034,6 +1046,14 @@ def cmd_verify(args: argparse.Namespace) -> int:
             source_path,
             require_contract_fields=True,
         )
+    except PackageError as e:
+        diagnostic = package_error_diagnostic(source_path, e)
+        if json_output:
+            return _emit_json("verify", [diagnostic], file=str(source_path))
+        print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+        if diagnostic.hint:
+            print(f"Hint: {diagnostic.hint}", file=sys.stderr)
+        return 1
     except StdlibUseError as e:
         if json_output:
             return _emit_json(
@@ -1262,6 +1282,14 @@ def cmd_test(args: argparse.Namespace) -> int:
 
     try:
         validation = validate_semantics(nl_file, source_path)
+    except PackageError as e:
+        diagnostic = package_error_diagnostic(source_path, e)
+        if json_output:
+            return _emit_json("test", [diagnostic], file=str(source_path))
+        print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+        if diagnostic.hint:
+            print(f"Hint: {diagnostic.hint}", file=sys.stderr)
+        return 1
     except StdlibUseError as e:
         diagnostic = stdlib_use_diagnostic(source_path, e)
         if json_output:
@@ -1882,6 +1910,14 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     try:
         validation = validate_semantics(nl_file, source_path)
+    except PackageError as e:
+        diagnostic = package_error_diagnostic(source_path, e)
+        if json_output:
+            return _emit_json("run", [diagnostic], file=str(source_path))
+        print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+        if diagnostic.hint:
+            print(f"Hint: {diagnostic.hint}", file=sys.stderr)
+        return 1
     except StdlibUseError as e:
         if json_output:
             return _emit_json(
@@ -2742,6 +2778,107 @@ def _write_desktop_integration(args: argparse.Namespace, json_output: bool) -> i
     return 0
 
 
+def cmd_install(args: argparse.Namespace) -> int:
+    """Resolve package dependencies and manage the project package lock (Issue #146)."""
+    from .pkg import (
+        LOCK_NAME,
+        PackageError,
+        load_manifest,
+        resolve_dependencies,
+        verify_package_lock,
+        write_package_lock,
+    )
+
+    json_output = getattr(args, "json", False)
+    check = getattr(args, "check", False)
+    requested_dir = Path(getattr(args, "path", ".") or ".")
+    from .pkg import find_manifest, find_project_root
+
+    project_dir = requested_dir
+    if find_manifest(project_dir) is None:
+        discovered = find_project_root(project_dir)
+        if discovered is not None:
+            project_dir = discovered
+
+    def _fail(code: str, message: str, hint: str) -> int:
+        diagnostic = Diagnostic(
+            code=code,
+            file=str(project_dir),
+            line=None,
+            col=None,
+            message=message,
+            hint=hint,
+        )
+        if json_output:
+            return _emit_json("install", [diagnostic], project=str(project_dir))
+        print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+        if diagnostic.hint:
+            print(f"Hint: {diagnostic.hint}", file=sys.stderr)
+        return 1
+
+    try:
+        manifest = load_manifest(project_dir)
+        resolved = resolve_dependencies(project_dir, manifest)
+    except PackageError as exc:
+        return _fail(exc.code, exc.message, exc.hint)
+
+    lock_path = project_dir / LOCK_NAME
+    if check:
+        drift = verify_package_lock(lock_path, project_dir, manifest)
+        if drift:
+            diagnostic = Diagnostic(
+                code=EPKG004,
+                file=str(lock_path),
+                line=None,
+                col=None,
+                message="package lockfile is not current: " + "; ".join(drift),
+                hint="Run `nlsc install` to refresh the lockfile and commit it.",
+            )
+            if json_output:
+                return _emit_json("install", [diagnostic], project=str(project_dir))
+            print(f"Error [{diagnostic.code}]: {diagnostic.message}", file=sys.stderr)
+            print(f"Hint: {diagnostic.hint}", file=sys.stderr)
+            return 1
+        if json_output:
+            return _emit_json(
+                "install",
+                [],
+                project=str(project_dir),
+                lockfile=str(lock_path),
+                packages=[package.name for package in resolved],
+                checked=True,
+            )
+        print(f"Package lock is current ({len(resolved)} dependencies)")
+        return 0
+
+    try:
+        write_package_lock(lock_path, manifest, resolved)
+    except OSError as exc:
+        return _fail(
+            EPKG005,
+            f"Could not write {lock_path}: {exc}",
+            "Check the project directory's permissions and free space, then rerun.",
+        )
+
+    if json_output:
+        return _emit_json(
+            "install",
+            [],
+            project=str(project_dir),
+            lockfile=str(lock_path),
+            packages=[package.name for package in resolved],
+            checked=False,
+        )
+    print(f"Resolved {len(resolved)} package dependencies")
+    for package in resolved:
+        print(
+            f"  {package.name} {package.version or 'unknown'} "
+            f"({package.content_hash})"
+        )
+    print(f"Wrote {lock_path}")
+    return 0
+
+
 def cmd_provenance(args: argparse.Namespace) -> int:
     """Read or write edit provenance for a .nl file (Issue #93)."""
     from .provenance import (
@@ -3459,6 +3596,22 @@ The conversation is the programming. The .nl file is the receipt.
         help="Emit structured JSON diagnostics for startup failures.",
     )
 
+    install_parser = subparsers.add_parser(
+        "install", help="Resolve package dependencies and write nls.pkg.lock"
+    )
+    install_parser.add_argument(
+        "path", nargs="?", default=".", help="Project directory (default: current)"
+    )
+    install_parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Verify the lockfile is current instead of writing it (CI gate).",
+    )
+    install_parser.add_argument(
+        "--json", action="store_true", help="Emit structured JSON output."
+    )
+    install_parser.set_defaults(command="install")
+
     # assoc command (Windows only)
     provenance_parser = subparsers.add_parser(
         "provenance", help="Read or write edit provenance for a .nl file"
@@ -3567,6 +3720,8 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_lsp(args)
     elif args.command == "provenance":
         return cmd_provenance(args)
+    elif args.command == "install":
+        return cmd_install(args)
     elif args.command == "assoc":
         return cmd_assoc(args)
 

@@ -11,11 +11,13 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from .diagnostics import (
+    package_error_diagnostic,
     Diagnostic,
     dependency_error_diagnostics,
     parse_error_diagnostic,
     stdlib_use_diagnostic,
 )
+from .pkg import PackageError
 from .error_catalog import ETARGET001, EVALIDATE001, EWATCH002
 
 
@@ -196,6 +198,9 @@ class NLWatcher:
 
         except ParseError as e:
             diagnostics = [parse_error_diagnostic(path, e)]
+            error_msg = diagnostics[0].message
+        except PackageError as e:
+            diagnostics = [package_error_diagnostic(path, e)]
             error_msg = diagnostics[0].message
         except StdlibUseError as e:
             diagnostics = [stdlib_use_diagnostic(path, e)]

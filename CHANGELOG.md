@@ -36,6 +36,12 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- Package model (Issue #146): projects declare local path dependencies
+  with semver constraints in `nls.pkg.json`; `nlsc install` resolves them,
+  checks versions, and writes a content-hashed `nls.pkg.lock`, with
+  `nlsc install --check` as the CI drift gate (`EPKG001`–`EPKG005`).
+  `@use <package>.<domain>` resolves inside a dependency root before the
+  stdlib roots. Symbol linking of imported ANLUs is the next slice.
 - Target docs and gating (Issue #24): `docs/targets.md` records the
   registered targets, capability gaps, the Rust design-intent mapping, and
   the two prerequisites for the Rust port; the LSP `@target` hover now

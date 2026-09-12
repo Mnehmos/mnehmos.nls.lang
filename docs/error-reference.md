@@ -4,7 +4,7 @@ Complete guide to NLS errors, their causes, and how to fix them.
 
 ## Active CLI Error Codes
 
-These are the stable error codes currently emitted by `nlsc init`, `nlsc atomize`, `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, `nlsc diff`, `nlsc test`, `nlsc watch`, `nlsc lock:check`, `nlsc lock:update`, `nlsc lsp`, and `nlsc assoc`.
+These are the stable error codes currently emitted by `nlsc init`, `nlsc atomize`, `nlsc compile`, `nlsc verify`, `nlsc run`, `nlsc graph`, `nlsc diff`, `nlsc test`, `nlsc watch`, `nlsc lock:check`, `nlsc lock:update`, `nlsc lsp`, `nlsc install`, and `nlsc assoc`.
 
 Use the CLI to get the extended explanation for any code:
 
@@ -32,6 +32,11 @@ maps each code family to the language rule it enforces.
 | `E_RESOLUTION` | `compile`, `verify`, `run`, `test`, `watch` | The ANLU dependency graph contains a missing or circular dependency. |
 | `ETEST001` | `test` | `nlsc test` generated pytest cases, but the run failed or could not be executed successfully. |
 | `ECONTRACT001` | `verify` | An ANLU is missing a required contract field such as `PURPOSE` or `RETURNS`. |
+| `EPKG001` | `install` | The package manifest is missing, malformed, or has an invalid dependency entry. |
+| `EPKG002` | `install` | A declared dependency path does not exist. |
+| `EPKG003` | `install` | A dependency's version does not satisfy the manifest constraint. |
+| `EPKG004` | `install` | `nlsc install --check` found the package lock out of date. |
+| `EPKG005` | `install` | The package lockfile could not be written to disk. |
 | `ETARGET001` | `compile`, `run`, `watch`, `lock:update` | The requested target is not supported by the command. |
 | `EVALIDATE001` | `compile`, `watch` | Generated output failed post-emit validation. |
 | `E_RUN` | `run` | `nlsc run` hit an unexpected internal error before execution completed. |
@@ -202,6 +207,18 @@ Raised when `nlsc compile --json` or `nlsc lock:update --json` successfully reac
 Raised when `nlsc compile --frozen-lockfile` or `nlsc ci --compile` reads a lockfile whose `semantics_version` marker for the target no longer matches the current backend. The marker changes when an emitter's code-generation contract changes, so the locked artifact can no longer be trusted even if the source is untouched. Lockfiles written before markers existed have no marker and remain compatible.
 
 **Fix:** Regenerate the lockfile with `nlsc compile <file>`, review the output diff, and commit the updated `.nl.lock`.
+
+### `EPKG001` - Package manifest missing or malformed
+
+Raised by `nlsc install` when `nls.pkg.json` is missing, is not valid JSON, or carries an invalid dependency entry (empty or absolute path, unsupported version constraint). See [packages.md](packages.md).
+
+**Fix:** Correct the manifest and rerun `nlsc install`.
+
+### `EPKG004` - Package lockfile out of date
+
+Raised by `nlsc install --check` when a dependency's content or version no longer matches `nls.pkg.lock`.
+
+**Fix:** Run `nlsc install` to refresh the lockfile and commit it.
 
 ### `ELSP001` - LSP optional dependencies unavailable
 

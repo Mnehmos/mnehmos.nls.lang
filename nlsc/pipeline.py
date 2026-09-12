@@ -125,10 +125,34 @@ def resolve_stdlib_uses(
         bundled_root=bundled_root,
     )
 
-    return [
-        resolve_use(domain_spec=spec, roots=roots, default_major=default_major)
-        for spec in nl_file.module.uses
-    ]
+    # Package dependencies (#146): `@use <package>.<domain>` resolves
+    # inside the dependency root; plain domains use the stdlib roots.
+    from .pkg import find_project_root, matching_package_root, package_search_roots
+    from .stdlib_resolver import parse_use_spec, resolve_use_in_package
+
+    project_root = find_project_root(source_path.parent)
+    package_roots = package_search_roots(project_root) if project_root else []
+
+    resolved_uses: list[ResolvedUse] = []
+    for spec in nl_file.module.uses:
+        major, domain = parse_use_spec(spec, default_major=default_major)
+        match = matching_package_root(domain, package_roots)
+        if match is not None:
+            package_name, package_root_path, remainder = match
+            resolved_uses.append(
+                resolve_use_in_package(
+                    domain_spec=spec,
+                    package_name=package_name,
+                    package_root=package_root_path,
+                    remainder=remainder,
+                    major=major,
+                )
+            )
+        else:
+            resolved_uses.append(
+                resolve_use(domain_spec=spec, roots=roots, default_major=default_major)
+            )
+    return resolved_uses
 
 
 @dataclass
