@@ -105,6 +105,7 @@ nav:
   - Design:
     - "Issue #90 — @use Directives": design/issue-90-use-directives.md
     - "Issue #93 — Edit Provenance": design/issue-93-edit-provenance.md
+    - "Issue #209 — Osprey Feasibility": design/issue-209-osprey-feasibility.md
     - Architecture: architecture.md
     - Formal Grammar: nl-grammar.ebnf
 
