@@ -2262,7 +2262,7 @@ entry is conservatively reported as changed and regenerated — stale cached
 bodies are never reused.</p>
 <h3 id="emitter-semantics-markers-issue-202">Emitter semantics markers (Issue #202)<a class="headerlink" href="#emitter-semantics-markers-issue-202" title="Permanent link">&para;</a></h3>
 <p>Each locked target also records a <code>semantics_version</code> marker (for example
-<code>py-1</code>, <code>ts-1</code>) naming the backend semantics revision that produced the
+<code>py-3</code>, <code>ts-2</code>) naming the backend semantics revision that produced the
 artifact. The marker is part of the lock's identity: <code>nlsc compile
 --frozen-lockfile</code> and <code>nlsc ci --compile</code> refuse a lockfile whose marker
 differs from the current emitter with <code>ELOCK004</code>, even when the source and
