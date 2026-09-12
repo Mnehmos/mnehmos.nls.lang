@@ -1,0 +1,191 @@
+{
+  "schema": "mnehmos.tool/1",
+  "name": "nlsc",
+  "description": "NLS (Natural Language Source) compiler: compile human-readable .nl specifications to Python or TypeScript.",
+  "homepage": "https://mnehmos.github.io/mnehmos.nls.lang/",
+  "license": "MIT",
+  "distribution": {
+    "channel": "pypi",
+    "package": "nlsc",
+    "entry_point": "nlsc",
+    "version_command": [
+      "nlsc",
+      "--version"
+    ],
+    "install": {
+      "python": ">=3.11",
+      "commands": [
+        [
+          "python",
+          "-m",
+          "pip",
+          "install",
+          "nlsc"
+        ],
+        [
+          "python",
+          "-m",
+          "pip",
+          "install",
+          "nlsc[treesitter]"
+        ],
+        [
+          "python",
+          "-m",
+          "pip",
+          "install",
+          "nlsc",
+          "pytest"
+        ]
+      ],
+      "extras": {
+        "treesitter": "faster parser with better error recovery",
+        "lsp": "language server (pygls)",
+        "dev": "pytest, mypy: development tooling"
+      },
+      "artifact_url": "https://pypi.org/project/nlsc/",
+      "notes": "The workspace bootstrap installs pytest alongside nlsc so the 'test' action can execute generated @test specifications."
+    },
+    "provenance": {
+      "publishing": "PyPI Trusted Publishing (OIDC, no long-lived tokens)",
+      "workflow": ".github/workflows/publish.yml"
+    },
+    "npm_bridge": {
+      "status": "not-provided",
+      "policy": "PyPI stays the canonical compiler channel; any future npm package is a thin bootstrap only, never a fork of compiler semantics."
+    }
+  },
+  "workspace": {
+    "script": "scripts/nls_workspace.py",
+    "actions": {
+      "bootstrap": [
+        "python",
+        "scripts/nls_workspace.py",
+        "bootstrap",
+        "--json"
+      ],
+      "health": [
+        "python",
+        "scripts/nls_workspace.py",
+        "health",
+        "--json"
+      ],
+      "verify": [
+        "python",
+        "scripts/nls_workspace.py",
+        "verify",
+        "--json"
+      ],
+      "test": [
+        "python",
+        "scripts/nls_workspace.py",
+        "test",
+        "--json"
+      ],
+      "compile-sample": [
+        "python",
+        "scripts/nls_workspace.py",
+        "compile-sample",
+        "--json"
+      ]
+    },
+    "layout": {
+      "venv": ".venv",
+      "samples": "sample/src",
+      "output": "sample/build"
+    }
+  },
+  "commands": {
+    "build": [
+      "python",
+      "-m",
+      "build"
+    ],
+    "test": [
+      "python",
+      "-m",
+      "pytest",
+      "tests/",
+      "-q"
+    ],
+    "lint": [
+      "python",
+      "-m",
+      "ruff",
+      "check",
+      "nlsc/",
+      "--select=E,F,W",
+      "--ignore=E501"
+    ],
+    "typecheck": [
+      "python",
+      "-m",
+      "mypy",
+      "nlsc/"
+    ],
+    "watch": [
+      "nlsc",
+      "watch",
+      "src/"
+    ],
+    "start": [
+      "nlsc",
+      "compile",
+      "sample/src/demo.nl"
+    ],
+    "health": [
+      "nlsc",
+      "--version"
+    ]
+  },
+  "capabilities": {
+    "targets": [
+      "python",
+      "typescript"
+    ],
+    "language_server": {
+      "command": [
+        "nlsc",
+        "lsp"
+      ],
+      "transport": [
+        "stdio",
+        "tcp"
+      ],
+      "features": [
+        "diagnostics",
+        "lint",
+        "formatting",
+        "hover",
+        "completion",
+        "definition",
+        "references"
+      ]
+    },
+    "quality_gates": [
+      "verify",
+      "compile",
+      "test",
+      "ci",
+      "lint",
+      "fmt"
+    ],
+    "interchange": {
+      "ir_command": [
+        "nlsc",
+        "ir",
+        "--json"
+      ],
+      "provenance": "docs/provenance.md"
+    }
+  },
+  "paths": {
+    "sources": "src/",
+    "specs": "**/*.nl",
+    "outputs": [
+      "**/*.py",
+      "**/*.ts",
+      "**/*.nl.lock"
+    ]
+  }
+}

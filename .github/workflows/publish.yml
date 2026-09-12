@@ -31,15 +31,41 @@ jobs:
           name: python-package-distributions
           path: dist/
 
+  verify-install:
+    name: Validate built artifacts
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Install the wheel in an isolated workspace and exercise it
+        run: |
+          python scripts/nls_workspace.py bootstrap --root .nls-workspace             --install-from "$(ls dist/*.whl)" --json
+          python scripts/nls_workspace.py health --root .nls-workspace --json
+          python scripts/nls_workspace.py test --root .nls-workspace --json
+          python scripts/nls_workspace.py compile-sample --root .nls-workspace --json
+
   publish-pypi:
     name: Publish to PyPI
-    needs: build
+    needs: [build, verify-install]
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/nlsc
     permissions:
       id-token: write  # OIDC trusted publishing
+      attestations: write
 
     steps:
       - name: Download distributions
@@ -47,6 +73,11 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

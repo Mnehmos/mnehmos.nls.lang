@@ -94,6 +94,7 @@ nav:
     - CLI Commands: cli-reference.md
     - Security Model: security.md
     - Performance: performance.md
+    - Distribution & Workspace: distribution.md
     - Edit Provenance: provenance.md
     - Versioning & Compatibility: versioning.md
     - LLM Reference: llm-reference.md
