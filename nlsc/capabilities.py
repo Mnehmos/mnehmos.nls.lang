@@ -31,7 +31,9 @@ EMITTER_SEMANTICS_VERSION: dict[str, str] = {
     # py-2: coded guards raise with `.code` attached and the message as the
     # sole argument, so error identity (type, code, message) is uniform
     # across targets (#202).
-    "python": "py-2",
+    # py-3: checked ANLU bodies render from IR statement nodes; record
+    # construction kwargs use canonical `name=value` spacing.
+    "python": "py-3",
     # ts-2: FOR-each LOGIC loop steps became an explicit capability gap.
     "typescript": "ts-2",
 }
