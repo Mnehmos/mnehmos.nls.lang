@@ -277,7 +277,11 @@ and stay compatible.
 
 1. Create `emitter_<target>.py`
 2. Implement `emit_<target>(nl_file: NLFile) -> str`
-3. Register in `cli.py` compile command
+3. Register a `TargetEmitter` in `nlsc/targets.py` (`register_target`) —
+   capabilities, fatal classification, semantics marker, suffixes, and an
+   optional output validator. Third-party packages can instead publish an
+   `nlsc.targets` entry point; the CLI, capability matrix, and lockfile
+   identity pick it up without core edits (#147).
 
 ### Adding a New Parser Feature
 

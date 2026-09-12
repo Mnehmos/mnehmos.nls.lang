@@ -22,42 +22,37 @@ from .diagnostics import Diagnostic
 from .error_catalog import ETARGET002
 from .schema import NLFile
 
-# Backend semantics/capability version per target.  Bump when emitted
-# behavior or the runtime contract changes (new helpers, different error
-# identities, changed truthiness/equality semantics, capability flips):
-# lockfile identity includes this marker, so stale artifacts are detected
-# instead of trusted (#202).
+# Per-target data (capabilities, fatal classification, semantics markers)
+# is owned by the target registry (#147): plugins register targets without
+# editing this module. These are compatibility views over the registry;
+# bump a marker when emitted behavior or the runtime contract changes
+# (new helpers, different error identities, capability flips) — lockfile
+# identity includes the marker, so stale artifacts are detected instead
+# of trusted (#202). Marker history: py-2 coded guards carry `.code`;
+# py-3 IR-rendered checked bodies with canonical record kwargs;
+# ts-2 loop-step capability gap plus branch-joined `let` hoisting.
+from .targets import TARGET_REGISTRY, ensure_plugins_loaded
+
+# Discover installed plugins before snapshotting, so these views are
+# deterministic rather than depending on which API was called first.
+# They remain snapshots: runtime registrations are seen by the gates
+# (which read the registry live), not by these dicts.
+ensure_plugins_loaded()
+
+TARGET_CAPABILITIES: dict[str, dict[str, bool]] = {
+    name: dict(entry.capabilities) for name, entry in TARGET_REGISTRY.items()
+}
+
 EMITTER_SEMANTICS_VERSION: dict[str, str] = {
-    # py-2: coded guards raise with `.code` attached and the message as the
-    # sole argument, so error identity (type, code, message) is uniform
-    # across targets (#202).
-    # py-3: checked ANLU bodies render from IR statement nodes; record
-    # construction kwargs use canonical `name=value` spacing.
-    "python": "py-3",
-    # ts-2: FOR-each LOGIC loop steps became an explicit capability gap.
-    "typescript": "ts-2",
+    name: entry.semantics_version for name, entry in TARGET_REGISTRY.items()
 }
 
 
 def emitter_semantics_version(target: str) -> str:
-    return EMITTER_SEMANTICS_VERSION.get(target, "unknown")
+    from .targets import get_target
 
-
-# feature name -> supported by target
-TARGET_CAPABILITIES: dict[str, dict[str, bool]] = {
-    "python": {
-        "literal_blocks": True,
-        "main_block": True,
-        "property_tests": True,
-        "loop_steps": True,
-    },
-    "typescript": {
-        "literal_blocks": False,
-        "main_block": False,
-        "property_tests": False,
-        "loop_steps": False,
-    },
-}
+    entry = get_target(target)
+    return entry.semantics_version if entry else "unknown"
 
 _FEATURE_DESCRIPTIONS = {
     "literal_blocks": "@literal blocks",
@@ -93,14 +88,23 @@ def _file_uses_feature(nl_file: NLFile, feature: str) -> bool:
 
 def capability_gaps(nl_file: NLFile, target: str) -> list[CapabilityGap]:
     """Unsupported features used by this file on the selected target."""
-    capabilities = TARGET_CAPABILITIES.get(target, {})
+    from .targets import get_target
+
+    entry = get_target(target)
+    if entry is None:
+        return []
     gaps: list[CapabilityGap] = []
-    for feature, supported in capabilities.items():
+    for feature, supported in entry.capabilities.items():
         if not supported and _file_uses_feature(nl_file, feature):
-            # Dropped program content is fatal; dropped test coverage is
-            # strict-only.
-            fatal = feature in ("literal_blocks", "main_block", "loop_steps")
-            gaps.append(CapabilityGap(feature=feature, fatal=fatal))
+            # Fatal classification comes from the registry entry: dropped
+            # program content breaks the artifact; dropped test coverage
+            # is strict-only.
+            gaps.append(
+                CapabilityGap(
+                    feature=feature,
+                    fatal=feature in entry.fatal_capabilities,
+                )
+            )
     return gaps
 
 

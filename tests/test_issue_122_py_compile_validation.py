@@ -1,10 +1,15 @@
-"""Regression tests for Issue #122: compile path must validate emitted Python via py_compile."""
+"""Regression tests for Issue #122: compile path must validate emitted Python via py_compile.
+
+Since #147 the CLI emits through the target registry, which resolves the
+emitter through ``nlsc.emitter`` at call time — so these tests patch the
+emitter at its source of truth.
+"""
 
 from __future__ import annotations
 
 from argparse import Namespace
 
-from nlsc import cli
+from nlsc import cli, emitter as emitter_module
 
 
 def _write_minimal_nl(tmp_path, stem: str = "issue_122"):
@@ -30,7 +35,7 @@ def test_should_fail_compile_when_emitted_python_is_syntactically_invalid(monkey
     def _emit_invalid_python(_nl_file, mode="mock", **kwargs):
         return "def broken(:\n    return 1\n"
 
-    monkeypatch.setattr(cli, "emit_python", _emit_invalid_python)
+    monkeypatch.setattr(emitter_module, "emit_python", _emit_invalid_python)
 
     args = Namespace(file=str(nl_file), target="python", output=None)
     exit_code = cli.cmd_compile(args)
@@ -54,7 +59,7 @@ def test_should_include_generated_file_context_when_py_compile_validation_fails(
     def _emit_invalid_python(_nl_file, mode="mock", **kwargs):
         return "if True print('missing colon')\n"
 
-    monkeypatch.setattr(cli, "emit_python", _emit_invalid_python)
+    monkeypatch.setattr(emitter_module, "emit_python", _emit_invalid_python)
 
     args = Namespace(file=str(nl_file), target="python", output=None)
     exit_code = cli.cmd_compile(args)
@@ -83,7 +88,7 @@ def test_should_succeed_compile_when_emitted_python_is_valid(monkeypatch, tmp_pa
     def _emit_valid_python(_nl_file, mode="mock", **kwargs):
         return "def hello():\n    return 'ok'\n"
 
-    monkeypatch.setattr(cli, "emit_python", _emit_valid_python)
+    monkeypatch.setattr(emitter_module, "emit_python", _emit_valid_python)
 
     args = Namespace(file=str(nl_file), target="python", output=None)
     exit_code = cli.cmd_compile(args)

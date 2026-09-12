@@ -1,7 +1,6 @@
 """Tests for nlsc watch command - Issue #14"""
 
 import json
-import py_compile
 import pytest
 import time
 from pathlib import Path
@@ -241,9 +240,21 @@ RETURNS: 1
         assert [d.code for d in compiled_files[0][3]] == ["ETARGET001"]
         assert compiled_files[0][3][0].file == str(nl_file)
 
-    def test_compile_reports_validation_diagnostic(self, tmp_path):
+    def test_compile_reports_validation_diagnostic(self, tmp_path, monkeypatch):
         """Watcher should reuse EVALIDATE001 for post-emit validation failures."""
+        import dataclasses
+
+        from nlsc.targets import TARGET_REGISTRY
         from nlsc.watch import NLWatcher
+
+        monkeypatch.setitem(
+            TARGET_REGISTRY,
+            "python",
+            dataclasses.replace(
+                TARGET_REGISTRY["python"],
+                validate_output=lambda output_path: "invalid generated code",
+            ),
+        )
 
         compiled_files = []
 
@@ -264,13 +275,7 @@ RETURNS: 1
 """
         )
 
-        compile_error = py_compile.PyCompileError(
-            SyntaxError,
-            SyntaxError("invalid generated code"),
-            str(nl_file.with_suffix(".py")),
-        )
-        with patch("nlsc.watch.py_compile.compile", side_effect=compile_error):
-            watcher.compile_file(nl_file)
+        watcher.compile_file(nl_file)
 
         assert len(compiled_files) == 1
         assert compiled_files[0][1] is False
@@ -376,3 +381,104 @@ class TestTestAfterCompile:
 
         watcher = NLWatcher(tmp_path, run_tests=True)
         assert watcher.run_tests is True
+
+
+class TestRegistryTargetsInWatch:
+    """Watch emits through the target registry (#147)."""
+
+    def test_watch_uses_plugin_target_and_validator(self, tmp_path):
+        from nlsc.targets import TARGET_REGISTRY, TargetEmitter
+        from nlsc.watch import NLWatcher
+
+        def emit_stub(nl_file, *, scaffold_anlus=None) -> str:
+            return "// stub\n"
+
+        validated: list[str] = []
+
+        def validate_stub(output_path: str):
+            validated.append(output_path)
+            return None
+
+        TARGET_REGISTRY["watch-stub"] = TargetEmitter(
+            name="watch-stub",
+            module_suffix=".stub",
+            test_suffix=".stub",
+            emit_module=emit_stub,
+            emit_tests=None,
+            capabilities={},
+            fatal_capabilities=frozenset(),
+            semantics_version="stub-1",
+            validate_output=validate_stub,
+        )
+        try:
+            results = []
+            watcher = NLWatcher(
+                tmp_path,
+                on_compile=lambda p, ok, err=None, diags=None: results.append(
+                    (p, ok, err)
+                ),
+            )
+            source = tmp_path / "probe.nl"
+            source.write_text(
+                """@module watch_stub
+@target watch-stub
+
+[hello]
+PURPOSE: greet
+RETURNS: 1
+""",
+                encoding="utf-8",
+            )
+            assert watcher.compile_file(source) is True
+            assert (tmp_path / "probe.stub").exists()
+            assert validated and validated[0].endswith("probe.stub")
+        finally:
+            TARGET_REGISTRY.pop("watch-stub", None)
+
+    def test_watch_reports_plugin_validator_failure(self, tmp_path):
+        from nlsc.targets import TARGET_REGISTRY, TargetEmitter
+        from nlsc.watch import NLWatcher
+
+        def emit_stub(nl_file, *, scaffold_anlus=None) -> str:
+            return "// stub\n"
+
+        def reject_stub(output_path: str):
+            return "stub artifact rejected"
+
+        TARGET_REGISTRY["reject-stub"] = TargetEmitter(
+            name="reject-stub",
+            module_suffix=".stub",
+            test_suffix=".stub",
+            emit_module=emit_stub,
+            emit_tests=None,
+            capabilities={},
+            fatal_capabilities=frozenset(),
+            semantics_version="stub-1",
+            validate_output=reject_stub,
+        )
+        try:
+            results = []
+            watcher = NLWatcher(
+                tmp_path,
+                on_compile=lambda p, ok, err=None, diags=None: results.append(
+                    (ok, err, diags)
+                ),
+            )
+            source = tmp_path / "probe.nl"
+            source.write_text(
+                """@module watch_reject
+@target reject-stub
+
+[hello]
+PURPOSE: greet
+RETURNS: 1
+""",
+                encoding="utf-8",
+            )
+            assert watcher.compile_file(source) is False
+            ok, error, diagnostics = results[0]
+            assert ok is False
+            assert "output validation failed" in (error or "")
+            assert diagnostics and diagnostics[0].code == "EVALIDATE001"
+        finally:
+            TARGET_REGISTRY.pop("reject-stub", None)
