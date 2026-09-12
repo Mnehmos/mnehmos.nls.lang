@@ -672,6 +672,22 @@ def _parse_and_publish_diagnostics(
         # Check for semantic issues
         diagnostics.extend(_check_semantic_issues(nl_file))
 
+        # Intent-quality lint findings (Issue #94) as warnings.
+        from ..lint import lint_module
+
+        for finding in lint_module(nl_file, file_token=uri):
+            diagnostics.append(
+                lsp.Diagnostic(
+                    range=lsp.Range(
+                        start=lsp.Position(line=max((finding.line or 1) - 1, 0), character=0),
+                        end=lsp.Position(line=max((finding.line or 1) - 1, 0), character=1000),
+                    ),
+                    message=f"{finding.message} [{finding.code}]",
+                    severity=lsp.DiagnosticSeverity.Warning,
+                    source="nlsc-lint",
+                )
+            )
+
     except Exception as e:
         # Parse error - create diagnostic
         error_msg = str(e)
