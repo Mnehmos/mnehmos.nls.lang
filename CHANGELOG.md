@@ -142,6 +142,11 @@ see what affects their `.nl` files and what only affects tooling. See
   code (a `RETURNS: x` bound to `"True and False"` was typed `bool`).
 - The TypeScript conformance runner falls back to `tsc`-emitted
   JavaScript on Node versions without native type stripping.
+- One shared gating rule for the TypeScript semantic runner: a missing
+  Node runtime skips locally but fails CI when `NLSC_REQUIRE_TS=1`, and
+  the cross-target divergence table now uses the same parameterized
+  fixture as the rest of the semantic suite, so the fixtures can no
+  longer skip unconditionally and vanish from the conformance job.
 - `examples/features/` — 14 strictly-verified feature examples, each with a
   committed lockfile, run as a regression suite in CI.
 - Docs: 15-minute quickstart (verified by tests), refreshed language spec

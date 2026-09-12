@@ -137,6 +137,26 @@ def node_available() -> bool:
     return shutil.which("node") is not None
 
 
+def require_typescript_runner() -> "TypeScriptRunner":
+    """Return a TypeScript runner, or skip/fail per ``NLSC_REQUIRE_TS``.
+
+    A missing Node runtime skips locally but fails the build when
+    ``NLSC_REQUIRE_TS=1`` (the conformance CI job), so cross-target
+    coverage cannot silently disappear from CI (#202).  This is the single
+    definition of that rule: the shared fixture and tests that construct a
+    runner directly both go through it.
+    """
+    import os
+
+    import pytest
+
+    if not node_available():
+        if os.environ.get("NLSC_REQUIRE_TS") == "1":
+            pytest.fail("NLSC_REQUIRE_TS=1 but Node.js is not available")
+        pytest.skip("Node.js runtime not available for the TypeScript runner")
+    return TypeScriptRunner()
+
+
 class TypeScriptRunner:
     """Execute NLS by compiling to TypeScript and running under Node.
 
