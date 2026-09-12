@@ -48,8 +48,10 @@ Then right-click any `.nl` file → **Open with** → select the NLS launcher an
 The short version:
 
 ```bash
-# Initialize a new project
+# Initialize a new project (basic scaffold, library, service, or cli template)
 nlsc init my-project
+nlsc init my-lib --template library
+nlsc init --list-templates
 cd my-project
 
 # Create your first .nl file

@@ -28,6 +28,11 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- `nlsc init --template {basic,library,service,cli}` — working project
+  scaffolds (Issue #92): example specs that pass strict verification,
+  compile, and run their tests; `nls.toml`, a README, and a CI workflow
+  per template; `--list-templates`; unknown names fail with cataloged
+  `EINIT004`.
 - `nlsc fmt <file|dir>` — canonical formatting (Issue #95): uppercase
   headers, normalized bullets/arrows, canonical section order, aligned
   INPUTS types, one blank line between blocks. `--check` for CI,

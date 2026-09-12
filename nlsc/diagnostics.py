@@ -17,6 +17,7 @@ from .error_catalog import (
     EINIT001,
     EINIT002,
     EINIT003,
+    EINIT004,
     EATOM001,
     EATOM002,
     EARTIFACT001,
@@ -128,6 +129,20 @@ def init_directory_creation_diagnostic(path: Path, exc: OSError) -> Diagnostic:
         col=None,
         message=f"Failed to create project directory: {path} ({exc})",
         hint="Check that the parent path exists and that you can create directories there, then rerun `nlsc init`.",
+    )
+
+
+def init_unknown_template_diagnostic(
+    template: str, available: list[str]
+) -> Diagnostic:
+    choices = ", ".join(available) or "none"
+    return Diagnostic(
+        code=EINIT004,
+        file="<cli>",
+        line=None,
+        col=None,
+        message=f"Unknown project template: '{template}'",
+        hint=f"Choose one of: {choices}. Run `nlsc init --list-templates` to see descriptions.",
     )
 
 

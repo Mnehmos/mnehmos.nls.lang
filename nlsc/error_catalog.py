@@ -9,6 +9,7 @@ EEXPLAIN001 = "EEXPLAIN001"
 EINIT001 = "EINIT001"
 EINIT002 = "EINIT002"
 EINIT003 = "EINIT003"
+EINIT004 = "EINIT004"
 EATOM001 = "EATOM001"
 EATOM002 = "EATOM002"
 EFILE001 = "EFILE001"
@@ -124,6 +125,19 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Run `nlsc explain --json ECLI001` or inspect the reported known codes to choose a cataloged error code.",
             "If you expected the code to exist, update the error catalog and reference docs before relying on it in automation.",
+        ),
+    ),
+    EINIT004: ErrorDefinition(
+        code=EINIT004,
+        title="Unknown project template",
+        summary="`nlsc init` was given a template name that is not in the template registry.",
+        emitted_by=("init",),
+        common_causes=(
+            "A typo in the template name.",
+            "The template exists in a newer nlsc release.",
+        ),
+        next_steps=(
+            "Run `nlsc init --list-templates` to see the available templates.",
         ),
     ),
     EINIT001: ErrorDefinition(
