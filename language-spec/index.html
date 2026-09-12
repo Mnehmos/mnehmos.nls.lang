@@ -2741,6 +2741,7 @@ target it names.</p>
 </span></code></pre></div>
 <hr />
 <h2 id="formatting-notes">Formatting Notes<a class="headerlink" href="#formatting-notes" title="Permanent link">&para;</a></h2>
+<p>The parser accepts flexible spelling:</p>
 <ol>
 <li><strong>Bullets</strong> are flexible: <code>•</code>, <code>-</code>, or <code>*</code></li>
 <li><strong>Arrows</strong> are flexible: <code>→</code> (Unicode) or <code>-&gt;</code> (ASCII)</li>
@@ -2748,6 +2749,15 @@ target it names.</p>
 <li><strong>Indentation</strong> uses spaces for visual structure</li>
 <li><strong>Unicode</strong> is supported in text content</li>
 </ol>
+<p><code>nlsc fmt</code> defines one <strong>canonical layout</strong> for review and diffs
+(Issue #95): headers uppercase; <code>-</code> bullets and numbered steps indented
+two spaces; <code>-&gt;</code> arrows; sections ordered PURPOSE → INPUTS → GUARDS →
+LOGIC → EDGE CASES → RETURNS → DEPENDS; INPUTS types aligned in a
+column; one blank line between top-level constructs; LF endings and no
+trailing whitespace. Formatting is line-based: comments travel with the
+section they precede, <code>@literal</code>/<code>@main</code> bodies stay verbatim, and the
+result must re-parse to the same structure or the file is left
+unchanged (<code>EFMT001</code>). <code>nlsc fmt --check</code> enforces the layout in CI.</p>
 <h2 id="unsupported-and-out-of-scope">Unsupported and out of scope<a class="headerlink" href="#unsupported-and-out-of-scope" title="Permanent link">&para;</a></h2>
 <p>This list is authoritative: if a construct is here, its absence is a design
 decision, not a compiler bug. Anything not listed as supported should be
