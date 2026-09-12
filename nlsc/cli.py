@@ -84,6 +84,7 @@ from .diagnostics import (
     watch_not_directory_diagnostic,
 )
 from .error_catalog import (
+    EASSOC003,
     ECLI001,
     EFMT001,
     EEXPLAIN001,
@@ -2490,9 +2491,93 @@ def cmd_fmt(args: argparse.Namespace) -> int:
     return 0
 
 
+_DESKTOP_ENTRY = """[Desktop Entry]
+Type=Application
+Name=NLS Compiler
+Comment=Verify, compile, and test .nl specifications
+Exec=nlsc %F
+Icon=text-x-generic
+Terminal=true
+Categories=Development;
+MimeType=text/x-nls;
+Actions=Verify;Compile;Test;
+
+[Desktop Action Verify]
+Name=Verify with NLS
+Exec=nlsc verify %f
+
+[Desktop Action Compile]
+Name=Compile with NLS
+Exec=nlsc compile %f
+
+[Desktop Action Test]
+Name=Test with NLS
+Exec=nlsc test %f
+"""
+
+_MIME_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="text/x-nls">
+    <comment>NLS specification</comment>
+    <comment xml:lang="en">NLS specification</comment>
+    <glob pattern="*.nl"/>
+    <icon name="text-x-generic"/>
+  </mime-type>
+</mime-info>
+"""
+
+
+def _write_desktop_integration(args: argparse.Namespace, json_output: bool) -> int:
+    """Generate Linux desktop integration files for .nl (Issue #91).
+
+    Portable: runs on any platform so the files can be generated and
+    committed from any development machine, then installed on Linux.
+    """
+    output_dir = Path(getattr(args, "output", None) or ".")
+    files = {
+        "nlsc.desktop": _DESKTOP_ENTRY,
+        "text-x-nls.xml": _MIME_XML,
+    }
+    written: list[str] = []
+    try:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        for name, content in files.items():
+            path = output_dir / name
+            path.write_text(content, encoding="utf-8")
+            written.append(str(path))
+    except OSError as exc:
+        diagnostic = Diagnostic(
+            code=EASSOC003,
+            file=str(output_dir),
+            line=None,
+            col=None,
+            message=f"Failed to write desktop integration files: {exc}",
+            hint="Check the output directory and permissions.",
+        )
+        if json_output:
+            return _emit_json("assoc", [diagnostic])
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
+        return 1
+
+    if json_output:
+        return _emit_json("assoc", [], mode="desktop", files=written)
+    for path in written:
+        print(f"Wrote {path}")
+    print(
+        "Install on Linux: copy nlsc.desktop to ~/.local/share/applications/, "
+        "text-x-nls.xml to ~/.local/share/mime/packages/, then run "
+        "`update-mime-database ~/.local/share/mime` and "
+        "`update-desktop-database ~/.local/share/applications`."
+    )
+    return 0
+
+
 def cmd_assoc(args: argparse.Namespace) -> int:
     """Install Windows file association for .nl files"""
     json_output = getattr(args, "json", False)
+
+    if getattr(args, "desktop", False):
+        return _write_desktop_integration(args, json_output)
 
     if platform.system() != "Windows":
         if json_output:
@@ -3081,6 +3166,16 @@ The conversation is the programming. The .nl file is the receipt.
         "--json",
         action="store_true",
         help="Emit structured JSON diagnostics for assoc failures.",
+    )
+    assoc_parser.add_argument(
+        "--desktop",
+        action="store_true",
+        help="Generate Linux desktop integration files (nlsc.desktop, text-x-nls.xml)",
+    )
+    assoc_parser.add_argument(
+        "--output",
+        "-o",
+        help="Directory for generated files (--desktop; default: current)",
     )
 
     try:
