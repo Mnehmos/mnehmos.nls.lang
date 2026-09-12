@@ -565,6 +565,7 @@ with causes and next steps.
 | `ESEM010` | Branch totality | [Bindings, branches, and guards](#bindings-branches-and-guards) |
 | `ESEM012` | Guard error identity | [Effects and failure contracts](#effects-and-failure-contracts) |
 | `ESEM013` | Module/file name shadows a host stdlib module | [File Structure](#file-structure) |
+| `EGRAPH003` | Control-flow view usage (`--control` needs `--anlu`) | [Semantics](#semantics-what-the-compiler-guarantees) |
 | `EVER001`, `EVER002` | Declared `@nls` revision compatibility | [Directives](#directives) |
 | `ELINT001`–`ELINT012` | Intent quality (`nlsc lint`; warnings unless `--strict`) | [Semantics](#semantics-what-the-compiler-guarantees) |
 | `EPROV001`, `EPROV002` | Edit provenance review gate (`nlsc ci`; see [provenance](provenance.md)) | [Semantics](#semantics-what-the-compiler-guarantees) |

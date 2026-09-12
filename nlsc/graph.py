@@ -280,3 +280,196 @@ def _compute_levels(nl_file: NLFile) -> dict[int, list[str]]:
         levels[level].append(anlu.identifier)
 
     return levels
+
+
+
+
+# ---------------------------------------------------------------------------
+# Control-flow view (Issue #192)
+#
+# The data-dependency view answers "which values feed which"; this view
+# answers "what actually executes, in what order, under which
+# conditions".  It walks the lowered IR regions, so effect-only steps
+# (discarded calls) appear as nodes, branch edges carry their
+# conditions, and loop regions render back edges without pretending the
+# value graph is cyclic.
+# ---------------------------------------------------------------------------
+
+
+def _expr_summary(expr: object) -> str:
+    """Compact one-line summary of an IR expression."""
+    from .ir import (
+        IRBinary,
+        IRCall,
+        IRFieldAccess,
+        IRIndexAccess,
+        IRList,
+        IRLiteral,
+        IRMethodCall,
+        IRRef,
+        IRUnary,
+    )
+
+    if expr is None:
+        return "..."
+    if isinstance(expr, IRLiteral):
+        return expr.raw
+    if isinstance(expr, IRRef):
+        return expr.name
+    if isinstance(expr, IRFieldAccess):
+        return f"{_expr_summary(expr.base)}.{expr.field_name}"
+    if isinstance(expr, IRIndexAccess):
+        return f"{_expr_summary(expr.base)}[{_expr_summary(expr.index)}]"
+    if isinstance(expr, IRList):
+        return "[" + ", ".join(_expr_summary(item) for item in expr.items) + "]"
+    if isinstance(expr, IRUnary):
+        operator = "not " if expr.op == "not" else "-"
+        return f"{operator}{_expr_summary(expr.operand)}"
+    if isinstance(expr, IRBinary):
+        return f"{_expr_summary(expr.left)} {expr.op} {_expr_summary(expr.right)}"
+    if isinstance(expr, IRCall):
+        target = f"[{expr.target}]" if expr.anlu else expr.target
+        return f"{target}(...)"
+    if isinstance(expr, IRMethodCall):
+        return f"{_expr_summary(expr.base)}.{expr.method}(...)"
+    return type(expr).__name__
+
+
+def _stmt_summary(stmt: object) -> str:
+    """One-line label for a statement, prefixed with its LOGIC step."""
+    from .ir import IRBind, IRBranch, IRDiscard, IRGuard, IRLoop, IRNote, ForeignStmt
+
+    span = getattr(stmt, "span", None)
+    step = span.step if span else None
+    prefix = f"{step}: " if step else ""
+    if isinstance(stmt, IRBind):
+        return f"{prefix}{stmt.name} = {_expr_summary(stmt.value)}"
+    if isinstance(stmt, IRDiscard):
+        return f"{prefix}{_expr_summary(stmt.value)}"
+    if isinstance(stmt, IRBranch):
+        return f"{prefix}IF {_expr_summary(stmt.condition)}"
+    if isinstance(stmt, IRGuard):
+        return f"{prefix}GUARD {_expr_summary(stmt.condition)}"
+    if isinstance(stmt, IRLoop):
+        return f"{prefix}WHILE {_expr_summary(stmt.condition)}"
+    if isinstance(stmt, IRNote):
+        return f"{prefix}note: {stmt.text[:48]}"
+    if isinstance(stmt, ForeignStmt):
+        return f"{prefix}foreign {stmt.reason}: {stmt.raw[:40]}"
+    return f"{prefix}{type(stmt).__name__}"
+
+
+class _ControlFlowBuilder:
+    """Builds nodes and labeled edges from IR statement regions."""
+
+    def __init__(self) -> None:
+        self.nodes: list[tuple[str, str]] = []
+        self.edges: list[tuple[str, str, str | None]] = []
+
+    def add_node(self, label: str) -> str:
+        node_id = f"n{len(self.nodes) + 1}"
+        self.nodes.append((node_id, label))
+        return node_id
+
+    def add_edge(self, source: str, target: str, label: str | None = None) -> None:
+        self.edges.append((source, target, label))
+
+    def build_region(
+        self, statements: tuple, entry: str | None, entry_label: str | None = None
+    ) -> list[str]:
+        """Wire a statement region; returns its exit node ids."""
+        from .ir import IRBranch, IRLoop
+
+        previous: list[str] = [entry] if entry else []
+        pending_label: str | None = entry_label
+        for stmt in statements:
+            if isinstance(stmt, IRBranch):
+                condition = self.add_node(_stmt_summary(stmt))
+                self._connect(previous, condition, pending_label)
+                then_exits = self._build_arm(stmt.then_body, condition, "true")
+                else_exits = self._build_arm(stmt.otherwise, condition, "false")
+                previous = then_exits + else_exits
+                pending_label = None
+                continue
+            if isinstance(stmt, IRLoop):
+                loop = self.add_node(_stmt_summary(stmt))
+                self._connect(previous, loop, pending_label)
+                body_exits = self._build_arm(stmt.body, loop, None)
+                for exit_node in body_exits:
+                    self.add_edge(exit_node, loop, "repeat")
+                previous = [loop]
+                pending_label = "exit"
+                continue
+            node = self.add_node(_stmt_summary(stmt))
+            self._connect(previous, node, pending_label)
+            previous = [node]
+            pending_label = None
+        return previous
+
+    def _connect(
+        self, parents: list[str], node: str, label: str | None
+    ) -> None:
+        for index, parent in enumerate(parents):
+            # The label belongs to the first incoming edge only.
+            self.add_edge(parent, node, label if index == 0 else None)
+
+    def _build_arm(self, body: tuple, condition: str, label: str | None) -> list[str]:
+        if not body:
+            empty = self.add_node("(empty)")
+            self.add_edge(condition, empty, label)
+            return [empty]
+        first = self.add_node(_stmt_summary(body[0]))
+        self.add_edge(condition, first, label)
+        if len(body) == 1:
+            return [first]
+        rest_exits = self.build_region(body[1:], first)
+        return rest_exits or [first]
+
+
+def _build_control_flow(anlu: ANLU) -> _ControlFlowBuilder:
+    from .lowering import lower_anlu
+
+    operation, _diagnostics = lower_anlu(anlu, set())
+    builder = _ControlFlowBuilder()
+    builder.build_region(operation.body, None)
+    return builder
+
+
+def _mermaid_label(text: str) -> str:
+    return text.replace('"', "'")
+
+
+def emit_controlflow_mermaid(anlu: ANLU) -> str:
+    """Mermaid flowchart of the operation's execution paths."""
+    builder = _build_control_flow(anlu)
+    lines = ["graph TD"]
+    if not builder.nodes:
+        lines.append("    empty[No executable statements]")
+        return "\n".join(lines)
+    for node_id, label in builder.nodes:
+        lines.append(f'    {node_id}["{_mermaid_label(label)}"]')
+    for source, target, edge_label in builder.edges:
+        if edge_label:
+            lines.append(f"    {source} -->|{edge_label}| {target}")
+        else:
+            lines.append(f"    {source} --> {target}")
+    return "\n".join(lines)
+
+
+def emit_controlflow_ascii(anlu: ANLU) -> str:
+    """ASCII listing of nodes with their labeled outgoing edges."""
+    builder = _build_control_flow(anlu)
+    lines = [f"Control flow: {anlu.identifier}", "-" * 40]
+    if not builder.nodes:
+        lines.append("(no executable statements)")
+        return "\n".join(lines)
+    outgoing: dict[str, list[tuple[str, str | None]]] = {}
+    for source, target, label in builder.edges:
+        outgoing.setdefault(source, []).append((target, label))
+    labels = dict(builder.nodes)
+    for node_id, label in builder.nodes:
+        lines.append(f"  {node_id}: {label}")
+        for target, edge_label in outgoing.get(node_id, []):
+            arrow = f"--{edge_label}-->" if edge_label else "-->"
+            lines.append(f"      {arrow} {target}: {labels[target]}")
+    return "\n".join(lines)

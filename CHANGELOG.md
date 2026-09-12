@@ -28,6 +28,14 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- `nlsc graph --anlu <name> --control` — execution-path view (Issue #192):
+  nodes in source order including effect-only steps, `true`/`false`
+  labeled branch edges carrying their conditions, loop back edges
+  labeled `repeat` with an `exit` continuation, explicit `(empty)` arms,
+  mermaid or ascii output, and `graph_kind: control` in JSON. The view
+  consumes the same IR regions as the checker and emitters; `--control`
+  requires `--anlu` and is mutually exclusive with `--dataflow`
+  (`EGRAPH003`).
 - Distribution contract (Issue #224): `.mnehmos/tool.json` declares the
   PyPI package/entry point, install commands, capabilities (targets, LSP
   features, quality gates), and workspace actions;

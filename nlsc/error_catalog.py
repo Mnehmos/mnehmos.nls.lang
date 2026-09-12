@@ -27,6 +27,7 @@ E_RUN = "E_RUN"
 EEXEC001 = "EEXEC001"
 EGRAPH001 = "EGRAPH001"
 EGRAPH002 = "EGRAPH002"
+EGRAPH003 = "EGRAPH003"
 ELOCK001 = "ELOCK001"
 ELOCK002 = "ELOCK002"
 ELOCK003 = "ELOCK003"
@@ -418,6 +419,19 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Inspect the generated module path, stdout, stderr, and runtime environment.",
             "Retry after fixing the local execution issue.",
+        ),
+    ),
+    EGRAPH003: ErrorDefinition(
+        code=EGRAPH003,
+        title="Control-flow view needs an operation",
+        summary="`nlsc graph --control` renders one operation's execution paths, so it requires --anlu and is mutually exclusive with --dataflow.",
+        emitted_by=("graph",),
+        common_causes=(
+            "--control was passed without --anlu.",
+            "--control and --dataflow were requested together.",
+        ),
+        next_steps=(
+            "Run `nlsc graph <file> --anlu <name> --control` for one view, or omit --control.",
         ),
     ),
     EGRAPH001: ErrorDefinition(
