@@ -2128,6 +2128,49 @@ def cmd_ir(args: argparse.Namespace) -> int:
     warnings = [_dc_replace(d, file=str(source_path)) for d in module.diagnostics]
     canonical = module_to_canonical(module)
 
+    # Backend-free validation (#147): the shared semantic gate (types,
+    # control, failures, effects) plus checked-emission eligibility decide
+    # whether this spec is valid IR on its own, independent of any target.
+    check = getattr(args, "check", False)
+    blocking: list[Diagnostic] = []
+    eligibility: list[Diagnostic] = []
+    if check:
+        gate = evaluate_semantic_gate(nl_file, file_token=str(source_path))
+        blocking = list(gate.fatal)
+        if strict:
+            blocking.extend(gate.strict_only + gate.scaffold_warnings)
+        from .lowering import check_module_eligibility
+
+        eligibility = [
+            _dc_replace(d, file=str(source_path))
+            for d in check_module_eligibility(module)
+        ]
+        if blocking or eligibility:
+            if json_output:
+                return _emit_json(
+                    "ir",
+                    blocking + eligibility,
+                    file=str(source_path),
+                    strict=strict,
+                    checked=False,
+                    eligible=False,
+                    output_file=(
+                        str(args.output) if getattr(args, "output", None) else None
+                    ),
+                    ir=module_to_json(module),
+                    canonical=canonical,
+                    warnings=[diagnostic.to_dict() for diagnostic in warnings],
+                )
+            for diagnostic in blocking + eligibility:
+                location = f"Line {diagnostic.line}: " if diagnostic.line else ""
+                print(
+                    f"Error: {location}{diagnostic.message} [{diagnostic.code}]",
+                    file=sys.stderr,
+                )
+                if diagnostic.hint:
+                    print(f"Error: {diagnostic.hint}", file=sys.stderr)
+            return 1
+
     if getattr(args, "output", None):
         output_path = Path(args.output)
         try:
@@ -2156,6 +2199,7 @@ def cmd_ir(args: argparse.Namespace) -> int:
             file=str(source_path),
             strict=strict,
             checked=module.checked,
+            eligible=True if check else None,
             output_file=str(args.output) if getattr(args, "output", None) else None,
             ir=module_to_json(module),
             canonical=canonical,
@@ -2166,6 +2210,9 @@ def cmd_ir(args: argparse.Namespace) -> int:
         print(f"IR written to {args.output}")
     else:
         print(canonical, end="")
+    if check and not json_output:
+        print("ir: spec is valid checked IR (backend-free validation passed)",
+              file=sys.stderr)
     for diagnostic in warnings:
         location = f"Line {diagnostic.line}: " if diagnostic.line else ""
         print(
@@ -3144,6 +3191,11 @@ The conversation is the programming. The .nl file is the receipt.
     )
     ir_parser.add_argument(
         "--strict", action="store_true", help="Fail on foreign/unsupported constructs"
+    )
+    ir_parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Validate the spec against the IR (no backend): shared semantic gate plus checked-emission eligibility.",
     )
     ir_parser.add_argument("--output", "-o", help="Write canonical IR to a file")
     ir_parser.set_defaults(command="ir")

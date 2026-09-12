@@ -143,3 +143,84 @@ def test_tree_sitter_steps_carry_line_numbers():
     ts_file = parse_nl_file_treesitter(PARITY_SOURCE)
     steps = [s for anlu in ts_file.anlus for s in anlu.logic_steps]
     assert all(s.line_number > 0 for s in steps)
+
+
+# --------------------------------------------------------------------------
+# `nlsc ir --check`: backend-free spec validation (#147)
+# --------------------------------------------------------------------------
+
+
+def test_cli_ir_check_passes_on_checked_clean_source(tmp_path, capsys):
+    path = _write(tmp_path, SIMPLE_SOURCE)
+    exit_code = main(["ir", "--check", str(path)])
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    # Status goes to stderr so stdout stays a clean canonical-IR stream.
+    assert "valid checked IR" in captured.err
+
+
+def test_cli_ir_check_json_reports_eligible(tmp_path, capsys):
+    path = _write(tmp_path, SIMPLE_SOURCE)
+    exit_code = main(["ir", "--check", "--json", str(path)])
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 0
+    assert payload["eligible"] is True
+    assert payload["diagnostics"] == []
+
+
+def test_cli_ir_check_fails_on_foreign_content_with_eligibility_blocker(
+    tmp_path, capsys
+):
+    path = _write(tmp_path, PROSE_SOURCE)
+    exit_code = main(["ir", "--check", str(path)])
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "EIR003" in captured.err
+
+
+def test_cli_ir_check_json_reports_eligibility_blockers(tmp_path, capsys):
+    path = _write(tmp_path, PROSE_SOURCE)
+    exit_code = main(["ir", "--check", "--json", str(path)])
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 1
+    assert payload["eligible"] is False
+    assert "EIR003" in [d["code"] for d in payload["diagnostics"]]
+
+
+def test_cli_ir_check_reports_semantic_errors(tmp_path, capsys):
+    source = SIMPLE_SOURCE.replace("RETURNS: total", "RETURNS: missing_value")
+    path = _write(tmp_path, source)
+    exit_code = main(["ir", "--check", str(path)])
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "ESEM004" in captured.err
+
+
+def test_cli_ir_without_check_stays_tolerant(tmp_path, capsys):
+    """Plain `ir` keeps its tolerant exit-0 behavior (#147 gating is opt-in)."""
+    path = _write(tmp_path, PROSE_SOURCE)
+    exit_code = main(["ir", str(path)])
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "EIR002" in captured.err
+
+
+def test_cli_ir_check_strict_promotes_strict_only_diagnostics(tmp_path, capsys):
+    """`--check` passes where `--check --strict` fails: strict-only gate
+    diagnostics (ESEM013 stdlib shadowing) block only under --strict."""
+    shadowed = """@module math
+[double]
+PURPOSE: double a value
+INPUTS:
+  - x: number
+LOGIC:
+  1. result = x + x
+RETURNS: result
+"""
+    path = _write(tmp_path, shadowed)
+    assert main(["ir", "--check", str(path)]) == 0
+    capsys.readouterr()
+    exit_code = main(["ir", "--check", "--strict", str(path)])
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "ESEM013" in captured.err

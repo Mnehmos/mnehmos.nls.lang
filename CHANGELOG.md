@@ -36,6 +36,10 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- `nlsc ir --check` validates a spec against the IR with no backend
+  involved (Issue #147): the shared semantic gate plus checked-emission
+  eligibility (`EIR003` blockers), an `eligible` flag in the JSON payload,
+  and a non-zero exit when the spec is not valid checked IR.
 - The TypeScript emitter also renders checked ANLU bodies from the
   target-neutral IR (Issue #202): guards, `const`/`let` bindings, `__nls_truthy`
   branches with hoisted joined values, and the result value all render from

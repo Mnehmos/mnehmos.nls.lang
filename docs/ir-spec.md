@@ -4,7 +4,7 @@ Status: **experimental, version 0.1** — the IR boundary described in issue #19
 
 - Schema module: `nlsc/ir.py`
 - Deterministic lowering: `nlsc/lowering.py` (shared by both parser backends)
-- CLI: `nlsc ir <file.nl>` (canonical text), `nlsc ir <file.nl> --json` (JSON form)
+- CLI: `nlsc ir <file.nl>` (canonical text), `nlsc ir <file.nl> --json` (JSON form), `nlsc ir <file.nl> --check` (backend-free validation: shared semantic gate plus checked-emission eligibility; exit 1 with `EIR003` blockers when the spec is not valid checked IR)
 
 ## Design rules
 
