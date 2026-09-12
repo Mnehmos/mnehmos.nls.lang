@@ -36,6 +36,13 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- The Python emitter renders checked ANLU bodies from the target-neutral
+  IR (Issue #202): guards, bindings, augmented assignments, total
+  branches, and the result value are emitted from the same lowered
+  statement nodes the checkers validated, instead of being re-parsed from
+  LOGIC prose. Foreign content still falls back to the legacy prose paths,
+  and record-construction kwargs now render with canonical `name=value`
+  spacing (Python semantics marker moves to `py-3`).
 - `FOR each` LOGIC loop steps are a Python-only capability (Issue #202):
   the TypeScript backend used to emit the step verbatim
   (`FOR each item IN items: total = total + item;`), which `tsc` rejects,
@@ -44,7 +51,7 @@ see what affects their `.nl` files and what only affects tooling. See
   moves to `ts-2`, so existing `ts-1` locks must be regenerated
   (`ELOCK004`).
 - Emitter semantics markers in lock identity (Issue #202): every locked
-  target records a `semantics_version` (`py-2`, `ts-2`) naming the backend
+  target records a `semantics_version` (`py-3`, `ts-2`) naming the backend
   semantics revision that produced it, and `nlsc compile --frozen-lockfile`
   / `nlsc ci --compile` refuse a mismatched marker with `ELOCK004` plus a
   regenerate-and-commit hint. Lockfiles without a marker stay compatible.

@@ -260,7 +260,7 @@ bodies are never reused.
 ### Emitter semantics markers (Issue #202)
 
 Each locked target also records a `semantics_version` marker (for example
-`py-1`, `ts-1`) naming the backend semantics revision that produced the
+`py-3`, `ts-2`) naming the backend semantics revision that produced the
 artifact. The marker is part of the lock's identity: `nlsc compile
 --frozen-lockfile` and `nlsc ci --compile` refuse a lockfile whose marker
 differs from the current emitter with `ELOCK004`, even when the source and

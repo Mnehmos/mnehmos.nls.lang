@@ -8,7 +8,7 @@ LLM integration can be added as a separate backend.
 import ast
 import math
 import re
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from .localization import (
     ANLU_IDENTIFIER_PATTERN,
@@ -25,6 +25,9 @@ from .schema import (
     Invariant,
     LogicStep,
 )
+
+if TYPE_CHECKING:
+    from .ir import IRGuard, IRStmt
 
 
 class EmitterError(Exception):
@@ -351,6 +354,25 @@ def emit_guard_error_classes(nl_file: NLFile) -> list[str]:
     return lines
 
 
+def _guard_raise_lines(
+    error_type: str, error_message: str, error_code: Optional[str], indent: str
+) -> list[str]:
+    """Raise lines for one failed guard.
+
+    A declared error code travels as a `.code` attribute so the identity
+    (type, code, message) is observable identically on every target (#202).
+    Shared by the prose and IR render paths so their shape cannot drift.
+    """
+    body_indent = indent + "    "
+    if error_code:
+        return [
+            f"{body_indent}__nls_error = {error_type}({error_message!r})",
+            f"{body_indent}__nls_error.code = {error_code!r}",
+            f"{body_indent}raise __nls_error",
+        ]
+    return [f"{body_indent}raise {error_type}({error_message!r})"]
+
+
 def emit_guards(anlu: ANLU) -> list[str]:
     """
     Generate guard validation code.
@@ -372,20 +394,10 @@ def emit_guards(anlu: ANLU) -> list[str]:
         error_type = guard.error_type or "ValueError"
         error_message = guard.error_message or "Guard condition failed"
 
-        # Generate the if-not check
         lines.append(f"    if not ({condition}):")
-
-        # Generate the raise statement. A declared error code travels as a
-        # `.code` attribute so the identity (type, code, message) is
-        # observable identically on every target (#202).
-        if guard.error_code:
-            lines.append(
-                f"        __nls_error = {error_type}({error_message!r})"
-            )
-            lines.append(f"        __nls_error.code = {guard.error_code!r}")
-            lines.append("        raise __nls_error")
-        else:
-            lines.append(f"        raise {error_type}({error_message!r})")
+        lines.extend(
+            _guard_raise_lines(error_type, error_message, guard.error_code, "    ")
+        )
 
     return lines
 
@@ -479,6 +491,18 @@ def emit_body_from_logic(anlu: ANLU) -> str:
                 lines.append(f"    # {step.description}")
 
     # Generate return statement
+    lines.extend(_legacy_return_lines(anlu))
+
+    return "\n".join(lines)
+
+
+def _legacy_return_lines(anlu: ANLU) -> list[str]:
+    """Return-statement generation from the RETURNS prose.
+
+    Shared by the legacy logic-step path and by the IR path when the
+    lowered result carries no value expression (declared type only, void,
+    or narrative text) so those scaffold cases keep their exact output.
+    """
     returns = normalize_expression_text(anlu.returns.strip())
     returns_expr = returns.replace("×", "*").replace("÷", "/")
 
@@ -495,17 +519,17 @@ def emit_body_from_logic(anlu: ANLU) -> str:
 
     # Validate that returns_expr is valid Python
     if _is_valid_return_expr(returns_expr):
-        lines.append(f"    return {returns_expr}")
-    else:
-        # Descriptive text: keep generated code runnable.
-        #
-        # We still include a NotImplementedError marker for test visibility,
-        # but do not raise at runtime (run CLI should succeed).
-        safe_desc = returns_expr.replace("'", "\\'")
-        lines.append(f"    # NotImplementedError('TODO: {safe_desc}')")
-        lines.append(f"    return None  # TODO: {safe_desc}")
+        return [f"    return {returns_expr}"]
 
-    return "\n".join(lines)
+    # Descriptive text: keep generated code runnable.
+    #
+    # We still include a NotImplementedError marker for test visibility,
+    # but do not raise at runtime (run CLI should succeed).
+    safe_desc = returns_expr.replace("'", "\\'")
+    return [
+        f"    # NotImplementedError('TODO: {safe_desc}')",
+        f"    return None  # TODO: {safe_desc}",
+    ]
 
 
 def _emit_for_loop_step(step: LogicStep) -> Optional[list[str]]:
@@ -933,6 +957,154 @@ def _structural_python_expression(desc: str) -> Optional[str]:
     return _render_py_expr(expr)
 
 
+_AUG_PY_OPS = {
+    "add": "+=",
+    "sub": "-=",
+    "mul": "*=",
+    "div": "/=",
+    "floor_div": "//=",
+    "mod": "%=",
+    "pow": "**=",
+}
+
+
+def _render_py_stmt(stmt: "IRStmt", indent: str) -> Optional[list[str]]:
+    """Render one lowered IR statement as Python lines (#202).
+
+    Returns None for statements without a structural Python rendering
+    (``ForeignStmt``, loops); the caller falls back to the legacy prose
+    path for that ANLU.
+    """
+    from .ir import IRBind, IRBranch, IRDiscard, IRNote
+
+    if isinstance(stmt, IRBind):
+        value = _render_py_expr(stmt.value)
+        if value is None:
+            return None
+        if stmt.aug:
+            aug = _AUG_PY_OPS.get(stmt.aug)
+            if aug is None:
+                return None
+            return [f"{indent}{stmt.name} {aug} {value}"]
+        return [f"{indent}{stmt.name} = {value}"]
+    if isinstance(stmt, IRDiscard):
+        value = _render_py_expr(stmt.value)
+        if value is None:
+            return None
+        return [f"{indent}{value}"]
+    if isinstance(stmt, IRNote):
+        # A FOR-each loop step lowered as a narrative note (the IR has no
+        # loop region yet, #196): the legacy path emits it as a real
+        # Python loop, so bail instead of silently commenting it out.
+        if FOR_EACH_STEP_RE.match(stmt.text.strip()):
+            return None
+        return [f"{indent}# {stmt.text}"]
+    if isinstance(stmt, IRBranch):
+        condition = _render_py_expr(stmt.condition)
+        if condition is None:
+            return None
+        lines = [f"{indent}if {condition}:"]
+        then_lines = _render_py_block(stmt.then_body, indent + "    ")
+        if then_lines is None:
+            return None
+        lines.extend(then_lines or [f"{indent}    pass"])
+        if stmt.otherwise:
+            lines.append(f"{indent}else:")
+            else_lines = _render_py_block(stmt.otherwise, indent + "    ")
+            if else_lines is None:
+                return None
+            lines.extend(else_lines or [f"{indent}    pass"])
+        return lines
+    return None
+
+
+def _render_py_block(stmts: tuple, indent: str) -> Optional[list[str]]:
+    """Render a statement region; None when any statement is unrenderable."""
+    lines: list[str] = []
+    for stmt in stmts:
+        rendered = _render_py_stmt(stmt, indent)
+        if rendered is None:
+            return None
+        lines.extend(rendered)
+    return lines
+
+
+def _emit_ir_guard(guard: "IRGuard") -> Optional[str]:
+    """Render one lowered guard; same shape as the prose path."""
+    condition = _render_py_expr(guard.condition)
+    if condition is None:
+        return None
+    error = guard.error
+    error_type = error.error_type if error else "ValueError"
+    error_message = (
+        error.message if error and error.message else "Guard condition failed"
+    )
+    lines = [f"    if not ({condition}):"]
+    lines.extend(
+        _guard_raise_lines(
+            error_type, error_message, error.code if error else None, "    "
+        )
+    )
+    return "\n".join(lines)
+
+
+def _emit_body_from_ir(anlu: ANLU, declared_types: set[str]) -> Optional[str]:
+    """Render the ANLU body from its lowered IR (#202).
+
+    Used whenever the operation lowered with no foreign nodes: guards,
+    bindings, branches, and the result value all render from IR statement
+    and expression nodes, so the emitter consumes the same structure the
+    checkers validated.  Returns None when any node is foreign; the legacy
+    prose path keeps scaffold output working unchanged.
+    """
+    from .ir import operation_unchecked_nodes
+    from .lowering import lower_anlu
+
+    operation, _diagnostics = lower_anlu(anlu, declared_types)
+    if operation_unchecked_nodes(operation):
+        return None
+
+    lines = _emit_edge_cases(anlu)
+    for guard in operation.guards:
+        rendered = _emit_ir_guard(guard)
+        if rendered is None:
+            return None
+        lines.append(rendered)
+
+    body_lines = _render_py_block(operation.body, "    ")
+    if body_lines is None:
+        return None
+    lines.extend(body_lines)
+
+    result = operation.result
+    if result is not None and result.value is not None:
+        from .ir import IRBind, IRRef, iter_stmt_nodes
+
+        value = result.value
+        if isinstance(value, IRRef):
+            # A result naming something never bound in this operation is
+            # the localized/declared-type-default case; the legacy return
+            # handling owns that (it maps type words to default values).
+            bound = {param.name for param in operation.params}
+            bound.update(
+                stmt.name
+                for stmt in iter_stmt_nodes(operation.body)
+                if isinstance(stmt, IRBind)
+            )
+            if value.name not in bound:
+                return None
+        rendered = _render_py_expr(value)
+        if rendered is None:
+            return None
+        lines.append(f"    return {rendered}")
+    else:
+        # Declared type only, void, or narrative RETURNS: the exact legacy
+        # return handling applies (invented defaults stay scaffold-visible).
+        lines.extend(_legacy_return_lines(anlu))
+
+    return "\n".join(lines)
+
+
 def _desc_to_expr(desc: str) -> Optional[str]:
     """
     Convert a logic step description to a Python expression.
@@ -1055,7 +1227,7 @@ def _convert_main_line(line: str) -> Optional[str]:
     return converted
 
 
-def emit_body_mock(anlu: ANLU) -> str:
+def emit_body_mock(anlu: ANLU, declared_types: Optional[set[str]] = None) -> str:
     """
     Generate function body using mock/template approach.
 
@@ -1064,7 +1236,15 @@ def emit_body_mock(anlu: ANLU) -> str:
     - RETURNS: a × b -> return a * b
     - RETURNS: a - b -> return a - b
     - RETURNS: a / b -> return a / b
+
+    ANLUs whose content lowered fully to the structural IR render from
+    those statement nodes (#202); anything foreign falls back to the
+    legacy prose paths.
     """
+    body = _emit_body_from_ir(anlu, declared_types or set())
+    if body is not None:
+        return body
+
     # If we have logic_steps, use deterministic emission
     if anlu.logic_steps:
         return emit_body_from_logic(anlu)
@@ -1147,18 +1327,26 @@ def emit_body_mock(anlu: ANLU) -> str:
     return "\n".join(lines)
 
 
-def emit_anlu(anlu: ANLU, mode: str = "mock") -> str:
+def emit_anlu(
+    anlu: ANLU, mode: str = "mock", declared_types: Optional[set[str]] = None
+) -> str:
     """
     Emit Python code for a single ANLU.
 
     Args:
         anlu: The ANLU to emit
         mode: "mock" for template-based, "llm" for LLM-based (future)
+        declared_types: Record types declared by the module; used when
+            lowering the ANLU to the target-neutral IR for checked emission
 
     Returns:
         Python function as a string
     """
-    parts = [emit_function_signature(anlu), emit_docstring(anlu), emit_body_mock(anlu)]
+    parts = [
+        emit_function_signature(anlu),
+        emit_docstring(anlu),
+        emit_body_mock(anlu, declared_types),
+    ]
 
     return "\n".join(parts)
 
@@ -1343,6 +1531,7 @@ def emit_python(
 
     # Extract function names defined in literal blocks to avoid duplicates
     literal_functions = nl_file.literal_function_names()
+    declared_types = {t.name for t in nl_file.module.types}
 
     # Emit each ANLU in dependency order, skipping those overridden by literal blocks
     ordered = nl_file.dependency_order()
@@ -1351,7 +1540,7 @@ def emit_python(
             # Skip - this ANLU is implemented by a literal block
             continue
         lines.append("")
-        lines.append(emit_anlu(anlu, mode))
+        lines.append(emit_anlu(anlu, mode, declared_types))
         lines.append("")
 
     # Add any literal blocks
