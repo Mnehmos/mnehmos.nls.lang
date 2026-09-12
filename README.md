@@ -151,6 +151,7 @@ def distance(p1: Point, p2: Point) -> float:
 | `nlsc test <file>`       | Run `@test` specifications             |
 | `nlsc ir <file>`         | Emit target-neutral IR (text or JSON) |
 | `nlsc lint <file\|dir>`  | Intent-quality lint rules (`--strict` for CI) |
+| `nlsc fmt <file\|dir>`   | Canonical formatting (`--check`/`--diff` for CI) |
 | `nlsc ci <file>`         | CI gate: strict semantics + frozen lockfile |
 | `nlsc graph <file>`      | Generate dependency diagrams           |
 | `nlsc diff <file>`       | Show changes since last compile        |

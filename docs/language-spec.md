@@ -471,11 +471,23 @@ PURPOSE: Add two numbers
 
 ## Formatting Notes
 
+The parser accepts flexible spelling:
+
 1. **Bullets** are flexible: `•`, `-`, or `*`
 2. **Arrows** are flexible: `→` (Unicode) or `->` (ASCII)
 3. **Section headers** are case-insensitive
 4. **Indentation** uses spaces for visual structure
 5. **Unicode** is supported in text content
+
+`nlsc fmt` defines one **canonical layout** for review and diffs
+(Issue #95): headers uppercase; `- ` bullets and numbered steps indented
+two spaces; `->` arrows; sections ordered PURPOSE → INPUTS → GUARDS →
+LOGIC → EDGE CASES → RETURNS → DEPENDS; INPUTS types aligned in a
+column; one blank line between top-level constructs; LF endings and no
+trailing whitespace. Formatting is line-based: comments travel with the
+section they precede, `@literal`/`@main` bodies stay verbatim, and the
+result must re-parse to the same structure or the file is left
+unchanged (`EFMT001`). `nlsc fmt --check` enforces the layout in CI.
 
 ## Unsupported and out of scope
 

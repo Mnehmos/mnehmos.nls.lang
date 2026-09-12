@@ -19,6 +19,10 @@ inputs:
     description: 'Run @test blocks from .nl files'
     required: false
     default: 'false'
+  format-check:
+    description: 'Fail the action when any .nl file is not canonically formatted'
+    required: false
+    default: 'false'
   lint:
     description: 'Run semantic lint rules (nlsc lint)'
     required: false
@@ -81,6 +85,7 @@ runs:
         INPUT_TEST: ${{ inputs.test }}
         INPUT_LOCK_CHECK: ${{ inputs.lock-check }}
         INPUT_LINT: ${{ inputs.lint }}
+        INPUT_FORMAT_CHECK: ${{ inputs.format-check }}
         INPUT_LINT_STRICT: ${{ inputs.lint-strict }}
         INPUT_PATH: ${{ inputs.path }}
         INPUT_FAIL_ON_WARNING: ${{ inputs.fail-on-warning }}
@@ -117,6 +122,17 @@ runs:
               echo "✓ Verification passed"
             else
               echo "::error file=$nl_file::Verification failed"
+              exit 1
+            fi
+          fi
+
+          # Format check (Issue #95)
+          if [ "$INPUT_FORMAT_CHECK" = "true" ]; then
+            echo "Checking formatting for $nl_file..."
+            if nlsc fmt "$nl_file" --check; then
+              echo "✓ Formatting canonical"
+            else
+              echo "::error file=$nl_file::File is not canonically formatted (run 'nlsc fmt $nl_file')"
               exit 1
             fi
           fi

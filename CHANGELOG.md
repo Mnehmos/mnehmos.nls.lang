@@ -28,6 +28,14 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- `nlsc fmt <file|dir>` — canonical formatting (Issue #95): uppercase
+  headers, normalized bullets/arrows, canonical section order, aligned
+  INPUTS types, one blank line between blocks. `--check` for CI,
+  `--diff` preview, JSON output; comments and their positions are
+  preserved, `@literal`/`@main` bodies stay verbatim, and any reformat
+  that would change module structure is refused (`EFMT001`). The LSP
+  serves `textDocument/formatting` from the same formatter, and the
+  GitHub Action gains a `format-check` input.
 - `nlsc lint <file|dir>` — semantic intent-quality linter with twelve rules
   (`ELINT001`–`ELINT012`: guards for inputs, test coverage, invariants for
   types, unguarded division/indexing/optionals, implicit mutation, module
