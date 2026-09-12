@@ -523,13 +523,14 @@ content is fatal in every mode; dropped test coverage is strict-only.
 | `@literal` blocks | yes | **no** — fatal to compile |
 | `@main` block | yes | **no** — fatal to compile |
 | `@property` specifications | yes | **no** — strict-only warning |
+| `FOR each` LOGIC loop steps | yes | **no** — fatal to compile |
 | `@test` blocks, guards, constraints, invariants, edge cases | yes | yes |
 
 ### Not yet implemented (tracked)
 
 | Feature | Tracking |
 | --- | --- |
-| Loops in LOGIC (`WHILE`/`FOR` steps; the IR has a reserved loop region) | #196 follow-up |
+| Full loop semantics in LOGIC (`WHILE`/`FOR` steps; the IR has a reserved loop region). `FOR each ... IN ...: action` steps already emit real Python loops and are gated off TypeScript; `WHILE` steps are only converted inside `@main` | #196 follow-up |
 | try/catch-style handlers, retry/timeout policies | #198, #201 |
 | Typestate/resource state transitions | #200 |
 | `FAILS`/`RAISES` declarations (failure sets are inferred) | #198 |

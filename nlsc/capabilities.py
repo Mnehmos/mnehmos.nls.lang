@@ -29,7 +29,7 @@ from .schema import NLFile
 # instead of trusted (#202).
 EMITTER_SEMANTICS_VERSION: dict[str, str] = {
     "python": "py-1",
-    "typescript": "ts-1",
+    "typescript": "ts-2",
 }
 
 
@@ -43,11 +43,13 @@ TARGET_CAPABILITIES: dict[str, dict[str, bool]] = {
         "literal_blocks": True,
         "main_block": True,
         "property_tests": True,
+        "loop_steps": True,
     },
     "typescript": {
         "literal_blocks": False,
         "main_block": False,
         "property_tests": False,
+        "loop_steps": False,
     },
 }
 
@@ -55,6 +57,7 @@ _FEATURE_DESCRIPTIONS = {
     "literal_blocks": "@literal blocks",
     "main_block": "@main block",
     "property_tests": "@property specifications",
+    "loop_steps": "FOR each LOGIC loop steps",
 }
 
 
@@ -77,6 +80,8 @@ def _file_uses_feature(nl_file: NLFile, feature: str) -> bool:
         return bool(nl_file.main_block)
     if feature == "property_tests":
         return bool(nl_file.properties)
+    if feature == "loop_steps":
+        return nl_file.uses_for_each_loops()
     return False
 
 
@@ -88,7 +93,7 @@ def capability_gaps(nl_file: NLFile, target: str) -> list[CapabilityGap]:
         if not supported and _file_uses_feature(nl_file, feature):
             # Dropped program content is fatal; dropped test coverage is
             # strict-only.
-            fatal = feature in ("literal_blocks", "main_block")
+            fatal = feature in ("literal_blocks", "main_block", "loop_steps")
             gaps.append(CapabilityGap(feature=feature, fatal=fatal))
     return gaps
 
@@ -107,7 +112,7 @@ def capability_diagnostics(
             col=None,
             message=(
                 f"target '{target}' does not support {gap.description}; "
-                "emitting would silently drop it"
+                "emitting it would produce an incomplete or invalid artifact"
             ),
             hint=(
                 f"Compile with the target that supports {gap.description}, or "

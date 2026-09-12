@@ -17,7 +17,14 @@ from .localization import (
     normalize_type_text,
 )
 from .ir import IRExpr
-from .schema import ANLU, NLFile, TypeDefinition, Invariant, LogicStep
+from .schema import (
+    ANLU,
+    FOR_EACH_STEP_RE,
+    NLFile,
+    TypeDefinition,
+    Invariant,
+    LogicStep,
+)
 
 
 class EmitterError(Exception):
@@ -527,6 +534,8 @@ def _emit_nested_logic_action(action_desc: str, indent: str) -> list[str]:
 def _parse_for_each_step(text: str) -> Optional[tuple[str, str, str]]:
     """Parse `FOR each target IN iterable: action` while tolerating slices."""
     desc = normalize_expression_text(text.strip())
+    if not FOR_EACH_STEP_RE.match(desc):
+        return None
     prefix_match = re.match(r"^FOR\s+each\s+(.+?)\s+IN\s+(.+)$", desc, re.IGNORECASE)
     if not prefix_match:
         return None

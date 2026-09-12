@@ -20,6 +20,11 @@ def _strip_string_literals(text: str) -> str:
     return _STRING_LITERAL.sub("", text)
 
 
+# `FOR each <target> IN <iterable>: <action>` LOGIC step. The required colon
+# separates it from narrative prose that merely starts with FOR (#202).
+FOR_EACH_STEP_RE = re.compile(r"^FOR\s+each\s+.+?\s+IN\s+.+?:", re.IGNORECASE)
+
+
 class InputType(Enum):
     """Primitive types supported in NLS"""
 
@@ -597,6 +602,22 @@ class NLFile:
             ):
                 names.add(match.group(1))
         return names
+
+    def uses_for_each_loops(self) -> bool:
+        """True when any LOGIC step is a ``FOR each ... IN ...`` loop.
+
+        Loop steps are a Python-target capability: the TypeScript backend
+        cannot represent them, and an unsupported construct must be refused
+        rather than emitted as prose (issue #202).  The pattern is the same
+        one the Python emitter parses, so the capability gate and the
+        emitter agree on what counts as a loop.
+        """
+        for anlu in self.anlus:
+            for step in anlu.logic_steps:
+                description = normalize_expression_text(step.description.strip())
+                if FOR_EACH_STEP_RE.match(description):
+                    return True
+        return False
 
     def dependency_order(self) -> list[ANLU]:
         """Return ANLUs in topological order based on dependencies"""
