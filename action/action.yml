@@ -19,6 +19,14 @@ inputs:
     description: 'Run @test blocks from .nl files'
     required: false
     default: 'false'
+  lint:
+    description: 'Run semantic lint rules (nlsc lint)'
+    required: false
+    default: 'false'
+  lint-strict:
+    description: 'Fail the action when lint warnings are found'
+    required: false
+    default: 'false'
   lock-check:
     description: 'Check that lockfiles are up to date'
     required: false
@@ -72,6 +80,8 @@ runs:
         INPUT_COMPILE: ${{ inputs.compile }}
         INPUT_TEST: ${{ inputs.test }}
         INPUT_LOCK_CHECK: ${{ inputs.lock-check }}
+        INPUT_LINT: ${{ inputs.lint }}
+        INPUT_LINT_STRICT: ${{ inputs.lint-strict }}
         INPUT_PATH: ${{ inputs.path }}
         INPUT_FAIL_ON_WARNING: ${{ inputs.fail-on-warning }}
       run: |
@@ -107,6 +117,21 @@ runs:
               echo "✓ Verification passed"
             else
               echo "::error file=$nl_file::Verification failed"
+              exit 1
+            fi
+          fi
+
+          # Lint (Issue #94)
+          if [ "$INPUT_LINT" = "true" ]; then
+            echo "Linting $nl_file..."
+            LINT_ARGS=(lint "$nl_file")
+            if [ "$INPUT_LINT_STRICT" = "true" ]; then
+              LINT_ARGS+=(--strict)
+            fi
+            if nlsc "${LINT_ARGS[@]}"; then
+              echo "✓ Lint passed"
+            else
+              echo "::error file=$nl_file::Lint found problems"
               exit 1
             fi
           fi

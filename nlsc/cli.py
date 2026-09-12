@@ -2211,6 +2211,105 @@ def cmd_ci(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_lint(args: argparse.Namespace) -> int:
+    """Lint .nl files for intent quality (Issue #94)."""
+    from .lint import RULES, LintConfig, lint_module
+
+    json_output = getattr(args, "json", False)
+
+    if getattr(args, "list_rules", False):
+        if json_output:
+            return _emit_json(
+                "lint",
+                [],
+                rules=[
+                    {"code": rule.code, "name": rule.name, "description": rule.description}
+                    for rule in RULES.values()
+                ],
+            )
+        for rule in RULES.values():
+            print(f"{rule.code}  {rule.name}: {rule.description}")
+        return 0
+
+    if not args.file:
+        diagnostic = cli_parse_error_diagnostic("the following arguments are required: file")
+        if json_output:
+            return _emit_json("lint", [diagnostic], file="<cli>")
+        print(f"Error: {diagnostic.message} [{diagnostic.code}]", file=sys.stderr)
+        print(diagnostic.hint, file=sys.stderr)
+        return 1
+
+    target = Path(args.file)
+    if not target.exists():
+        diagnostic = missing_file_diagnostic(target)
+        if json_output:
+            return _emit_json("lint", [diagnostic], file=str(target))
+        print(f"Error: {diagnostic.message}", file=sys.stderr)
+        return 1
+
+    if target.is_dir():
+        sources = sorted(target.rglob("*.nl"))
+    else:
+        sources = [target]
+
+    if not sources:
+        if json_output:
+            return _emit_json("lint", [], file=str(target), files=0, warnings=0)
+        print(f"No .nl files found under {target}")
+        return 0
+
+    all_diagnostics: list[Diagnostic] = []
+    for source_path in sources:
+        try:
+            nl_file = parse_nl_file_auto(source_path)
+        except ParseError as e:
+            all_diagnostics.append(parse_error_diagnostic(source_path, e))
+            continue
+        config = LintConfig.discover(source_path)
+        all_diagnostics.extend(
+            lint_module(nl_file, file_token=str(source_path), config=config)
+        )
+
+    parse_failures = [d for d in all_diagnostics if d.code == "EPARSE001"]
+    lint_warnings = [d for d in all_diagnostics if d.code.startswith("ELINT")]
+
+    if json_output:
+        status = 0 if not parse_failures else 1
+        return _emit_json(
+            "lint",
+            all_diagnostics,
+            status_code=status,
+            file=str(target),
+            files=len(sources),
+            warnings=len(lint_warnings),
+        )
+
+    by_file: dict[str, list[Diagnostic]] = {}
+    for diagnostic in all_diagnostics:
+        by_file.setdefault(diagnostic.file, []).append(diagnostic)
+    for diagnostic in all_diagnostics:
+        location = f"{diagnostic.file}:{diagnostic.line}" if diagnostic.line else diagnostic.file
+        if diagnostic.code == "EPARSE001":
+            print(f"{location}: {diagnostic.message} [{diagnostic.code}]", file=sys.stderr)
+        else:
+            print(f"{location}: {diagnostic.message} [{diagnostic.code}]")
+
+    if parse_failures:
+        print(
+            f"{len(parse_failures)} file(s) failed to parse",
+            file=sys.stderr,
+        )
+        return 1
+
+    print(
+        f"{len(lint_warnings)} warning(s) across {len(sources)} file(s)"
+        f" ({len(by_file)} with findings)"
+    )
+    if getattr(args, "strict", False) and lint_warnings:
+        return 1
+    return 0
+
+
 def cmd_assoc(args: argparse.Namespace) -> int:
     """Install Windows file association for .nl files"""
     json_output = getattr(args, "json", False)
@@ -2563,6 +2662,23 @@ The conversation is the programming. The .nl file is the receipt.
         "--output", "-o", help="Write the compiled artifact to this path (--compile)"
     )
     ci_parser.set_defaults(command="ci")
+
+    lint_parser = subparsers.add_parser(
+        "lint", help="Lint .nl files for intent quality (Issue #94)"
+    )
+    lint_parser.add_argument(
+        "file", nargs="?", help="Input .nl file or directory"
+    )
+    lint_parser.add_argument(
+        "--json", action="store_true", help="Emit structured JSON diagnostics."
+    )
+    lint_parser.add_argument(
+        "--strict", action="store_true", help="Exit 1 when any warning is found"
+    )
+    lint_parser.add_argument(
+        "--list-rules", action="store_true", help="List every lint rule and exit"
+    )
+    lint_parser.set_defaults(command="lint")
     verify_parser = subparsers.add_parser("verify", help="Verify .nl file")
     verify_parser.add_argument(
         "--strict",
@@ -2786,6 +2902,8 @@ The conversation is the programming. The .nl file is the receipt.
         return cmd_ir(args)
     elif args.command == "ci":
         return cmd_ci(args)
+    elif args.command == "lint":
+        return cmd_lint(args)
     elif args.command == "verify":
         return cmd_verify(args)
     elif args.command == "explain":

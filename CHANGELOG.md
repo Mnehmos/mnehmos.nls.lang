@@ -28,6 +28,13 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- `nlsc lint <file|dir>` — semantic intent-quality linter with twelve rules
+  (`ELINT001`–`ELINT012`: guards for inputs, test coverage, invariants for
+  types, unguarded division/indexing/optionals, implicit mutation, module
+  version, long LOGIC, nested conditionals, input coverage, typed guard
+  errors). Warnings by default, `--strict` for CI, `--list-rules`, JSON
+  output, rules disabled via `.nlslintrc`/`nls.toml`, findings reported as
+  LSP warnings, and a `lint` input on the GitHub Action.
 - Performance: fixed quadratic dependency resolution (a 2000-ANLU compile
   went from 470 s to 4 s), bulk lockfile hashing lowers the module once
   per file instead of once per ANLU, and function extraction from emitted

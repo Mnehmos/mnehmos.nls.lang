@@ -554,6 +554,7 @@ with causes and next steps.
 | `ESEM012` | Guard error identity | [Effects and failure contracts](#effects-and-failure-contracts) |
 | `ESEM013` | Module/file name shadows a host stdlib module | [File Structure](#file-structure) |
 | `EVER001`, `EVER002` | Declared `@nls` revision compatibility | [Directives](#directives) |
+| `ELINT001`–`ELINT012` | Intent quality (`nlsc lint`; warnings unless `--strict`) | [Semantics](#semantics-what-the-compiler-guarantees) |
 
 ---
 

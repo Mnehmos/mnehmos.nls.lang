@@ -249,6 +249,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
             "lock:check",
             "lock:update",
             "ir",
+            "lint",
         ),
         common_causes=(
             "A required directive or section is malformed or missing.",
@@ -279,6 +280,7 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
             "lock:check",
             "lock:update",
             "ir",
+            "lint",
         ),
         common_causes=(
             "`--parser treesitter` was requested, but the optional tree-sitter dependency is not installed.",
@@ -838,6 +840,80 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         ),
     ),
 }
+
+
+# Lint rules (`nlsc lint`, Issue #94) share the ELINT prefix; entries are
+# generated from a compact table so `nlsc explain ELINT00N` works without
+# the linter being importable from this module.
+_LINT_RULE_CATALOG: dict[str, tuple[str, str]] = {
+    "ELINT001": (
+        "Inputs without guards",
+        "An ANLU declares INPUTS but no GUARDS, so invalid inputs are unspecified.",
+    ),
+    "ELINT002": (
+        "Inputs without tests",
+        "An ANLU declares INPUTS but has no @test/@property coverage.",
+    ),
+    "ELINT003": (
+        "Type without invariant",
+        "An @type has no @invariant stating what must always hold for it.",
+    ),
+    "ELINT004": (
+        "Unguarded division",
+        "Division or modulo uses a divisor with no zero/non-zero guard.",
+    ),
+    "ELINT005": (
+        "Unguarded list indexing",
+        "A list input is indexed without a length guard.",
+    ),
+    "ELINT006": (
+        "Optional used without nil check",
+        "An optional input feeds arithmetic without an is-not-None guard or IF/ELSE.",
+    ),
+    "ELINT007": (
+        "Implicit mutation",
+        "Augmented assignment mutates a binding; checked bindings are immutable.",
+    ),
+    "ELINT008": (
+        "Missing module version",
+        "The module does not declare @version.",
+    ),
+    "ELINT009": (
+        "Long LOGIC sequence",
+        "LOGIC exceeds ten steps; consider decomposition into smaller ANLUs.",
+    ),
+    "ELINT010": (
+        "Nested conditional syntax",
+        "A step nests IF/THEN inside its action; nested conditionals are not executable syntax.",
+    ),
+    "ELINT011": (
+        "Input not covered by tests",
+        "An input is never referenced by the ANLU's test cases.",
+    ),
+    "ELINT012": (
+        "Untyped guard",
+        "A guard has no typed error; write condition -> ErrorType(\"message\").",
+    ),
+}
+
+for _lint_code, (_lint_title, _lint_summary) in _LINT_RULE_CATALOG.items():
+    ERROR_CATALOG.setdefault(
+        _lint_code,
+        ErrorDefinition(
+            code=_lint_code,
+            title=_lint_title,
+            summary=_lint_summary,
+            emitted_by=("lint",),
+            common_causes=(
+                "The specification is incomplete or relies on implicit assumptions.",
+                "The rule is intentional here and should be disabled in .nlslintrc.",
+            ),
+            next_steps=(
+                "Address the finding, or list the code under [lint] disable in nls.toml / .nlslintrc.",
+                "Run `nlsc lint --list-rules` to see every rule.",
+            ),
+        ),
+    )
 
 
 def get_error_definition(code: str) -> ErrorDefinition | None:
