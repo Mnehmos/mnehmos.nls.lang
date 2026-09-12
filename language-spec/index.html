@@ -2735,7 +2735,9 @@ never treated as proof of type safety. <code>integer</code> values are accepted 
 message or adding a foreign call invalidates the affected entries and their
 callers. Portability: guard failures raise the same <code>ValueError</code>-style
 identity with the same message on Python and TypeScript; non-builtin error
-types get generated classes on both targets.</p>
+types get generated classes on both targets. A declared error code is part
+of that identity and is observable as <code>.code</code> on the raised error on both
+targets.</p>
 <h3 id="execution-and-analysis-are-separate">Execution and analysis are separate<a class="headerlink" href="#execution-and-analysis-are-separate" title="Permanent link">&para;</a></h3>
 <p>The emitters execute LOGIC <strong>sequentially</strong>; <code>nlsc graph</code> displays
 data-dependency layers, and a layer is labeled <code>parallel-eligible</code> only when
