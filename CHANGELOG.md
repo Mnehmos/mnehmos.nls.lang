@@ -28,7 +28,11 @@ see what affects their `.nl` files and what only affects tooling. See
   Implementing an ANLU with a `@literal` block still satisfies the
   contract. *(0.1)*
 - Guard error types must be builtins or declared `@type`s (`ESEM012`);
-  non-builtin error classes are generated on both targets.
+  non-builtin error classes are generated on both targets, and a declared
+  error code is now executable on both: it travels as `.code` on the
+  raised error with the message as the sole argument, instead of a
+  Python-only tuple argument. The Python semantics marker moves to
+  `py-2`. *(0.1)*
 
 ### Toolchain
 
@@ -40,7 +44,7 @@ see what affects their `.nl` files and what only affects tooling. See
   moves to `ts-2`, so existing `ts-1` locks must be regenerated
   (`ELOCK004`).
 - Emitter semantics markers in lock identity (Issue #202): every locked
-  target records a `semantics_version` (`py-1`, `ts-2`) naming the backend
+  target records a `semantics_version` (`py-2`, `ts-2`) naming the backend
   semantics revision that produced it, and `nlsc compile --frozen-lockfile`
   / `nlsc ci --compile` refuse a mismatched marker with `ELOCK004` plus a
   regenerate-and-commit hint. Lockfiles without a marker stay compatible.

@@ -18,6 +18,7 @@ class ExecutionResult:
     exception: Exception | None = None
     exception_type: str | None = None
     exception_message: str | None = None
+    exception_code: str | None = None
     side_effects: list[str] = field(default_factory=list)
 
     @classmethod
@@ -33,6 +34,7 @@ class ExecutionResult:
             exception=exc,
             exception_type=type(exc).__name__,
             exception_message=str(exc),
+            exception_code=getattr(exc, "code", None),
         )
 
 

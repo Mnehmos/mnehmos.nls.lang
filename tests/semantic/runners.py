@@ -249,6 +249,7 @@ class TypeScriptRunner:
                     exception=None,
                     exception_type=payload.get("name", "Error"),
                     exception_message=payload.get("message", ""),
+                    exception_code=payload.get("code"),
                 )
         stderr = completed.stderr.strip() or completed.stdout.strip()
         return ExecutionResult.from_exception(
@@ -275,7 +276,7 @@ class TypeScriptRunner:
             + "  const __nls_out = __nls_value === undefined ? null : __nls_value;\n"
             + '  console.log("__NLS_RESULT__" + JSON.stringify({ ok: true, value: __nls_out }));\n'
             + "} catch (e) {\n"
-            + '  console.log("__NLS_RESULT__" + JSON.stringify({ ok: false, name: (e as Error).name ?? "Error", message: (e as Error).message ?? String(e) }));\n'
+            + '  console.log("__NLS_RESULT__" + JSON.stringify({ ok: false, name: (e as Error).name ?? "Error", message: (e as Error).message ?? String(e), code: (e as any).code ?? null }));\n'
             + "}\n"
         )
         return self._run_node(code, driver)
@@ -302,7 +303,7 @@ class TypeScriptRunner:
             + f"  const __nls_value = make_{class_name}({keys});\n"
             + '  console.log("__NLS_RESULT__" + JSON.stringify({ ok: true, value: __nls_value }));\n'
             + "} catch (e) {\n"
-            + '  console.log("__NLS_RESULT__" + JSON.stringify({ ok: false, name: (e as Error).name ?? "Error", message: (e as Error).message ?? String(e) }));\n'
+            + '  console.log("__NLS_RESULT__" + JSON.stringify({ ok: false, name: (e as Error).name ?? "Error", message: (e as Error).message ?? String(e), code: (e as any).code ?? null }));\n'
             + "}\n"
         )
         return self._run_node(code, driver)
