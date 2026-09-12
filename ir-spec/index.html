@@ -1721,7 +1721,7 @@
 <ul>
 <li>Schema module: <code>nlsc/ir.py</code></li>
 <li>Deterministic lowering: <code>nlsc/lowering.py</code> (shared by both parser backends)</li>
-<li>CLI: <code>nlsc ir &lt;file.nl&gt;</code> (canonical text), <code>nlsc ir &lt;file.nl&gt; --json</code> (JSON form)</li>
+<li>CLI: <code>nlsc ir &lt;file.nl&gt;</code> (canonical text), <code>nlsc ir &lt;file.nl&gt; --json</code> (JSON form), <code>nlsc ir &lt;file.nl&gt; --check</code> (backend-free validation: shared semantic gate plus checked-emission eligibility; exit 1 with <code>EIR003</code> blockers when the spec is not valid checked IR)</li>
 </ul>
 <h2 id="design-rules">Design rules<a class="headerlink" href="#design-rules" title="Permanent link">&para;</a></h2>
 <ol>
