@@ -1085,6 +1085,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#target-capability-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Target capability matrix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#not-yet-implemented-tracked" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2234,6 +2245,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#target-capability-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Target capability matrix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#not-yet-implemented-tracked" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2717,6 +2739,41 @@ block checked emission (<code>EIR003</code>):</p>
 <td>Declared return type without a value</td>
 <td><code>RETURNS: number</code> alone</td>
 <td><code>EIR004</code>; return the value or <code>none</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="target-capability-matrix">Target capability matrix<a class="headerlink" href="#target-capability-matrix" title="Permanent link">&para;</a></h3>
+<p>Compiling to a target that cannot represent content fails explicitly
+(<code>ETARGET002</code>) instead of silently dropping it (#202). Dropped program
+content is fatal in every mode; dropped test coverage is strict-only.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Python</th>
+<th>TypeScript</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>@literal</code> blocks</td>
+<td>yes</td>
+<td><strong>no</strong> — fatal to compile</td>
+</tr>
+<tr>
+<td><code>@main</code> block</td>
+<td>yes</td>
+<td><strong>no</strong> — fatal to compile</td>
+</tr>
+<tr>
+<td><code>@property</code> specifications</td>
+<td>yes</td>
+<td><strong>no</strong> — strict-only warning</td>
+</tr>
+<tr>
+<td><code>@test</code> blocks, guards, constraints, invariants, edge cases</td>
+<td>yes</td>
+<td>yes</td>
 </tr>
 </tbody>
 </table>
