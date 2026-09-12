@@ -28,6 +28,15 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- Distribution contract (Issue #224): `.mnehmos/tool.json` declares the
+  PyPI package/entry point, install commands, capabilities (targets, LSP
+  features, quality gates), and workspace actions;
+  `scripts/nls_workspace.py` implements the workspace workflow (isolated
+  venv bootstrap from PyPI or a built wheel, health, verify, test, and
+  sample compilation, all JSON). CI gains a `distribution` job that
+  validates a workspace bootstrapped **from the built wheel** on every
+  PR, and `publish.yml` validates the artifacts and attests build
+  provenance before publishing.
 - `nlsc provenance <file>` — edit provenance (Issue #93): record whether
   a revision came from a human, LLM, or tool with an optional model and
   conversation id, read/clear the sidecar (`<file>.nl.provenance.json`,

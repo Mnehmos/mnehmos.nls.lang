@@ -1,6 +1,7 @@
 # Natural Language Source (NLS)
 
 [![PyPI](https://img.shields.io/pypi/v/nlsc)](https://pypi.org/project/nlsc/)
+[![PyPI downloads](https://img.shields.io/pepy/dt/nlsc)](https://pepy.tech/project/nlsc)
 [![Tests](https://img.shields.io/badge/tests-239%20passing-brightgreen)](https://github.com/Mnehmos/mnehmos.nls.lang)
 [![CI](https://github.com/Mnehmos/mnehmos.nls.lang/actions/workflows/ci.yml/badge.svg)](https://github.com/Mnehmos/mnehmos.nls.lang/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](https://www.python.org)
@@ -25,6 +26,12 @@ git clone https://github.com/Mnehmos/mnehmos.nls.lang.git
 cd mnehmos.nls.lang
 pip install -e ".[dev,treesitter]"
 ```
+
+The distribution contract (PyPI-first, Trusted Publishing, and the
+machine-readable workspace manifest used by tooling dashboards) lives in
+[.mnehmos/tool.json](.mnehmos/tool.json); see
+[docs/distribution.md](docs/distribution.md) for the workspace workflow
+and release flow.
 
 ### Windows File Association
 
