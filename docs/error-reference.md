@@ -109,9 +109,9 @@ Raised when `nlsc atomize --json` hits an unexpected read/extract/write failure,
 
 ### `EPARSE001` - Parse error
 
-Raised when the parser rejects the `.nl` source, including watch-triggered recompiles after `nlsc watch` has already started.
+Raised when the parser rejects the `.nl` source, including watch-triggered recompiles after `nlsc watch` has already started. Sources reported as unparsed content were recovered by the tree-sitter grammar into an `ERROR` node: the message quotes the offending text instead of dropping the section, which would silently strip an ANLU's INPUTS, LOGIC, and RETURNS.
 
-**Fix:** Use the reported line number, correct the syntax, then rerun `nlsc verify <file>`.
+**Fix:** Use the reported line number, correct the syntax, then rerun `nlsc verify <file>`. Rewrite sections the message quotes using the documented spelling (for example `list of number` rather than `list[number]`).
 
 ### `EPARSE002` - Parser backend unavailable
 

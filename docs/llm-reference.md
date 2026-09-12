@@ -838,6 +838,7 @@ Understanding how NLS compiles to Python:
 | `Invalid ANLU identifier` | Wrong naming format | Use kebab-case |
 | `Missing PURPOSE section` | ANLU has no PURPOSE | Add `PURPOSE: description` |
 | `Missing RETURNS section` | ANLU has no RETURNS | Add `RETURNS: expression` |
+| `Unparsed content: ...` | The grammar could not parse a section (e.g. a bracketed type like `list[number]`) | Use the documented spelling (`list of number`) and rerun |
 
 ### Resolution Errors
 

@@ -1329,14 +1329,7 @@ def emit_python(
             lines.append("")
 
     # Extract function names defined in literal blocks to avoid duplicates
-    literal_functions = set()
-    if nl_file.literals:
-        for literal in nl_file.literals:
-            # Find all "def funcname(" patterns
-            for match in re.finditer(
-                rf"^def\s+({IDENTIFIER_PATTERN})\s*\(", literal, re.MULTILINE
-            ):
-                literal_functions.add(match.group(1))
+    literal_functions = nl_file.literal_function_names()
 
     # Emit each ANLU in dependency order, skipping those overridden by literal blocks
     ordered = nl_file.dependency_order()

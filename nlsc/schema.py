@@ -582,6 +582,22 @@ class NLFile:
                 return anlu
         return None
 
+    def literal_function_names(self) -> set[str]:
+        """Function names defined by ``@literal`` blocks.
+
+        Those ANLUs carry a verbatim implementation from the literal block,
+        so the shared contract checks treat them as implemented even when the
+        ANLU declares no RETURNS (issue #202).  Kept here so the emitter and
+        the semantic gate cannot drift apart on which ANLUs are covered.
+        """
+        names: set[str] = set()
+        for literal in self.literals:
+            for match in re.finditer(
+                r"^def\s+([^\W\d]\w*)\s*\(", literal, re.MULTILINE
+            ):
+                names.add(match.group(1))
+        return names
+
     def dependency_order(self) -> list[ANLU]:
         """Return ANLUs in topological order based on dependencies"""
         # Simple implementation - assumes no circular deps for V0

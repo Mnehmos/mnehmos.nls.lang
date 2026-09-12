@@ -44,6 +44,7 @@ EIR001 = "EIR001"
 EIR002 = "EIR002"
 EIR003 = "EIR003"
 EIR004 = "EIR004"
+EIR005 = "EIR005"
 ESEM001 = "ESEM001"
 ESEM002 = "ESEM002"
 ESEM003 = "ESEM003"
@@ -927,6 +928,20 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Resolve the reported foreign nodes by rewriting or declaring them @literal.",
             "Rerun lowering and confirm no EIR002 diagnostics remain before requesting checked emission.",
+        ),
+    ),
+    EIR005: ErrorDefinition(
+        code=EIR005,
+        title="ANLU without a result contract",
+        summary="An ANLU declares no RETURNS value, so the module has no executable result contract for that operation and emitting a function body would invent behavior the specification never stated.",
+        emitted_by=("verify", "compile", "run", "test", "watch", "ci"),
+        common_causes=(
+            "The RETURNS section is missing or empty for an ANLU that is not implemented with @literal.",
+            "An atomized or LLM-drafted ANLU kept its PURPOSE and LOGIC but lost the RETURNS line.",
+        ),
+        next_steps=(
+            "Declare the computed result (for example 'RETURNS: total') or 'RETURNS: none'.",
+            "When the body must be verbatim code, implement the ANLU with a @literal python { ... } block.",
         ),
     ),
 }

@@ -311,6 +311,11 @@ def parse_error_diagnostic(path: Path, error: ParseError) -> Diagnostic:
         hint = "Rewrite the line as an INPUTS bullet using -, *, or •."
     elif "Invalid GUARDS bullet marker" in message:
         hint = "Rewrite the line as a GUARDS bullet using -, *, or •."
+    elif "Unparsed content" in message:
+        hint = (
+            "Rewrite the reported section with supported syntax "
+            "(for example 'list of number' rather than 'list[number]')."
+        )
 
     return Diagnostic(
         code=EPARSE001,

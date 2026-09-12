@@ -14,7 +14,7 @@ from .parser import parse_nl_file, ParseError
 from .resolver import ResolutionError, resolve_dependencies
 from .schema import ANLU, NLFile
 from .diagnostics import Diagnostic
-from .error_catalog import EIR002, EIR004
+from .error_catalog import EIR002, EIR004, EIR005
 from .ir import ForeignExpr, operation_unchecked_nodes
 from .stdlib_resolver import (
     ResolvedUse,
@@ -226,6 +226,7 @@ def evaluate_executable_contract(
     diagnostics: list[Diagnostic] = []
     scaffold: set[str] = set()
     declared_types = {t.name for t in nl_file.module.types}
+    literal_functions = nl_file.literal_function_names()
 
     for anlu in nl_file.anlus:
         operation, op_diagnostics = lower_anlu(anlu, declared_types)
@@ -235,12 +236,16 @@ def evaluate_executable_contract(
         if operation_unchecked_nodes(operation):
             scaffold.add(anlu.identifier)
 
+        literal_implemented = bool(operation.literal) or (
+            anlu.python_name in literal_functions
+        )
+
         if (
             operation.result is not None
             and operation.result.declared_type is not None
             and operation.result.value is None
             and operation.result.declared_type.name not in ("void",)
-            and not operation.literal
+            and not literal_implemented
         ):
             diagnostics.append(
                 Diagnostic(
@@ -254,6 +259,25 @@ def evaluate_executable_contract(
                         "a default value would be invented"
                     ),
                     hint="Return the computed value (e.g. 'RETURNS: total') or declare 'RETURNS: none'.",
+                )
+            )
+            scaffold.add(anlu.identifier)
+
+        if not (anlu.returns or "").strip() and not literal_implemented:
+            diagnostics.append(
+                Diagnostic(
+                    code=EIR005,
+                    file=file_token,
+                    line=anlu.line_number or None,
+                    col=None,
+                    message=(
+                        f"{anlu.identifier}: no RETURNS contract; emitting a "
+                        "default would invent behavior the specification never stated"
+                    ),
+                    hint=(
+                        "Declare the computed result (e.g. 'RETURNS: total'), "
+                        "'RETURNS: none', or implement the ANLU with @literal."
+                    ),
                 )
             )
             scaffold.add(anlu.identifier)
@@ -282,9 +306,9 @@ class SemanticGateResult:
     - ``strict_only``: contract drift (argument types, DEPENDS drift,
       undeclared foreign calls).  Fatal under ``--strict``, warnings
       otherwise.
-    - ``scaffold_warnings``: unresolved executable content (EIR002/EIR004)
-      from the #190 contract.  Fatal under ``--strict``; in default mode
-      the artifact compiles marked as an incomplete scaffold.
+    - ``scaffold_warnings``: unresolved executable content (EIR002/EIR004/
+      EIR005) from the #190 contract.  Fatal under ``--strict``; in
+      default mode the artifact compiles marked as an incomplete scaffold.
     """
 
     fatal: list[Diagnostic]

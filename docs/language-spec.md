@@ -510,6 +510,7 @@ block checked emission (`EIR003`):
 | Dict/set literals | `{"a": 1}` | Foreign |
 | Prose with executable intent | `Process payment -> pay` | `EIR002`; rewrite as a call or `@literal` |
 | Declared return type without a value | `RETURNS: number` alone | `EIR004`; return the value or `none` |
+| ANLU with no result contract | `[checkout]` with no `RETURNS` | `EIR005`; declare the value, `none`, or implement it with `@literal` |
 
 ### Target capability matrix
 
@@ -554,8 +555,8 @@ with causes and next steps.
 
 | Code family | Rule | Section |
 | --- | --- | --- |
-| `EPARSE001` | Surface syntax, step numbering (duplicate step numbers name both lines) | [LOGIC](#logic), [ANLU Blocks](#anlu-blocks) |
-| `EIR001`–`EIR004` | Structural lowering: tokenization, foreign constructs, declared-type returns | [Unsupported and out of scope](#unsupported-and-out-of-scope) |
+| `EPARSE001` | Surface syntax (including sections the grammar cannot parse, reported as unparsed content), step numbering (duplicate step numbers name both lines) | [LOGIC](#logic), [ANLU Blocks](#anlu-blocks) |
+| `EIR001`–`EIR005` | Structural lowering: tokenization, foreign constructs, declared-type returns, missing result contract | [Unsupported and out of scope](#unsupported-and-out-of-scope) |
 | `ESEM001`, `ESEM002`, `ESEM009` | Call resolution and arity | [Type checking](#type-checking) |
 | `ESEM003` | Argument types | [Type checking](#type-checking) |
 | `ESEM004`, `ESEM011` | Binding definition and immutability | [Bindings, branches, and guards](#bindings-branches-and-guards) |
