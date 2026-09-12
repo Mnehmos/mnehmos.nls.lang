@@ -10,29 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://mnehmos.github.io/mnehmos.nls.lang/">
+        <link rel="canonical" href="https://mnehmos.github.io/mnehmos.nls.lang/distribution/">
       
       
+        <link rel="prev" href="../performance/">
       
-        <link rel="next" href="quickstart/">
+      
+        <link rel="next" href="../provenance/">
       
       
         
       
       
-      <link rel="icon" href="assets/favicon.png">
+      <link rel="icon" href="../assets/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>NLS Compiler</title>
+        <title>Distribution & Workspace - NLS Compiler</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -51,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="stylesheets/custom.css">
+      <link rel="stylesheet" href="../stylesheets/custom.css">
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#nls-compiler" class="md-skip">
+        <a href="#distribution-and-the-workspace-contract" class="md-skip">
           Skip to content
         </a>
       
@@ -94,9 +96,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="NLS Compiler" class="md-header__button md-logo" aria-label="NLS Compiler" data-md-component="logo">
+    <a href=".." title="NLS Compiler" class="md-header__button md-logo" aria-label="NLS Compiler" data-md-component="logo">
       
-  <img src="assets/logo.svg" alt="logo">
+  <img src="../assets/logo.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -113,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Home
+              Distribution & Workspace
             
           </span>
         </div>
@@ -231,9 +233,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="NLS Compiler" class="md-nav__button md-logo" aria-label="NLS Compiler" data-md-component="logo">
+    <a href=".." title="NLS Compiler" class="md-nav__button md-logo" aria-label="NLS Compiler" data-md-component="logo">
       
-  <img src="assets/logo.svg" alt="logo">
+  <img src="../assets/logo.svg" alt="logo">
 
     </a>
     NLS Compiler
@@ -257,37 +259,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Home
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -303,92 +278,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#why-nls" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why NLS?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Example
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Installation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#project-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Project Status
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#get-started" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Get Started
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-links" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Links
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -400,7 +289,7 @@
   
   
     <li class="md-nav__item">
-      <a href="quickstart/" class="md-nav__link">
+      <a href="../quickstart/" class="md-nav__link">
         
   
   
@@ -427,7 +316,7 @@
   
   
     <li class="md-nav__item">
-      <a href="getting-started/" class="md-nav__link">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
@@ -508,7 +397,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/" class="md-nav__link">
+      <a href="../tutorials/" class="md-nav__link">
         
   
   
@@ -536,7 +425,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/first-module/" class="md-nav__link">
+      <a href="../tutorials/first-module/" class="md-nav__link">
         
   
   
@@ -564,7 +453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/working-with-types/" class="md-nav__link">
+      <a href="../tutorials/working-with-types/" class="md-nav__link">
         
   
   
@@ -592,7 +481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/testing-guide/" class="md-nav__link">
+      <a href="../tutorials/testing-guide/" class="md-nav__link">
         
   
   
@@ -620,7 +509,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/patterns/" class="md-nav__link">
+      <a href="../tutorials/patterns/" class="md-nav__link">
         
   
   
@@ -709,7 +598,7 @@
   
   
     <li class="md-nav__item">
-      <a href="language-spec/" class="md-nav__link">
+      <a href="../language-spec/" class="md-nav__link">
         
   
   
@@ -737,7 +626,7 @@
   
   
     <li class="md-nav__item">
-      <a href="type-system/" class="md-nav__link">
+      <a href="../type-system/" class="md-nav__link">
         
   
   
@@ -765,7 +654,7 @@
   
   
     <li class="md-nav__item">
-      <a href="core-semantics/" class="md-nav__link">
+      <a href="../core-semantics/" class="md-nav__link">
         
   
   
@@ -793,7 +682,7 @@
   
   
     <li class="md-nav__item">
-      <a href="ir-spec/" class="md-nav__link">
+      <a href="../ir-spec/" class="md-nav__link">
         
   
   
@@ -821,7 +710,7 @@
   
   
     <li class="md-nav__item">
-      <a href="examples/" class="md-nav__link">
+      <a href="../examples/" class="md-nav__link">
         
   
   
@@ -910,7 +799,7 @@
   
   
     <li class="md-nav__item">
-      <a href="case-studies/quicksort/" class="md-nav__link">
+      <a href="../case-studies/quicksort/" class="md-nav__link">
         
   
   
@@ -942,8 +831,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -954,13 +845,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
         
           
           <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
@@ -981,7 +870,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -999,7 +888,7 @@
   
   
     <li class="md-nav__item">
-      <a href="cli-reference/" class="md-nav__link">
+      <a href="../cli-reference/" class="md-nav__link">
         
   
   
@@ -1027,7 +916,7 @@
   
   
     <li class="md-nav__item">
-      <a href="security/" class="md-nav__link">
+      <a href="../security/" class="md-nav__link">
         
   
   
@@ -1055,7 +944,7 @@
   
   
     <li class="md-nav__item">
-      <a href="performance/" class="md-nav__link">
+      <a href="../performance/" class="md-nav__link">
         
   
   
@@ -1080,10 +969,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="distribution/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Distribution & Workspace
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1099,6 +1015,70 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#manifest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manifest
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workspace-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workspace workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#release-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Versioning
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1111,7 +1091,7 @@
   
   
     <li class="md-nav__item">
-      <a href="provenance/" class="md-nav__link">
+      <a href="../provenance/" class="md-nav__link">
         
   
   
@@ -1139,7 +1119,7 @@
   
   
     <li class="md-nav__item">
-      <a href="versioning/" class="md-nav__link">
+      <a href="../versioning/" class="md-nav__link">
         
   
   
@@ -1167,7 +1147,7 @@
   
   
     <li class="md-nav__item">
-      <a href="llm-reference/" class="md-nav__link">
+      <a href="../llm-reference/" class="md-nav__link">
         
   
   
@@ -1195,7 +1175,7 @@
   
   
     <li class="md-nav__item">
-      <a href="error-reference/" class="md-nav__link">
+      <a href="../error-reference/" class="md-nav__link">
         
   
   
@@ -1223,7 +1203,7 @@
   
   
     <li class="md-nav__item">
-      <a href="os-integration/" class="md-nav__link">
+      <a href="../os-integration/" class="md-nav__link">
         
   
   
@@ -1251,7 +1231,7 @@
   
   
     <li class="md-nav__item">
-      <a href="parser-performance/" class="md-nav__link">
+      <a href="../parser-performance/" class="md-nav__link">
         
   
   
@@ -1279,7 +1259,7 @@
   
   
     <li class="md-nav__item">
-      <a href="antigravity_prompt/" class="md-nav__link">
+      <a href="../antigravity_prompt/" class="md-nav__link">
         
   
   
@@ -1368,7 +1348,7 @@
   
   
     <li class="md-nav__item">
-      <a href="design/issue-90-use-directives/" class="md-nav__link">
+      <a href="../design/issue-90-use-directives/" class="md-nav__link">
         
   
   
@@ -1396,7 +1376,7 @@
   
   
     <li class="md-nav__item">
-      <a href="design/issue-93-edit-provenance/" class="md-nav__link">
+      <a href="../design/issue-93-edit-provenance/" class="md-nav__link">
         
   
   
@@ -1424,7 +1404,7 @@
   
   
     <li class="md-nav__item">
-      <a href="architecture/" class="md-nav__link">
+      <a href="../architecture/" class="md-nav__link">
         
   
   
@@ -1452,7 +1432,7 @@
   
   
     <li class="md-nav__item">
-      <a href="nl-grammar.ebnf" class="md-nav__link">
+      <a href="../nl-grammar.ebnf" class="md-nav__link">
         
   
   
@@ -1507,10 +1487,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#why-nls" class="md-nav__link">
+  <a href="#manifest" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why NLS?
+        Manifest
       
     </span>
   </a>
@@ -1518,10 +1498,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-example" class="md-nav__link">
+  <a href="#workspace-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Example
+        Workspace workflow
       
     </span>
   </a>
@@ -1529,10 +1509,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#release-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation
+        Release flow
       
     </span>
   </a>
@@ -1540,32 +1520,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#project-status" class="md-nav__link">
+  <a href="#versioning" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Project Status
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#get-started" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Get Started
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-links" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Links
+        Versioning
       
     </span>
   </a>
@@ -1592,175 +1550,62 @@
   
 
 
-<h1 id="nls-compiler">NLS Compiler<a class="headerlink" href="#nls-compiler" title="Permanent link">&para;</a></h1>
-<blockquote>
-<p><strong>The source is natural language. The compiled artifact can be Python or TypeScript.</strong></p>
-</blockquote>
-<p>NLS is a programming language where specifications are written in natural language that anyone can read—managers, auditors, domain experts—not just programmers. The <code>nlsc</code> compiler translates <code>.nl</code> files into executable Python or TypeScript with type hints, validation, and documentation.</p>
-<h2 id="why-nls">Why NLS?<a class="headerlink" href="#why-nls" title="Permanent link">&para;</a></h2>
+<h1 id="distribution-and-the-workspace-contract">Distribution and the Workspace Contract<a class="headerlink" href="#distribution-and-the-workspace-contract" title="Permanent link">&para;</a></h1>
+<p><code>nlsc</code> ships on PyPI and is the canonical implementation; the dashboard
+contract lives in <a href="../.mnehmos/tool.json"><code>.mnehmos/tool.json</code></a> so a
+distribution dashboard can discover, install, exercise, and health-check
+the toolchain entirely from machine-readable metadata.</p>
+<h2 id="manifest">Manifest<a class="headerlink" href="#manifest" title="Permanent link">&para;</a></h2>
+<p><code>.mnehmos/tool.json</code> declares:</p>
 <ul>
-<li><strong>Readable by everyone</strong> — Non-programmers can review business logic</li>
-<li><strong>Auditable</strong> — Clear mapping from intent to implementation</li>
-<li><strong>Testable</strong> — Specifications include test cases</li>
-<li><strong>Versionable</strong> — Lock files ensure reproducibility</li>
-<li><strong>Toolable</strong> — Tree-sitter grammar enables IDE support</li>
+<li><strong>distribution</strong> — PyPI package <code>nlsc</code>, entry point, version command,
+  Python requirement, install commands (plain / treesitter / workspace
+  with pytest), publishing provenance (PyPI Trusted Publishing via
+  <code>.github/workflows/publish.yml</code>), and the npm policy (a thin bootstrap
+  is possible in the future; the compiler is never forked to npm).</li>
+<li><strong>workspace</strong> — the workspace script and its actions, with the layout
+  (<code>.venv</code>, <code>sample/src</code>, <code>sample/build</code>).</li>
+<li><strong>commands</strong> — build, test, lint, typecheck, watch, start, health.</li>
+<li><strong>capabilities</strong> — targets (python, typescript), the language server
+  command plus its features (diagnostics, lint, formatting, hover,
+  completion, definition, references), quality gates, and the
+  IR/provenance interchange commands.</li>
+<li><strong>paths</strong> — where specs live and which artifacts are generated.</li>
 </ul>
-<h2 id="quick-example">Quick Example<a class="headerlink" href="#quick-example" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>@module calculator
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>@target python
+<h2 id="workspace-workflow">Workspace workflow<a class="headerlink" href="#workspace-workflow" title="Permanent link">&para;</a></h2>
+<p><code>scripts/nls_workspace.py</code> implements the manifest contract with JSON
+output for every action:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Isolated workspace: venv + nlsc (from PyPI, or a built wheel) + sample spec</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>python<span class="w"> </span>scripts/nls_workspace.py<span class="w"> </span>bootstrap<span class="w"> </span>--root<span class="w"> </span>.nls-workspace<span class="w">     </span>--install-from<span class="w"> </span>dist/nlsc-0.2.5-py3-none-any.whl
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>[divide]
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>PURPOSE: Divide two numbers safely
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>INPUTS:
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  - numerator: number
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  - divisor: number
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>GUARDS:
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>  - divisor must not be zero -&gt; ValueError("Cannot divide by zero")
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>RETURNS: numerator / divisor
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>python<span class="w"> </span>scripts/nls_workspace.py<span class="w"> </span>health<span class="w">        </span>--root<span class="w"> </span>.nls-workspace<span class="w"> </span>--json
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>python<span class="w"> </span>scripts/nls_workspace.py<span class="w"> </span>verify<span class="w">        </span>--root<span class="w"> </span>.nls-workspace<span class="w"> </span>--json
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>python<span class="w"> </span>scripts/nls_workspace.py<span class="w"> </span><span class="nb">test</span><span class="w">          </span>--root<span class="w"> </span>.nls-workspace<span class="w"> </span>--json
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>python<span class="w"> </span>scripts/nls_workspace.py<span class="w"> </span>compile-sample<span class="w"> </span>--root<span class="w"> </span>.nls-workspace<span class="w"> </span>--json
 </span></code></pre></div>
-<p>Compiles to:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">divide</span><span class="p">(</span><span class="n">numerator</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">divisor</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="sd">"""Divide two numbers safely."""</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="k">if</span> <span class="n">divisor</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Cannot divide by zero"</span><span class="p">)</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="k">return</span> <span class="n">numerator</span> <span class="o">/</span> <span class="n">divisor</span>
-</span></code></pre></div>
-<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">pip</label><label for="__tabbed_1_2">pip (with tree-sitter)</label><label for="__tabbed_1_3">VS Code</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pip<span class="w"> </span>install<span class="w"> </span>nlsc
-</span></code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"nlsc[treesitter]"</span>
-</span></code></pre></div>
-</div>
-<div class="tabbed-block">
-<p>Search "NLS" in Extensions, or:
-<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>ext install mnehmos.nls-language
-</span></code></pre></div></p>
-</div>
-</div>
-</div>
-<h2 id="project-status">Project Status<a class="headerlink" href="#project-status" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Component</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Parser (regex)</td>
-<td>✅ Complete</td>
-</tr>
-<tr>
-<td>Parser (tree-sitter)</td>
-<td>✅ Complete</td>
-</tr>
-<tr>
-<td>Python emitter</td>
-<td>✅ Complete</td>
-</tr>
-<tr>
-<td>Type generation</td>
-<td>✅ Complete</td>
-</tr>
-<tr>
-<td>Guard validation</td>
-<td>✅ Complete</td>
-</tr>
-<tr>
-<td>Dataflow analysis</td>
-<td>✅ Complete</td>
-</tr>
-<tr>
-<td>Test runner</td>
-<td>✅ Complete</td>
-</tr>
-<tr>
-<td>Property-based testing</td>
-<td>✅ Complete</td>
-</tr>
-<tr>
-<td>Type invariants</td>
-<td>✅ Complete</td>
-</tr>
-<tr>
-<td>Watch mode</td>
-<td>✅ Complete</td>
-</tr>
-<tr>
-<td>GitHub Action</td>
-<td>✅ Complete</td>
-</tr>
-<tr>
-<td>PyPI distribution</td>
-<td>✅ Complete</td>
-</tr>
-<tr>
-<td>VS Code extension</td>
-<td>✅ Complete</td>
-</tr>
-<tr>
-<td>LSP server</td>
-<td>✅ Complete</td>
-</tr>
-<tr>
-<td>Windows installer</td>
-<td>✅ Complete</td>
-</tr>
-<tr>
-<td>TypeScript target</td>
-<td>✅ Initial compile support</td>
-</tr>
-</tbody>
-</table>
-<p><strong>239 tests passing</strong> — Production-ready for Python target.</p>
-<h2 id="get-started">Get Started<a class="headerlink" href="#get-started" title="Permanent link">&para;</a></h2>
-<div class="grid cards">
-<ul>
-<li>
-<p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m13.13 22.19-1.63-3.83c1.57-.58 3.04-1.36 4.4-2.27zM5.64 12.5l-3.83-1.63 6.1-2.77C7 9.46 6.22 10.93 5.64 12.5M21.61 2.39S16.66.269 11 5.93c-2.19 2.19-3.5 4.6-4.35 6.71-.28.75-.09 1.57.46 2.13l2.13 2.12c.55.56 1.37.74 2.12.46A19.1 19.1 0 0 0 18.07 13c5.66-5.66 3.54-10.61 3.54-10.61m-7.07 7.07c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0c.77.78.78 2.05 0 2.83s-2.05.78-2.83 0m-5.66 7.07-1.41-1.41zM6.24 22l3.64-3.64c-.34-.09-.67-.24-.97-.45L4.83 22zM2 22h1.41l4.77-4.76-1.42-1.41L2 20.59zm0-2.83 4.09-4.08c-.21-.3-.36-.62-.45-.97L2 17.76z"/></svg></span> <strong><a href="tutorials/">Tutorials</a></strong></p>
-<p>Step-by-step learning path from first module to advanced patterns</p>
-</li>
-<li>
-<p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 12h7v1.5h-7m0-4h7V11h-7m0 3.5h7V16h-7m8-12H3a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2m0 15h-9V6h9"/></svg></span> <strong><a href="language-spec/">Language Spec</a></strong></p>
-<p>Complete syntax reference for all NLS constructs</p>
-</li>
-<li>
-<p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8 3a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2H3v2h1a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h2v-2H8v-5a2 2 0 0 0-2-2 2 2 0 0 0 2-2V5h2V3m6 0a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h1v2h-1a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-2v-2h2v-5a2 2 0 0 1 2-2 2 2 0 0 1-2-2V5h-2V3z"/></svg></span> <strong><a href="examples/">Examples</a></strong></p>
-<p>Real-world examples: calculators, e-commerce, banking, auth</p>
-</li>
-<li>
-<p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2M7.5 13A2.5 2.5 0 0 0 5 15.5 2.5 2.5 0 0 0 7.5 18a2.5 2.5 0 0 0 2.5-2.5A2.5 2.5 0 0 0 7.5 13m9 0a2.5 2.5 0 0 0-2.5 2.5 2.5 2.5 0 0 0 2.5 2.5 2.5 2.5 0 0 0 2.5-2.5 2.5 2.5 0 0 0-2.5-2.5"/></svg></span> <strong><a href="llm-reference/">LLM Reference</a></strong></p>
-<p>AI-optimized documentation for training and inference</p>
-</li>
-</ul>
-</div>
-<h2 id="quick-links">Quick Links<a class="headerlink" href="#quick-links" title="Permanent link">&para;</a></h2>
-<div class="grid cards">
-<ul>
-<li>
-<p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 20h14v-2H5m14-9h-4V3H9v6H5l7 7z"/></svg></span> <strong><a href="getting-started/#installation">Installation</a></strong></p>
-<p>Install nlsc with pip or VS Code</p>
-</li>
-<li>
-<p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 19V7H4v12zm0-16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm-7 14v-2h5v2zm-3.42-4L5.57 9H8.4l3.3 3.3c.39.39.39 1.03 0 1.42L8.42 17H5.59z"/></svg></span> <strong><a href="cli-reference/">CLI Reference</a></strong></p>
-<p>All 11 commands documented</p>
-</li>
-<li>
-<p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18s-.41-.06-.57-.18l-7.9-4.44A.99.99 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18s.41.06.57.18l7.9 4.44c.32.17.53.5.53.88zM12 4.15 6.04 7.5 12 10.85l5.96-3.35zM5 15.91l6 3.38v-6.71L5 9.21zm14 0v-6.7l-6 3.37v6.71z"/></svg></span> <strong><a href="type-system/">Type System</a></strong></p>
-<p>Primitives, composites, and custom types</p>
-</li>
-<li>
-<p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 13h-2V7h2m0 10h-2v-2h2M12 2A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg></span> <strong><a href="error-reference/">Error Reference</a></strong></p>
-<p>Troubleshooting guide for all error types</p>
-</li>
-</ul>
-</div>
+<p><code>bootstrap --no-venv</code> writes only the sample and uses the running
+interpreter — for dashboards that manage environments themselves. The
+sample specification exercises types with invariants, guards, a total
+branch, and <code>@test</code> cases, so a green workflow means the installed
+artifact verifiably compiles and runs.</p>
+<h2 id="release-flow">Release flow<a class="headerlink" href="#release-flow" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>CI validates packaging on every PR</strong> (<code>distribution</code> job):
+   builds sdist+wheel, then bootstraps a workspace <strong>from the wheel</strong> and
+   runs health → verify → test → compile-sample. A wheel that misses
+   package data fails here, not after publishing.</li>
+<li><strong><code>publish.yml</code></strong> builds the distributions, runs the same
+   artifact-install validation (<code>verify-install</code> job), attests build
+   provenance for the artifacts, and publishes to PyPI with Trusted
+   Publishing (OIDC — no long-lived tokens). Manual dispatches publish to
+   TestPyPI first.</li>
+</ol>
+<h2 id="versioning">Versioning<a class="headerlink" href="#versioning" title="Permanent link">&para;</a></h2>
+<p>Version output is stable and parseable: <code>nlsc --version</code> prints the
+toolchain version and the supported language-spec revision
+(<code>nlsc 0.2.5 (language spec 0.1)</code>); the manifest's
+<code>distribution.version_command</code> is the contract. Compatibility rules are
+in <a href="../versioning/">versioning.md</a>.</p>
 
 
 
@@ -1842,10 +1687,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.sections", "navigation.expand", "navigation.top", "navigation.instant", "content.code.copy", "content.code.annotate", "search.highlight", "search.suggest", "toc.follow"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "navigation.instant", "content.code.copy", "content.code.annotate", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
