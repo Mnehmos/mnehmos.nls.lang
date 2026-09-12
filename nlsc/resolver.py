@@ -83,35 +83,39 @@ def resolve_dependencies(nl_file: NLFile) -> ResolverResult:
 
     # Topological sort using unresolved dependency counts per ANLU.
     # Self-recursive dependencies are treated as valid declarations, not cycles.
-    unresolved = {
-        anlu.identifier: len(dependency_ids(anlu, allow_self=True))
-        for anlu in nl_file.anlus
-    }
+    #
+    # Reverse edges (dependency -> dependents) are built once so each node
+    # is visited a constant number of times; scanning every ANLU per node
+    # with dataclass equality made this quadratic in file size (#151).
+    from collections import deque
 
-    # Start with ANLUs that have no dependencies
-    ready = [anlu for anlu in nl_file.anlus if not dependency_ids(anlu, allow_self=True)]
-    resolved = set()
+    by_id = {anlu.identifier: anlu for anlu in nl_file.anlus}
+    unresolved: dict[str, int] = {}
+    dependents: dict[str, list[str]] = {}
+    ready: deque[str] = deque()
 
+    for anlu in nl_file.anlus:
+        deps = list(dict.fromkeys(dependency_ids(anlu, allow_self=True)))
+        unresolved[anlu.identifier] = len(deps)
+        for dep_id in deps:
+            dependents.setdefault(dep_id, []).append(anlu.identifier)
+        if not deps:
+            ready.append(anlu.identifier)
+
+    resolved: set[str] = set()
     while ready:
-        # Take next ready ANLU
-        current = ready.pop(0)
-        result.order.append(current)
-        resolved.add(current.identifier)
+        current_id = ready.popleft()
+        if current_id in resolved:
+            continue
+        resolved.add(current_id)
+        result.order.append(by_id[current_id])
 
-        # Update dependents
-        for anlu in nl_file.anlus:
-            if anlu.identifier in resolved:
+        for dependent_id in dependents.get(current_id, ()):
+            if dependent_id in resolved:
                 continue
-
-            # Check if this ANLU depends on current
-            for dep_id in dependency_ids(anlu, allow_self=True):
-                if dep_id == current.identifier:
-                    unresolved[anlu.identifier] -= 1
-
-            # If all deps resolved, add to ready
-            if unresolved[anlu.identifier] == 0 and anlu.identifier not in resolved:
-                if anlu not in ready:
-                    ready.append(anlu)
+            unresolved[dependent_id] -= 1
+            if unresolved[dependent_id] == 0:
+                ready.append(dependent_id)
 
     # Check for circular dependencies (unresolved ANLUs remaining)
     unresolved_anlus = [a for a in nl_file.anlus if a.identifier not in resolved]

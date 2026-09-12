@@ -15,7 +15,7 @@ from typing import Literal
 from typing import Optional
 
 from .schema import NLFile
-from .lockfile import Lockfile, hash_anlu
+from .lockfile import Lockfile, hash_anlus
 
 
 @dataclass
@@ -56,10 +56,11 @@ def get_anlu_changes(nl_file: NLFile, lockfile: Optional[Lockfile]) -> list[ANLU
                 for anlu_id, anlu_lock in mod_lock.anlus.items():
                     previous_hashes[anlu_id] = anlu_lock.source_hash
 
-    # Check each current ANLU
+    # Check each current ANLU (one lowering for the whole file)
+    current_hashes = hash_anlus(nl_file)
     for anlu_id, anlu in current_anlus.items():
         # Compute current hash using same function as lockfile
-        current_hash = hash_anlu(anlu, nl_file)
+        current_hash = current_hashes[anlu_id]
 
         if anlu_id not in previous_hashes:
             # New ANLU

@@ -12,6 +12,7 @@ from typing import Optional
 
 from . import __version__
 from .ir import IROperation
+from typing import Callable
 from .schema import NLFile, ANLU
 
 
@@ -148,8 +149,63 @@ def hash_anlu(anlu: ANLU, module: Optional[NLFile] = None) -> str:
     Covers all executable semantics and contracts; see
     ``semantic_anlu_canonical``.  Pass the enclosing ``module`` to make
     the hash sensitive to the signatures of declared dependencies.
+
+    Hashing many ANLUs from one file should use :func:`hash_anlus`: it
+    lowers the module once instead of once per ANLU (#151).
     """
-    return hash_content(semantic_anlu_canonical(anlu, module))
+    if module is None:
+        return hash_content(semantic_anlu_canonical(anlu, None))
+    return hash_anlus(module).get(anlu.identifier, "")
+
+
+def hash_anlus(nl_file: NLFile) -> dict[str, str]:
+    """Semantic hashes for every ANLU, lowering the module exactly once."""
+    from .ir import operation_semantic_canonical
+    from .lowering import lower_module
+
+    lowered = lower_module(nl_file)
+    ops = {op.name: op for op in lowered.operations}
+    hashes: dict[str, str] = {}
+    for anlu in nl_file.anlus:
+        canonical = _canonical_from_lowered(anlu, nl_file, ops, operation_semantic_canonical)
+        hashes[anlu.identifier] = hash_content(canonical)
+    return hashes
+
+
+def _canonical_from_lowered(
+    anlu: ANLU,
+    nl_file: NLFile,
+    ops: dict[str, IROperation],
+    render_semantic: Callable[..., str],
+) -> str:
+    """Canonical semantics for one ANLU using prebuilt lowered operations."""
+    operation = ops.get(anlu.identifier)
+    if operation is not None:
+        canonical = SEMANTIC_HASH_SCHEME + "\n" + render_semantic(operation)
+    else:
+        from .lowering import lower_anlu
+
+        declared_types = {t.name for t in nl_file.module.types}
+        single, _diagnostics = lower_anlu(anlu, declared_types)
+        from .effects import populate_effect_sets
+        from .failures import populate_failure_sets
+        from .ir import IRModule as _IRModule
+
+        wrapper = _IRModule(module_name=anlu.identifier, operations=(single,))
+        populate_failure_sets(wrapper)
+        populate_effect_sets(wrapper)
+        canonical = SEMANTIC_HASH_SCHEME + "\n" + render_semantic(single)
+
+    for dep in anlu.depends:
+        dep_id = dep.strip("[]")
+        if dep_id == anlu.identifier:
+            continue
+        dep_op = ops.get(dep_id)
+        if dep_op is None:
+            continue
+        signature = _render_dependency_signature(dep_op)
+        canonical += "\n(dep " + dep_id + " " + signature + ")"
+    return canonical
 
 
 def extract_function_code(
@@ -177,6 +233,35 @@ def extract_function_code(
         return match.group(1).rstrip()
 
     return ""
+
+
+def extract_all_function_code(
+    generated_code: str, target: str = "python"
+) -> dict[str, str]:
+    """Map every top-level function name to its code in one pass (#151).
+
+    Per-name DOTALL extraction is quadratic in file size; bulk lockfile
+    generation uses this single scan instead.
+    """
+    import re
+
+    if target == "typescript":
+        header = re.compile(r"^(?:export\s+)?function\s+([A-Za-z_]\w*)\s*\(", re.MULTILINE)
+    else:
+        header = re.compile(r"^def\s+([A-Za-z_]\w*)\s*\(", re.MULTILINE)
+
+    starts = [(match.group(1), match.start()) for match in header.finditer(generated_code)]
+    code_by_name: dict[str, str] = {}
+    for index, (name, start) in enumerate(starts):
+        end = starts[index + 1][1] if index + 1 < len(starts) else len(generated_code)
+        # Include decorators immediately above the def/function line.
+        block_start = start
+        preceding = generated_code.rfind("\n\n", 0, start)
+        candidate = generated_code[preceding + 2 : start] if preceding != -1 else ""
+        if candidate.lstrip().startswith("@"):
+            block_start = preceding + 2
+        code_by_name[name] = generated_code[block_start:end].rstrip()
+    return code_by_name
 
 
 def generate_lockfile(
@@ -210,13 +295,18 @@ def generate_lockfile(
 
     module_lock = ModuleLock(source_hash=hash_content(source_content))
 
-    # Lock each ANLU with its generated code
+    # Lock each ANLU with its generated code. One lowering for the whole
+    # file: hashing per-ANLU re-lowered the module each time (#151).
+    anlu_hashes = hash_anlus(nl_file)
+    function_code = extract_all_function_code(generated_code, target=target)
     for anlu in nl_file.anlus:
         func_name = anlu.python_name
-        anlu_code = extract_function_code(generated_code, func_name, target=target)
+        anlu_code = function_code.get(func_name) or extract_function_code(
+            generated_code, func_name, target=target
+        )
 
         module_lock.anlus[anlu.identifier] = ANLULock(
-            source_hash=hash_anlu(anlu, nl_file),
+            source_hash=anlu_hashes[anlu.identifier],
             output_hash=hash_content(anlu_code)
             if anlu_code
             else hash_content(func_name),
@@ -499,14 +589,14 @@ def verify_lockfile(lockfile: Lockfile, nl_file: NLFile) -> list[str]:
         errors.append(f"Module {nl_file.module.name} not in lockfile")
         return errors
 
+    anlu_hashes = hash_anlus(nl_file)
     for anlu in nl_file.anlus:
         anlu_lock = mod_lock.anlus.get(anlu.identifier)
         if not anlu_lock:
             errors.append(f"ANLU {anlu.identifier} not in lockfile")
             continue
 
-        current_hash = hash_anlu(anlu, nl_file)
-        if current_hash != anlu_lock.source_hash:
+        if anlu_hashes[anlu.identifier] != anlu_lock.source_hash:
             errors.append(f"ANLU {anlu.identifier} has changed since lock")
 
     return errors
@@ -547,9 +637,10 @@ def rebuild_from_lockfile(
     all_code_pieces = []
     llm_calls = 0
 
+    anlu_hashes = hash_anlus(nl_file)
     for anlu in nl_file.anlus:
         anlu_lock = mod_lock.anlus.get(anlu.identifier)
-        current_hash = hash_anlu(anlu, nl_file)
+        current_hash = anlu_hashes[anlu.identifier]
 
         if (
             anlu_lock
