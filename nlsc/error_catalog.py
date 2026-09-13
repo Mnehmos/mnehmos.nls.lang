@@ -69,6 +69,7 @@ ESEM014 = "ESEM014"
 ESEM015 = "ESEM015"
 ESEM016 = "ESEM016"
 ESEM017 = "ESEM017"
+ESEM022 = "ESEM022"
 ESEM018 = "ESEM018"
 ESEM019 = "ESEM019"
 ESEM020 = "ESEM020"
@@ -956,6 +957,20 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         ),
         next_steps=(
             "Define the operation in the module, use a documented builtin, or declare an import contract.",
+        ),
+    ),
+    ESEM022: ErrorDefinition(
+        code=ESEM022,
+        title="Definition collides with a localized builtin alias",
+        summary="An ANLU, input, type, or binding is named with a word the localization layer substitutes for a builtin (長さ/なし/無し/真/偽/かつ/または), so references to it would be silently redirected.",
+        emitted_by=("verify", "compile", "run", "test", "ci"),
+        common_causes=(
+            "A user function or variable is named 長さ, 真, なし, and so on.",
+            "The alias words are reserved because substitution happens before name resolution.",
+        ),
+        next_steps=(
+            "Rename the definition (for example 長さ → 要素数).",
+            "Alias words keep working as expressions where no definition shadows them.",
         ),
     ),
     ESEM018: ErrorDefinition(

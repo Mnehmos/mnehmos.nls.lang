@@ -47,9 +47,11 @@ from .error_catalog import (
     EVER001,
     EVER002,
     EFX001,
+    ESEM022,
 )
 from .ir import (
     IRBind,
+    iter_stmt_nodes,
     IRBinary,
     IRBranch,
     IRCall,
@@ -712,6 +714,7 @@ def check_module(nl_file: NLFile, *, file_token: str = "<source>") -> SemanticCh
     result.warnings.extend(control.warnings)
 
     result.errors.extend(_check_effect_declarations(module, file_token))
+    result.errors.extend(_check_reserved_aliases(nl_file, module, file_token))
 
     from .typestate import check_typestate
 
@@ -873,6 +876,57 @@ def check_module(nl_file: NLFile, *, file_token: str = "<source>") -> SemanticCh
             )
 
     return result
+
+
+def _check_reserved_aliases(
+    nl_file: NLFile, module: "IRModule", file_token: str
+) -> list[Diagnostic]:
+    """Reject definitions that collide with localized builtin aliases (#256).
+
+    Substitution happens before any symbol table exists, so a user ANLU,
+    input, type, or binding named ``長さ`` / ``なし`` / ``真`` / ... would be
+    silently redirected to the builtin.  The names are reserved instead:
+    the definition is reported (ESEM022) and the author renames it.
+    """
+    from .localization import RESERVED_ALIASES
+
+    diagnostics: list[Diagnostic] = []
+    seen: set[str] = set()
+
+    def report(name: str, line: int | None, kind: str) -> None:
+        if name not in RESERVED_ALIASES or name in seen:
+            return
+        seen.add(name)
+        diagnostics.append(
+            Diagnostic(
+                code=ESEM022,
+                file=file_token,
+                line=line,
+                col=None,
+                message=(
+                    f"{kind} '{name}' collides with a localized builtin alias"
+                ),
+                hint=(
+                    "Rename it: alias words are substituted before names are "
+                    "resolved, so the definition would be redirected to the "
+                    "builtin."
+                ),
+            )
+        )
+
+    for anlu in nl_file.anlus:
+        report(anlu.identifier, anlu.line_number or None, "ANLU")
+        for input_ in anlu.inputs:
+            report(input_.name, anlu.line_number or None, "input")
+    for record in module.types:
+        report(record.name, None, "type")
+    for operation in module.operations:
+        for stmt in iter_stmt_nodes(operation.body):
+            name = getattr(stmt, "name", None)
+            if isinstance(name, str):
+                span = getattr(stmt, "span", None)
+                report(name, span.line if span is not None else None, "binding")
+    return diagnostics
 
 
 def _check_effect_declarations(module: "IRModule", file_token: str) -> list[Diagnostic]:

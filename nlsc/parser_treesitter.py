@@ -568,7 +568,13 @@ def _parse_test_assertion(node: "Node", source: bytes) -> TestCase:
         if not expected:
             expected = _get_text(expected_node, source)
 
-    return TestCase(expression=expression, expected=expected)
+    from .localization import normalize_expression_text
+
+    # Same capture-time normalization as the regex parser (#253).
+    return TestCase(
+        expression=normalize_expression_text(expression),
+        expected=normalize_expression_text(expected),
+    )
 
 
 def _parse_anlu_block(node: "Node", source: bytes) -> ANLU:
