@@ -380,7 +380,11 @@ Every operation carries inferred contracts in the IR:
   Unknown external failures are never an empty set, and pure operations are
   analyzed-empty.
 - **effects** (`effects`): analyzed-empty for purely structural code;
-  `unknown` markers for anything that can touch the world.
+  named writes for method calls on parameters/bindings (`write(items)`);
+  `unknown` markers for anything that cannot be attributed to a resource.
+  An optional `EFFECTS:` line declares an upper bound — `pure`, `unknown`,
+  `read`, `write`, `read(name)`, `write(name)` — checked as `EFX001`
+  (declaration exceeded) and `EFX002` (malformed, fatal in every mode).
 
 These contracts participate in lockfile semantic hashes: changing a guard
 message or adding a foreign call invalidates the affected entries and their
@@ -569,6 +573,7 @@ with causes and next steps.
 | `ESEM010` | Branch totality | [Bindings, branches, and guards](#bindings-branches-and-guards) |
 | `ESEM012` | Guard error identity | [Effects and failure contracts](#effects-and-failure-contracts) |
 | `ESEM013` | Module/file name shadows a host stdlib module | [File Structure](#file-structure) |
+| `EFX001`, `EFX002` | Declared `EFFECTS` upper bound exceeded / malformed | [Effects and failure contracts](#effects-and-failure-contracts) |
 | `EGRAPH003` | Control-flow view usage (`--control` needs `--anlu`) | [Semantics](#semantics-what-the-compiler-guarantees) |
 | `EVER001`, `EVER002` | Declared `@nls` revision compatibility | [Directives](#directives) |
 | `ELINT001`–`ELINT012` | Intent quality (`nlsc lint`; warnings unless `--strict`) | [Semantics](#semantics-what-the-compiler-guarantees) |

@@ -1,11 +1,13 @@
 """Issue #197 (conservative slice): infer operation effect contracts.
 
-With no effect surface syntax yet, the contract is deliberately coarse
-but honest: every operation carries an *analyzed* effect set where pure
-structural code is empty, and anything that could touch the world —
-foreign calls, method calls, literal implementations — contributes an
-``unknown`` effect marker that propagates to callers.  No unfilled slot
-ever silently means "pure".
+The contract is conservative but names resources where it can: pure
+structural code yields an empty set, a method call on a parameter or
+binding yields ``write(<resource>)``, and anything unattributable —
+foreign calls, @literal bodies, method calls on unnamed bases —
+contributes an ``unknown`` marker that propagates to callers.  Caller
+sets substitute their own argument names for callee parameters
+(``[mutate](rows)`` sees ``write(rows)``).  No unfilled slot ever silently
+means "pure".
 """
 
 from __future__ import annotations
@@ -73,9 +75,10 @@ def test_foreign_call_carries_unknown_effect():
     assert any(e.kind == "unknown" for e in effects)
 
 
-def test_method_call_carries_unknown_effect():
+def test_method_call_carries_resource_write_effect():
+    """#197: a method call on a named resource is a `write`, not a blanket unknown."""
     effects = _op(lower_module(parse_nl_file(METHOD_EFFECT)), "probe").effects or ()
-    assert any(e.kind == "unknown" for e in effects)
+    assert any(e.kind == "write" and e.resource == "items" for e in effects)
 
 
 def test_effects_propagate_to_callers():

@@ -45,6 +45,8 @@ EPKG004 = "EPKG004"
 EPKG005 = "EPKG005"
 EWATCH001 = "EWATCH001"
 EWATCH002 = "EWATCH002"
+EFX001 = "EFX001"
+EFX002 = "EFX002"
 EIR001 = "EIR001"
 EIR002 = "EIR002"
 EIR003 = "EIR003"
@@ -946,6 +948,34 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         ),
         next_steps=(
             "Define the operation in the module, use a documented builtin, or declare an import contract.",
+        ),
+    ),
+    EFX001: ErrorDefinition(
+        code=EFX001,
+        title="Declared effect contract exceeded",
+        summary="An ANLU declares an `EFFECTS:` upper bound, but the inferred effects contain something the declaration does not allow — including `unknown` effects inside a declared-pure contract.",
+        emitted_by=("verify", "compile", "run", "test", "ci"),
+        common_causes=(
+            "A function declared `pure` calls foreign code or a method that can mutate a resource.",
+            "A `write(...)`-bounded operation gained a new foreign call or a mutation of another resource.",
+        ),
+        next_steps=(
+            "Widen the EFFECTS declaration (for example add `unknown` or the missing `write(name)`).",
+            "Or remove the offending effect by restructuring the code.",
+        ),
+    ),
+    EFX002: ErrorDefinition(
+        code=EFX002,
+        title="Malformed EFFECTS declaration",
+        summary="The `EFFECTS:` contract line could not be parsed; the accepted forms are `pure`, `unknown`, `read`, `write`, `read(name)`, and `write(name)`.",
+        emitted_by=("verify", "compile", "run", "test", "ci"),
+        common_causes=(
+            "A typo or unsupported effect spelling in the declaration.",
+            "`pure` combined with other effects in one declaration.",
+        ),
+        next_steps=(
+            "Rewrite the declaration using the documented forms.",
+            "Run `nlsc verify <file>` to re-check the contract.",
         ),
     ),
     EIR001: ErrorDefinition(

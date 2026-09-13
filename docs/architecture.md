@@ -252,10 +252,11 @@ file never invalidates a lock; changing a guard message, a constraint, a
 logic expression, or a dependency's signature always does.
 
 **Migration:** lock entries written before the `sem2` scheme (partial
-identifier/purpose/returns hashes) never compare equal to new hashes. On
-first `nlsc compile` or `nlsc lock:update` after upgrading, every legacy
-entry is conservatively reported as changed and regenerated — stale cached
-bodies are never reused.
+identifier/purpose/returns hashes) never compare equal to new hashes, and
+`sem3` adds read/write effect resource identities (#197) to the canonical
+form. On first `nlsc compile` or `nlsc lock:update` after upgrading, every
+legacy entry is conservatively reported as changed and regenerated — stale
+cached bodies are never reused.
 
 ### Emitter semantics markers (Issue #202)
 

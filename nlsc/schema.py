@@ -162,6 +162,7 @@ class ANLU:
     edge_cases: list[EdgeCase] = field(default_factory=list)
     depends: list[str] = field(default_factory=list)
     literal: Optional[str] = None
+    declared_effects: Optional[str] = None  # raw EFFECTS: contract text (#197)
 
     # Metadata
     line_number: int = 0

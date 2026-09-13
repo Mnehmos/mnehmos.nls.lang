@@ -350,14 +350,20 @@ def evaluate_semantic_gate(
     nl_file: NLFile, *, file_token: str = "<source>"
 ) -> SemanticGateResult:
     """Run the shared executable-contract and type-check boundary."""
+    from .error_catalog import EFX002
     from .typecheck import check_module
 
     contract = evaluate_executable_contract(nl_file, file_token=file_token)
     types = check_module(nl_file, file_token=file_token)
+
+    # A malformed EFFECTS declaration is fatal in every mode: an unreadable
+    # upper bound must never silently disable enforcement (#197).
+    malformed_declarations = [d for d in contract.diagnostics if d.code == EFX002]
+    contract_warnings = [d for d in contract.diagnostics if d.code != EFX002]
     return SemanticGateResult(
-        fatal=types.errors,
+        fatal=types.errors + malformed_declarations,
         strict_only=types.warnings,
-        scaffold_warnings=contract.diagnostics,
+        scaffold_warnings=contract_warnings,
         scaffold=contract.scaffold_anlus,
     )
 

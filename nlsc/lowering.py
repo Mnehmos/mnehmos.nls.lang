@@ -23,7 +23,7 @@ from dataclasses import replace
 from typing import Optional
 
 from .diagnostics import Diagnostic
-from .error_catalog import EIR001, EIR002, EIR003
+from .error_catalog import EFX002, EIR001, EIR002, EIR003
 from .ir import (
     BINARY_OPS,
     IRBind,
@@ -999,6 +999,23 @@ def lower_anlu(
             raw=result.raw,
         )
 
+    declared_effects = None
+    if anlu.declared_effects is not None:
+        from .effects import EffectDeclarationError, parse_effect_declaration
+
+        try:
+            declared_effects = parse_effect_declaration(anlu.declared_effects)
+        except EffectDeclarationError as exc:
+            diagnostic = Diagnostic(
+                code=EFX002,
+                file=IR_FILE_TOKEN,
+                line=anlu.line_number or None,
+                col=None,
+                message=f"{anlu.identifier}: malformed EFFECTS declaration: {exc}",
+                hint="Use pure, unknown, read, write, read(name), or write(name).",
+            )
+            diagnostics.append(diagnostic)
+
     operation = IROperation(
         name=anlu.identifier,
         purpose=anlu.purpose,
@@ -1009,6 +1026,7 @@ def lower_anlu(
         depends=tuple(anlu.depends),
         literal=anlu.literal,
         edge_cases=tuple((ec.condition, ec.behavior) for ec in anlu.edge_cases),
+        declared_effects=declared_effects,
         span=span,
     )
     return operation, diagnostics

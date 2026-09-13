@@ -72,19 +72,31 @@ number integer string boolean void any     primitives
 (<typeref> optional)                       nullable / optional
 ```
 
-### Effect sets (Issue #197, conservative slice)
+### Effect sets (Issue #197)
 
-Operations also carry an analyzed ``effects`` set: ``(effects)`` for
-purely structural code, or ``unknown`` markers for foreign calls, method
-calls, and literal implementations, propagated to callers:
+Operations carry an analyzed ``effects`` set with read/write resource
+identities where the analysis can attribute one:
+
+- purely structural code yields ``(effects)`` — an analyzed **empty** set;
+- a method call on a parameter or binding yields a **named write**
+  (``items.append(x)`` -> ``write(items)``);
+- anything unattributable — foreign calls, ``@literal`` bodies, method
+  calls on unnamed bases — stays an ``unknown`` marker;
+- callee effects propagate to callers with **call-site substitution**:
+  the caller sees its own argument name (``[mutate](rows)`` ->
+  ``write(rows) origin=callee``), and a callee-internal resource that
+  cannot be attributed to a caller name propagates as ``unknown``.
 
 ```
-(effects (effect unknown origin=call) (effect unknown origin=callee))
+(effects (effect write items origin=call) (effect unknown origin=callee))
 ```
 
-``kind`` and ``resource`` are reserved for the read/write
-resource-identity syntax in the full #197 slice; ``None`` still means
-*not analyzed* and is never an implicit proof of purity.
+An optional ``EFFECTS:`` contract line declares an upper bound —
+``pure``, ``unknown``, ``read``, ``write``, ``read(name)``,
+``write(name)`` — checked as ``EFX001`` (exceeded) / ``EFX002``
+(malformed, fatal in every mode). ``None`` still means *not analyzed* and
+is never an implicit proof of purity.  Effects participate in lockfile
+semantic hashes (scheme ``sem3``).
 
 ### Failure sets (Issue #198)
 
