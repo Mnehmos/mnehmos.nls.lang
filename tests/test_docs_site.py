@@ -97,8 +97,17 @@ def test_landing_page_does_not_advertise_stale_counts():
         # A count in a table cell is fine too; only a stated number matters.
         return
     advertised = int(match.group(1).replace(",", ""))
+    # Count only tracked test files: local work-in-progress tests must not
+    # make the advertised count look stale.
+    tracked = subprocess.run(
+        ["git", "ls-files", "tests/"],
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+    ).stdout.split()
+    test_files = [name for name in tracked if name.endswith(".py") and "test_" in name]
     collected = subprocess.run(
-        [sys.executable, "-m", "pytest", "tests/", "-q", "--collect-only"],
+        [sys.executable, "-m", "pytest", *test_files, "-q", "--collect-only"],
         capture_output=True,
         text=True,
         cwd=REPO_ROOT,
