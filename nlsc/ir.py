@@ -152,6 +152,25 @@ def type_ref_from_text(text: str) -> TypeRef:
             raw=raw,
         )
 
+    # Protocol/state token spelling `Base<State>` (#200): the base is the
+    # resource type, the single argument is the state token.
+    if candidate.endswith(">") and "<" in candidate:
+        protocol_base, _, state_token = candidate.partition("<")
+        protocol_base = protocol_base.strip()
+        state_token = state_token[:-1].strip()
+        if (
+            protocol_base
+            and state_token
+            and " " not in protocol_base
+            and "," not in state_token
+        ):
+            return TypeRef(
+                name=protocol_base,
+                args=(type_ref_from_text(state_token),),
+                optional=optional,
+                raw=raw,
+            )
+
     # Unknown/custom type name — preserved verbatim and marked via name.
     return TypeRef(name=candidate, optional=optional, raw=raw)
 

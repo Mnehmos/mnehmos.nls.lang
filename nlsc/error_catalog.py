@@ -65,6 +65,10 @@ ESEM010 = "ESEM010"
 ESEM011 = "ESEM011"
 ESEM012 = "ESEM012"
 ESEM013 = "ESEM013"
+ESEM014 = "ESEM014"
+ESEM015 = "ESEM015"
+ESEM016 = "ESEM016"
+ESEM017 = "ESEM017"
 EFMT001 = "EFMT001"
 EPROV001 = "EPROV001"
 EPROV002 = "EPROV002"
@@ -948,6 +952,60 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         ),
         next_steps=(
             "Define the operation in the module, use a documented builtin, or declare an import contract.",
+        ),
+    ),
+    ESEM014: ErrorDefinition(
+        code=ESEM014,
+        title="Protocol transition on the wrong state",
+        summary="A resource token is passed to a transition whose declared parameter requires a different state.",
+        emitted_by=("verify", "compile", "run", "test", "ci"),
+        common_causes=(
+            "The transition that produces the required state was skipped or reordered.",
+            "A branch arm left the token in a different state than the call site expects.",
+        ),
+        next_steps=(
+            "Run the transition that produces the required state first.",
+            "Check the protocol's declared states with `nlsc graph --anlu <name>` or @states.",
+        ),
+    ),
+    ESEM015: ErrorDefinition(
+        code=ESEM015,
+        title="Consumed protocol token reused",
+        summary="A resource token was already consumed by an earlier transition (or through an alias) and is used again.",
+        emitted_by=("verify", "compile", "run", "test", "ci"),
+        common_causes=(
+            "The same binding is passed to two consuming transitions.",
+            "An alias (`copy = order`) shares the token, so consuming one consumes both.",
+        ),
+        next_steps=(
+            "Obtain a fresh token from a transition result instead of reusing a spent one.",
+            "Split the work so each token is consumed once.",
+        ),
+    ),
+    ESEM016: ErrorDefinition(
+        code=ESEM016,
+        title="Fabricated protocol token",
+        summary="A protocol value appears without a valid state: an undeclared protocol or state, a protocol parameter without a state token, or a transition returning a protocol value without declaring its result state.",
+        emitted_by=("verify", "compile", "run", "test", "ci"),
+        common_causes=(
+            "A typo or missing @states declaration for the protocol.",
+            "`RETURNS: Order` instead of `RETURNS: Order<Validated>` on a transition.",
+        ),
+        next_steps=(
+            "Declare the protocol with @states and spell every parameter/result with '<State>'.",
+        ),
+    ),
+    ESEM017: ErrorDefinition(
+        code=ESEM017,
+        title="Ambiguous token state after a branch join",
+        summary="The two arms of a branch leave a resource token in different states, so a later transition cannot know which state holds.",
+        emitted_by=("verify", "compile", "run", "test", "ci"),
+        common_causes=(
+            "Only one arm of a total branch performs the transition.",
+            "Different arms produce different states for the same binding.",
+        ),
+        next_steps=(
+            "Make both arms leave the token in the same state, or perform the transition inside one arm.",
         ),
     ),
     EFX001: ErrorDefinition(

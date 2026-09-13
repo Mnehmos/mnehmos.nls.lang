@@ -101,6 +101,12 @@ output_binding = SPACE , arrow , SPACE , identifier ;
 returns_section = "RETURNS:" , SPACE , return_expression , NEWLINE ;
 return_expression = expression | type_spec ;
 
+(* @states Name: State1, State2 — resource state protocol (#200) *)
+(* @states is a module directive; protocol types appear wherever type_spec does *)
+states_directive = "@states" , SPACE , identifier , ":" , SPACE , identifier , { "," , [ SPACE ] , identifier } , NEWLINE ;
+(* Input/result types may carry a state token: Base<State> *)
+protocol_type    = identifier , "<" , identifier , ">" ;
+
 (* EFFECTS: declared upper bound on inferred effects (#197) *)
 effects_section = "EFFECTS:" , SPACE , effect_contract , NEWLINE ;
 effect_contract = "pure" | "unknown" | effect_item , { ( "," | SPACE ) , effect_item } ;

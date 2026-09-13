@@ -49,7 +49,7 @@ class ParseError(Exception):
 PATTERNS = {
     "anlu_header": re.compile(rf"^\[({ANLU_IDENTIFIER_PATTERN})\]\s*$"),
     "directive": re.compile(
-        r"^@(module|version|nls|target|imports|use|types|type|test|property|invariant|literal|main)\s*(.*)$"
+        r"^@(module|version|nls|target|imports|use|types|type|test|property|invariant|literal|main|states)\s*(.*)$"
     ),
     "purpose": re.compile(r"^PURPOSE:\s*(.+)$", re.IGNORECASE),
     "inputs": re.compile(r"^INPUTS:\s*$", re.IGNORECASE),
@@ -101,6 +101,28 @@ def apply_module_directive(
     elif directive_type == "use":
         if directive_value:
             module.uses.append(directive_value)
+    elif directive_type == "states":
+        # @states Order: Pending, Validated, Charged (#200)
+        protocol, separator, states_text = directive_value.partition(":")
+        protocol = protocol.strip()
+        states = tuple(
+            state.strip() for state in states_text.split(",") if state.strip()
+        )
+        if not separator or not protocol or not states:
+            raise ParseError(
+                "Invalid @states directive; expected '@states Name: State1, State2'",
+                line_num,
+                directive_value,
+            )
+        if len(set(states)) != len(states):
+            raise ParseError(
+                f"Duplicate state in @states {protocol}", line_num, directive_value
+            )
+        if protocol in module.states:
+            raise ParseError(
+                f"@states {protocol} is already declared", line_num, directive_value
+            )
+        module.states[protocol] = states
 
 
 def parse_module_directives(source: str) -> Module:
@@ -531,7 +553,15 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             directive_type = directive_match.group(1)
             directive_value = directive_match.group(2).strip()
 
-            if directive_type in {"module", "version", "nls", "target", "imports", "use"}:
+            if directive_type in {
+                "module",
+                "version",
+                "nls",
+                "target",
+                "imports",
+                "use",
+                "states",
+            }:
                 apply_module_directive(
                     module, directive_type, directive_value, line_num
                 )

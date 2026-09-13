@@ -487,6 +487,9 @@ def _translate_return_expression(anlu: ANLU, expression: str) -> Optional[str]:
     normalized = normalize_expression_text(expression.strip())
     if normalized.lower() in {"void", "none"}:
         return None
+    # A protocol state token is a declaration, not a value (#200).
+    if normalized.endswith(">") and "<" in normalized and " " not in normalized:
+        return None
 
     return_type = _return_type_to_typescript(anlu)
     if return_type.endswith("[]"):
@@ -957,6 +960,18 @@ def _emit_ir_guard_ts(guard: "IRGuard") -> Optional[str]:
     return "\n".join(lines)
 
 
+def _protocol_token_return_lines(anlu: ANLU) -> Optional[list[str]]:
+    """Fallback for a type-only protocol RETURNS (#200): a declaration, not
+    a value. Emits a visible TODO that still type-checks."""
+    raw = normalize_expression_text(anlu.returns.strip())
+    if raw.endswith(">") and "<" in raw and " " not in raw:
+        return [
+            f"  // TODO: implement the transition declared as {raw}",
+            "  return undefined as any;",
+        ]
+    return None
+
+
 def _emit_body_from_ir(anlu: ANLU) -> Optional[str]:
     """Render the ANLU body from its lowered IR (#202).
 
@@ -1007,11 +1022,15 @@ def _emit_body_from_ir(anlu: ANLU) -> Optional[str]:
     else:
         # Declared type only, void, or narrative RETURNS: the exact legacy
         # return handling applies (invented defaults stay scaffold-visible).
-        return_expr = _translate_return_expression(anlu, anlu.returns)
-        if return_expr is None:
-            lines.append("  return;")
+        token_lines = _protocol_token_return_lines(anlu)
+        if token_lines is not None:
+            lines.extend(token_lines)
         else:
-            lines.append(f"  return {return_expr};")
+            return_expr = _translate_return_expression(anlu, anlu.returns)
+            if return_expr is None:
+                lines.append("  return;")
+            else:
+                lines.append(f"  return {return_expr};")
 
     return "\n".join(lines)
 
@@ -1057,6 +1076,11 @@ def _emit_body(anlu: ANLU) -> str:
         action = _extract_action(step, multi_bound, hoisted)
         if action:
             lines.append(f"  {action}")
+
+    token_lines = _protocol_token_return_lines(anlu)
+    if token_lines is not None:
+        lines.extend(token_lines)
+        return "\n".join(lines)
 
     return_expr = _translate_return_expression(anlu, anlu.returns)
     if return_expr is None:

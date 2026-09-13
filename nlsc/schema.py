@@ -46,6 +46,22 @@ class Input:
     constraints: list[str] = field(default_factory=list)
     description: Optional[str] = None
 
+
+    @staticmethod
+    def _strip_state_token(type_str: str) -> str:
+        """`Order<Pending>` -> `Order` for emitted annotations (#200).
+
+        State tokens are contract information for the checker; target
+        languages see the base resource type.
+        """
+        suffix = "?" if type_str.endswith("?") else ""
+        candidate = type_str[:-1] if suffix else type_str
+        if candidate.endswith(">") and "<" in candidate:
+            base = candidate.partition("<")[0].strip()
+            if base:
+                return base + suffix
+        return type_str
+
     def to_python_type(self) -> str:
         """Convert NLS type to Python type hint"""
         type_map = {
@@ -59,7 +75,7 @@ class Input:
             "integer": "int",
         }
 
-        type_str = self.type.strip()
+        type_str = self._strip_state_token(self.type.strip())
 
         # Handle Type? suffix syntax (nullable shorthand)
         # Strip the ? and mark as optional
@@ -272,6 +288,18 @@ class ANLU:
     def to_python_return_type(self) -> str:
         """Convert RETURNS to Python type hint"""
         returns = normalize_expression_text(self.returns.strip())
+        # Protocol state tokens are contract information (#200): the
+        # emitted annotation uses the base resource type.
+        returns_suffix = "?" if returns.endswith("?") else ""
+        returns_candidate = returns[:-1] if returns_suffix else returns
+        if (
+            returns_candidate.endswith(">")
+            and "<" in returns_candidate
+            and " " not in returns_candidate
+        ):
+            returns = (
+                returns_candidate.partition("<")[0].strip() + returns_suffix
+            )
         normalized_type = normalize_type_text(returns)
 
         # Handle boolean literals
@@ -562,6 +590,9 @@ class Module:
     # Issue #90: stdlib domain dependencies declared via @use
     uses: list[str] = field(default_factory=list)
     types: list[TypeDefinition] = field(default_factory=list)
+    # Issue #200: resource state protocols declared via @states
+    # (protocol name -> ordered state names).
+    states: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
 
 @dataclass
