@@ -45,6 +45,7 @@ from .error_catalog import (
     ESEM013,
     EVER001,
     EVER002,
+    EFX001,
 )
 from .ir import (
     IRBind,
@@ -725,6 +726,8 @@ def check_module(nl_file: NLFile, *, file_token: str = "<source>") -> SemanticCh
     result.errors.extend(control.errors)
     result.warnings.extend(control.warnings)
 
+    result.errors.extend(_check_effect_declarations(module, file_token))
+
     table = _build_symbol_table(module, result, file_token)
     # Declared language-spec revision (@nls, Issue #144): same major is
     # compatible; a newer minor is a strict-only warning; a different
@@ -878,3 +881,52 @@ def check_module(nl_file: NLFile, *, file_token: str = "<source>") -> SemanticCh
             )
 
     return result
+
+
+def _check_effect_declarations(module: "IRModule", file_token: str) -> list[Diagnostic]:
+    """EFFECTS: declarations are upper bounds on inferred effects (#197).
+
+    The inferred set is conservative, so an exceeded declaration is a real
+    contract violation: the operation does something its author said it
+    does not.  Malformed declarations are reported at lowering (EFX002);
+    here we validate the *shape* they promised.
+    """
+    from .effects import uncovered_effects
+
+    diagnostics: list[Diagnostic] = []
+    for operation in module.operations:
+        if operation.declared_effects is None or operation.effects is None:
+            continue
+        uncovered = uncovered_effects(operation.declared_effects, operation.effects)
+        if not uncovered:
+            continue
+        declared_text = ", ".join(
+            (
+                effect.kind if effect.resource is None else f"{effect.kind}({effect.resource})"
+            )
+            for effect in operation.declared_effects
+        ) or "pure"
+        inferred_text = ", ".join(
+            (
+                effect.kind if effect.resource is None else f"{effect.kind}({effect.resource})"
+            )
+            for effect in uncovered
+        )
+        span = operation.span
+        diagnostics.append(
+            Diagnostic(
+                code=EFX001,
+                file=file_token,
+                line=span.line if span else None,
+                col=None,
+                message=(
+                    f"{operation.name}: declared EFFECTS '{declared_text}' does not "
+                    f"allow inferred {inferred_text}"
+                ),
+                hint=(
+                    "Widen the EFFECTS declaration or remove the offending effect; "
+                    "declarations are upper bounds on conservatively inferred effects."
+                ),
+            )
+        )
+    return diagnostics

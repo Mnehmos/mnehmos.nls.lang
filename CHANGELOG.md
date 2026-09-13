@@ -23,6 +23,13 @@ see what affects their `.nl` files and what only affects tooling. See
   `EVER001` (fatal) / `EVER002` (strict-only). *(0.1)*
 - New diagnostics: `EIR001`–`EIR005`, `ESEM001`–`ESEM013`, `EVER001`–`EVER002`
   with a diagnostics index in the language spec.
+- `EFFECTS:` declares an upper bound on an ANLU's effects (`pure`,
+  `unknown`, `read`, `write`, `read(name)`, `write(name)`). Inferred
+  effects are conservative and named: a method call on a parameter or
+  binding yields `write(<resource>)` instead of a blanket unknown, and
+  callee effects substitute the caller's argument names. Exceeding the
+  declaration is `EFX001`; a malformed declaration is `EFX002` (fatal in
+  every mode). *(0.1)*
 - An ANLU with no `RETURNS` has no result contract: it is unresolved
   executable content (`EIR005`) rather than a stub that compiles clean.
   Implementing an ANLU with a `@literal` block still satisfies the
@@ -36,6 +43,11 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- The lockfile semantic-hash scheme moves to `sem3` (Issue #197): inferred
+  effects now carry read/write resource identities and declared `EFFECTS`
+  bounds render into the canonical form, so existing locks regenerate
+  conservatively on the next compile or `nlsc lock:update`. The committed
+  example locks and generated artifacts are refreshed in the same change.
 - Package model (Issue #146): projects declare local path dependencies
   with semver constraints in `nls.pkg.json`; `nlsc install` resolves them,
   checks versions, and writes a content-hashed `nls.pkg.lock`, with

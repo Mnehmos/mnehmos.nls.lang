@@ -73,10 +73,13 @@ def hash_content(content: str) -> str:
 
 
 # Semantic hash scheme marker.  Lock entries written before this scheme
-# (#193) used a partial identifier/purpose/returns string and never
-# compare equal to sem2 hashes; verify treats them as stale and the next
-# compile or `nlsc lock:update` regenerates them.
-SEMANTIC_HASH_SCHEME = "sem2"
+# (#193) used a partial identifier/purpose/returns string; sem2 added the
+# checked IR with failure/effect summaries; sem3 gives effects read/write
+# resource identities instead of blanket `unknown` method-call markers
+# (#197).  Hashes never compare equal across schemes: verify treats old
+# entries as stale and the next compile or `nlsc lock:update` regenerates
+# them.
+SEMANTIC_HASH_SCHEME = "sem3"
 
 
 def semantic_anlu_canonical(

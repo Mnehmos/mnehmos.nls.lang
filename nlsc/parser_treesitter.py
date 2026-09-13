@@ -184,6 +184,7 @@ def _should_use_regex_canonical_parse(source: str) -> bool:
             r"^\s*@(?:test|property|invariant|literal|main)\b", source, re.MULTILINE
         )
         or re.search(r"^\s*\d+\.\s+.+(?:->|→)\s+.+$", source, re.MULTILINE)
+        or re.search(r"^\s*EFFECTS:", source, re.MULTILINE | re.IGNORECASE)
     )
 
 

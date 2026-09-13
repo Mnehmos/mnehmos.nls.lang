@@ -57,6 +57,7 @@ PATTERNS = {
     "logic": re.compile(r"^LOGIC:\s*$", re.IGNORECASE),
     "returns": re.compile(r"^RETURNS:\s*(.+)$", re.IGNORECASE),
     "edge_cases": re.compile(r"^EDGE\s*CASES:\s*$", re.IGNORECASE),
+    "effects": re.compile(r"^EFFECTS:\s*(.*)$", re.IGNORECASE),
     "depends": re.compile(r"^DEPENDS:\s*(.+)$", re.IGNORECASE),
     "bullet": re.compile(r"^\s*[•\-\*]\s*(.+)$"),
     "numbered": re.compile(r"^\s*(\d+)\.\s*(.+)$"),
@@ -647,6 +648,13 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                 current_anlu.returns = normalize_expression_text(
                     returns_match.group(1).strip()
                 )
+                current_section = None
+                continue
+
+            # EFFECTS: (#197)
+            effects_match = PATTERNS["effects"].match(line_match)
+            if effects_match:
+                current_anlu.declared_effects = effects_match.group(1).strip()
                 current_section = None
                 continue
 

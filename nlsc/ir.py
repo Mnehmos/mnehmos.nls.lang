@@ -933,6 +933,9 @@ class IROperation:
     # Contract slots populated by later passes.  None means *not analyzed* —
     # it is never implicit proof of purity or absence of failures.
     effects: Optional[tuple[IREffectSpec, ...]] = None
+    # Declared upper bound from an ``EFFECTS:`` contract line (#197).
+    # None means no declaration; the empty tuple means declared pure.
+    declared_effects: Optional[tuple[IREffectSpec, ...]] = None
     failures: Optional[tuple[IRFailureSpec, ...]] = None
     typestate: Optional[dict[str, object]] = None
 
@@ -956,6 +959,10 @@ class IROperation:
         if self.edge_cases:
             data["edge_cases"] = [
                 {"condition": c, "behavior": b} for c, b in self.edge_cases
+            ]
+        if self.declared_effects is not None:
+            data["declared_effects"] = [
+                effect.to_json() for effect in self.declared_effects
             ]
         data["span"] = self.span.to_json() if self.span else None
         data["effects"] = (
@@ -1036,6 +1043,16 @@ def _render_operation(
         lines.append(f"{indent}{op.result.render()}")
     if op.depends:
         lines.append(f"{indent}(depends {' '.join(op.depends)})")
+    if op.declared_effects is not None:
+        # The declared upper bound is part of the operation's contract, so
+        # it renders canonically and participates in the semantic hash
+        # (#197): changing a declaration invalidates the lock entry.
+        inner_declared = " ".join(effect.render() for effect in op.declared_effects)
+        lines.append(
+            f"{indent}(declares {inner_declared})"
+            if inner_declared
+            else f"{indent}(declares pure)"
+        )
     if op.effects is not None:
         inner_effects = " ".join(effect.render() for effect in op.effects)
         lines.append(

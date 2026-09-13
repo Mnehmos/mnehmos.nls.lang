@@ -103,6 +103,10 @@ def _called_operations(operation: IROperation, ops: dict[str, IROperation]) -> l
             for node in iter_expr_nodes(expr):
                 if isinstance(node, IRCall) and node.anlu and node.target in ops:
                     called.append(node.target)
+    for guard in operation.guards:
+        for node in iter_expr_nodes(guard.condition):
+            if isinstance(node, IRCall) and node.anlu and node.target in ops:
+                called.append(node.target)
     if operation.result is not None and operation.result.value is not None:
         for node in iter_expr_nodes(operation.result.value):
             if isinstance(node, IRCall) and node.anlu and node.target in ops:

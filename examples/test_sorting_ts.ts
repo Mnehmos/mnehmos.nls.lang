@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { quick_sort } from "./sorting_ts";
 
 assert.deepStrictEqual(quick_sort([3, 1, 4, 1, 5]), [1, 1, 3, 4, 5]);
-assert.deepStrictEqual(quick_sort([]), []);
+assert.deepStrictEqual(quick_sort([] as any[]), [] as any[]);
 assert.deepStrictEqual(quick_sort([1]), [1]);
 assert.deepStrictEqual(quick_sort([5, 4, 3, 2, 1]), [1, 2, 3, 4, 5]);
 console.log("All generated tests passed.");
