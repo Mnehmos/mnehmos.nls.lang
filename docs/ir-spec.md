@@ -98,6 +98,14 @@ An optional ``EFFECTS:`` contract line declares an upper bound —
 is never an implicit proof of purity.  Effects participate in lockfile
 semantic hashes (scheme ``sem3``).
 
+### Control policies (Issue #201)
+
+``RETRY:`` / ``TIMEOUT:`` sections lower onto ``IROperation.retry`` and
+``.timeout`` and render canonically (``(retry attempts=3 on=NetworkError
+key=order_id)``, ``(timeout after=5000ms outcome=...)``).  They are part
+of the checked contract and the semantic hash; no emitter produces them
+yet, so both targets refuse policy files with ``ETARGET002``.
+
 ### State tokens (Issue #200)
 
 Protocol parameters and results carry state tokens on their type

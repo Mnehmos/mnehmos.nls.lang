@@ -595,6 +595,43 @@ class IRErrorSpec:
 
 
 @dataclass(frozen=True)
+class IRRetryPolicy:
+    """Checked retry policy (#201): a finite attempt budget, the retryable
+    error identities, and the idempotency key that makes replay safe."""
+
+    attempts: Optional[int] = None
+    error_types: tuple[str, ...] = ()
+    idempotency_key: Optional[str] = None
+
+    def render(self) -> str:
+        errors = " ".join(self.error_types) if self.error_types else "-"
+        key = self.idempotency_key or "-"
+        return f"(retry attempts={self.attempts} on={errors} key={key})"
+
+    def to_json(self) -> dict[str, object]:
+        return {
+            "attempts": self.attempts,
+            "error_types": list(self.error_types),
+            "idempotency_key": self.idempotency_key,
+        }
+
+
+@dataclass(frozen=True)
+class IRTimeoutPolicy:
+    """Checked timeout policy (#201): the deadline and the explicit
+    outcome, because a timeout never proves the operation stopped."""
+
+    after_ms: Optional[int] = None
+    outcome: Optional[str] = None
+
+    def render(self) -> str:
+        return f"(timeout after={self.after_ms}ms outcome={self.outcome or '-'})"
+
+    def to_json(self) -> dict[str, object]:
+        return {"after_ms": self.after_ms, "outcome": self.outcome}
+
+
+@dataclass(frozen=True)
 class IREffectSpec:
     """One entry in an operation's inferred effect set (#197).
 
@@ -955,6 +992,9 @@ class IROperation:
     # Declared upper bound from an ``EFFECTS:`` contract line (#197).
     # None means no declaration; the empty tuple means declared pure.
     declared_effects: Optional[tuple[IREffectSpec, ...]] = None
+    # Checked control policies (#201); None means not declared.
+    retry: Optional[IRRetryPolicy] = None
+    timeout: Optional[IRTimeoutPolicy] = None
     failures: Optional[tuple[IRFailureSpec, ...]] = None
     typestate: Optional[dict[str, object]] = None
 
@@ -983,6 +1023,10 @@ class IROperation:
             data["declared_effects"] = [
                 effect.to_json() for effect in self.declared_effects
             ]
+        if self.retry is not None:
+            data["retry"] = self.retry.to_json()
+        if self.timeout is not None:
+            data["timeout"] = self.timeout.to_json()
         data["span"] = self.span.to_json() if self.span else None
         data["effects"] = (
             None if self.effects is None else [e.to_json() for e in self.effects]
@@ -1062,6 +1106,10 @@ def _render_operation(
         lines.append(f"{indent}{op.result.render()}")
     if op.depends:
         lines.append(f"{indent}(depends {' '.join(op.depends)})")
+    if op.retry is not None:
+        lines.append(f"{indent}{op.retry.render()}")
+    if op.timeout is not None:
+        lines.append(f"{indent}{op.timeout.render()}")
     if op.declared_effects is not None:
         # The declared upper bound is part of the operation's contract, so
         # it renders canonically and participates in the semantic hash

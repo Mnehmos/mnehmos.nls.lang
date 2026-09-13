@@ -166,9 +166,10 @@ def _register_builtin_targets() -> None:
                 "main_block": True,
                 "property_tests": True,
                 "loop_steps": True,
+                "retry_policies": False,
             },
             fatal_capabilities=frozenset(
-                {"literal_blocks", "main_block", "loop_steps"}
+                {"literal_blocks", "main_block", "loop_steps", "retry_policies"}
             ),
             semantics_version="py-3",
             validate_output=validate_python_output,
@@ -190,9 +191,10 @@ def _register_builtin_targets() -> None:
                 "main_block": False,
                 "property_tests": False,
                 "loop_steps": False,
+                "retry_policies": False,
             },
             fatal_capabilities=frozenset(
-                {"literal_blocks", "main_block", "loop_steps"}
+                {"literal_blocks", "main_block", "loop_steps", "retry_policies"}
             ),
             semantics_version="ts-2",
             extract_function_code=extract_typescript_function,

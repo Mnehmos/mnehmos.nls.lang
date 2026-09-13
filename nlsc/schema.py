@@ -158,6 +158,25 @@ class LogicStep:
 
 
 @dataclass
+class RetryPolicy:
+    """Checked retry policy declared with a RETRY: section (#201)."""
+
+    attempts: int | None = None
+    error_types: list[str] = field(default_factory=list)
+    idempotency_key: str | None = None
+    line_number: int = 0
+
+
+@dataclass
+class TimeoutPolicy:
+    """Checked timeout policy declared with a TIMEOUT: section (#201)."""
+
+    after_ms: int | None = None
+    outcome: str | None = None
+    line_number: int = 0
+
+
+@dataclass
 class ANLU:
     """
     Atomic Natural Language Unit
@@ -179,6 +198,8 @@ class ANLU:
     depends: list[str] = field(default_factory=list)
     literal: Optional[str] = None
     declared_effects: Optional[str] = None  # raw EFFECTS: contract text (#197)
+    retry: Optional[RetryPolicy] = None  # RETRY: policy (#201)
+    timeout: Optional[TimeoutPolicy] = None  # TIMEOUT: policy (#201)
 
     # Metadata
     line_number: int = 0
@@ -634,6 +655,10 @@ class NLFile:
             ):
                 names.add(match.group(1))
         return names
+
+    def uses_retry_policies(self) -> bool:
+        """True when any ANLU declares a RETRY:/TIMEOUT: policy (#201)."""
+        return any(anlu.retry is not None or anlu.timeout is not None for anlu in self.anlus)
 
     def uses_for_each_loops(self) -> bool:
         """True when any LOGIC step is a ``FOR each ... IN ...`` loop.

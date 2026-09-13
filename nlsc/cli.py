@@ -1322,6 +1322,19 @@ def cmd_test(args: argparse.Namespace) -> int:
         _print_semantic_diagnostics("Error: Errors (strict)", blocking, hint=True)
         return 1
 
+    # Capability gate before anything else (#201): a policy the target
+    # cannot emit must be refused even when there are no test blocks.
+    capability_exit = _capability_gate(
+        nl_file,
+        "python",
+        source_path,
+        command="test",
+        json_output=json_output,
+        strict=True,
+    )
+    if capability_exit is not None:
+        return capability_exit
+
     # Check for tests
     if not nl_file.tests:
         if json_output:
@@ -1966,6 +1979,17 @@ def cmd_run(args: argparse.Namespace) -> int:
             return _emit_json("run", [diagnostic], file=str(source_path))
         print(f"Error: Target '{target}' not yet supported", file=sys.stderr)
         return 1
+
+    capability_exit = _capability_gate(
+        nl_file,
+        "python",
+        source_path,
+        command="run",
+        json_output=json_output,
+        strict=True,
+    )
+    if capability_exit is not None:
+        return capability_exit
 
     python_code = emit_python(nl_file, mode="mock")
     proc: subprocess.CompletedProcess[str] | None = None

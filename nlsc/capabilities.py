@@ -59,6 +59,7 @@ _FEATURE_DESCRIPTIONS = {
     "main_block": "@main block",
     "property_tests": "@property specifications",
     "loop_steps": "FOR each LOGIC loop steps",
+    "retry_policies": "RETRY/TIMEOUT control policies",
 }
 
 
@@ -83,6 +84,8 @@ def _file_uses_feature(nl_file: NLFile, feature: str) -> bool:
         return bool(nl_file.properties)
     if feature == "loop_steps":
         return nl_file.uses_for_each_loops()
+    if feature == "retry_policies":
+        return nl_file.uses_retry_policies()
     return False
 
 
@@ -108,6 +111,14 @@ def capability_gaps(nl_file: NLFile, target: str) -> list[CapabilityGap]:
     return gaps
 
 
+def _any_target_supports(feature: str) -> bool:
+    from .targets import TARGET_REGISTRY
+
+    return any(
+        bool(entry.capabilities.get(feature)) for entry in TARGET_REGISTRY.values()
+    )
+
+
 def capability_diagnostics(
     nl_file: NLFile, target: str, *, file_token: str = "<source>"
 ) -> tuple[list[Diagnostic], list[Diagnostic]]:
@@ -115,6 +126,17 @@ def capability_diagnostics(
     fatal: list[Diagnostic] = []
     warnings: list[Diagnostic] = []
     for gap in capability_gaps(nl_file, target):
+        if _any_target_supports(gap.feature):
+            hint = (
+                f"Compile with the target that supports {gap.description}, or "
+                "move the content into supported constructs."
+            )
+        else:
+            hint = (
+                f"{gap.description} is checked and recorded in the IR but no "
+                "target emits it yet, so this file cannot be compiled until a "
+                "backend implements it."
+            )
         diagnostic = Diagnostic(
             code=ETARGET002,
             file=file_token,
@@ -124,10 +146,7 @@ def capability_diagnostics(
                 f"target '{target}' does not support {gap.description}; "
                 "emitting it would produce an incomplete or invalid artifact"
             ),
-            hint=(
-                f"Compile with the target that supports {gap.description}, or "
-                "move the content into supported constructs."
-            ),
+            hint=hint,
         )
         (fatal if gap.fatal else warnings).append(diagnostic)
     return fatal, warnings

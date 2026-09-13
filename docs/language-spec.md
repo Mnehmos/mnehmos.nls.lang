@@ -518,6 +518,40 @@ block checked emission (`EIR003`):
 | Declared return type without a value | `RETURNS: number` alone | `EIR004`; return the value or `none` |
 | ANLU with no result contract | `[checkout]` with no `RETURNS` | `EIR005`; declare the value, `none`, or implement it with `@literal` |
 
+### Retry and timeout policies (checked, not yet emitted)
+
+An ANLU may declare bounded replay and deadline policies:
+
+```nl
+RETRY:
+  - up to 3 attempts on NetworkError
+  - idempotency key: order_id
+TIMEOUT:
+  - after 5000ms -> cancel-and-reconcile
+```
+
+The checker enforces the *declared policy shape*, statically:
+
+- `ESEM018` — RETRY without a finite, positive attempt budget;
+- `ESEM019` — a retried error identity that provably cannot occur (the
+  operation's failure set is fully known and lacks it); when the failure
+  set contains unknown markers, the declaration is the author's
+  classification and only the listed identities are retried;
+- `ESEM020` — retrying an operation with effects (or unresolved effects)
+  without an idempotency key, or keying on something that is not a
+  parameter (a per-attempt value would defeat the key);
+- `ESEM021` — TIMEOUT without a positive deadline or without an explicit
+  outcome; a timeout never proves the operation stopped, so an ambiguous
+  post-timeout state is not accepted silently.
+
+**External contracts required.** The compiler checks the policy, not the
+provider: keyed replay assumes the provider deduplicates on that key for a
+documented scope, and `cancel-and-reconcile` is a caller-side obligation.
+Nothing here provides exactly-once execution. The policies are checked and
+recorded in the IR but not yet emitted, so both targets refuse files using
+them (`ETARGET002`) instead of dropping them; runtime support follows in a
+later slice, as do handler-scoped retries (#207/#208).
+
 ### Resource state protocols (opt-in)
 
 A module can declare resource states with `@states` and carry them as
@@ -578,7 +612,8 @@ content is fatal in every mode; dropped test coverage is strict-only.
 | Feature | Tracking |
 | --- | --- |
 | Full loop semantics in LOGIC (`WHILE`/`FOR` steps; the IR has a reserved loop region). `FOR each ... IN ...: action` steps already emit real Python loops and are gated off TypeScript; `WHILE` steps are only converted inside `@main` | #196 follow-up |
-| try/catch-style handlers, retry/timeout policies | #198, #201 |
+| try/catch-style handlers | #207, #208 |
+| Retry/timeout runtime emission (policies are checked today; both targets refuse files using them) | #201 follow-up |
 | Typestate/resource state transitions | #200 |
 | `FAILS`/`RAISES` declarations (failure sets are inferred) | #198 |
 | Read/write resource identities in effect contracts | #197 |
@@ -615,6 +650,7 @@ with causes and next steps.
 | `ESEM012` | Guard error identity | [Effects and failure contracts](#effects-and-failure-contracts) |
 | `ESEM013` | Module/file name shadows a host stdlib module | [File Structure](#file-structure) |
 | `ESEM014`–`ESEM017` | Resource state protocols: wrong state, consumed reuse, fabrication, ambiguous join | [Resource state protocols](#resource-state-protocols-opt-in) |
+| `ESEM018`–`ESEM021` | Retry/timeout policy shape: budget, retryable identities, idempotency key, timeout outcome | [Retry and timeout policies](#retry-and-timeout-policies-checked-not-yet-emitted) |
 | `EFX001`, `EFX002` | Declared `EFFECTS` upper bound exceeded / malformed | [Effects and failure contracts](#effects-and-failure-contracts) |
 | `EGRAPH003` | Control-flow view usage (`--control` needs `--anlu`) | [Semantics](#semantics-what-the-compiler-guarantees) |
 | `EVER001`, `EVER002` | Declared `@nls` revision compatibility | [Directives](#directives) |
