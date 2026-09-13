@@ -633,6 +633,10 @@ class NLFile:
 
     # Source info
     source_path: Optional[str] = None
+    # The backend that actually parsed this file (#258): tree-sitter
+    # delegates non-ASCII sources and regex-canonical constructs to the
+    # regex parser, so the requested backend is not always the real one.
+    parser_backend: Optional[str] = None
 
     def get_anlu(self, identifier: str) -> Optional[ANLU]:
         """Find an ANLU by identifier"""

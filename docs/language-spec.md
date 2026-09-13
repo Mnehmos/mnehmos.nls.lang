@@ -552,6 +552,74 @@ recorded in the IR but not yet emitted, so both targets refuse files using
 them (`ETARGET002`) instead of dropping them; runtime support follows in a
 later slice, as do handler-scoped retries (#207/#208).
 
+## Localized surface syntax (Japanese)
+
+`.nl` files may be written with Japanese surface words; normalization
+rewrites them to the canonical spellings above before parsing. The tables
+below are normative and kept in sync with `nlsc/localization.py` by a test
+(`tests/test_japanese_localization.py`). Rules:
+
+- Section headers are case-insensitive; full-width `：` is accepted beside `:`.
+- Non-ASCII sources are parsed by the **regex parser** (tree-sitter
+  delegates them), while pure-ASCII files use tree-sitter when installed.
+- String literals are never rewritten: an alias word inside quotes is
+  user-visible text, not an operator (#251).
+- `@literal` block bodies are verbatim passthrough: no normalization runs
+  inside the braces (#252).
+- The comprehension form `[項目 を リスト から もし 条件]` rewrites to a
+  canonical list comprehension, which remains foreign in the checked IR
+  (`EIR002`).
+- **Reserved words** (#256): `長さ`, `なし`, `無し`, `真`, `偽`, `かつ`,
+  `または` are substituted wherever they stand alone, so defining an ANLU,
+  input, type, or binding with one of them is rejected with `ESEM022`.
+  They remain valid as expressions everywhere else.
+- Conditionals accept `もし … なら` / `ならば` with an optional `N. ` step
+  prefix, and `そうでなければ` / `それ以外` as `ELSE` (#254).
+
+<!-- localization-aliases:begin -->
+
+| Directive | `imports` | `インポート` |
+| Directive | `invariant` | `不変条件` |
+| Directive | `literal` | `リテラル` |
+| Directive | `main` | `メイン` |
+| Directive | `module` | `モジュール` |
+| Directive | `property` | `性質` |
+| Directive | `states` | `状態` |
+| Directive | `target` | `ターゲット` |
+| Directive | `test` | `テスト` |
+| Directive | `type` | `型` |
+| Directive | `use` | `使用` |
+| Directive | `version` | `バージョン` |
+| Section | `PURPOSE` | `目的` |
+| Section | `INPUTS` | `引数`, `入力` |
+| Section | `GUARDS` | `ガード` |
+| Section | `LOGIC` | `ロジック`, `処理` |
+| Section | `RETURNS` | `返す`, `返り値`, `戻り値` |
+| Section | `EDGE CASES` | `境界事例`, `エッジケース`, `EDGE_CASES`, `境界ケース` |
+| Section | `DEPENDS` | `依存` |
+| Section | `EFFECTS` | `効果`, `影響` |
+| Section | `RETRY` | `再試行` |
+| Section | `TIMEOUT` | `タイムアウト` |
+| Value | `none` | `なし`, `無し` |
+| Type | `any` | `任意` |
+| Type | `boolean` | `bool`, `真偽値`, `ブール` |
+| Type | `dictionary` | `辞書` |
+| Type | `integer` | `整数` |
+| Type | `number` | `数`, `数値` |
+| Type | `string` | `文字列` |
+| Type | `void` | `none`, `なし`, `無し` |
+| Expression alias (rewrites to) | `かつ` | `and` |
+| Expression alias (rewrites to) | `なし` | `None` |
+| Expression alias (rewrites to) | `または` | `or` |
+| Expression alias (rewrites to) | `偽` | `False` |
+| Expression alias (rewrites to) | `無し` | `None` |
+| Expression alias (rewrites to) | `真` | `True` |
+| Target | `python` | `パイソン` |
+| Target | `rust` | `ラスト` |
+| Target | `typescript` | `タイプスクリプト` |
+
+<!-- localization-aliases:end -->
+
 ### Resource state protocols (opt-in)
 
 A module can declare resource states with `@states` and carry them as
@@ -651,6 +719,7 @@ with causes and next steps.
 | `ESEM013` | Module/file name shadows a host stdlib module | [File Structure](#file-structure) |
 | `ESEM014`–`ESEM017` | Resource state protocols: wrong state, consumed reuse, fabrication, ambiguous join | [Resource state protocols](#resource-state-protocols-opt-in) |
 | `ESEM018`–`ESEM021` | Retry/timeout policy shape: budget, retryable identities, idempotency key, timeout outcome | [Retry and timeout policies](#retry-and-timeout-policies-checked-not-yet-emitted) |
+| `ESEM022` | Definition collides with a localized builtin alias | [Localized surface syntax](#localized-surface-syntax-japanese) |
 | `EFX001`, `EFX002` | Declared `EFFECTS` upper bound exceeded / malformed | [Effects and failure contracts](#effects-and-failure-contracts) |
 | `EGRAPH003` | Control-flow view usage (`--control` needs `--anlu`) | [Semantics](#semantics-what-the-compiler-guarantees) |
 | `EVER001`, `EVER002` | Declared `@nls` revision compatibility | [Directives](#directives) |

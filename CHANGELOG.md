@@ -31,6 +31,11 @@ see what affects their `.nl` files and what only affects tooling. See
   both targets refuse policy files with `ETARGET002` instead of dropping
   them. Runtime emission and deterministic fake-clock traces follow in a
   later slice. *(0.1)*
+- Normative Japanese alias reference (Issue #257): the language spec
+  documents every directive, section, type, value, expression, and target
+  alias with a test that keeps the tables in sync with
+  `nlsc/localization.py`; the quicksort case study's output claims are
+  corrected (scaffold status and EIR002 warnings).
 - Resource state protocols (opt-in): `@states Order: Pending, Validated`
   declares a protocol, and `Order<State>` tokens on INPUTS/RETURNS carry
   it through transitions. The checker rejects wrong-state transitions
@@ -62,6 +67,12 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- Localization reporting (Issue #258): `nlsc ir` canonical text renders
+  non-ASCII verbatim (the semantic-hash canonical stays ASCII-escaped, so
+  lock identity is unchanged), CLI JSON emits readable non-ASCII, the
+  parser banner reports the backend that actually parsed the file (the
+  regex parser handles non-ASCII sources), and semantic diagnostics quote
+  the original localized source line beneath the canonical message.
 - Documentation and website refresh: the landing page and README now
   describe the checked pipeline (types, control, failures, effects,
   typestate, policies), the capability gate, semantic lock identity, the

@@ -369,7 +369,7 @@ def _emit_json(
         "diagnostics": [diagnostic.to_dict() for diagnostic in diagnostics],
     }
     payload.update(extra)
-    print(json.dumps(payload, indent=2))
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
     if status_code is not None:
         return status_code
     return 0 if not diagnostics else 1
@@ -379,14 +379,38 @@ def _print_semantic_diagnostics(
     title: str, diagnostics: list[Diagnostic], *, hint: bool = False
 ) -> None:
     print(f"{title}:", file=sys.stderr)
+    source_cache: dict[str, list[str] | None] = {}
     for diagnostic in diagnostics:
         location = f"Line {diagnostic.line}: " if diagnostic.line else ""
         print(
             f"    - {location}{diagnostic.message} [{diagnostic.code}]",
             file=sys.stderr,
         )
+        # Analysis runs on canonical (normalized) text, so quoting the
+        # original source line keeps localized specs readable (#258).
+        source_line = _diagnostic_source_line(diagnostic, source_cache)
+        if source_line is not None and diagnostic.line:
+            print(f"      {diagnostic.line}: {source_line.strip()}", file=sys.stderr)
         if hint and diagnostic.hint:
             print(f"      Hint: {diagnostic.hint}", file=sys.stderr)
+
+
+def _diagnostic_source_line(
+    diagnostic: Diagnostic, cache: dict[str, list[str] | None]
+) -> str | None:
+    """The original source line for a diagnostic, or None when unavailable."""
+    if not diagnostic.line or not diagnostic.file or diagnostic.file == "<source>":
+        return None
+    if diagnostic.file not in cache:
+        path = Path(diagnostic.file)
+        try:
+            cache[diagnostic.file] = path.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            cache[diagnostic.file] = None
+    lines = cache[diagnostic.file]
+    if lines is None or not 0 < diagnostic.line <= len(lines):
+        return None
+    return lines[diagnostic.line - 1]
 
 
 def _emit_watch_runtime_json(path: Path, diagnostics: list[Diagnostic]) -> None:
@@ -398,7 +422,7 @@ def _emit_watch_runtime_json(path: Path, diagnostics: list[Diagnostic]) -> None:
         "file": str(path),
         "diagnostics": [diagnostic.to_dict() for diagnostic in diagnostics],
     }
-    print(json.dumps(payload, indent=2))
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
 
 
 def _emit_cli_parse_failure(error: CLIParseError) -> int:
@@ -434,7 +458,7 @@ def _emit_explain_definition_json(code: str) -> int:
         "next_steps": list(definition.next_steps),
         "diagnostics": [],
     }
-    print(json.dumps(payload, indent=2))
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
     return 0
 
 
@@ -731,14 +755,14 @@ def cmd_compile(args: argparse.Namespace) -> int:
         print(f"Error: {diagnostic.hint}", file=sys.stderr)
         return 1
 
-    parser_name = "tree-sitter" if _use_treesitter else "regex"
-    if not json_output:
-        print(f"Compiling {source_path} (parser: {parser_name})...")
-
     # Parse
     try:
         nl_file = parse_nl_file_auto(source_path)
+        parser_name = nl_file.parser_backend or (
+            "tree-sitter" if _use_treesitter else "regex"
+        )
         if not json_output:
+            print(f"Compiling {source_path} (parser: {parser_name})...")
             print(f"  {_check()} Parsed {len(nl_file.anlus)} ANLUs")
     except ParseError as e:
         diagnostic = parse_error_diagnostic(source_path, e)
@@ -1024,14 +1048,14 @@ def cmd_verify(args: argparse.Namespace) -> int:
         print(f"Error: {diagnostic.message}", file=sys.stderr)
         return 1
 
-    parser_name = "tree-sitter" if _use_treesitter else "regex"
-    if not json_output:
-        print(f"Verifying {source_path} (parser: {parser_name})...")
-
     # Parse
     try:
         nl_file = parse_nl_file_auto(source_path)
+        parser_name = nl_file.parser_backend or (
+            "tree-sitter" if _use_treesitter else "regex"
+        )
         if not json_output:
+            print(f"Verifying {source_path} (parser: {parser_name})...")
             print(f"  {_check()} Syntax valid: {len(nl_file.anlus)} ANLUs")
     except ParseError as e:
         diagnostic = parse_error_diagnostic(source_path, e)
@@ -2963,7 +2987,7 @@ def cmd_provenance(args: argparse.Namespace) -> int:
                 recorded=True,
                 provenance=record.to_json(),
             )
-        print(json.dumps(record.to_json(), indent=2, sort_keys=True))
+        print(json.dumps(record.to_json(), indent=2, sort_keys=True, ensure_ascii=False))
         return 0
 
     if getattr(args, "clear", False):
