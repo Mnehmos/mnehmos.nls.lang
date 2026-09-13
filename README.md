@@ -2,7 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/nlsc)](https://pypi.org/project/nlsc/)
 [![PyPI downloads](https://img.shields.io/pepy/dt/nlsc)](https://pepy.tech/project/nlsc)
-[![Tests](https://img.shields.io/badge/tests-239%20passing-brightgreen)](https://github.com/Mnehmos/mnehmos.nls.lang)
+[![Tests](https://img.shields.io/badge/tests-1162%20passing-brightgreen)](https://github.com/Mnehmos/mnehmos.nls.lang)
 [![CI](https://github.com/Mnehmos/mnehmos.nls.lang/actions/workflows/ci.yml/badge.svg)](https://github.com/Mnehmos/mnehmos.nls.lang/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](https://www.python.org)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -159,10 +159,12 @@ def distance(p1: Point, p2: Point) -> float:
 | Command                  | Description                            |
 | ------------------------ | -------------------------------------- |
 | `nlsc init <path>`       | Initialize new NLS project             |
-| `nlsc compile <file>`    | Compile .nl to Python                  |
+| `nlsc compile <file>`    | Compile .nl to Python or TypeScript    |
+| `nlsc run <file>`        | Compile and execute a module's `@main` |
+| `nlsc install [path]`    | Resolve package dependencies and write `nls.pkg.lock` |
 | `nlsc verify <file>`     | Validate syntax and dependencies       |
 | `nlsc test <file>`       | Run `@test` specifications             |
-| `nlsc ir <file>`         | Emit target-neutral IR (text or JSON) |
+| `nlsc ir <file>`         | Emit target-neutral IR (`--check` validates it backend-free) |
 | `nlsc lint <file\|dir>`  | Intent-quality lint rules (`--strict` for CI) |
 | `nlsc fmt <file\|dir>`   | Canonical formatting (`--check`/`--diff` for CI) |
 | `nlsc ci <file>`         | CI gate: strict semantics + frozen lockfile |
@@ -173,6 +175,8 @@ def distance(p1: Point, p2: Point) -> float:
 | `nlsc atomize <file.py>` | Extract ANLUs from existing Python     |
 | `nlsc assoc`             | Install Windows file association       |
 | `nlsc lsp`               | Start the NLS language server          |
+| `nlsc explain <CODE>`    | Extended explanation for any diagnostic |
+| `nlsc lock:check` / `lock:update` | Inspect or refresh a `.nl.lock` |
 
 `nlsc lsp --json` emits structured startup diagnostics for missing optional LSP dependencies (`ELSP001`) and server-start failures (`ELSP002`).
 
@@ -488,26 +492,25 @@ DEPENDS: [other-function], [another]
 
 ## Project Status
 
-| Component              | Status      |
-| ---------------------- | ----------- |
-| Parser (regex)         | ✅ Complete |
-| Parser (tree-sitter)   | ✅ Complete |
-| Python emitter         | ✅ Complete |
-| Type generation        | ✅ Complete |
-| Guard validation       | ✅ Complete |
-| Dataflow analysis      | ✅ Complete |
-| Test runner            | ✅ Complete |
-| Property-based testing | ✅ Complete |
-| Type invariants        | ✅ Complete |
-| Watch mode             | ✅ Complete |
-| GitHub Action          | ✅ Complete |
-| PyPI distribution      | ✅ Complete |
-| VS Code extension      | ✅ Complete |
-| LSP server             | ✅ Complete |
-| Windows installer      | ✅ Complete |
-| TypeScript target      | ✅ Initial compile support |
+| Component | Status |
+| --------- | ------ |
+| Both parsers (regex + tree-sitter) sharing one canonical lowering | ✅ Complete |
+| Target-neutral IR with canonical text/JSON (`nlsc ir`) | ✅ Complete |
+| Checked pipeline: types, control flow, failures, effects, typestate, retry policies | ✅ Complete |
+| Python emitter (IR-driven) | ✅ Complete |
+| TypeScript emitter (IR-driven, `tsc --strict` conformance in CI) | ✅ Complete |
+| Cross-target semantic conformance suite (Python + Node) | ✅ Complete |
+| Guard validation, edge cases, type invariants, property tests | ✅ Complete |
+| Semantic lock identity + `--frozen-lockfile` reproducibility | ✅ Complete |
+| Capability matrix + per-target emitter semantics markers | ✅ Complete |
+| Quality gates: `nlsc ci`, `lint`, `fmt`, `provenance` | ✅ Complete |
+| Local package model (`nls.pkg.json`, `nlsc install`) | ✅ Complete |
+| Emitter plugin registry (`nlsc.targets` entry points) | ✅ Complete |
+| Watch mode, LSP server, GitHub Action, PyPI distribution, VS Code extension, Windows installer | ✅ Complete |
+| Retry/timeout runtime emission | ◐ Checked, refused by both targets until emitted |
+| Typed effect handlers (#207/#208), Rust target (#24) | ◐ Planned — staged in the issues |
 
-**239 tests passing** — Production-ready for Python target. See [GitHub Issues](https://github.com/Mnehmos/mnehmos.nls.lang/issues) for roadmap.
+**1,162 tests passing** across three operating systems and two Python versions, including a cross-target conformance suite that executes compiled modules on both backends. See [GitHub Issues](https://github.com/Mnehmos/mnehmos.nls.lang/issues) for the roadmap.
 
 ## Documentation
 
@@ -515,7 +518,10 @@ DEPENDS: [other-function], [another]
 
 - [Getting Started](docs/getting-started.md)
 - [Language Specification](docs/language-spec.md)
+- [IR Specification](docs/ir-spec.md)
 - [CLI Reference](docs/cli-reference.md)
+- [Emission Targets](docs/targets.md)
+- [Packages](docs/packages.md)
 - [Architecture](docs/architecture.md)
 
 ## Contributing

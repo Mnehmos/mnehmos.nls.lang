@@ -126,7 +126,7 @@ except ValueError as e:
 
 ## Next Steps
 
-- **[CLI Reference](cli-reference.md)** — Learn all 8 nlsc commands
+- **[CLI Reference](cli-reference.md)** — Every `nlsc` command, flag, and exit code
 - **[Language Specification](language-spec.md)** — Full syntax reference
 - **[Architecture](architecture.md)** — How the compiler works
 

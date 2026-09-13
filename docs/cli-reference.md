@@ -333,6 +333,102 @@ Example success payload:
 
 ---
 
+### `nlsc run`
+
+Compile and execute a module's `@main` block (Python target only).
+
+```bash
+nlsc run <file.nl> [-t python] [--json] [--keep DIR]
+```
+
+Target-independent validation runs first — the same semantic gate as
+`compile` — and the capability gate refuses files using features the
+Python target cannot emit (`ETARGET002`). `--keep` preserves the generated
+module for inspection.
+
+### `nlsc ir`
+
+Emit the target-neutral IR for a `.nl` file (`#194`).
+
+```bash
+nlsc ir <file.nl> [--json] [--strict] [--check] [-o FILE]
+```
+
+`--check` adds backend-free validation (`#147`): the shared semantic gate
+plus checked-emission eligibility. It exits 1 on semantic errors (`ESEM`)
+or `EIR003` foreign-node blockers and reports `eligible` in the JSON
+payload; under `--strict`, strict-only diagnostics also block. The
+canonical text form is the same IR that lockfile semantic hashes cover
+(scheme `sem3`), and it is the recommended hand-off format for LLMs. See
+[ir-spec.md](ir-spec.md).
+
+### `nlsc ci`
+
+The automation gate: strict semantics plus a frozen lockfile, optionally
+compiling with reproducibility verification and running tests.
+
+```bash
+nlsc ci <file.nl> [--compile] [--test] [--json] [-t TARGET]
+```
+
+Stages run in order — `parse`, `gate` (fatal diagnostics, contract drift,
+scaffold content), `provenance` (a pending LLM edit blocks CI), `lockfile`
+(must exist, be current, and match the backend semantics marker), then
+optional `compile` (regenerated output must reproduce the locked target
+hash exactly) and `test`. Every stage failure exits 1 with structured
+diagnostics.
+
+### `nlsc lint`
+
+Intent-quality rules over a `.nl` file or directory (`ELINT001`–`ELINT012`):
+inputs without guards or tests, types without invariants, prose-only logic,
+and more.
+
+```bash
+nlsc lint [path] [--strict] [--json]
+```
+
+Findings are warnings unless `--strict`, which makes them exit non-zero.
+
+### `nlsc fmt`
+
+Rewrite files in the canonical layout (`#95`): section order
+`PURPOSE → INPUTS → GUARDS → LOGIC → EDGE CASES → RETURNS → DEPENDS`,
+blank-line discipline, and bullet normalization. The formatter is
+idempotent and refuses to destroy executable content (`EFMT001`).
+
+```bash
+nlsc fmt [path] [--check] [--json]
+```
+
+`--check` reports files that would change without writing them — use it as
+a CI gate.
+
+### `nlsc provenance`
+
+Read or write the edit-provenance sidecar for a `.nl` file (`#93`): who
+authored the current revision (human, LLM, tool), the review status, and
+the model/conversation identifiers for LLM edits.
+
+```bash
+nlsc provenance <file.nl> [--source human|llm|tool] [--status draft|pending|accepted|rejected] [--model ID] [--conversation ID] [--json]
+```
+
+A `pending` status blocks `nlsc ci` (`EPROV001`) until it is reviewed and
+accepted. See [provenance.md](provenance.md).
+
+### `nlsc lsp`
+
+Run the language server over stdio or TCP for editor integration (hover,
+completion, diagnostics, formatting).
+
+```bash
+nlsc lsp [--tcp HOST:PORT]
+```
+
+Requires the optional extras (`pip install "nlsc[lsp]"`); missing
+dependencies surface as `ELSP001`, startup failures as `ELSP002`.
+
 ### `nlsc install`
 
 ```

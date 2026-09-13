@@ -62,6 +62,16 @@ see what affects their `.nl` files and what only affects tooling. See
 
 ### Toolchain
 
+- Documentation and website refresh: the landing page and README now
+  describe the checked pipeline (types, control, failures, effects,
+  typestate, policies), the capability gate, semantic lock identity, the
+  package model, and the target plugin registry, with an accurate status
+  table and test count; the CLI reference documents all 20 commands
+  (`run`, `ir --check`, `ci`, `lint`, `fmt`, `provenance`, `lsp` added);
+  the architecture page's pipeline and module breakdown match the code.
+  A new `tests/test_docs_site.py` validates nav paths, internal links,
+  anchors, and the advertised test count on every run, so the site cannot
+  silently drift before its `mkdocs gh-deploy`.
 - The lockfile semantic-hash scheme moves to `sem3` (Issue #197): inferred
   effects now carry read/write resource identities and declared `EFFECTS`
   bounds render into the canonical form, so existing locks regenerate
