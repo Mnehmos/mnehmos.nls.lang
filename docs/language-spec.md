@@ -199,6 +199,13 @@ Steps can include:
   total with `ELSE ... -> name` so every path defines it. Bindings are
   immutable in checked code; rebinding the same name is rejected under
   `--strict` (ESEM011).
+- **Bounded folds** (#267): `FOR EACH <var> IN <list> [WHERE <cond>]: ADD <expr>`
+  or `... : COLLECT <expr>`, with the usual `-> name` binding. `ADD`
+  accumulates from `0`; `COLLECT` appends from `[]`. The loop variable is
+  scoped to the step, the binding is visible afterwards, and the region is
+  total and bounded by the collection — so it carries no termination
+  obligation and emits on both targets. Unbounded `WHILE` is deliberately
+  **not** in the checked core.
 - **State markers**: `[state] action`
 
 ### EDGE CASES
@@ -524,7 +531,7 @@ Scaffolding is a drafting aid, never a deliverable.
 
 | Construct | Example | Status |
 | --- | --- | --- |
-| List/dict/set comprehensions | `[x for x in items]` | Foreign; LLM/target-specific escape |
+| List/dict/set comprehensions | `[x for x in items]` | Foreign; use a `FOR EACH ... COLLECT` fold |
 | Conditional expressions | `a if c else b` | Use `IF/THEN/ELSE` steps instead |
 | f-strings, lambdas, slices, star-args | `f"{x}"`, `lambda t: t` | Foreign |
 | Dict/set literals | `{"a": 1}` | Foreign |

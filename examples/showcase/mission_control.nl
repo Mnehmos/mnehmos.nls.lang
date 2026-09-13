@@ -91,31 +91,25 @@ DEPENDS: [distance-between], [base]
 [science-total]
 PURPOSE: Sum the science points collected at the selected stops.
 INPUTS:
-  - route:  list of Waypoint
-  - cursor: number, optional
+  - route: list of Waypoint
 LOGIC:
-  1. IF cursor is not None THEN cursor -> index ELSE 0 -> index
-  2. IF index >= len(route) THEN 0 -> total ELSE route[(index)].science + [science-total](route, index + 1) -> total
+  1. FOR EACH stop IN route: ADD stop.science -> total
 RETURNS: total
 
 [payload-total]
 PURPOSE: Sum the sample mass that must fit in the rover's cargo bay.
 INPUTS:
-  - route:  list of Waypoint
-  - cursor: number, optional
+  - route: list of Waypoint
 LOGIC:
-  1. IF cursor is not None THEN cursor -> index ELSE 0 -> index
-  2. IF index >= len(route) THEN 0 -> total ELSE route[(index)].sample_kg + [payload-total](route, index + 1) -> total
+  1. FOR EACH stop IN route: ADD stop.sample_kg -> total
 RETURNS: total
 
 [sampling-hours]
 PURPOSE: Sum the time spent collecting samples rather than driving.
 INPUTS:
-  - route:  list of Waypoint
-  - cursor: number, optional
+  - route: list of Waypoint
 LOGIC:
-  1. IF cursor is not None THEN cursor -> index ELSE 0 -> index
-  2. IF index >= len(route) THEN 0 -> total ELSE route[(index)].dwell_hours + [sampling-hours](route, index + 1) -> total
+  1. FOR EACH stop IN route: ADD stop.dwell_hours -> total
 RETURNS: total
 
 [pace-factor]
@@ -280,6 +274,7 @@ RETURNS: min(100, max(0, value))
   science_total([]) == 0
   science_total(catalog()) == 204
 }
+
 
 @test [payload-total] {
   payload_total([]) == 0

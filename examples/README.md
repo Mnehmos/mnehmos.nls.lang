@@ -33,13 +33,11 @@ steps compile to `None` placeholders rather than to the logic described.
 | `shop_demo.nl` | Complete — passes `--strict` |
 | `billing.nl` | Complete — passes `--strict` |
 | `strings.nl` | Complete — passes `--strict` |
-| `sorting.nl`, `sorting_ja.nl`, `sorting_ts.nl` | Draft — list comprehensions |
+| `sorting.nl`, `sorting_ja.nl`, `sorting_ts.nl` | Complete — passes `--strict` |
 | `workflow_engine.nl` | Draft — largely prose LOGIC |
 
 Bringing the corpus to strict-clean is tracked in
-[#264](https://github.com/Mnehmos/mnehmos.nls.lang/issues/264); the iteration
-gap the sorting examples depend on is
-[#267](https://github.com/Mnehmos/mnehmos.nls.lang/issues/267).
+[#264](https://github.com/Mnehmos/mnehmos.nls.lang/issues/264).
 
 ## Examples
 

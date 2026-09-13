@@ -25,6 +25,12 @@ from .localization import (
 # separates it from narrative prose that merely starts with FOR (#202).
 FOR_EACH_STEP_RE = re.compile(r"^FOR\s+each\s+.+?\s+IN\s+.+?:", re.IGNORECASE)
 
+# A `COLLECT` fold (#267) builds a list into its binding; `ADD` accumulates a
+# number.  Return-type inference needs to tell them apart.
+_COLLECT_FOLD_RE = re.compile(
+    r"^FOR\s+EACH\s+.+?\s+IN\s+.+?:\s*COLLECT\s+", re.IGNORECASE
+)
+
 
 class InputType(Enum):
     """Primitive types supported in NLS"""
@@ -386,6 +392,14 @@ class ANLU:
                     if desc.startswith("[") and " for " in desc:
                         for var in step.assigns:
                             list_vars.add(var)
+                    # A COLLECT fold builds a list into its binding (#267).
+                    elif _COLLECT_FOLD_RE.match(
+                        normalize_expression_text(desc)
+                    ):
+                        if step.output_binding:
+                            list_vars.add(step.output_binding)
+                        for var in step.assigns:
+                            list_vars.add(var)
                 if list_vars and any(p in list_vars for p in parts):
                     # It's list concatenation — return the list input type
                     for inp in self.inputs:
@@ -666,18 +680,23 @@ class NLFile:
         return any(anlu.retry is not None or anlu.timeout is not None for anlu in self.anlus)
 
     def uses_for_each_loops(self) -> bool:
-        """True when any LOGIC step is a ``FOR each ... IN ...`` loop.
+        """True when any LOGIC step is an effect-only ``FOR each`` loop.
 
-        Loop steps are a Python-target capability: the TypeScript backend
-        cannot represent them, and an unsupported construct must be refused
-        rather than emitted as prose (issue #202).  The pattern is the same
-        one the Python emitter parses, so the capability gate and the
-        emitter agree on what counts as a loop.
+        Effect loop steps remain a Python-target capability: the TypeScript
+        backend cannot represent them, and an unsupported construct must be
+        refused rather than emitted as prose (issue #202).
+
+        Bounded folds (``FOR EACH ... : ADD|COLLECT ... -> name``, issue #267)
+        are *not* counted here.  They lower to a checked IR region that both
+        backends emit, so gating them off TypeScript would refuse a construct
+        the target fully supports.
         """
+        from .lowering import is_fold_step
+
         for anlu in self.anlus:
             for step in anlu.logic_steps:
                 description = normalize_expression_text(step.description.strip())
-                if FOR_EACH_STEP_RE.match(description):
+                if FOR_EACH_STEP_RE.match(description) and not is_fold_step(description):
                     return True
         return False
 

@@ -72,6 +72,14 @@ see what affects their `.nl` files and what only affects tooling. See
   it, or collected by a test run. A stale generated artifact for a module
   that regressed into a scaffold is removed rather than left importable.
   Scaffolding is a drafting aid, never a deliverable. *(0.1)*
+- Bounded iteration in the checked core (Issue #267): `FOR EACH <var> IN
+  <list> [WHERE <cond>]: ADD <expr> -> name` accumulates from 0 and
+  `... : COLLECT <expr> -> name` appends from []. The loop variable is
+  scoped to the step, the binding is visible after it, and the region
+  lowers to a checked `for-each` IR node both backends emit — so folds are
+  no longer gated off TypeScript the way effect-only `FOR each` loops are.
+  Unbounded `WHILE` stays out of the core deliberately. Japanese surface:
+  `<list> の 各 <var> について [もし <cond>]: 合計|収集 <expr>`. *(0.1)*
 
 ### Toolchain
 

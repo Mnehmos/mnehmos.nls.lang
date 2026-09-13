@@ -540,7 +540,7 @@ def _split_top_level_plus(expression: str) -> list[str]:
 # module context through every translate call arrives with the
 # checked-IR emitter migration.
 if TYPE_CHECKING:
-    from .ir import IRGuard, IRStmt
+    from .ir import IRExpr, IRForEach, IRGuard, IRStmt
 
 _DECLARED_TYPES: dict[str, list[str]] = {}
 
@@ -851,6 +851,37 @@ def _ir_multi_bound_names(stmts: tuple) -> set[str]:
     return {name for name, count in counts.items() if count > 1}
 
 
+def _render_ts_for_each(stmt: "IRForEach", indent: str) -> Optional[list[str]]:
+    """Render a bounded fold as an accumulator loop (#267).
+
+    Uses the same seeded-accumulator shape as the Python backend so the two
+    artifacts read alike next to the same `.nl` step.
+    """
+    iterable = _render_ts_expr(stmt.iterable)
+    value = _render_ts_expr(stmt.value)
+    if iterable is None or value is None:
+        return None
+
+    seed = "0" if stmt.op == "add" else "[]"
+    lines = [
+        f"{indent}let {stmt.target}: any = {seed};",
+        f"{indent}for (const {stmt.var} of {iterable}) {{",
+    ]
+    body_indent = indent + "  "
+    inner_indent = body_indent
+    if stmt.where is not None:
+        condition = _render_ts_expr(stmt.where)
+        if condition is None:
+            return None
+        lines.append(f"{body_indent}if (!__nls_truthy({condition})) {{ continue; }}")
+    if stmt.op == "add":
+        lines.append(f"{inner_indent}{stmt.target} = {stmt.target} + {value};")
+    else:
+        lines.append(f"{inner_indent}{stmt.target} = [...{stmt.target}, {value}];")
+    lines.append(f"{indent}}}")
+    return lines
+
+
 def _render_ts_stmt(
     stmt: "IRStmt",
     indent: str,
@@ -863,8 +894,10 @@ def _render_ts_stmt(
     (``ForeignStmt``, loop notes); the caller falls back to the legacy
     prose path for that ANLU.
     """
-    from .ir import IRBind, IRBranch, IRDiscard, IRNote
+    from .ir import IRBind, IRBranch, IRDiscard, IRForEach, IRNote
 
+    if isinstance(stmt, IRForEach):
+        return _render_ts_for_each(stmt, indent)
     if isinstance(stmt, IRBind):
         value = _render_ts_expr(stmt.value)
         if value is None:
@@ -972,6 +1005,37 @@ def _protocol_token_return_lines(anlu: ANLU) -> Optional[list[str]]:
     return None
 
 
+def _render_ts_list_concat(value: "IRExpr", anlu: ANLU) -> Optional[str]:
+    """Render `a + b + c` as array spread when the result is a list (#267).
+
+    JavaScript `+` on arrays stringifies them, so a list-valued concatenation
+    must emit `[...a, ...b]`. The Python backend needs no such distinction,
+    which is exactly why this has to be handled per target rather than in the
+    shared IR.
+    """
+    from .ir import IRBinary
+
+    if not _return_type_to_typescript(anlu).endswith("[]"):
+        return None
+
+    parts: list[str] = []
+
+    def flatten(node: "IRExpr") -> bool:
+        if isinstance(node, IRBinary) and node.op == "add":
+            return flatten(node.left) and flatten(node.right)
+        rendered = _render_ts_expr(node)
+        if rendered is None:
+            return False
+        parts.append(rendered)
+        return True
+
+    if not isinstance(value, IRBinary) or value.op != "add":
+        return None
+    if not flatten(value):
+        return None
+    return "[" + ", ".join(f"...{part}" for part in parts) + "]"
+
+
 def _emit_body_from_ir(anlu: ANLU) -> Optional[str]:
     """Render the ANLU body from its lowered IR (#202).
 
@@ -980,7 +1044,13 @@ def _emit_body_from_ir(anlu: ANLU) -> Optional[str]:
     default-value handling; the prose path keeps scaffold output working
     unchanged.
     """
-    from .ir import IRBind, IRRef, iter_stmt_nodes, operation_unchecked_nodes
+    from .ir import (
+        IRBind,
+        IRForEach,
+        IRRef,
+        iter_stmt_nodes,
+        operation_unchecked_nodes,
+    )
     from .lowering import lower_anlu
 
     operation, _diagnostics = lower_anlu(anlu, set(_DECLARED_TYPES))
@@ -1013,9 +1083,16 @@ def _emit_body_from_ir(anlu: ANLU) -> Optional[str]:
                 for stmt in iter_stmt_nodes(operation.body)
                 if isinstance(stmt, IRBind)
             )
+            bound.update(
+                stmt.target
+                for stmt in iter_stmt_nodes(operation.body)
+                if isinstance(stmt, IRForEach)
+            )
             if value.name not in bound:
                 return None
-        rendered = _render_ts_expr(value)
+        rendered = _render_ts_list_concat(value, anlu)
+        if rendered is None:
+            rendered = _render_ts_expr(value)
         if rendered is None:
             return None
         lines.append(f"  return {rendered};")

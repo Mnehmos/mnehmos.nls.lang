@@ -39,14 +39,6 @@ class TestCalculate_Tax:
         assert calculate_tax(200, 7.5) == 15
 
 
-class TestLine_Items_Total:
-    def test_case_1(self):
-        assert line_items_total([]) == 0
-
-    def test_case_2(self):
-        assert line_items_total([LineItem(description="Widget", quantity=5, unit_price=10)]) == 50
-
-
 class TestCalculate_Subtotal:
     def test_case_1(self):
         assert calculate_subtotal(Invoice(id="INV-1", customer_name="Acme", items=[], tax_rate=0, discount_percent=0)) == 0

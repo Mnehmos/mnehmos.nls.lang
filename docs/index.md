@@ -99,7 +99,7 @@ code is written:
 | Typed effect handlers (#207/#208) | ◐ Planned — design staged in the issues |
 | Rust target (#24) | ◐ Design intent documented; not implemented |
 
-**1,229 tests passing** across three operating systems and two Python
+**1,250 tests passing** across three operating systems and two Python
 versions, including a cross-target conformance suite that executes
 compiled modules on both backends.
 

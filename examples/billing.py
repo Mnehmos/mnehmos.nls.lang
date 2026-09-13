@@ -6,7 +6,7 @@ Module: billing
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -60,28 +60,6 @@ def calculate_line_total(item: LineItem) -> float:
     return item.quantity * item.unit_price
 
 
-def line_items_total(items: list[LineItem], cursor: Optional[float] = None) -> Any:
-    """
-    Recursively total the line items from a starting position.
-
-    Args:
-        items: list of LineItem
-        cursor: number
-
-    Returns:
-        total
-    """
-    if cursor is not None:
-        index = cursor
-    else:
-        index = 0
-    if index >= len(items):
-        total = 0
-    else:
-        total = calculate_line_total(items[index]) + line_items_total(items, index + 1)
-    return total
-
-
 def calculate_subtotal(invoice: Invoice) -> Any:
     """
     Sum all line item totals for an invoice.
@@ -92,7 +70,9 @@ def calculate_subtotal(invoice: Invoice) -> Any:
     Returns:
         subtotal
     """
-    subtotal = line_items_total(invoice.items)
+    subtotal = 0
+    for item in invoice.items:
+        subtotal = subtotal + calculate_line_total(item)
     return subtotal
 
 

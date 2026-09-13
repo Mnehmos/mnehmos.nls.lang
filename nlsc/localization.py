@@ -380,6 +380,27 @@ def normalize_localized_line(line: str) -> str:
         else_part = _normalize_conditional_arm(else_part)
         return f"{indent}{step}IF {condition} THEN {then_part} ELSE {else_part}"
 
+    # Bounded fold (#267): 「<iterable> の 各 <var> について[ もし <cond>] : 合計|収集 <expr>」
+    fold_match = re.match(
+        step_prefix
+        + r"(?P<iter>.+?)\s+の\s+各\s+(?P<var>\S+)\s+について"
+        r"(?:\s+もし\s+(?P<cond>.+?))?\s*[:：]\s*(?P<op>合計|収集)\s+(?P<value>.+)$",
+        line,
+    )
+    if fold_match:
+        indent, step = fold_match.group(1), fold_match.group(2)
+        op = "ADD" if fold_match.group("op") == "合計" else "COLLECT"
+        header = "FOR EACH {} IN {}".format(
+            normalize_expression_text(fold_match.group("var").strip()),
+            normalize_expression_text(fold_match.group("iter").strip()),
+        )
+        if fold_match.group("cond"):
+            header += " WHERE " + normalize_expression_text(
+                fold_match.group("cond").strip()
+            )
+        value = normalize_expression_text(fold_match.group("value").strip())
+        return f"{indent}{step}{header}: {op} {value}"
+
     while_match = re.match(step_prefix + r"繰り返し\s+(.+)$", line)
     if while_match:
         indent, step, condition = while_match.groups()

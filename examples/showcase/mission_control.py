@@ -175,69 +175,51 @@ def route_distance(route: list[Waypoint], origin: Waypoint, cursor: Optional[flo
     return distance
 
 
-def science_total(route: list[Waypoint], cursor: Optional[float] = None) -> Any:
+def science_total(route: list[Waypoint]) -> Any:
     """
     Sum the science points collected at the selected stops.
 
     Args:
         route: list of Waypoint
-        cursor: number
 
     Returns:
         total
     """
-    if cursor is not None:
-        index = cursor
-    else:
-        index = 0
-    if index >= len(route):
-        total = 0
-    else:
-        total = route[index].science + science_total(route, index + 1)
+    total = 0
+    for stop in route:
+        total = total + stop.science
     return total
 
 
-def payload_total(route: list[Waypoint], cursor: Optional[float] = None) -> Any:
+def payload_total(route: list[Waypoint]) -> Any:
     """
     Sum the sample mass that must fit in the rover's cargo bay.
 
     Args:
         route: list of Waypoint
-        cursor: number
 
     Returns:
         total
     """
-    if cursor is not None:
-        index = cursor
-    else:
-        index = 0
-    if index >= len(route):
-        total = 0
-    else:
-        total = route[index].sample_kg + payload_total(route, index + 1)
+    total = 0
+    for stop in route:
+        total = total + stop.sample_kg
     return total
 
 
-def sampling_hours(route: list[Waypoint], cursor: Optional[float] = None) -> Any:
+def sampling_hours(route: list[Waypoint]) -> Any:
     """
     Sum the time spent collecting samples rather than driving.
 
     Args:
         route: list of Waypoint
-        cursor: number
 
     Returns:
         total
     """
-    if cursor is not None:
-        index = cursor
-    else:
-        index = 0
-    if index >= len(route):
-        total = 0
-    else:
-        total = route[index].dwell_hours + sampling_hours(route, index + 1)
+    total = 0
+    for stop in route:
+        total = total + stop.dwell_hours
     return total
 
 

@@ -783,6 +783,50 @@ class IRLoop:
 
 
 @dataclass(frozen=True)
+class IRForEach:
+    """Bounded fold over a finite collection (#267).
+
+    ``op`` is ``add`` (accumulate from 0) or ``collect`` (append from []).
+    ``var`` is scoped to this region; ``target`` is bound after it. The region
+    is total and terminates with the iterable, so it carries no separate
+    termination obligation the way ``IRLoop`` does.
+    """
+
+    var: str
+    iterable: IRExpr
+    op: str
+    value: IRExpr
+    target: str
+    where: Optional[IRExpr] = None
+    id: str = ""
+    span: Optional[SourceSpan] = None
+
+    def render(self) -> str:
+        where_part = f" where {self.where.render()}" if self.where else ""
+        return "(for-each {} in {}{} {} {} -> {})".format(
+            self.var,
+            self.iterable.render(),
+            where_part,
+            self.op,
+            self.value.render(),
+            self.target,
+        )
+
+    def to_json(self) -> dict[str, object]:
+        return {
+            "kind": "for-each",
+            "var": self.var,
+            "iterable": self.iterable.to_json(),
+            "op": self.op,
+            "value": self.value.to_json(),
+            "target": self.target,
+            "where": self.where.to_json() if self.where else None,
+            "id": self.id,
+            "span": self.span.to_json() if self.span else None,
+        }
+
+
+@dataclass(frozen=True)
 class IRNote:
     """Attached narrative: executable order preserved, semantics-free."""
 
@@ -831,6 +875,7 @@ IRStmt = Union[
     IRGuard,
     IRBranch,
     IRLoop,
+    IRForEach,
     IRNote,
     ForeignStmt,
 ]
@@ -1325,6 +1370,11 @@ def operation_unchecked_nodes(op: IROperation) -> list[Union[ForeignExpr, Foreig
             scan_expr(stmt.value)
         elif isinstance(stmt, IRBranch):
             scan_expr(stmt.condition)
+        elif isinstance(stmt, IRForEach):
+            scan_expr(stmt.iterable)
+            scan_expr(stmt.value)
+            if stmt.where is not None:
+                scan_expr(stmt.where)
     if op.result is not None and op.result.value is not None:
         scan_expr(op.result.value)
     return blockers

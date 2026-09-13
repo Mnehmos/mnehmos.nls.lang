@@ -33,25 +33,14 @@ INPUTS:
   - item: LineItem
 RETURNS: item.quantity * item.unit_price
 
-[line-items-total]
-PURPOSE: Recursively total the line items from a starting position.
-INPUTS:
-  - items:  list of LineItem
-  - cursor: number, optional
-LOGIC:
-  1. IF cursor is not None THEN cursor -> index ELSE 0 -> index
-  2. IF index >= len(items) THEN 0 -> total ELSE [calculate-line-total](items[(index)]) + [line-items-total](items, index + 1) -> total
-RETURNS: total
-DEPENDS: [calculate-line-total]
-
 [calculate-subtotal]
 PURPOSE: Sum all line item totals for an invoice.
 INPUTS:
   - invoice: Invoice
 LOGIC:
-  1. [line-items-total](invoice.items) -> subtotal
+  1. FOR EACH item IN invoice.items: ADD [calculate-line-total](item) -> subtotal
 RETURNS: subtotal
-DEPENDS: [line-items-total]
+DEPENDS: [calculate-line-total]
 
 [apply-discount]
 PURPOSE: Apply a percentage discount to an amount.
@@ -105,11 +94,6 @@ DEPENDS: [calculate-subtotal], [apply-discount], [calculate-tax]
   calculate_tax(100, 10) == 10
   calculate_tax(100, 0) == 0
   calculate_tax(200, 7.5) == 15
-}
-
-@test [line-items-total] {
-  line_items_total([]) == 0
-  line_items_total([LineItem(description="Widget", quantity=5, unit_price=10)]) == 50
 }
 
 @test [calculate-subtotal] {
