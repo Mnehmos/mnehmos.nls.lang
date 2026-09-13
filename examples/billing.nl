@@ -33,13 +33,25 @@ INPUTS:
   - item: LineItem
 RETURNS: item.quantity * item.unit_price
 
+[line-items-total]
+PURPOSE: Recursively total the line items from a starting position.
+INPUTS:
+  - items:  list of LineItem
+  - cursor: number, optional
+LOGIC:
+  1. IF cursor is not None THEN cursor -> index ELSE 0 -> index
+  2. IF index >= len(items) THEN 0 -> total ELSE [calculate-line-total](items[(index)]) + [line-items-total](items, index + 1) -> total
+RETURNS: total
+DEPENDS: [calculate-line-total]
+
 [calculate-subtotal]
 PURPOSE: Sum all line item totals for an invoice.
 INPUTS:
   - invoice: Invoice
 LOGIC:
-  1. Sum each item's total -> subtotal
-RETURNS: sum(item.quantity * item.unit_price for item in invoice.items)
+  1. [line-items-total](invoice.items) -> subtotal
+RETURNS: subtotal
+DEPENDS: [line-items-total]
 
 [apply-discount]
 PURPOSE: Apply a percentage discount to an amount.
@@ -50,9 +62,9 @@ GUARDS:
   - discount_percent >= 0 -> ValueError("Discount cannot be negative")
   - discount_percent <= 100 -> ValueError("Discount cannot exceed 100%")
 LOGIC:
-  1. Calculate discount amount -> discount
-  2. Subtract from original -> final
-RETURNS: amount * (1 - discount_percent / 100)
+  1. amount * (discount_percent / 100) -> discount
+  2. amount - discount -> final
+RETURNS: final
 
 [calculate-tax]
 PURPOSE: Calculate tax on a given amount.
@@ -68,11 +80,11 @@ PURPOSE: Calculate the final total for an invoice including tax and discount.
 INPUTS:
   - invoice: Invoice
 LOGIC:
-  1. Calculate subtotal from all items -> subtotal
-  2. Apply discount to subtotal -> discounted
-  3. Calculate tax on discounted amount -> tax
-  4. Add tax to discounted amount -> total
-RETURNS: calculate_subtotal(invoice) * (1 - invoice.discount_percent / 100) * (1 + invoice.tax_rate / 100)
+  1. [calculate-subtotal](invoice) -> subtotal
+  2. [apply-discount](subtotal, invoice.discount_percent) -> discounted
+  3. [calculate-tax](discounted, invoice.tax_rate) -> tax
+  4. discounted + tax -> total
+RETURNS: total
 DEPENDS: [calculate-subtotal], [apply-discount], [calculate-tax]
 
 # === Test Specifications ===
@@ -93,6 +105,23 @@ DEPENDS: [calculate-subtotal], [apply-discount], [calculate-tax]
   calculate_tax(100, 10) == 10
   calculate_tax(100, 0) == 0
   calculate_tax(200, 7.5) == 15
+}
+
+@test [line-items-total] {
+  line_items_total([]) == 0
+  line_items_total([LineItem(description="Widget", quantity=5, unit_price=10)]) == 50
+}
+
+@test [calculate-subtotal] {
+  calculate_subtotal(Invoice(id="INV-1", customer_name="Acme", items=[], tax_rate=0, discount_percent=0)) == 0
+  calculate_subtotal(Invoice(id="INV-2", customer_name="Acme", items=[LineItem(description="Widget", quantity=2, unit_price=25), LineItem(description="Gadget", quantity=1, unit_price=50)], tax_rate=0, discount_percent=0)) == 100
+}
+
+@test [calculate-invoice-total] {
+  calculate_invoice_total(Invoice(id="INV-3", customer_name="Acme", items=[LineItem(description="Widget", quantity=1, unit_price=100)], tax_rate=0, discount_percent=0)) == 100
+  calculate_invoice_total(Invoice(id="INV-4", customer_name="Acme", items=[LineItem(description="Widget", quantity=1, unit_price=100)], tax_rate=10, discount_percent=0)) == 110
+  calculate_invoice_total(Invoice(id="INV-5", customer_name="Acme", items=[LineItem(description="Widget", quantity=1, unit_price=100)], tax_rate=0, discount_percent=25)) == 75
+  calculate_invoice_total(Invoice(id="INV-6", customer_name="Acme", items=[LineItem(description="Widget", quantity=1, unit_price=200)], tax_rate=10, discount_percent=50)) == 110
 }
 
 # === Property-Based Tests ===

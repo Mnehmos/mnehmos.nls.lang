@@ -6,10 +6,10 @@ This directory contains working examples of `.nl` files demonstrating various NL
 
 ```bash
 # Compile any example
-nlsc compile math.nl
+nlsc compile arithmetic.nl
 
 # Or compile the same example to TypeScript
-nlsc compile math.nl -t typescript
+nlsc compile arithmetic.nl -t typescript
 
 # Run tests
 nlsc test shop_demo.nl
@@ -29,10 +29,10 @@ steps compile to `None` placeholders rather than to the logic described.
 | Example | Status |
 | --- | --- |
 | `showcase/mission_control.nl` | Complete — passes `--strict` |
+| `arithmetic.nl` | Complete — passes `--strict` |
 | `shop_demo.nl` | Complete — passes `--strict` |
-| `math.nl` | Compiles; module name shadows the stdlib `math` (`ESEM013`) |
-| `billing.nl` | Draft — prose LOGIC, a generator expression, `DEPENDS` drift |
-| `strings.nl` | Draft — ternary and method-chain expressions |
+| `billing.nl` | Complete — passes `--strict` |
+| `strings.nl` | Complete — passes `--strict` |
 | `sorting.nl`, `sorting_ja.nl`, `sorting_ts.nl` | Draft — list comprehensions |
 | `workflow_engine.nl` | Draft — largely prose LOGIC |
 
@@ -56,7 +56,7 @@ python -m nlsc run examples/showcase/mission_control.nl --strict
 
 See the [showcase guide](showcase/README.md) for a walkthrough and verification.
 
-### math.nl - Basic Arithmetic
+### arithmetic.nl - Basic Arithmetic
 The simplest possible example. Two functions: `add` and `multiply`.
 
 **Features demonstrated:**

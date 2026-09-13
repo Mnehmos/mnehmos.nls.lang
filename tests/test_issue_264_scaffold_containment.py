@@ -252,6 +252,30 @@ def test_complete_module_still_emits_its_test_artifact(tmp_path, capsys, monkeyp
     assert (tmp_path / "test_complete_probe.py").exists()
 
 
+def test_resolved_scaffold_removes_its_superseded_draft(tmp_path, capsys, monkeypatch):
+    """The inverse of the stale-artifact case: a draft must not outlive its fix."""
+    monkeypatch.chdir(tmp_path)
+    path = _write(tmp_path, SCAFFOLD, "fix_probe.nl")
+    assert main(["compile", str(path)]) == 0
+    assert (tmp_path / "fix_probe.draft.py").exists()
+
+    # Same module, LOGIC now executable.
+    resolved = SCAFFOLD.replace(
+        "  1. Look up tax brackets for the income -> brackets\n"
+        "  2. Sum bracket amounts to get total_tax -> total_tax\n",
+        "  1. income * 0.2 -> total_tax\n",
+    )
+    path.write_text(resolved, encoding="utf-8")
+    code = main(["compile", str(path)])
+    captured = capsys.readouterr()
+
+    assert code == 0, captured.err
+    assert (tmp_path / "fix_probe.py").exists()
+    assert not (tmp_path / "fix_probe.draft.py").exists(), (
+        "a superseded draft must not linger next to the real artifact"
+    )
+
+
 def test_explicit_output_path_is_honoured_but_warned(tmp_path, capsys, monkeypatch):
     monkeypatch.chdir(tmp_path)
     path = _write(tmp_path, SCAFFOLD, "tax_probe.nl")

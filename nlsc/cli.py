@@ -943,14 +943,16 @@ def cmd_compile(args: argparse.Namespace) -> int:
     # <stem>.draft<suffix>. An explicit --output is honoured as written —
     # the scaffold warnings above already say what the artifact is.
     output_path = source_path.with_suffix(output_suffix)
+    draft_path = source_path.with_name(f"{source_path.stem}.draft{output_suffix}")
     if args.output:
         output_path = Path(args.output)
     elif scaffold:
-        importable_path = output_path
-        output_path = source_path.with_name(
-            f"{source_path.stem}.draft{output_suffix}"
-        )
-        _remove_stale_artifact(importable_path)
+        # Regressed into a scaffold: drop the last good importable build.
+        _remove_stale_artifact(output_path)
+        output_path = draft_path
+    else:
+        # Resolved into a complete module: drop the superseded draft.
+        _remove_stale_artifact(draft_path)
 
     try:
         output_path.write_text(generated_code, encoding="utf-8")
@@ -3355,7 +3357,7 @@ def main(argv: list[str] | None = None) -> int:
         epilog="""\
 Examples:
   nlsc init                     Initialize new NLS project
-  nlsc compile src/math.nl      Compile to Python
+  nlsc compile src/arithmetic.nl      Compile to Python
   nlsc verify src/auth.nl       Validate without generating
   nlsc graph src/order.nl       Generate Mermaid dependency diagram
   nlsc graph src/order.nl -a process-order  Visualize ANLU dataflow
