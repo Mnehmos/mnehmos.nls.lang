@@ -69,12 +69,17 @@ def _root_ref(expr: IRExpr) -> str | None:
         return None
 
 
-def _expr_needs_unknown(expr: IRExpr, named: set[str]) -> bool:
+def _expr_needs_unknown(
+    expr: IRExpr, named: set[str], pure_calls: frozenset[str] | set[str]
+) -> bool:
     for node in iter_expr_nodes(expr):
         if isinstance(node, ForeignExpr):
             return True
         if isinstance(node, IRCall) and not node.anlu:
-            return True
+            # Documented builtins and declared-type constructors are pure:
+            # their constraint violations are *failures*, not effects (#197).
+            if node.target not in pure_calls:
+                return True
         if isinstance(node, IRMethodCall):
             base = _root_ref(node.base)
             if base is None or base not in named:
@@ -106,7 +111,9 @@ def _statement_expressions(statement: object) -> list[IRExpr]:
     ]
 
 
-def _own_effects(operation: IROperation) -> list[IREffectSpec]:
+def _own_effects(
+    operation: IROperation, pure_calls: frozenset[str] | set[str]
+) -> list[IREffectSpec]:
     own: list[IREffectSpec] = []
     if operation.literal is not None:
         own.append(IREffectSpec(kind="unknown", origin="literal"))
@@ -119,17 +126,17 @@ def _own_effects(operation: IROperation) -> list[IREffectSpec]:
             continue
         for expr in _statement_expressions(stmt):
             own.extend(_method_write_effects(expr, named))
-            if _expr_needs_unknown(expr, named):
+            if _expr_needs_unknown(expr, named, pure_calls):
                 own.append(UNKNOWN_EFFECT)
 
     for guard in operation.guards:
         own.extend(_method_write_effects(guard.condition, named))
-        if _expr_needs_unknown(guard.condition, named):
+        if _expr_needs_unknown(guard.condition, named, pure_calls):
             own.append(UNKNOWN_EFFECT)
 
     if operation.result is not None and operation.result.value is not None:
         own.extend(_method_write_effects(operation.result.value, named))
-        if _expr_needs_unknown(operation.result.value, named):
+        if _expr_needs_unknown(operation.result.value, named, pure_calls):
             own.append(UNKNOWN_EFFECT)
 
     return own
@@ -202,12 +209,17 @@ def _dedupe_sorted(effects: list[IREffectSpec]) -> tuple[IREffectSpec, ...]:
 
 def populate_effect_sets(module: IRModule) -> None:
     """Fill every operation's effects slot, propagating callee effects."""
+    from .builtins import BUILTIN_NAMES
+
     ops = {op.name: op for op in module.operations}
     calls: dict[str, list[IRCall]] = {}
+    pure_calls: frozenset[str] = frozenset(
+        BUILTIN_NAMES | {record.name for record in module.types}
+    )
 
     for operation in module.operations:
         calls[operation.name] = _anlu_calls(operation)
-        operation.effects = _dedupe_sorted(_own_effects(operation))
+        operation.effects = _dedupe_sorted(_own_effects(operation, pure_calls))
 
     for _ in range(len(module.operations) + 1):
         changed = False

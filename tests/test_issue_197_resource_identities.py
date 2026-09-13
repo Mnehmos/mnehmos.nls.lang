@@ -483,3 +483,64 @@ RETURNS: a + b
 """
     path = _write(tmp_path, source)
     assert main(["verify", str(path)]) == 0
+
+
+# --------------------------------------------------------------------------
+# Pure builtins and declared-type constructors (review + showcase finding)
+# --------------------------------------------------------------------------
+
+BUILTIN_CALL = """@module builtin_pure
+[clamp-percent]
+PURPOSE: clamp a percentage
+INPUTS:
+  - value: number
+EFFECTS: pure
+RETURNS: min(100, max(0, value))
+"""
+
+TYPE_CONSTRUCTOR = """@module type_ctor
+@type Waypoint
+  - label: string
+
+[base]
+PURPOSE: the base waypoint
+EFFECTS: pure
+RETURNS: Waypoint("base")
+"""
+
+GUARD_BUILTIN = """@module guard_builtin
+[authorize]
+PURPOSE: refuse empty routes
+INPUTS:
+  - route: list of number
+EFFECTS: pure
+GUARDS:
+  - len(route) > 0 -> ValueError("empty route")
+RETURNS: 0
+"""
+
+
+def test_documented_builtins_are_pure():
+    effects = _op(BUILTIN_CALL, "clamp-percent").effects
+    assert effects == ()
+
+
+def test_declared_type_constructors_are_pure():
+    effects = _op(TYPE_CONSTRUCTOR, "base").effects
+    assert effects == ()
+
+
+def test_builtins_in_guards_are_pure():
+    effects = _op(GUARD_BUILTIN, "authorize").effects
+    assert effects == ()
+
+
+def test_declared_pure_with_builtins_passes_the_gate(tmp_path, capsys):
+    for source in (BUILTIN_CALL, TYPE_CONSTRUCTOR, GUARD_BUILTIN):
+        path = _write(tmp_path, source)
+        assert main(["verify", str(path)]) == 0, source
+
+
+def test_unknown_foreign_calls_still_infer_unknown():
+    effects = _op(FOREIGN_CALL, "log").effects or ()
+    assert any(e.kind == "unknown" for e in effects)
