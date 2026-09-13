@@ -98,6 +98,13 @@ An optional ``EFFECTS:`` contract line declares an upper bound —
 is never an implicit proof of purity.  Effects participate in lockfile
 semantic hashes (scheme ``sem3``).
 
+### State tokens (Issue #200)
+
+Protocol parameters and results carry state tokens on their type
+references (``Order<Pending>``), lowered as ``TypeRef`` arguments.  The
+typestate checker consumes them; emitted annotations use the base type.
+See [language-spec.md](language-spec.md#resource-state-protocols-opt-in).
+
 ### Failure sets (Issue #198)
 
 Every operation carries an analyzed ``fails`` set after lowering:

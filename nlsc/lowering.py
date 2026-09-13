@@ -907,6 +907,10 @@ def _looks_like_type_name(text: str, declared_types: set[str]) -> bool:
     candidate = text.strip()
     if not candidate or " " in candidate:
         return False
+    # Protocol/state spellings are declared types too (#200).
+    if candidate.endswith(">") and "<" in candidate:
+        base = candidate.partition("<")[0].strip()
+        return bool(base) and _looks_like_type_name(base, declared_types)
     if candidate.lower() in _PRIMITIVE_RETURN_WORDS:
         return True
     lowered = candidate.lower()

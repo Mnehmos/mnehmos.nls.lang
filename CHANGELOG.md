@@ -23,6 +23,17 @@ see what affects their `.nl` files and what only affects tooling. See
   `EVER001` (fatal) / `EVER002` (strict-only). *(0.1)*
 - New diagnostics: `EIR001`–`EIR005`, `ESEM001`–`ESEM013`, `EVER001`–`EVER002`
   with a diagnostics index in the language spec.
+- Resource state protocols (opt-in): `@states Order: Pending, Validated`
+  declares a protocol, and `Order<State>` tokens on INPUTS/RETURNS carry
+  it through transitions. The checker rejects wrong-state transitions
+  (`ESEM014`), consumed-token reuse including through aliases and branch
+  joins (`ESEM015`), fabricated tokens — undeclared protocol/state,
+  unlabeled parameters, undeclared result states (`ESEM016`) — and
+  ambiguous branch joins (`ESEM017`). This is a static guarantee about the
+  specified transition order only; it says nothing about external systems.
+  Emitted annotations use the base resource type, and a type-only protocol
+  `RETURNS` is a contract that `nlsc ci` requires you to implement with
+  `@literal`. *(0.1)*
 - `EFFECTS:` declares an upper bound on an ANLU's effects (`pure`,
   `unknown`, `read`, `write`, `read(name)`, `write(name)`). Inferred
   effects are conservative and named: a method call on a parameter or

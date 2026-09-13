@@ -518,6 +518,47 @@ block checked emission (`EIR003`):
 | Declared return type without a value | `RETURNS: number` alone | `EIR004`; return the value or `none` |
 | ANLU with no result contract | `[checkout]` with no `RETURNS` | `EIR005`; declare the value, `none`, or implement it with `@literal` |
 
+### Resource state protocols (opt-in)
+
+A module can declare resource states with `@states` and carry them as
+tokens on inputs and results:
+
+```nl
+@states Order: Pending, Validated, Charged, Shipped
+
+[validate-order]
+PURPOSE: Validate a pending order
+INPUTS:
+  - order: Order<Pending>
+EFFECTS: unknown
+RETURNS: Order<Validated>
+```
+
+The checker tracks each token's state, so tokens cannot be forged or
+reused in checked code:
+
+- `ESEM014` — a token in the wrong state is passed to a transition;
+- `ESEM015` — a consumed token (or an alias of it) is used again —
+  passing a token to a transition consumes it;
+- `ESEM016` — a token is fabricated: an undeclared protocol or state, a
+  protocol parameter without a state token, or a transition returning a
+  protocol value without declaring its result state;
+- `ESEM017` — the two arms of a branch leave a token in different states,
+  so a later transition cannot know which state holds.
+
+Files without `@states` are unaffected. Emitted annotations use the base
+resource type (`order: Order`). A transition declared with a type-only
+`RETURNS: Order<State>` is a contract, and contracts are scaffold content:
+`nlsc verify` accepts it with a warning, while `nlsc ci` requires the
+operation to be implemented — give it a `@literal` block (a value-bearing
+`RETURNS` cannot carry a state token today).
+
+**Static guarantee only.** The checker proves the *specified* transition
+order; it says nothing about whether an external system actually applied
+the transition, nor does it provide exactly-once semantics for anything a
+transition performs. External effects still carry their own contracts
+(see [#201](https://github.com/Mnehmos/mnehmos.nls.lang/issues/201)).
+
 ### Target capability matrix
 
 Compiling to a target that cannot represent content fails explicitly
@@ -573,6 +614,7 @@ with causes and next steps.
 | `ESEM010` | Branch totality | [Bindings, branches, and guards](#bindings-branches-and-guards) |
 | `ESEM012` | Guard error identity | [Effects and failure contracts](#effects-and-failure-contracts) |
 | `ESEM013` | Module/file name shadows a host stdlib module | [File Structure](#file-structure) |
+| `ESEM014`–`ESEM017` | Resource state protocols: wrong state, consumed reuse, fabrication, ambiguous join | [Resource state protocols](#resource-state-protocols-opt-in) |
 | `EFX001`, `EFX002` | Declared `EFFECTS` upper bound exceeded / malformed | [Effects and failure contracts](#effects-and-failure-contracts) |
 | `EGRAPH003` | Control-flow view usage (`--control` needs `--anlu`) | [Semantics](#semantics-what-the-compiler-guarantees) |
 | `EVER001`, `EVER002` | Declared `@nls` revision compatibility | [Directives](#directives) |

@@ -728,6 +728,10 @@ def check_module(nl_file: NLFile, *, file_token: str = "<source>") -> SemanticCh
 
     result.errors.extend(_check_effect_declarations(module, file_token))
 
+    from .typestate import check_typestate
+
+    result.errors.extend(check_typestate(nl_file, module, file_token=file_token))
+
     table = _build_symbol_table(module, result, file_token)
     # Declared language-spec revision (@nls, Issue #144): same major is
     # compatible; a newer minor is a strict-only warning; a different

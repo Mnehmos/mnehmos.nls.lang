@@ -514,6 +514,15 @@ def _legacy_return_lines(anlu: ANLU) -> list[str]:
     if returns_expr.strip().lower() in {"void", "none"}:
         returns_expr = "None"
 
+    # A protocol state token is a declaration, not a value (#200): keep the
+    # artifact visibly unresolved instead of emitting invalid syntax.
+    if returns_expr.endswith(">") and "<" in returns_expr and " " not in returns_expr:
+        safe_token = returns_expr.replace("'", "\\'")
+        return [
+            f"    # NotImplementedError('TODO: {safe_token}')",
+            f"    return None  # TODO: {safe_token}",
+        ]
+
     # Check if returns_expr is a type name that needs conversion
     returns_expr = _convert_type_return(returns_expr, anlu)
 
