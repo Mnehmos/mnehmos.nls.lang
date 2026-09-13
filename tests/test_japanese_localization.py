@@ -255,3 +255,123 @@ def test_english_literal_block_is_unaffected():
     )
     code = emit_python(parse_nl_file(source, source_path="t.nl"))
     assert "def helper():\n    表示 = 1\n    return 表示" in code
+
+
+# --------------------------------------------------------------------------
+# Assertion localization (#253) and reserved aliases (#256)
+# --------------------------------------------------------------------------
+
+ASSERTIONS = '''@モジュール t
+@ターゲット パイソン
+
+[常に真]
+目的: 真を返す
+返り値: 真
+
+@テスト [常に真] {
+  常に真() == 真
+}
+
+@性質 [常に真] {
+  forall x: 数値 -> 常に真() == 真 かつ x >= 0 または 偽
+}
+'''
+
+
+def test_test_assertions_are_localized():
+    from nlsc.emitter import emit_tests
+
+    code = emit_tests(parse_nl_file(ASSERTIONS, source_path="t.nl"))
+    assert "assert 常に真() == True" in code
+    assert "== 真" not in code
+
+
+def test_property_assertions_and_types_are_localized():
+    from nlsc.emitter import emit_property_tests
+
+    code = emit_property_tests(parse_nl_file(ASSERTIONS, source_path="t.nl"))
+    assert "常に真() == True" in code
+    assert " or False" in code
+    assert " and " in code
+    # The alias words themselves are gone from the assertion.
+    assert "かつ" not in code and "または" not in code
+    # The forall variable type is normalized for the hypothesis strategy.
+    assert "st.floats" in code
+
+
+def test_english_assertions_are_unchanged():
+    from nlsc.emitter import emit_tests
+
+    source = """@module t
+@target python
+
+[pair]
+PURPOSE: two
+RETURNS: 2
+
+@test [pair] {
+  pair() == 2
+}
+"""
+    code = emit_tests(parse_nl_file(source, source_path="t.nl"))
+    assert "assert pair() == 2" in code
+
+
+COLLIDING_ANLU = """@モジュール t
+@ターゲット パイソン
+
+[長さ]
+目的: 要素数を返す
+入力:
+  - 項目: 数値のリスト
+返り値: 長さ(項目)
+"""
+
+COLLIDING_INPUT = """@モジュール t
+@ターゲット パイソン
+
+[件数]
+目的: 数える
+入力:
+  - 真: 数値
+返り値: 真
+"""
+
+LEN_STILL_BUILTIN = """@モジュール t
+@ターゲット パイソン
+
+[件数]
+目的: 数える
+入力:
+  - 項目: 数値のリスト
+返り値: 長さ(項目)
+"""
+
+
+def test_reserved_alias_anlu_is_rejected(tmp_path, capsys):
+    from nlsc.cli import main
+
+    path = tmp_path / "probe.nl"
+    path.write_text(COLLIDING_ANLU, encoding="utf-8")
+    assert main(["verify", str(path)]) == 1
+    assert "ESEM022" in capsys.readouterr().err
+
+
+def test_reserved_alias_input_is_rejected(tmp_path, capsys):
+    from nlsc.cli import main
+
+    path = tmp_path / "probe.nl"
+    path.write_text(COLLIDING_INPUT, encoding="utf-8")
+    assert main(["verify", str(path)]) == 1
+    assert "ESEM022" in capsys.readouterr().err
+
+
+def test_alias_builtin_still_works_without_a_definition(tmp_path, capsys):
+    from nlsc.cli import main
+    from nlsc.emitter import emit_python
+
+    path = tmp_path / "probe.nl"
+    path.write_text(LEN_STILL_BUILTIN, encoding="utf-8")
+    assert main(["verify", str(path)]) == 0
+    code = emit_python(parse_nl_file(LEN_STILL_BUILTIN, source_path="t.nl"))
+    assert "return len(項目)" in code

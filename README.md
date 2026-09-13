@@ -2,7 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/nlsc)](https://pypi.org/project/nlsc/)
 [![PyPI downloads](https://img.shields.io/pepy/dt/nlsc)](https://pepy.tech/project/nlsc)
-[![Tests](https://img.shields.io/badge/tests-1173%20passing-brightgreen)](https://github.com/Mnehmos/mnehmos.nls.lang)
+[![Tests](https://img.shields.io/badge/tests-1179%20passing-brightgreen)](https://github.com/Mnehmos/mnehmos.nls.lang)
 [![CI](https://github.com/Mnehmos/mnehmos.nls.lang/actions/workflows/ci.yml/badge.svg)](https://github.com/Mnehmos/mnehmos.nls.lang/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](https://www.python.org)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -510,7 +510,7 @@ DEPENDS: [other-function], [another]
 | Retry/timeout runtime emission | ◐ Checked, refused by both targets until emitted |
 | Typed effect handlers (#207/#208), Rust target (#24) | ◐ Planned — staged in the issues |
 
-**1,173 tests passing** across three operating systems and two Python versions, including a cross-target conformance suite that executes compiled modules on both backends. See [GitHub Issues](https://github.com/Mnehmos/mnehmos.nls.lang/issues) for the roadmap.
+**1,179 tests passing** across three operating systems and two Python versions, including a cross-target conformance suite that executes compiled modules on both backends. See [GitHub Issues](https://github.com/Mnehmos/mnehmos.nls.lang/issues) for the roadmap.
 
 ## Documentation
 

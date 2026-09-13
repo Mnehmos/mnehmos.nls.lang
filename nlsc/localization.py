@@ -93,6 +93,29 @@ _EXPRESSION_ALIASES = {
     "無し": "None",
 }
 
+# Localized builtin aliases are substituted anywhere they stand alone, so
+# a user definition with one of these names would be silently redirected to
+# the builtin (#256).  They are reserved: definitions are rejected (ESEM022)
+# rather than reinterpreted.
+RESERVED_ALIASES: frozenset[str] = frozenset(
+    {
+        "長さ",
+        "なし",
+        "無し",
+        "真",
+        "偽",
+        "かつ",
+        "または",
+        # Post-normalization spellings of the same aliases, so a binding that
+        # was rewritten before analysis is still caught.
+        "True",
+        "False",
+        "None",
+        "len",
+    }
+)
+
+
 _KEYWORDS = {
     "True",
     "False",

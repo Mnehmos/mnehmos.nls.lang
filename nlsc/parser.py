@@ -929,8 +929,13 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             # Simple assertion like: add(2, 3) == 5
             if "==" in line:
                 expr, expected = line.split("==", 1)
+                # Normalize at capture: assertion positions use the same
+                # localized aliases as every other expression (#253).
                 current_test.cases.append(
-                    TestCase(expression=expr.strip(), expected=expected.strip())
+                    TestCase(
+                        expression=normalize_expression_text(expr.strip()),
+                        expected=normalize_expression_text(expected.strip()),
+                    )
                 )
             elif line.strip() == "}":
                 current_test = None
@@ -953,16 +958,22 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                     if forall_match:
                         current_property.assertions.append(
                             PropertyAssertion(
-                                expression=forall_match.group(3).strip(),
+                                expression=normalize_expression_text(
+                                    forall_match.group(3).strip()
+                                ),
                                 quantifier="forall",
                                 variable=forall_match.group(1),
-                                variable_type=forall_match.group(2),
+                                variable_type=normalize_type_text(
+                                    forall_match.group(2)
+                                ),
                             )
                         )
                     else:
                         # Simple property assertion
                         current_property.assertions.append(
-                            PropertyAssertion(expression=stripped)
+                            PropertyAssertion(
+                                expression=normalize_expression_text(stripped)
+                            )
                         )
 
         # Parse invariant conditions
@@ -971,7 +982,9 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
             if stripped == "}":
                 current_invariant = None
             elif stripped and not stripped.startswith("#"):
-                current_invariant.conditions.append(stripped)
+                current_invariant.conditions.append(
+                    normalize_expression_text(stripped)
+                )
 
     # Don't forget the last ANLU
     if current_anlu:
