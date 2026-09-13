@@ -67,7 +67,10 @@ anlu_section = purpose_section
              | logic_section
              | returns_section
              | depends_section
-             | edge_cases_section ;
+             | edge_cases_section 
+              | effects_section
+              | retry_section
+              | timeout_section;
 
 (* PURPOSE: single line description *)
 purpose_section = "PURPOSE:" , SPACE , text_line , NEWLINE ;
@@ -106,6 +109,13 @@ return_expression = expression | type_spec ;
 states_directive = "@states" , SPACE , identifier , ":" , SPACE , identifier , { "," , [ SPACE ] , identifier } , NEWLINE ;
 (* Input/result types may carry a state token: Base<State> *)
 protocol_type    = identifier , "<" , identifier , ">" ;
+
+(* RETRY: / TIMEOUT: checked control policies (#201) *)
+retry_section    = "RETRY:" , NEWLINE , { retry_item } ;
+retry_item       = INDENT , bullet , "up to" , SPACE , integer , SPACE , "attempts" , [ SPACE , "on" , SPACE , identifier { "," , [ SPACE ] , identifier } ] , NEWLINE
+                 | INDENT , bullet , "idempotency key:" , SPACE , identifier , NEWLINE ;
+timeout_section  = "TIMEOUT:" , NEWLINE , { timeout_item } ;
+timeout_item     = INDENT , bullet , "after" , SPACE , integer , "ms" , [ SPACE , "->" , SPACE , identifier ] , NEWLINE ;
 
 (* EFFECTS: declared upper bound on inferred effects (#197) *)
 effects_section = "EFFECTS:" , SPACE , effect_contract , NEWLINE ;

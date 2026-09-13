@@ -1085,6 +1085,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#retry-and-timeout-policies-checked-not-yet-emitted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retry and timeout policies (checked, not yet emitted)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#resource-state-protocols-opt-in" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2452,6 +2463,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#retry-and-timeout-policies-checked-not-yet-emitted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retry and timeout policies (checked, not yet emitted)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#resource-state-protocols-opt-in" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2981,17 +3003,46 @@ block checked emission (<code>EIR003</code>):</p>
 </tr>
 </tbody>
 </table>
+<h3 id="retry-and-timeout-policies-checked-not-yet-emitted">Retry and timeout policies (checked, not yet emitted)<a class="headerlink" href="#retry-and-timeout-policies-checked-not-yet-emitted" title="Permanent link">&para;</a></h3>
+<p>An ANLU may declare bounded replay and deadline policies:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>RETRY:
+</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>  - up to 3 attempts on NetworkError
+</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>  - idempotency key: order_id
+</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>TIMEOUT:
+</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>  - after 5000ms -&gt; cancel-and-reconcile
+</span></code></pre></div>
+<p>The checker enforces the <em>declared policy shape</em>, statically:</p>
+<ul>
+<li><code>ESEM018</code> — RETRY without a finite, positive attempt budget;</li>
+<li><code>ESEM019</code> — a retried error identity that provably cannot occur (the
+  operation's failure set is fully known and lacks it); when the failure
+  set contains unknown markers, the declaration is the author's
+  classification and only the listed identities are retried;</li>
+<li><code>ESEM020</code> — retrying an operation with effects (or unresolved effects)
+  without an idempotency key, or keying on something that is not a
+  parameter (a per-attempt value would defeat the key);</li>
+<li><code>ESEM021</code> — TIMEOUT without a positive deadline or without an explicit
+  outcome; a timeout never proves the operation stopped, so an ambiguous
+  post-timeout state is not accepted silently.</li>
+</ul>
+<p><strong>External contracts required.</strong> The compiler checks the policy, not the
+provider: keyed replay assumes the provider deduplicates on that key for a
+documented scope, and <code>cancel-and-reconcile</code> is a caller-side obligation.
+Nothing here provides exactly-once execution. The policies are checked and
+recorded in the IR but not yet emitted, so both targets refuse files using
+them (<code>ETARGET002</code>) instead of dropping them; runtime support follows in a
+later slice, as do handler-scoped retries (#207/#208).</p>
 <h3 id="resource-state-protocols-opt-in">Resource state protocols (opt-in)<a class="headerlink" href="#resource-state-protocols-opt-in" title="Permanent link">&para;</a></h3>
 <p>A module can declare resource states with <code>@states</code> and carry them as
 tokens on inputs and results:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>@states Order: Pending, Validated, Charged, Shipped
-</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>
-</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>[validate-order]
-</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>PURPOSE: Validate a pending order
-</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>INPUTS:
-</span><span id="__span-26-6"><a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>  - order: Order&lt;Pending&gt;
-</span><span id="__span-26-7"><a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>EFFECTS: unknown
-</span><span id="__span-26-8"><a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>RETURNS: Order&lt;Validated&gt;
+<div class="language-text highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>@states Order: Pending, Validated, Charged, Shipped
+</span><span id="__span-27-2"><a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>
+</span><span id="__span-27-3"><a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>[validate-order]
+</span><span id="__span-27-4"><a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>PURPOSE: Validate a pending order
+</span><span id="__span-27-5"><a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>INPUTS:
+</span><span id="__span-27-6"><a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>  - order: Order&lt;Pending&gt;
+</span><span id="__span-27-7"><a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>EFFECTS: unknown
+</span><span id="__span-27-8"><a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>RETURNS: Order&lt;Validated&gt;
 </span></code></pre></div>
 <p>The checker tracks each token's state, so tokens cannot be forged or
 reused in checked code:</p>
@@ -3070,8 +3121,12 @@ content is fatal in every mode; dropped test coverage is strict-only.</p>
 <td>#196 follow-up</td>
 </tr>
 <tr>
-<td>try/catch-style handlers, retry/timeout policies</td>
-<td>#198, #201</td>
+<td>try/catch-style handlers</td>
+<td>#207, #208</td>
+</tr>
+<tr>
+<td>Retry/timeout runtime emission (policies are checked today; both targets refuse files using them)</td>
+<td>#201 follow-up</td>
 </tr>
 <tr>
 <td>Typestate/resource state transitions</td>
@@ -3176,6 +3231,11 @@ with causes and next steps.</p>
 <td><code>ESEM014</code>–<code>ESEM017</code></td>
 <td>Resource state protocols: wrong state, consumed reuse, fabrication, ambiguous join</td>
 <td><a href="#resource-state-protocols-opt-in">Resource state protocols</a></td>
+</tr>
+<tr>
+<td><code>ESEM018</code>–<code>ESEM021</code></td>
+<td>Retry/timeout policy shape: budget, retryable identities, idempotency key, timeout outcome</td>
+<td><a href="#retry-and-timeout-policies-checked-not-yet-emitted">Retry and timeout policies</a></td>
 </tr>
 <tr>
 <td><code>EFX001</code>, <code>EFX002</code></td>

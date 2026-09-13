@@ -798,6 +798,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#control-policies-issue-201" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control policies (Issue #201)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#state-tokens-issue-200" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1721,6 +1732,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#control-policies-issue-201" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control policies (Issue #201)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#state-tokens-issue-200" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1907,6 +1929,12 @@ identities where the analysis can attribute one:</p>
 (malformed, fatal in every mode). <code>None</code> still means <em>not analyzed</em> and
 is never an implicit proof of purity.  Effects participate in lockfile
 semantic hashes (scheme <code>sem3</code>).</p>
+<h3 id="control-policies-issue-201">Control policies (Issue #201)<a class="headerlink" href="#control-policies-issue-201" title="Permanent link">&para;</a></h3>
+<p><code>RETRY:</code> / <code>TIMEOUT:</code> sections lower onto <code>IROperation.retry</code> and
+<code>.timeout</code> and render canonically (<code>(retry attempts=3 on=NetworkError
+key=order_id)</code>, <code>(timeout after=5000ms outcome=...)</code>).  They are part
+of the checked contract and the semantic hash; no emitter produces them
+yet, so both targets refuse policy files with <code>ETARGET002</code>.</p>
 <h3 id="state-tokens-issue-200">State tokens (Issue #200)<a class="headerlink" href="#state-tokens-issue-200" title="Permanent link">&para;</a></h3>
 <p>Protocol parameters and results carry state tokens on their type
 references (<code>Order&lt;Pending&gt;</code>), lowered as <code>TypeRef</code> arguments.  The
