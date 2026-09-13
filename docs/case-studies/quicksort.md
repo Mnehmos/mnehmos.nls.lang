@@ -83,7 +83,7 @@ $ nlsc compile examples/sorting.nl
 Compiling examples/sorting.nl (parser: tree-sitter)...
   [OK] Parsed 1 ANLUs
   [OK] Resolved dependencies
-  [OK] Generated sorting.py (28 lines)
+  [OK] Generated sorting.py (29 lines)
   [OK] Generated test_sorting.py
   [OK] Updated sorting.nl.lock
 
@@ -124,7 +124,15 @@ def quick_sort(items: list[float]) -> list[float]:
     return sorted_lesser + equal + sorted_greater
 ```
 
-This is **working Python**. Not a scaffold. Not TODO stubs. Run it:
+The emitted file **runs**, and this page's listing is illustrative — the
+compiler output evolves with the toolchain. Two things to know about the
+current compiler: the module docstring carries a
+`Status: INCOMPLETE SCAFFOLD` header because the comprehension steps are
+foreign in the checked IR (`EIR002` warnings — comprehensions and slices
+are documented as outside the supported core), and `nlsc ci` therefore
+requires those steps to be implemented with `@literal` before it passes.
+The Python itself is what you see above: the comprehensions are carried
+through verbatim, not invented.
 
 ```bash
 $ python -c "from sorting import quick_sort; print(quick_sort([3, 1, 4, 1, 5]))"
@@ -172,7 +180,7 @@ $ nlsc compile examples/sorting_ja.nl
 Compiling examples/sorting_ja.nl (parser: tree-sitter)...
   [OK] Parsed 1 ANLUs
   [OK] Resolved dependencies
-  [OK] Generated sorting_ja.py (28 lines)
+  [OK] Generated sorting_ja.py (29 lines)
   [OK] Generated test_sorting_ja.py
   [OK] Updated sorting_ja.nl.lock
 

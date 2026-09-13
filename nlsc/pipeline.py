@@ -102,8 +102,12 @@ def parse_nl_path_auto(
     from .parser_treesitter import parse_nl_file_treesitter
 
     nl_file = parse_nl_file_treesitter(source, source_path=source_path_str)
+    if nl_file.parser_backend is None:
+        nl_file.parser_backend = "treesitter"
     if _tree_sitter_parse_needs_fallback(source, nl_file):
-        return parse_nl_file(source, source_path=source_path_str)
+        fallback = parse_nl_file(source, source_path=source_path_str)
+        fallback.parser_backend = "regex"
+        return fallback
     return nl_file
 
 

@@ -197,7 +197,7 @@ class IRLiteral:
 
     def render(self) -> str:
         if self.kind == "string":
-            return f"(lit {json.dumps(self.value)})"
+            return f"(lit {_json_text(self.value)})"
         return f"(lit {self.raw})"
 
     def to_json(self) -> dict[str, object]:
@@ -452,7 +452,7 @@ class ForeignExpr:
     span: Optional[SourceSpan] = None
 
     def render(self) -> str:
-        return f"(foreign reason={self.reason} {json.dumps(self.raw)})"
+        return f"(foreign reason={self.reason} {_json_text(self.raw)})"
 
     def to_json(self) -> dict[str, object]:
         return {
@@ -583,7 +583,7 @@ class IRErrorSpec:
         if self.code:
             parts.append(f"code={self.code}")
         if self.message is not None:
-            parts.append(json.dumps(self.message))
+            parts.append(_json_text(self.message))
         return f"(error {' '.join(parts)})"
 
     def to_json(self) -> dict[str, object]:
@@ -693,7 +693,7 @@ class IRFailureSpec:
         if self.code:
             parts.append(f"code={self.code}")
         if self.message is not None:
-            parts.append(json.dumps(self.message))
+            parts.append(_json_text(self.message))
         parts.append(f"origin={self.origin}")
         return f"(fail {' '.join(parts)})"
 
@@ -791,7 +791,7 @@ class IRNote:
     span: Optional[SourceSpan] = None
 
     def render(self) -> str:
-        return f"(note {json.dumps(self.text)})"
+        return f"(note {_json_text(self.text)})"
 
     def to_json(self) -> dict[str, object]:
         return {
@@ -812,7 +812,7 @@ class ForeignStmt:
     span: Optional[SourceSpan] = None
 
     def render(self) -> str:
-        return f"(foreign-stmt reason={self.reason} {json.dumps(self.raw)})"
+        return f"(foreign-stmt reason={self.reason} {_json_text(self.raw)})"
 
     def to_json(self) -> dict[str, object]:
         return {
@@ -871,7 +871,7 @@ class IRParam:
         opt = " optional" if self.optional else ""
         rendered = f"(param {self.name} {self.type_ref.render()}{opt}"
         for constraint in self.constraints:
-            rendered += f" {json.dumps(constraint)}"
+            rendered += f" {_json_text(constraint)}"
         return rendered + ")"
 
     def to_json(self) -> dict[str, object]:
@@ -926,9 +926,9 @@ class IRRecordField:
     def render(self) -> str:
         parts = [f"(field {self.name} {self.type_ref.render()}"]
         for constraint in self.constraints:
-            parts.append(json.dumps(constraint))
+            parts.append(_json_text(constraint))
         if self.description is not None:
-            parts.append(json.dumps(self.description))
+            parts.append(_json_text(self.description))
         parts.append(")")
         return " ".join(parts)
 
@@ -1086,7 +1086,7 @@ def _render_operation(
         header += f" (line {op.span.line})"
     lines.append(header)
     if with_purpose and op.purpose:
-        lines.append(f"{indent}(purpose {json.dumps(op.purpose)})")
+        lines.append(f"{indent}(purpose {_json_text(op.purpose)})")
     for param in op.params:
         lines.append(f"{indent}{param.render()}")
     for guard in op.guards:
@@ -1129,18 +1129,43 @@ def _render_operation(
         inner = " ".join(failure.render() for failure in op.failures)
         lines.append(f"{indent}(fails {inner})" if inner else f"{indent}(fails)")
     if op.literal is not None:
-        lines.append(f"{indent}(literal {json.dumps(op.literal)})")
+        lines.append(f"{indent}(literal {_json_text(op.literal)})")
     for condition, behavior in op.edge_cases:
         lines.append(
-            f"{indent}(edge-case {json.dumps(condition)} -> {json.dumps(behavior)})"
+            f"{indent}(edge-case {_json_text(condition)} -> {_json_text(behavior)})"
         )
     lines.append(")")
     return "\n".join(lines)
 
 
+# Canonical text is the human-readable artifact, so the display path
+# renders non-ASCII verbatim; the semantic-hash path keeps the ASCII-escaped
+# form for byte-stable identity across terminals and file encodings (#258).
+_RENDER_ESCAPED = True
+
+
+class readable_render:
+    """Context manager: render canonical text without ASCII escaping."""
+
+    def __enter__(self) -> "readable_render":
+        global _RENDER_ESCAPED
+        self._previous = _RENDER_ESCAPED
+        _RENDER_ESCAPED = False
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        global _RENDER_ESCAPED
+        _RENDER_ESCAPED = self._previous
+
+
+def _json_text(value: object) -> str:
+    return json.dumps(value, ensure_ascii=_RENDER_ESCAPED)
+
+
 def operation_to_canonical(op: IROperation, *, with_spans: bool = True) -> str:
     """Canonical text of one operation (used by `nlsc ir`)."""
-    return _render_operation(op, "  ", with_spans=with_spans)
+    with readable_render():
+        return _render_operation(op, "  ", with_spans=with_spans)
 
 
 def operation_semantic_canonical(op: IROperation) -> str:
@@ -1172,6 +1197,11 @@ def _render_stmt_with_span(stmt: IRStmt) -> str:
 
 def module_to_canonical(module: IRModule) -> str:
     """Render the canonical, deterministic, human-readable IR text."""
+    with readable_render():
+        return _render_module_lines(module)
+
+
+def _render_module_lines(module: IRModule) -> str:
     header = f";; nls-ir {IR_SCHEMA_VERSION} target-neutral module={module.module_name}"
     if module.version:
         header += f" version={module.version}"

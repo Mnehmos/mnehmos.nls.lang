@@ -522,3 +522,61 @@ def test_effects_aliases_work_before_and_after_returns():
     for source in (before, after):
         parsed = parse_nl_file(source, source_path="t.nl")
         assert parsed.anlus[0].declared_effects == "none"
+
+
+# --------------------------------------------------------------------------
+# Normative alias tables in the spec stay in sync (#257)
+# --------------------------------------------------------------------------
+
+
+def _parse_spec_alias_table() -> set[tuple[str, str, str]]:
+    import re
+    from pathlib import Path
+
+    spec = (
+        Path(__file__).resolve().parents[1] / "docs" / "language-spec.md"
+    ).read_text(encoding="utf-8")
+    match = re.search(
+        r"<!-- localization-aliases:begin -->\n(.*?)<!-- localization-aliases:end -->",
+        spec,
+        re.DOTALL,
+    )
+    assert match is not None, "the alias table markers are missing from the spec"
+    rows: set[tuple[str, str, str]] = set()
+    for line in match.group(1).splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
+        if len(cells) != 3 or cells[0] in ("Category", "---", ""):
+            continue
+        category, canonical, spellings = cells
+        for spelling in [s.strip().strip("`") for s in spellings.split(",")]:
+            rows.add((category, canonical, spelling))
+    return rows
+
+
+def test_spec_alias_table_matches_the_module():
+    import nlsc.localization as L
+
+    documented = _parse_spec_alias_table()
+    expected: set[tuple[str, str, str]] = set()
+
+    def add(category, mapping):
+        for surface, canonical in mapping.items():
+            if surface == canonical:
+                continue  # identity rows carry no localized spelling
+            expected.add((category, canonical, surface))
+
+    add("Directive", L._DIRECTIVE_ALIASES)
+    for canonical, aliases in L._SECTION_ALIASES.items():
+        add("Section", {alias: canonical for alias in aliases})
+    add("Value", L._NONE_ALIASES)
+    add("Type", L._TYPE_ALIASES)
+    for surface, replacement in L._EXPRESSION_ALIASES.items():
+        expected.add(("Expression alias (rewrites to)", surface, replacement))
+    add("Target", L._TARGET_ALIASES)
+
+    assert documented == expected, (
+        "docs/language-spec.md's alias table is out of sync with "
+        "nlsc/localization.py; update the marked table when aliases change."
+    )

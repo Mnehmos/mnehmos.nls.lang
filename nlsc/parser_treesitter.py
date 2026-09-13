@@ -803,9 +803,13 @@ def parse_nl_file_treesitter(source: str, source_path: Optional[str] = None) -> 
     canonical_result = parse_nl_file(source, source_path=source_path)
 
     if not normalized_source.isascii():
+        # Non-ASCII sources are parsed by the regex parser; record that so
+        # the CLI banner reports the real backend (#258).
+        canonical_result.parser_backend = "regex"
         return canonical_result
 
     if _should_use_regex_canonical_parse(normalized_source):
+        canonical_result.parser_backend = "regex"
         return canonical_result
 
     # Pre-check for a known edge case: malformed INPUTS bullets.
