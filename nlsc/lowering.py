@@ -1020,6 +1020,23 @@ def lower_anlu(
             )
             diagnostics.append(diagnostic)
 
+    from .ir import IRRetryPolicy, IRTimeoutPolicy
+
+    ir_retry = (
+        IRRetryPolicy(
+            attempts=anlu.retry.attempts,
+            error_types=tuple(anlu.retry.error_types),
+            idempotency_key=anlu.retry.idempotency_key,
+        )
+        if anlu.retry is not None
+        else None
+    )
+    ir_timeout = (
+        IRTimeoutPolicy(after_ms=anlu.timeout.after_ms, outcome=anlu.timeout.outcome)
+        if anlu.timeout is not None
+        else None
+    )
+
     operation = IROperation(
         name=anlu.identifier,
         purpose=anlu.purpose,
@@ -1031,6 +1048,8 @@ def lower_anlu(
         literal=anlu.literal,
         edge_cases=tuple((ec.condition, ec.behavior) for ec in anlu.edge_cases),
         declared_effects=declared_effects,
+        retry=ir_retry,
+        timeout=ir_timeout,
         span=span,
     )
     return operation, diagnostics

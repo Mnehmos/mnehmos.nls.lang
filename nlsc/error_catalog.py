@@ -69,6 +69,10 @@ ESEM014 = "ESEM014"
 ESEM015 = "ESEM015"
 ESEM016 = "ESEM016"
 ESEM017 = "ESEM017"
+ESEM018 = "ESEM018"
+ESEM019 = "ESEM019"
+ESEM020 = "ESEM020"
+ESEM021 = "ESEM021"
 EFMT001 = "EFMT001"
 EPROV001 = "EPROV001"
 EPROV002 = "EPROV002"
@@ -952,6 +956,59 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         ),
         next_steps=(
             "Define the operation in the module, use a documented builtin, or declare an import contract.",
+        ),
+    ),
+    ESEM018: ErrorDefinition(
+        code=ESEM018,
+        title="Unbounded retry policy",
+        summary="A RETRY: section has no finite, positive attempt budget; retrying without a bound is not a checked policy.",
+        emitted_by=("verify", "compile", "run", "test", "ci"),
+        common_causes=(
+            "The 'up to N attempts' bullet is missing.",
+            "The attempt count is zero or negative.",
+        ),
+        next_steps=(
+            "Declare a finite budget, e.g. 'up to 3 attempts on NetworkError'.",
+        ),
+    ),
+    ESEM019: ErrorDefinition(
+        code=ESEM019,
+        title="Retried error identity is not in the failure set",
+        summary="RETRY: names an error the operation provably cannot raise: the failure set is fully known and does not contain the identity. Only the listed identities are retried, so unlisted failures propagate.",
+        emitted_by=("verify", "compile", "run", "test", "ci"),
+        common_causes=(
+            "The retried error type is misspelled or comes from another operation.",
+            "The identity is misspelled, or belongs to a different operation.",
+        ),
+        next_steps=(
+            "Retry only error identities present in the operation's inferred failures.",
+            "Resolve unknown failures by removing foreign calls or declaring the dependency.",
+        ),
+    ),
+    ESEM020: ErrorDefinition(
+        code=ESEM020,
+        title="Retry without a valid idempotency key",
+        summary="A retried operation has effects (or unresolved effects) but no idempotency key, or the key is not a parameter — replaying it may repeat an effect.",
+        emitted_by=("verify", "compile", "run", "test", "ci"),
+        common_causes=(
+            "The operation performs writes or foreign calls and the RETRY section omits 'idempotency key: <param>'.",
+            "The key names a binding that could differ between attempts instead of a parameter.",
+        ),
+        next_steps=(
+            "Declare 'idempotency key: <param>' naming an input that identifies the request.",
+        ),
+    ),
+    ESEM021: ErrorDefinition(
+        code=ESEM021,
+        title="Timeout without an explicit outcome",
+        summary="A TIMEOUT: section has no positive deadline, or declares a deadline without an outcome — a timeout never proves the operation stopped, so an ambiguous post-timeout state is rejected.",
+        emitted_by=("verify", "compile", "run", "test", "ci"),
+        common_causes=(
+            "The 'after Nms -> outcome' bullet is missing or has no outcome.",
+            "The outcome is prose instead of an identifier.",
+        ),
+        next_steps=(
+            "Declare the outcome, e.g. 'after 5000ms -> cancel-and-reconcile'.",
         ),
     ),
     ESEM014: ErrorDefinition(

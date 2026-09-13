@@ -185,6 +185,7 @@ def _should_use_regex_canonical_parse(source: str) -> bool:
         )
         or re.search(r"^\s*\d+\.\s+.+(?:->|→)\s+.+$", source, re.MULTILINE)
         or re.search(r"^\s*EFFECTS:", source, re.MULTILINE | re.IGNORECASE)
+        or re.search(r"^\s*(?:RETRY|TIMEOUT):", source, re.MULTILINE | re.IGNORECASE)
         or re.search(r"^\s*@states", source, re.MULTILINE)
         or re.search(
             r"^\s*(?:-\s*\w+\s*:|RETURNS:).*<[A-Za-z_][A-Za-z0-9_]*>",

@@ -23,6 +23,14 @@ see what affects their `.nl` files and what only affects tooling. See
   `EVER001` (fatal) / `EVER002` (strict-only). *(0.1)*
 - New diagnostics: `EIR001`–`EIR005`, `ESEM001`–`ESEM013`, `EVER001`–`EVER002`
   with a diagnostics index in the language spec.
+- Checked Retry/Timeout policies (Issue #201, check-only slice): `RETRY:`
+  declares a finite attempt budget, the retryable error identities, and an
+  idempotency key; `TIMEOUT:` declares a deadline and an explicit outcome.
+  The checker enforces the policy shape (`ESEM018`–`ESEM021`) and the
+  policies render in the semantic hash, but no emitter produces them yet:
+  both targets refuse policy files with `ETARGET002` instead of dropping
+  them. Runtime emission and deterministic fake-clock traces follow in a
+  later slice. *(0.1)*
 - Resource state protocols (opt-in): `@states Order: Pending, Validated`
   declares a protocol, and `Order<State>` tokens on INPUTS/RETURNS carry
   it through transitions. The checker rejects wrong-state transitions

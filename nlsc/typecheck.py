@@ -731,6 +731,9 @@ def check_module(nl_file: NLFile, *, file_token: str = "<source>") -> SemanticCh
     from .typestate import check_typestate
 
     result.errors.extend(check_typestate(nl_file, module, file_token=file_token))
+    from .retry_policy import check_retry_policies
+
+    result.errors.extend(check_retry_policies(module, file_token))
 
     table = _build_symbol_table(module, result, file_token)
     # Declared language-spec revision (@nls, Issue #144): same major is

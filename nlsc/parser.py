@@ -32,6 +32,8 @@ from .schema import (
     LogicStep,
     PropertyTest,
     PropertyAssertion,
+    RetryPolicy,
+    TimeoutPolicy,
     Invariant,
 )
 
@@ -58,6 +60,10 @@ PATTERNS = {
     "returns": re.compile(r"^RETURNS:\s*(.+)$", re.IGNORECASE),
     "edge_cases": re.compile(r"^EDGE\s*CASES:\s*$", re.IGNORECASE),
     "effects": re.compile(r"^EFFECTS:\s*(.*)$", re.IGNORECASE),
+    "retry": re.compile(r"^RETRY:\s*$", re.IGNORECASE),
+    "timeout": re.compile(r"^TIMEOUT:\s*$", re.IGNORECASE),
+    "retry_inline": re.compile(r"^RETRY:\s*(\S.*)$", re.IGNORECASE),
+    "timeout_inline": re.compile(r"^TIMEOUT:\s*(\S.*)$", re.IGNORECASE),
     "depends": re.compile(r"^DEPENDS:\s*(.+)$", re.IGNORECASE),
     "bullet": re.compile(r"^\s*[•\-\*]\s*(.+)$"),
     "numbered": re.compile(r"^\s*(\d+)\.\s*(.+)$"),
@@ -123,6 +129,85 @@ def apply_module_directive(
                 f"@states {protocol} is already declared", line_num, directive_value
             )
         module.states[protocol] = states
+
+
+
+_SECTION_HEADER_PATTERNS = (
+    "purpose",
+    "inputs",
+    "guards",
+    "logic",
+    "returns",
+    "edge_cases",
+    "depends",
+    "effects",
+    "retry",
+    "timeout",
+)
+
+
+def _is_section_header_line(line_match: str) -> bool:
+    """True when a line opens a known ANLU section (used to end a policy
+    section without treating the header as a stray bullet)."""
+    if any(PATTERNS[name].match(line_match) for name in _SECTION_HEADER_PATTERNS):
+        return True
+    # Bare headers (no value) also end a section; they are malformed
+    # elsewhere, but must not be reported as stray policy bullets.
+    return bool(
+        re.match(
+            r"^(PURPOSE|INPUTS|GUARDS|LOGIC|RETURNS|DEPENDS|EDGE\s*CASES|"
+            r"EFFECTS|RETRY|TIMEOUT)\s*:\s*$",
+            line_match,
+            re.IGNORECASE,
+        )
+    )
+
+
+def _parse_retry_bullet(
+    policy: "RetryPolicy | None", text: str, line_num: int, raw: str
+) -> None:
+    """Parse one RETRY: bullet into the policy (#201)."""
+    if policy is None:
+        return
+    attempts_match = re.match(
+        r"up to\s+(\d+)\s+attempts?(?:\s+on\s+(.+))?$", text, re.IGNORECASE
+    )
+    if attempts_match:
+        policy.attempts = int(attempts_match.group(1))
+        errors = attempts_match.group(2)
+        if errors:
+            policy.error_types = [part.strip() for part in errors.split(",") if part.strip()]
+        return
+    key_match = re.match(r"idempotency key:\s*(\S+)$", text, re.IGNORECASE)
+    if key_match:
+        policy.idempotency_key = key_match.group(1)
+        return
+    raise ParseError(
+        "Invalid RETRY bullet; expected 'up to N attempts [on Err1, Err2]' "
+        "or 'idempotency key: name'",
+        line_num,
+        raw,
+    )
+
+
+def _parse_timeout_bullet(
+    policy: "TimeoutPolicy | None", text: str, line_num: int, raw: str
+) -> None:
+    """Parse one TIMEOUT: bullet into the policy (#201)."""
+    if policy is None:
+        return
+    after_match = re.match(
+        r"after\s+(\d+)\s*ms(?:\s*->\s*(\S+))?$", text, re.IGNORECASE
+    )
+    if after_match:
+        policy.after_ms = int(after_match.group(1))
+        policy.outcome = after_match.group(2)
+        return
+    raise ParseError(
+        "Invalid TIMEOUT bullet; expected 'after Nms -> outcome'",
+        line_num,
+        raw,
+    )
 
 
 def parse_module_directives(source: str) -> Module:
@@ -680,6 +765,59 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                 )
                 current_section = None
                 continue
+
+            # RETRY: / TIMEOUT: sections (#201)
+            if PATTERNS["retry_inline"].match(line_match):
+                raise ParseError(
+                    "RETRY bullets go on their own lines under 'RETRY:'",
+                    line_num,
+                    line,
+                )
+            if PATTERNS["timeout_inline"].match(line_match):
+                raise ParseError(
+                    "TIMEOUT bullets go on their own lines under 'TIMEOUT:'",
+                    line_num,
+                    line,
+                )
+            if PATTERNS["retry"].match(line_match):
+                if current_anlu.retry is not None:
+                    raise ParseError(
+                        "Duplicate RETRY section for this ANLU", line_num, line
+                    )
+                current_anlu.retry = RetryPolicy(line_number=line_num)
+                current_section = "retry"
+                continue
+            if PATTERNS["timeout"].match(line_match):
+                if current_anlu.timeout is not None:
+                    raise ParseError(
+                        "Duplicate TIMEOUT section for this ANLU", line_num, line
+                    )
+                current_anlu.timeout = TimeoutPolicy(line_number=line_num)
+                current_section = "timeout"
+                continue
+            if current_section in ("retry", "timeout") and line_match.strip():
+                bullet = PATTERNS["bullet"].match(line_match)
+                if bullet is not None:
+                    text_value = bullet.group(1).strip()
+                    if current_section == "retry":
+                        _parse_retry_bullet(
+                            current_anlu.retry, text_value, line_num, line
+                        )
+                    else:
+                        _parse_timeout_bullet(
+                            current_anlu.timeout, text_value, line_num, line
+                        )
+                    continue
+                if not _is_section_header_line(line_match):
+                    raise ParseError(
+                        "Invalid "
+                        + current_section.upper()
+                        + " bullet marker; expected one of: •, -, *",
+                        line_num,
+                        line,
+                    )
+                # A section header ends the policy section: fall through so
+                # the header handlers below can process it.
 
             # EFFECTS: (#197)
             effects_match = PATTERNS["effects"].match(line_match)
