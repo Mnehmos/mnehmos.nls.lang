@@ -38,6 +38,7 @@ def _check_retry(
     operation: "IROperation", param_names: set[str], line: int | None, file_token: str
 ) -> list[Diagnostic]:
     retry = operation.retry
+    assert retry is not None
     diagnostics: list[Diagnostic] = []
     if retry.attempts is None or retry.attempts <= 0:
         diagnostics.append(
@@ -128,6 +129,7 @@ def _check_timeout(
     operation: "IROperation", line: int | None, file_token: str
 ) -> list[Diagnostic]:
     timeout = operation.timeout
+    assert timeout is not None
     if timeout.after_ms is None or timeout.after_ms <= 0:
         return [
             Diagnostic(
