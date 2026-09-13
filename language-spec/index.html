@@ -1085,6 +1085,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#resource-state-protocols-opt-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resource state protocols (opt-in)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#target-capability-matrix" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2441,6 +2452,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#resource-state-protocols-opt-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resource state protocols (opt-in)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#target-capability-matrix" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2959,6 +2981,41 @@ block checked emission (<code>EIR003</code>):</p>
 </tr>
 </tbody>
 </table>
+<h3 id="resource-state-protocols-opt-in">Resource state protocols (opt-in)<a class="headerlink" href="#resource-state-protocols-opt-in" title="Permanent link">&para;</a></h3>
+<p>A module can declare resource states with <code>@states</code> and carry them as
+tokens on inputs and results:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>@states Order: Pending, Validated, Charged, Shipped
+</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>
+</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>[validate-order]
+</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>PURPOSE: Validate a pending order
+</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>INPUTS:
+</span><span id="__span-26-6"><a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>  - order: Order&lt;Pending&gt;
+</span><span id="__span-26-7"><a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>EFFECTS: unknown
+</span><span id="__span-26-8"><a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>RETURNS: Order&lt;Validated&gt;
+</span></code></pre></div>
+<p>The checker tracks each token's state, so tokens cannot be forged or
+reused in checked code:</p>
+<ul>
+<li><code>ESEM014</code> — a token in the wrong state is passed to a transition;</li>
+<li><code>ESEM015</code> — a consumed token (or an alias of it) is used again —
+  passing a token to a transition consumes it;</li>
+<li><code>ESEM016</code> — a token is fabricated: an undeclared protocol or state, a
+  protocol parameter without a state token, or a transition returning a
+  protocol value without declaring its result state;</li>
+<li><code>ESEM017</code> — the two arms of a branch leave a token in different states,
+  so a later transition cannot know which state holds.</li>
+</ul>
+<p>Files without <code>@states</code> are unaffected. Emitted annotations use the base
+resource type (<code>order: Order</code>). A transition declared with a type-only
+<code>RETURNS: Order&lt;State&gt;</code> is a contract, and contracts are scaffold content:
+<code>nlsc verify</code> accepts it with a warning, while <code>nlsc ci</code> requires the
+operation to be implemented — give it a <code>@literal</code> block (a value-bearing
+<code>RETURNS</code> cannot carry a state token today).</p>
+<p><strong>Static guarantee only.</strong> The checker proves the <em>specified</em> transition
+order; it says nothing about whether an external system actually applied
+the transition, nor does it provide exactly-once semantics for anything a
+transition performs. External effects still carry their own contracts
+(see <a href="https://github.com/Mnehmos/mnehmos.nls.lang/issues/201">#201</a>).</p>
 <h3 id="target-capability-matrix">Target capability matrix<a class="headerlink" href="#target-capability-matrix" title="Permanent link">&para;</a></h3>
 <p>Compiling to a target that cannot represent content fails explicitly
 (<code>ETARGET002</code>) instead of silently dropping it (#202). Dropped program
@@ -3114,6 +3171,11 @@ with causes and next steps.</p>
 <td><code>ESEM013</code></td>
 <td>Module/file name shadows a host stdlib module</td>
 <td><a href="#file-structure">File Structure</a></td>
+</tr>
+<tr>
+<td><code>ESEM014</code>–<code>ESEM017</code></td>
+<td>Resource state protocols: wrong state, consumed reuse, fabrication, ambiguous join</td>
+<td><a href="#resource-state-protocols-opt-in">Resource state protocols</a></td>
 </tr>
 <tr>
 <td><code>EFX001</code>, <code>EFX002</code></td>

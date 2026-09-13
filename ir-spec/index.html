@@ -798,6 +798,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#state-tokens-issue-200" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State tokens (Issue #200)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#failure-sets-issue-198" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1710,6 +1721,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#state-tokens-issue-200" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State tokens (Issue #200)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#failure-sets-issue-198" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1885,6 +1907,11 @@ identities where the analysis can attribute one:</p>
 (malformed, fatal in every mode). <code>None</code> still means <em>not analyzed</em> and
 is never an implicit proof of purity.  Effects participate in lockfile
 semantic hashes (scheme <code>sem3</code>).</p>
+<h3 id="state-tokens-issue-200">State tokens (Issue #200)<a class="headerlink" href="#state-tokens-issue-200" title="Permanent link">&para;</a></h3>
+<p>Protocol parameters and results carry state tokens on their type
+references (<code>Order&lt;Pending&gt;</code>), lowered as <code>TypeRef</code> arguments.  The
+typestate checker consumes them; emitted annotations use the base type.
+See <a href="../language-spec/#resource-state-protocols-opt-in">language-spec.md</a>.</p>
 <h3 id="failure-sets-issue-198">Failure sets (Issue #198)<a class="headerlink" href="#failure-sets-issue-198" title="Permanent link">&para;</a></h3>
 <p>Every operation carries an analyzed <code>fails</code> set after lowering:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>(fails (fail ValueError code=MISSING "Token required" origin=guard)
