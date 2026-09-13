@@ -52,6 +52,7 @@ EIR002 = "EIR002"
 EIR003 = "EIR003"
 EIR004 = "EIR004"
 EIR005 = "EIR005"
+ESCAF001 = "ESCAF001"
 ESEM001 = "ESEM001"
 ESEM002 = "ESEM002"
 ESEM003 = "ESEM003"
@@ -1176,6 +1177,22 @@ ERROR_CATALOG: dict[str, ErrorDefinition] = {
         next_steps=(
             "Declare the computed result (for example 'RETURNS: total') or 'RETURNS: none'.",
             "When the body must be verbatim code, implement the ANLU with a @literal python { ... } block.",
+        ),
+    ),
+    ESCAF001: ErrorDefinition(
+        code=ESCAF001,
+        title="Refused to execute an incomplete scaffold",
+        summary="One or more ANLUs have unresolved executable content (see EIR002/EIR004/EIR005), so the generated code does not implement the specification. Executing it would report success for logic that was never compiled, so run/test refuse instead.",
+        emitted_by=("run", "test"),
+        common_causes=(
+            "LOGIC steps are still prose, so their bindings compile to `None` placeholders.",
+            "RETURNS declares a type rather than a value expression.",
+            "An LLM-drafted or atomized spec was executed before its steps were made executable.",
+        ),
+        next_steps=(
+            "Rewrite the reported steps as executable expressions, or implement the ANLU with a @literal block.",
+            "Run `nlsc verify <file> --strict` to see every unresolved step.",
+            "To inspect the scaffold without running it, use `nlsc compile <file>` and read the generated .draft file.",
         ),
     ),
 }

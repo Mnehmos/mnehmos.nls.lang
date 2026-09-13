@@ -12,13 +12,49 @@ nlsc compile math.nl
 nlsc compile math.nl -t typescript
 
 # Run tests
-nlsc test billing.nl
+nlsc test shop_demo.nl
 
 # Visualize dependencies
 nlsc graph billing.nl
 ```
 
+## Complete examples vs. drafts
+
+Only some files here are complete specifications. The rest still have prose
+LOGIC steps or use constructs outside the checked core, which makes them
+**scaffolds**: `nlsc compile` writes them to `<name>.draft.py` and `nlsc run`
+and `nlsc test` refuse to execute them (`ESCAF001`), because their unresolved
+steps compile to `None` placeholders rather than to the logic described.
+
+| Example | Status |
+| --- | --- |
+| `showcase/mission_control.nl` | Complete — passes `--strict` |
+| `shop_demo.nl` | Complete — passes `--strict` |
+| `math.nl` | Compiles; module name shadows the stdlib `math` (`ESEM013`) |
+| `billing.nl` | Draft — prose LOGIC, a generator expression, `DEPENDS` drift |
+| `strings.nl` | Draft — ternary and method-chain expressions |
+| `sorting.nl`, `sorting_ja.nl`, `sorting_ts.nl` | Draft — list comprehensions |
+| `workflow_engine.nl` | Draft — largely prose LOGIC |
+
+Bringing the corpus to strict-clean is tracked in
+[#264](https://github.com/Mnehmos/mnehmos.nls.lang/issues/264); the iteration
+gap the sorting examples depend on is
+[#267](https://github.com/Mnehmos/mnehmos.nls.lang/issues/267).
+
 ## Examples
+
+### showcase/mission_control.nl - Aster Mission Control
+An interactive rover expedition planner with a local browser interface. Select
+survey sites, balance energy and sample capacity, and launch a simulated round
+trip. The domain logic is compiled from 19 NLS operations with typed records,
+invariants, launch guards, recursive routes, and embedded examples and properties.
+
+```bash
+python -m nlsc run examples/showcase/mission_control.nl --strict
+# Open http://127.0.0.1:8765
+```
+
+See the [showcase guide](showcase/README.md) for a walkthrough and verification.
 
 ### math.nl - Basic Arithmetic
 The simplest possible example. Two functions: `add` and `multiply`.

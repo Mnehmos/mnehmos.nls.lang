@@ -41,6 +41,7 @@ maps each code family to the language rule it enforces.
 | `EVALIDATE001` | `compile`, `watch` | Generated output failed post-emit validation. |
 | `E_RUN` | `run` | `nlsc run` hit an unexpected internal error before execution completed. |
 | `EEXEC001` | `run` | `nlsc run` failed while setting up or launching the generated module. |
+| `ESCAF001` | `run`, `test` | Execution was refused because the module is an incomplete scaffold: one or more ANLUs have unresolved executable content, so the generated code does not implement the specification. |
 | `EGRAPH001` | `graph` | `nlsc graph --anlu` requested an ANLU that is not defined in the source file. |
 | `EGRAPH002` | `graph` | `nlsc graph --anlu` was asked for an output format that is not supported for ANLU-level graphs. |
 | `ELOCK001` | `lock:check` | `nlsc lock:check` could not load the `.nl.lock` file because it is missing or malformed. |

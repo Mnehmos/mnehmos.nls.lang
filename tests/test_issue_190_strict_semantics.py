@@ -183,7 +183,7 @@ def test_valid_program_passes_strict_verify(tmp_path):
 
 
 # --------------------------------------------------------------------------
-# Default mode: scaffolds stay runnable but are visibly incomplete
+# Default mode: scaffolds still compile, but land as an inert draft (#264)
 # --------------------------------------------------------------------------
 
 
@@ -194,8 +194,10 @@ def test_default_compile_marks_scaffold_artifact(tmp_path, capsys, monkeypatch):
     captured = capsys.readouterr()
     assert code == 0
     assert "EIR002" in captured.err  # visible warning
-    artifact = tmp_path / "probe.py"
+    # #264: quarantined under a name that cannot be imported as the module.
+    artifact = tmp_path / "probe.draft.py"
     assert artifact.exists()
+    assert not (tmp_path / "probe.py").exists()
     content = artifact.read_text(encoding="utf-8")
     assert "INCOMPLETE SCAFFOLD" in content
 

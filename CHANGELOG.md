@@ -64,6 +64,14 @@ see what affects their `.nl` files and what only affects tooling. See
   raised error with the message as the sole argument, instead of a
   Python-only tuple argument. The Python semantics marker moves to
   `py-2`. *(0.1)*
+- Scaffold containment (Issue #264): a module with unresolved executable
+  content is inert. `nlsc run` and `nlsc test` refuse to execute it
+  (`ESCAF001`) instead of running placeholder bodies and reporting success;
+  `nlsc compile` writes it to `<stem>.draft.<ext>` and emits no test
+  artifact, so a scaffold can never be imported as the module, packaged as
+  it, or collected by a test run. A stale generated artifact for a module
+  that regressed into a scaffold is removed rather than left importable.
+  Scaffolding is a drafting aid, never a deliverable. *(0.1)*
 
 ### Toolchain
 

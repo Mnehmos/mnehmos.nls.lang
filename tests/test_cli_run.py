@@ -339,7 +339,7 @@ class TestRunIntegration:
 PURPOSE: Return greeting
 INPUTS:
   - name: string
-RETURNS: greeting message
+RETURNS: "Hello, " + name
 
 @main {
   result = greet("World")
@@ -359,9 +359,11 @@ RETURNS: greeting message
             capture_output=True,
             text=True,
         )
-        # Should execute without error
-        # (actual output depends on mock mode behavior)
-        assert result.returncode == 0
+        # Should execute the @main block and produce its output. The module is
+        # deliberately complete: #264 refuses to run a scaffold, so a prose
+        # RETURNS here would test the refusal path rather than @main.
+        assert result.returncode == 0, result.stderr
+        assert "Hello, World" in result.stdout
 
     def test_run_hyphenated_module(self, tmp_path):
         """Run should handle hyphenated module names"""
