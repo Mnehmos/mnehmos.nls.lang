@@ -21,19 +21,16 @@ def quick_sort(items: list[float]) -> list[float]:
     pivot = items[0]
     lesser = []
     for x in items:
-        if not (x < pivot):
-            continue
-        lesser = lesser + [x]
+        if x < pivot:
+            lesser = lesser + [x]
     equal = []
     for x in items:
-        if not (x == pivot):
-            continue
-        equal = equal + [x]
+        if x == pivot:
+            equal = equal + [x]
     greater = []
     for x in items:
-        if not (x > pivot):
-            continue
-        greater = greater + [x]
+        if x > pivot:
+            greater = greater + [x]
     sorted_lesser = quick_sort(lesser)
     sorted_greater = quick_sort(greater)
     return sorted_lesser + equal + sorted_greater

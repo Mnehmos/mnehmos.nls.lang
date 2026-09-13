@@ -993,15 +993,15 @@ def _render_py_for_each(stmt: "IRForEach", indent: str) -> Optional[list[str]]:
     lines = [f"{indent}{stmt.target} = {seed}", f"{indent}for {stmt.var} in {iterable}:"]
     body_indent = indent + "    "
     if stmt.where is not None:
+        # Positive form: `if <cond>:` keeps the emitted loop one level deep
+        # and mirrors the WHERE clause as written.
         condition = _render_py_expr(stmt.where)
         if condition is None:
             return None
-        lines.append(f"{body_indent}if not ({condition}):")
-        lines.append(f"{body_indent}    continue")
-    if stmt.op == "add":
-        lines.append(f"{body_indent}{stmt.target} = {stmt.target} + {value}")
-    else:
-        lines.append(f"{body_indent}{stmt.target} = {stmt.target} + [{value}]")
+        lines.append(f"{body_indent}if {condition}:")
+        body_indent += "    "
+    accumulated = value if stmt.op == "add" else f"[{value}]"
+    lines.append(f"{body_indent}{stmt.target} = {stmt.target} + {accumulated}")
     return lines
 
 

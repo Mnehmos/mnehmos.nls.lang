@@ -868,17 +868,21 @@ def _render_ts_for_each(stmt: "IRForEach", indent: str) -> Optional[list[str]]:
         f"{indent}for (const {stmt.var} of {iterable}) {{",
     ]
     body_indent = indent + "  "
-    inner_indent = body_indent
+    closers = [f"{indent}}}"]
     if stmt.where is not None:
+        # Positive form, matching the Python backend: one nesting level and
+        # the WHERE clause readable as written.
         condition = _render_ts_expr(stmt.where)
         if condition is None:
             return None
-        lines.append(f"{body_indent}if (!__nls_truthy({condition})) {{ continue; }}")
+        lines.append(f"{body_indent}if (__nls_truthy({condition})) {{")
+        closers.insert(0, f"{body_indent}}}")
+        body_indent += "  "
     if stmt.op == "add":
-        lines.append(f"{inner_indent}{stmt.target} = {stmt.target} + {value};")
+        lines.append(f"{body_indent}{stmt.target} = {stmt.target} + {value};")
     else:
-        lines.append(f"{inner_indent}{stmt.target} = [...{stmt.target}, {value}];")
-    lines.append(f"{indent}}}")
+        lines.append(f"{body_indent}{stmt.target} = [...{stmt.target}, {value}];")
+    lines.extend(closers)
     return lines
 
 

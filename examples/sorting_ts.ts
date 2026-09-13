@@ -82,18 +82,21 @@ export function quick_sort(items: number[]): number[] {
   const pivot = items[0];
   let lesser: any = [];
   for (const x of items) {
-    if (!__nls_truthy(x < pivot)) { continue; }
-    lesser = [...lesser, x];
+    if (__nls_truthy(x < pivot)) {
+      lesser = [...lesser, x];
+    }
   }
   let equal: any = [];
   for (const x of items) {
-    if (!__nls_truthy(__nls_eq(x, pivot))) { continue; }
-    equal = [...equal, x];
+    if (__nls_truthy(__nls_eq(x, pivot))) {
+      equal = [...equal, x];
+    }
   }
   let greater: any = [];
   for (const x of items) {
-    if (!__nls_truthy(x > pivot)) { continue; }
-    greater = [...greater, x];
+    if (__nls_truthy(x > pivot)) {
+      greater = [...greater, x];
+    }
   }
   const sorted_lesser = quick_sort(lesser);
   const sorted_greater = quick_sort(greater);
