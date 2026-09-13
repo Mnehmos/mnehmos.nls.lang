@@ -353,6 +353,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#what-the-compiler-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the compiler checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#project-status" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1624,6 +1635,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#what-the-compiler-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the compiler checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#project-status" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1688,6 +1710,8 @@
 <li><strong>Testable</strong> — Specifications include test cases</li>
 <li><strong>Versionable</strong> — Lock files ensure reproducibility</li>
 <li><strong>Toolable</strong> — Tree-sitter grammar enables IDE support</li>
+<li><strong>Checked, not guessed</strong> — types, control flow, effects, resource states, and retry policies are verified against the IR before any code is emitted</li>
+<li><strong>Reproducible</strong> — lockfiles pin semantic hashes of the checked IR; <code>nlsc ci</code> re-derives and compares them</li>
 </ul>
 <h2 id="quick-example">Quick Example<a class="headerlink" href="#quick-example" title="Permanent link">&para;</a></h2>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>@module calculator
@@ -1727,6 +1751,51 @@
 </div>
 </div>
 </div>
+<h2 id="what-the-compiler-checks">What the compiler checks<a class="headerlink" href="#what-the-compiler-checks" title="Permanent link">&para;</a></h2>
+<p>Everything below is enforced on every <code>nlsc compile</code> / <code>nlsc ci</code>, before any
+code is written:</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Diagnostics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Types, call resolution, arity, fields, operand types</td>
+<td><code>ESEM001</code>–<code>ESEM009</code></td>
+</tr>
+<tr>
+<td>Branch totality, binding immutability, definite assignment</td>
+<td><code>ESEM010</code>, <code>ESEM011</code></td>
+</tr>
+<tr>
+<td>Guard error identities (builtins or declared <code>@type</code>s)</td>
+<td><code>ESEM012</code></td>
+</tr>
+<tr>
+<td>Effects: named resource writes, <code>unknown</code> for foreign content, and declared <code>EFFECTS:</code> upper bounds</td>
+<td><code>EFX001</code>, <code>EFX002</code></td>
+</tr>
+<tr>
+<td>Resource state protocols: wrong state, consumed-token reuse, fabrication, ambiguous joins</td>
+<td><code>ESEM014</code>–<code>ESEM017</code></td>
+</tr>
+<tr>
+<td>Retry/timeout policy shape: bounded budget, retryable identities, idempotency key, explicit timeout outcome</td>
+<td><code>ESEM018</code>–<code>ESEM021</code></td>
+</tr>
+<tr>
+<td>Target capability gate: a feature the target cannot emit is refused, never dropped</td>
+<td><code>ETARGET002</code></td>
+</tr>
+<tr>
+<td>Executable contract: prose instead of code, invented defaults, missing results</td>
+<td><code>EIR002</code>, <code>EIR004</code>, <code>EIR005</code></td>
+</tr>
+</tbody>
+</table>
 <h2 id="project-status">Project Status<a class="headerlink" href="#project-status" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1737,72 +1806,74 @@
 </thead>
 <tbody>
 <tr>
-<td>Parser (regex)</td>
+<td>Both parsers (regex + tree-sitter), canonical lowering</td>
 <td>✅ Complete</td>
 </tr>
 <tr>
-<td>Parser (tree-sitter)</td>
+<td>Target-neutral IR with canonical text/JSON (<code>nlsc ir</code>)</td>
 <td>✅ Complete</td>
 </tr>
 <tr>
-<td>Python emitter</td>
+<td>Checked pipeline: types, control, failures, effects, typestate, retry policies</td>
 <td>✅ Complete</td>
 </tr>
 <tr>
-<td>Type generation</td>
+<td>Python emitter (IR-driven)</td>
 <td>✅ Complete</td>
 </tr>
 <tr>
-<td>Guard validation</td>
+<td>TypeScript emitter (IR-driven, <code>tsc --strict</code> conformance in CI)</td>
 <td>✅ Complete</td>
 </tr>
 <tr>
-<td>Dataflow analysis</td>
+<td>Cross-target semantic conformance suite (Python + Node)</td>
 <td>✅ Complete</td>
 </tr>
 <tr>
-<td>Test runner</td>
+<td>Guard validation, edge cases, type invariants, property tests</td>
 <td>✅ Complete</td>
 </tr>
 <tr>
-<td>Property-based testing</td>
+<td>Semantic lock identity + <code>--frozen-lockfile</code> reproducibility</td>
 <td>✅ Complete</td>
 </tr>
 <tr>
-<td>Type invariants</td>
+<td>Capability matrix + emitter semantics markers</td>
 <td>✅ Complete</td>
 </tr>
 <tr>
-<td>Watch mode</td>
+<td>Quality gates: <code>ci</code>, <code>lint</code>, <code>fmt</code>, <code>provenance</code></td>
 <td>✅ Complete</td>
 </tr>
 <tr>
-<td>GitHub Action</td>
+<td>Local package model (<code>nls.pkg.json</code>, <code>nlsc install</code>)</td>
 <td>✅ Complete</td>
 </tr>
 <tr>
-<td>PyPI distribution</td>
+<td>Watch mode, LSP server, GitHub Action, PyPI distribution, VS Code extension</td>
 <td>✅ Complete</td>
 </tr>
 <tr>
-<td>VS Code extension</td>
+<td>Emitter plugin registry (<code>nlsc.targets</code> entry points)</td>
 <td>✅ Complete</td>
 </tr>
 <tr>
-<td>LSP server</td>
-<td>✅ Complete</td>
+<td>Retry/timeout <strong>runtime</strong> emission</td>
+<td>◐ Checked, not yet emitted (both targets refuse explicitly)</td>
 </tr>
 <tr>
-<td>Windows installer</td>
-<td>✅ Complete</td>
+<td>Typed effect handlers (#207/#208)</td>
+<td>◐ Planned — design staged in the issues</td>
 </tr>
 <tr>
-<td>TypeScript target</td>
-<td>✅ Initial compile support</td>
+<td>Rust target (#24)</td>
+<td>◐ Design intent documented; not implemented</td>
 </tr>
 </tbody>
 </table>
-<p><strong>239 tests passing</strong> — Production-ready for Python target.</p>
+<p><strong>1,162 tests passing</strong> across three operating systems and two Python
+versions, including a cross-target conformance suite that executes
+compiled modules on both backends.</p>
 <h2 id="get-started">Get Started<a class="headerlink" href="#get-started" title="Permanent link">&para;</a></h2>
 <div class="grid cards">
 <ul>
@@ -1833,7 +1904,7 @@
 </li>
 <li>
 <p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 19V7H4v12zm0-16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm-7 14v-2h5v2zm-3.42-4L5.57 9H8.4l3.3 3.3c.39.39.39 1.03 0 1.42L8.42 17H5.59z"/></svg></span> <strong><a href="cli-reference/">CLI Reference</a></strong></p>
-<p>All 11 commands documented</p>
+<p>All 20 commands, every flag, and the exit codes</p>
 </li>
 <li>
 <p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18s-.41-.06-.57-.18l-7.9-4.44A.99.99 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18s.41.06.57.18l7.9 4.44c.32.17.53.5.53.88zM12 4.15 6.04 7.5 12 10.85l5.96-3.35zM5 15.91l6 3.38v-6.71L5 9.21zm14 0v-6.7l-6 3.37v6.71z"/></svg></span> <strong><a href="type-system/">Type System</a></strong></p>

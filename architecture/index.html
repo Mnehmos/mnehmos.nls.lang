@@ -2094,18 +2094,37 @@
 <p>This document describes the internal architecture of the NLS compiler.</p>
 <h2 id="pipeline-overview">Pipeline Overview<a class="headerlink" href="#pipeline-overview" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart LR
-    A[".nl file"] --&gt; B[Parser]
-    B --&gt; C[AST]
-    C --&gt; D[Resolver]
-    D --&gt; E[Emitter]
-    E --&gt; F[".py file"]
-    E --&gt; G[".nl.lock"]</code></pre>
-<p>The compiler follows a classic pipeline architecture:</p>
+    A[".nl file"] --&gt; B["Parser&lt;br/&gt;(regex or tree-sitter)"]
+    B --&gt; C["AST&lt;br/&gt;(NLFile)"]
+    C --&gt; D["Canonical lowering&lt;br/&gt;(lower_module)"]
+    D --&gt; E["Target-neutral IR&lt;br/&gt;(IROperation / IRStmt)"]
+    E --&gt; F["Checkers&lt;br/&gt;types · control · failures&lt;br/&gt;effects · typestate · policies"]
+    F --&gt; G["Capability gate&lt;br/&gt;(ETARGET002)"]
+    G --&gt; H["Emitter registry&lt;br/&gt;(nlsc/targets.py)"]
+    H --&gt; I[".py / .ts"]
+    H --&gt; J[".nl.lock&lt;br/&gt;(semantic hashes)"]</code></pre>
+<p>The compiler has one shared frontend and one checked core:</p>
 <ol>
-<li><strong>Parser</strong> — Converts <code>.nl</code> text to AST</li>
-<li><strong>Resolver</strong> — Validates dependencies and ordering</li>
-<li><strong>Emitter</strong> — Generates Python code</li>
-<li><strong>Lockfile</strong> — Records hashes for reproducibility</li>
+<li><strong>Parser</strong> — regex and tree-sitter both produce the same <code>NLFile</code>; the
+   regex parser is canonical for constructs the grammar does not cover
+   (<code>@test</code>, <code>@literal</code>, <code>@use</code>, <code>@states</code>, <code>EFFECTS:</code>, <code>RETRY:</code>/<code>TIMEOUT:</code>,
+   arrow steps), selected by <code>_should_use_regex_canonical_parse</code>.</li>
+<li><strong>Lowering</strong> — <code>lower_module</code> turns the AST into the target-neutral IR
+   (both backends share it). Unsupported executable content becomes an
+   explicit foreign node with a diagnostic, never a silent drop.</li>
+<li><strong>Checkers</strong> — typecheck (symbol table, <code>ESEM001</code>–<code>ESEM013</code>),
+   controlflow (totality, immutability), failures (<code>#198</code>), effects
+   (<code>#197</code>), typestate (<code>#200</code>), and retry/timeout policies (<code>#201</code>).
+   Fatal diagnostics block every command before a backend runs.</li>
+<li><strong>Capability gate</strong> — the resolved IR is validated against the target's
+   declared capabilities; a feature the target cannot emit fails with
+   <code>ETARGET002</code> instead of producing an incomplete artifact.</li>
+<li><strong>Emission</strong> — the target registry (<code>nlsc/targets.py</code>) resolves the
+   emitter; checked ANLU bodies render from IR statement nodes. Registry
+   plugins can add targets through the <code>nlsc.targets</code> entry-point group.</li>
+<li><strong>Lockfile</strong> — records the semantic hash of each ANLU's canonical IR
+   (scheme <code>sem3</code>), the target artifact hash, and the emitter semantics
+   marker; <code>--frozen-lockfile</code> and <code>nlsc ci</code> re-derive and compare them.</li>
 </ol>
 <hr />
 <h2 id="module-breakdown">Module Breakdown<a class="headerlink" href="#module-breakdown" title="Permanent link">&para;</a></h2>
@@ -2115,39 +2134,84 @@
 <tr>
 <th>Module</th>
 <th>Purpose</th>
-<th>Lines</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>parser.py</code></td>
-<td>Regex-based parser</td>
-<td>~500</td>
+<td>Regex parser (canonical for directives, tests, policies)</td>
 </tr>
 <tr>
 <td><code>parser_treesitter.py</code></td>
-<td>Tree-sitter parser</td>
-<td>~600</td>
+<td>Tree-sitter frontend with the regex fallback contract</td>
 </tr>
 <tr>
-<td><code>resolver.py</code></td>
-<td>Dependency resolution</td>
-<td>~100</td>
+<td><code>lowering.py</code></td>
+<td>AST → target-neutral IR; foreign-node diagnostics</td>
 </tr>
 <tr>
-<td><code>emitter.py</code></td>
-<td>Python code generation</td>
-<td>~400</td>
-</tr>
-<tr>
-<td><code>lockfile.py</code></td>
-<td>Hash computation and storage</td>
-<td>~200</td>
+<td><code>ir.py</code></td>
+<td>IR schema, canonical text/JSON rendering, invariants</td>
 </tr>
 <tr>
 <td><code>schema.py</code></td>
 <td>AST data structures</td>
-<td>~300</td>
+</tr>
+<tr>
+<td><code>typecheck.py</code></td>
+<td>Symbol table and semantic checks (<code>ESEM</code>)</td>
+</tr>
+<tr>
+<td><code>controlflow.py</code></td>
+<td>Branch totality, binding immutability, definite assignment</td>
+</tr>
+<tr>
+<td><code>failures.py</code></td>
+<td>Conservative failure sets (<code>#198</code>)</td>
+</tr>
+<tr>
+<td><code>effects.py</code></td>
+<td>Resource-identity effect sets and <code>EFFECTS:</code> bounds (<code>#197</code>)</td>
+</tr>
+<tr>
+<td><code>typestate.py</code></td>
+<td>Resource state protocols (<code>#200</code>)</td>
+</tr>
+<tr>
+<td><code>retry_policy.py</code></td>
+<td>Retry/timeout policy shape checks (<code>#201</code>)</td>
+</tr>
+<tr>
+<td><code>capabilities.py</code></td>
+<td>Capability matrix and gap diagnostics</td>
+</tr>
+<tr>
+<td><code>targets.py</code></td>
+<td>Target emitter registry and plugin entry points</td>
+</tr>
+<tr>
+<td><code>emitter.py</code> / <code>emitter_typescript.py</code></td>
+<td>Python and TypeScript backends</td>
+</tr>
+<tr>
+<td><code>lockfile.py</code></td>
+<td>Semantic hashes, target locks, rebuild</td>
+</tr>
+<tr>
+<td><code>pkg.py</code></td>
+<td>Package manifest, dependency resolution, package lock (<code>#146</code>)</td>
+</tr>
+<tr>
+<td><code>pipeline.py</code></td>
+<td>Shared parse/lower/gate boundary used by every command</td>
+</tr>
+<tr>
+<td><code>diagnostics.py</code> / <code>error_catalog.py</code></td>
+<td>Diagnostic constructors and the code catalog</td>
+</tr>
+<tr>
+<td><code>graph.py</code>, <code>diff.py</code>, <code>watch.py</code>, <code>atomize.py</code>, <code>lint.py</code>, <code>formatting.py</code>, <code>provenance.py</code>, <code>sandbox.py</code></td>
+<td>Tooling around the core pipeline</td>
 </tr>
 </tbody>
 </table>
@@ -2162,23 +2226,11 @@
 <tbody>
 <tr>
 <td><code>cli.py</code></td>
-<td>Command-line interface</td>
+<td>All commands (<code>compile</code>, <code>run</code>, <code>ir</code>, <code>ci</code>, <code>lint</code>, <code>fmt</code>, <code>verify</code>, <code>test</code>, <code>graph</code>, <code>diff</code>, <code>watch</code>, <code>install</code>, <code>lock:check</code>, <code>lock:update</code>, <code>provenance</code>, <code>assoc</code>, <code>lsp</code>, <code>atomize</code>, <code>explain</code>, <code>init</code>)</td>
 </tr>
 <tr>
-<td><code>graph.py</code></td>
-<td>Visualization (Mermaid, DOT, ASCII)</td>
-</tr>
-<tr>
-<td><code>diff.py</code></td>
-<td>Change detection</td>
-</tr>
-<tr>
-<td><code>watch.py</code></td>
-<td>File watcher</td>
-</tr>
-<tr>
-<td><code>atomize.py</code></td>
-<td>Python → NL extraction</td>
+<td><code>lsp/</code></td>
+<td>Language server (hover, completion, diagnostics, formatting)</td>
 </tr>
 </tbody>
 </table>

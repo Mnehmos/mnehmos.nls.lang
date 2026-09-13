@@ -1087,6 +1087,83 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#nlsc-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nlsc-ir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc ir
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nlsc-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc ci
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nlsc-lint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc lint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nlsc-fmt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc fmt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nlsc-provenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc provenance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nlsc-lsp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc lsp
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#nlsc-install" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1887,6 +1964,83 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#nlsc-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nlsc-ir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc ir
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nlsc-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc ci
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nlsc-lint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc lint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nlsc-fmt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc fmt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nlsc-provenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc provenance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nlsc-lsp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nlsc lsp
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#nlsc-install" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2367,8 +2521,69 @@
 </span><span id="__span-22-10"><a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a><span class="p">}</span>
 </span></code></pre></div>
 <hr />
+<h3 id="nlsc-run"><code>nlsc run</code><a class="headerlink" href="#nlsc-run" title="Permanent link">&para;</a></h3>
+<p>Compile and execute a module's <code>@main</code> block (Python target only).</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>nlsc<span class="w"> </span>run<span class="w"> </span>&lt;file.nl&gt;<span class="w"> </span><span class="o">[</span>-t<span class="w"> </span>python<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span><span class="w"> </span><span class="o">[</span>--keep<span class="w"> </span>DIR<span class="o">]</span>
+</span></code></pre></div>
+<p>Target-independent validation runs first — the same semantic gate as
+<code>compile</code> — and the capability gate refuses files using features the
+Python target cannot emit (<code>ETARGET002</code>). <code>--keep</code> preserves the generated
+module for inspection.</p>
+<h3 id="nlsc-ir"><code>nlsc ir</code><a class="headerlink" href="#nlsc-ir" title="Permanent link">&para;</a></h3>
+<p>Emit the target-neutral IR for a <code>.nl</code> file (<code>#194</code>).</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>nlsc<span class="w"> </span>ir<span class="w"> </span>&lt;file.nl&gt;<span class="w"> </span><span class="o">[</span>--json<span class="o">]</span><span class="w"> </span><span class="o">[</span>--strict<span class="o">]</span><span class="w"> </span><span class="o">[</span>--check<span class="o">]</span><span class="w"> </span><span class="o">[</span>-o<span class="w"> </span>FILE<span class="o">]</span>
+</span></code></pre></div>
+<p><code>--check</code> adds backend-free validation (<code>#147</code>): the shared semantic gate
+plus checked-emission eligibility. It exits 1 on semantic errors (<code>ESEM</code>)
+or <code>EIR003</code> foreign-node blockers and reports <code>eligible</code> in the JSON
+payload; under <code>--strict</code>, strict-only diagnostics also block. The
+canonical text form is the same IR that lockfile semantic hashes cover
+(scheme <code>sem3</code>), and it is the recommended hand-off format for LLMs. See
+<a href="../ir-spec/">ir-spec.md</a>.</p>
+<h3 id="nlsc-ci"><code>nlsc ci</code><a class="headerlink" href="#nlsc-ci" title="Permanent link">&para;</a></h3>
+<p>The automation gate: strict semantics plus a frozen lockfile, optionally
+compiling with reproducibility verification and running tests.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>nlsc<span class="w"> </span>ci<span class="w"> </span>&lt;file.nl&gt;<span class="w"> </span><span class="o">[</span>--compile<span class="o">]</span><span class="w"> </span><span class="o">[</span>--test<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span><span class="w"> </span><span class="o">[</span>-t<span class="w"> </span>TARGET<span class="o">]</span>
+</span></code></pre></div>
+<p>Stages run in order — <code>parse</code>, <code>gate</code> (fatal diagnostics, contract drift,
+scaffold content), <code>provenance</code> (a pending LLM edit blocks CI), <code>lockfile</code>
+(must exist, be current, and match the backend semantics marker), then
+optional <code>compile</code> (regenerated output must reproduce the locked target
+hash exactly) and <code>test</code>. Every stage failure exits 1 with structured
+diagnostics.</p>
+<h3 id="nlsc-lint"><code>nlsc lint</code><a class="headerlink" href="#nlsc-lint" title="Permanent link">&para;</a></h3>
+<p>Intent-quality rules over a <code>.nl</code> file or directory (<code>ELINT001</code>–<code>ELINT012</code>):
+inputs without guards or tests, types without invariants, prose-only logic,
+and more.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>nlsc<span class="w"> </span>lint<span class="w"> </span><span class="o">[</span>path<span class="o">]</span><span class="w"> </span><span class="o">[</span>--strict<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
+</span></code></pre></div>
+<p>Findings are warnings unless <code>--strict</code>, which makes them exit non-zero.</p>
+<h3 id="nlsc-fmt"><code>nlsc fmt</code><a class="headerlink" href="#nlsc-fmt" title="Permanent link">&para;</a></h3>
+<p>Rewrite files in the canonical layout (<code>#95</code>): section order
+<code>PURPOSE → INPUTS → GUARDS → LOGIC → EDGE CASES → RETURNS → DEPENDS</code>,
+blank-line discipline, and bullet normalization. The formatter is
+idempotent and refuses to destroy executable content (<code>EFMT001</code>).</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>nlsc<span class="w"> </span>fmt<span class="w"> </span><span class="o">[</span>path<span class="o">]</span><span class="w"> </span><span class="o">[</span>--check<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
+</span></code></pre></div>
+<p><code>--check</code> reports files that would change without writing them — use it as
+a CI gate.</p>
+<h3 id="nlsc-provenance"><code>nlsc provenance</code><a class="headerlink" href="#nlsc-provenance" title="Permanent link">&para;</a></h3>
+<p>Read or write the edit-provenance sidecar for a <code>.nl</code> file (<code>#93</code>): who
+authored the current revision (human, LLM, tool), the review status, and
+the model/conversation identifiers for LLM edits.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>nlsc<span class="w"> </span>provenance<span class="w"> </span>&lt;file.nl&gt;<span class="w"> </span><span class="o">[</span>--source<span class="w"> </span>human<span class="p">|</span>llm<span class="p">|</span>tool<span class="o">]</span><span class="w"> </span><span class="o">[</span>--status<span class="w"> </span>draft<span class="p">|</span>pending<span class="p">|</span>accepted<span class="p">|</span>rejected<span class="o">]</span><span class="w"> </span><span class="o">[</span>--model<span class="w"> </span>ID<span class="o">]</span><span class="w"> </span><span class="o">[</span>--conversation<span class="w"> </span>ID<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
+</span></code></pre></div>
+<p>A <code>pending</code> status blocks <code>nlsc ci</code> (<code>EPROV001</code>) until it is reviewed and
+accepted. See <a href="../provenance/">provenance.md</a>.</p>
+<h3 id="nlsc-lsp"><code>nlsc lsp</code><a class="headerlink" href="#nlsc-lsp" title="Permanent link">&para;</a></h3>
+<p>Run the language server over stdio or TCP for editor integration (hover,
+completion, diagnostics, formatting).</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>nlsc<span class="w"> </span>lsp<span class="w"> </span><span class="o">[</span>--tcp<span class="w"> </span>HOST:PORT<span class="o">]</span>
+</span></code></pre></div>
+<p>Requires the optional extras (<code>pip install "nlsc[lsp]"</code>); missing
+dependencies surface as <code>ELSP001</code>, startup failures as <code>ELSP002</code>.</p>
 <h3 id="nlsc-install"><code>nlsc install</code><a class="headerlink" href="#nlsc-install" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>nlsc install [path] [--check] [--json]
+<div class="language-text highlight"><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>nlsc install [path] [--check] [--json]
 </span></code></pre></div>
 <p>Resolves the local package dependencies declared in <code>nls.pkg.json</code>
 (<code>#146</code>), checks their versions against the manifest constraints, and
@@ -2379,7 +2594,7 @@ nearest project root when the directory itself has no manifest. See
 <a href="../packages/">packages.md</a>.</p>
 <h3 id="nlsc-watch"><code>nlsc watch</code><a class="headerlink" href="#nlsc-watch" title="Permanent link">&para;</a></h3>
 <p>Watch a directory for <code>.nl</code> file changes and automatically recompile.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>nlsc<span class="w"> </span>watch<span class="w"> </span><span class="o">[</span>dir<span class="o">]</span><span class="w"> </span><span class="o">[</span>-q<span class="o">]</span><span class="w"> </span><span class="o">[</span>-t<span class="o">]</span><span class="w"> </span><span class="o">[</span>-d<span class="w"> </span>DEBOUNCE<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>nlsc<span class="w"> </span>watch<span class="w"> </span><span class="o">[</span>dir<span class="o">]</span><span class="w"> </span><span class="o">[</span>-q<span class="o">]</span><span class="w"> </span><span class="o">[</span>-t<span class="o">]</span><span class="w"> </span><span class="o">[</span>-d<span class="w"> </span>DEBOUNCE<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -2412,14 +2627,14 @@ nearest project root when the directory itself has no manifest. See
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Watch current directory</span>
-</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>nlsc<span class="w"> </span>watch
-</span><span id="__span-25-3"><a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
-</span><span id="__span-25-4"><a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="c1"># Watch with tests</span>
-</span><span id="__span-25-5"><a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>nlsc<span class="w"> </span>watch<span class="w"> </span>src/<span class="w"> </span>--test
-</span><span id="__span-25-6"><a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>
-</span><span id="__span-25-7"><a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="c1"># Quiet mode with custom debounce</span>
-</span><span id="__span-25-8"><a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>nlsc<span class="w"> </span>watch<span class="w"> </span>src/<span class="w"> </span>-q<span class="w"> </span>-d<span class="w"> </span><span class="m">500</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Watch current directory</span>
+</span><span id="__span-32-2"><a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>nlsc<span class="w"> </span>watch
+</span><span id="__span-32-3"><a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>
+</span><span id="__span-32-4"><a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="c1"># Watch with tests</span>
+</span><span id="__span-32-5"><a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>nlsc<span class="w"> </span>watch<span class="w"> </span>src/<span class="w"> </span>--test
+</span><span id="__span-32-6"><a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>
+</span><span id="__span-32-7"><a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="c1"># Quiet mode with custom debounce</span>
+</span><span id="__span-32-8"><a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>nlsc<span class="w"> </span>watch<span class="w"> </span>src/<span class="w"> </span>-q<span class="w"> </span>-d<span class="w"> </span><span class="m">500</span>
 </span></code></pre></div>
 <p>Press <code>Ctrl+C</code> to stop watching.</p>
 <p>When <code>--json</code> is enabled, <code>nlsc watch</code> emits stable diagnostics for deterministic startup failures before the watcher begins, including missing directories and non-directory paths.</p>
@@ -2427,7 +2642,7 @@ nearest project root when the directory itself has no manifest. See
 <hr />
 <h3 id="nlsc-assoc"><code>nlsc assoc</code><a class="headerlink" href="#nlsc-assoc" title="Permanent link">&para;</a></h3>
 <p>Install or remove the Windows Explorer file association for <code>.nl</code> files.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>nlsc<span class="w"> </span>assoc<span class="w"> </span><span class="o">[</span>--user<span class="o">]</span><span class="w"> </span><span class="o">[</span>--uninstall<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-33-1"><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>nlsc<span class="w"> </span>assoc<span class="w"> </span><span class="o">[</span>--user<span class="o">]</span><span class="w"> </span><span class="o">[</span>--uninstall<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -2455,7 +2670,7 @@ nearest project root when the directory itself has no manifest. See
 <hr />
 <h3 id="nlsc-atomize"><code>nlsc atomize</code><a class="headerlink" href="#nlsc-atomize" title="Permanent link">&para;</a></h3>
 <p>Extract ANLUs from existing Python source code (reverse compilation).</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>nlsc<span class="w"> </span>atomize<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>-o<span class="w"> </span>OUTPUT<span class="o">]</span><span class="w"> </span><span class="o">[</span>-m<span class="w"> </span>MODULE<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-34-1"><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>nlsc<span class="w"> </span>atomize<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>-o<span class="w"> </span>OUTPUT<span class="o">]</span><span class="w"> </span><span class="o">[</span>-m<span class="w"> </span>MODULE<span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -2484,7 +2699,7 @@ nearest project root when the directory itself has no manifest. See
 </tbody>
 </table>
 <p><strong>Example:</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>nlsc<span class="w"> </span>atomize<span class="w"> </span>legacy/utils.py<span class="w"> </span>-o<span class="w"> </span>src/utils.nl<span class="w"> </span>-m<span class="w"> </span>utils
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-35-1"><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>nlsc<span class="w"> </span>atomize<span class="w"> </span>legacy/utils.py<span class="w"> </span>-o<span class="w"> </span>src/utils.nl<span class="w"> </span>-m<span class="w"> </span>utils
 </span></code></pre></div>
 <p>This extracts functions from Python and generates corresponding ANLU blocks.</p>
 <p>When <code>--json</code> is enabled, <code>nlsc atomize</code> emits stable diagnostics for missing input files, Python syntax failures, and unexpected atomize/write failures.</p>
@@ -2525,25 +2740,25 @@ nearest project root when the directory itself has no manifest. See
 </table>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
 <p>Project settings are stored in <code>nl.config.yaml</code>:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="nt">project</span><span class="p">:</span>
-</span><span id="__span-29-2"><a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-project</span>
-</span><span id="__span-29-3"><a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1.0</span>
-</span><span id="__span-29-4"><a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>
-</span><span id="__span-29-5"><a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="nt">compiler</span><span class="p">:</span>
-</span><span id="__span-29-6"><a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="w">  </span><span class="nt">default_target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python</span>
-</span><span id="__span-29-7"><a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a><span class="w">  </span><span class="nt">llm_backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mock</span>
-</span><span id="__span-29-8"><a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a><span class="w">  </span><span class="nt">cache_strategy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aggressive</span>
-</span><span id="__span-29-9"><a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a>
-</span><span id="__span-29-10"><a id="__codelineno-29-10" name="__codelineno-29-10" href="#__codelineno-29-10"></a><span class="nt">targets</span><span class="p">:</span>
-</span><span id="__span-29-11"><a id="__codelineno-29-11" name="__codelineno-29-11" href="#__codelineno-29-11"></a><span class="w">  </span><span class="nt">python</span><span class="p">:</span>
-</span><span id="__span-29-12"><a id="__codelineno-29-12" name="__codelineno-29-12" href="#__codelineno-29-12"></a><span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">"&gt;=3.11"</span>
-</span><span id="__span-29-13"><a id="__codelineno-29-13" name="__codelineno-29-13" href="#__codelineno-29-13"></a><span class="w">    </span><span class="nt">style</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">black</span>
-</span><span id="__span-29-14"><a id="__codelineno-29-14" name="__codelineno-29-14" href="#__codelineno-29-14"></a><span class="w">    </span><span class="nt">type_hints</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">strict</span>
-</span><span id="__span-29-15"><a id="__codelineno-29-15" name="__codelineno-29-15" href="#__codelineno-29-15"></a>
-</span><span id="__span-29-16"><a id="__codelineno-29-16" name="__codelineno-29-16" href="#__codelineno-29-16"></a><span class="nt">validation</span><span class="p">:</span>
-</span><span id="__span-29-17"><a id="__codelineno-29-17" name="__codelineno-29-17" href="#__codelineno-29-17"></a><span class="w">  </span><span class="nt">require_purpose</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-</span><span id="__span-29-18"><a id="__codelineno-29-18" name="__codelineno-29-18" href="#__codelineno-29-18"></a><span class="w">  </span><span class="nt">require_guards</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-</span><span id="__span-29-19"><a id="__codelineno-29-19" name="__codelineno-29-19" href="#__codelineno-29-19"></a><span class="w">  </span><span class="nt">max_anlu_complexity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-36-1"><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="nt">project</span><span class="p">:</span>
+</span><span id="__span-36-2"><a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-project</span>
+</span><span id="__span-36-3"><a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1.0</span>
+</span><span id="__span-36-4"><a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a>
+</span><span id="__span-36-5"><a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="nt">compiler</span><span class="p">:</span>
+</span><span id="__span-36-6"><a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a><span class="w">  </span><span class="nt">default_target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python</span>
+</span><span id="__span-36-7"><a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a><span class="w">  </span><span class="nt">llm_backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mock</span>
+</span><span id="__span-36-8"><a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a><span class="w">  </span><span class="nt">cache_strategy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aggressive</span>
+</span><span id="__span-36-9"><a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a>
+</span><span id="__span-36-10"><a id="__codelineno-36-10" name="__codelineno-36-10" href="#__codelineno-36-10"></a><span class="nt">targets</span><span class="p">:</span>
+</span><span id="__span-36-11"><a id="__codelineno-36-11" name="__codelineno-36-11" href="#__codelineno-36-11"></a><span class="w">  </span><span class="nt">python</span><span class="p">:</span>
+</span><span id="__span-36-12"><a id="__codelineno-36-12" name="__codelineno-36-12" href="#__codelineno-36-12"></a><span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">"&gt;=3.11"</span>
+</span><span id="__span-36-13"><a id="__codelineno-36-13" name="__codelineno-36-13" href="#__codelineno-36-13"></a><span class="w">    </span><span class="nt">style</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">black</span>
+</span><span id="__span-36-14"><a id="__codelineno-36-14" name="__codelineno-36-14" href="#__codelineno-36-14"></a><span class="w">    </span><span class="nt">type_hints</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">strict</span>
+</span><span id="__span-36-15"><a id="__codelineno-36-15" name="__codelineno-36-15" href="#__codelineno-36-15"></a>
+</span><span id="__span-36-16"><a id="__codelineno-36-16" name="__codelineno-36-16" href="#__codelineno-36-16"></a><span class="nt">validation</span><span class="p">:</span>
+</span><span id="__span-36-17"><a id="__codelineno-36-17" name="__codelineno-36-17" href="#__codelineno-36-17"></a><span class="w">  </span><span class="nt">require_purpose</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-36-18"><a id="__codelineno-36-18" name="__codelineno-36-18" href="#__codelineno-36-18"></a><span class="w">  </span><span class="nt">require_guards</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</span><span id="__span-36-19"><a id="__codelineno-36-19" name="__codelineno-36-19" href="#__codelineno-36-19"></a><span class="w">  </span><span class="nt">max_anlu_complexity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
 </span></code></pre></div>
 
 
