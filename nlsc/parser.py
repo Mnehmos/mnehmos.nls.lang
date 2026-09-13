@@ -834,6 +834,34 @@ def parse_nl_file(source: str, source_path: Optional[str] = None) -> NLFile:
                 current_section = None
                 continue
 
+            # Unknown section header (#255): a header-shaped line that no
+            # known handler consumed must not be attributed to the previous
+            # section or silently ignored.
+            unknown_header = re.match(r"^([^\s:：]{1,32})\s*[:：]", line_match)
+            if (
+                unknown_header
+                and not PATTERNS["bullet"].match(line_match)
+                and not PATTERNS["numbered"].match(line_match)
+                and current_section
+                not in ("inputs", "guards", "edge_cases", "retry", "timeout")
+                # Inside @type/@test/@property/@invariant/@literal/@main
+                # blocks, `field: value` lines are block content, not
+                # section headers.
+                and current_type is None
+                and current_test is None
+                and current_property is None
+                and current_invariant is None
+                and not in_literal_block
+                and not in_main_block
+            ):
+                raise ParseError(
+                    f"Unknown section header '{unknown_header.group(1)}'; "
+                    "expected one of: PURPOSE, INPUTS, GUARDS, LOGIC, EDGE CASES, "
+                    "EFFECTS, RETRY, TIMEOUT, RETURNS, DEPENDS",
+                    line_num,
+                    line,
+                )
+
             # Parse section content
             if current_section:
                 if PATTERNS["empty"].match(line):
