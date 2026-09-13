@@ -787,10 +787,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#effect-sets-issue-197-conservative-slice" class="md-nav__link">
+  <a href="#effect-sets-issue-197" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Effect sets (Issue #197, conservative slice)
+        Effect sets (Issue #197)
       
     </span>
   </a>
@@ -1699,10 +1699,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#effect-sets-issue-197-conservative-slice" class="md-nav__link">
+  <a href="#effect-sets-issue-197" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Effect sets (Issue #197, conservative slice)
+        Effect sets (Issue #197)
       
     </span>
   </a>
@@ -1863,15 +1863,28 @@
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>(&lt;Name&gt;)                                   declared record type
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>(&lt;typeref&gt; optional)                       nullable / optional
 </span></code></pre></div>
-<h3 id="effect-sets-issue-197-conservative-slice">Effect sets (Issue #197, conservative slice)<a class="headerlink" href="#effect-sets-issue-197-conservative-slice" title="Permanent link">&para;</a></h3>
-<p>Operations also carry an analyzed <code>effects</code> set: <code>(effects)</code> for
-purely structural code, or <code>unknown</code> markers for foreign calls, method
-calls, and literal implementations, propagated to callers:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>(effects (effect unknown origin=call) (effect unknown origin=callee))
+<h3 id="effect-sets-issue-197">Effect sets (Issue #197)<a class="headerlink" href="#effect-sets-issue-197" title="Permanent link">&para;</a></h3>
+<p>Operations carry an analyzed <code>effects</code> set with read/write resource
+identities where the analysis can attribute one:</p>
+<ul>
+<li>purely structural code yields <code>(effects)</code> — an analyzed <strong>empty</strong> set;</li>
+<li>a method call on a parameter or binding yields a <strong>named write</strong>
+  (<code>items.append(x)</code> -&gt; <code>write(items)</code>);</li>
+<li>anything unattributable — foreign calls, <code>@literal</code> bodies, method
+  calls on unnamed bases — stays an <code>unknown</code> marker;</li>
+<li>callee effects propagate to callers with <strong>call-site substitution</strong>:
+  the caller sees its own argument name (<code>[mutate](rows)</code> -&gt;
+  <code>write(rows) origin=callee</code>), and a callee-internal resource that
+  cannot be attributed to a caller name propagates as <code>unknown</code>.</li>
+</ul>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>(effects (effect write items origin=call) (effect unknown origin=callee))
 </span></code></pre></div>
-<p><code>kind</code> and <code>resource</code> are reserved for the read/write
-resource-identity syntax in the full #197 slice; <code>None</code> still means
-<em>not analyzed</em> and is never an implicit proof of purity.</p>
+<p>An optional <code>EFFECTS:</code> contract line declares an upper bound —
+<code>pure</code>, <code>unknown</code>, <code>read</code>, <code>write</code>, <code>read(name)</code>,
+<code>write(name)</code> — checked as <code>EFX001</code> (exceeded) / <code>EFX002</code>
+(malformed, fatal in every mode). <code>None</code> still means <em>not analyzed</em> and
+is never an implicit proof of purity.  Effects participate in lockfile
+semantic hashes (scheme <code>sem3</code>).</p>
 <h3 id="failure-sets-issue-198">Failure sets (Issue #198)<a class="headerlink" href="#failure-sets-issue-198" title="Permanent link">&para;</a></h3>
 <p>Every operation carries an analyzed <code>fails</code> set after lowering:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>(fails (fail ValueError code=MISSING "Token required" origin=guard)

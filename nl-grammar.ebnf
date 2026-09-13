@@ -101,6 +101,11 @@ output_binding = SPACE , arrow , SPACE , identifier ;
 returns_section = "RETURNS:" , SPACE , return_expression , NEWLINE ;
 return_expression = expression | type_spec ;
 
+(* EFFECTS: declared upper bound on inferred effects (#197) *)
+effects_section = "EFFECTS:" , SPACE , effect_contract , NEWLINE ;
+effect_contract = "pure" | "unknown" | effect_item , { ( "," | SPACE ) , effect_item } ;
+effect_item     = "read" | "write" | "read" , "(" , identifier , ")" | "write" , "(" , identifier , ")" ;
+
 (* DEPENDS: list of ANLU dependencies *)
 depends_section = "DEPENDS:" , SPACE , depends_list , NEWLINE ;
 depends_list    = anlu_reference , { "," , [ SPACE ] , anlu_reference } ;

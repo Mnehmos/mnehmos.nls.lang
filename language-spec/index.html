@@ -2813,7 +2813,11 @@ never treated as proof of type safety. <code>integer</code> values are accepted 
   Unknown external failures are never an empty set, and pure operations are
   analyzed-empty.</li>
 <li><strong>effects</strong> (<code>effects</code>): analyzed-empty for purely structural code;
-  <code>unknown</code> markers for anything that can touch the world.</li>
+  named writes for method calls on parameters/bindings (<code>write(items)</code>);
+  <code>unknown</code> markers for anything that cannot be attributed to a resource.
+  An optional <code>EFFECTS:</code> line declares an upper bound — <code>pure</code>, <code>unknown</code>,
+  <code>read</code>, <code>write</code>, <code>read(name)</code>, <code>write(name)</code> — checked as <code>EFX001</code>
+  (declaration exceeded) and <code>EFX002</code> (malformed, fatal in every mode).</li>
 </ul>
 <p>These contracts participate in lockfile semantic hashes: changing a guard
 message or adding a foreign call invalidates the affected entries and their
@@ -3110,6 +3114,11 @@ with causes and next steps.</p>
 <td><code>ESEM013</code></td>
 <td>Module/file name shadows a host stdlib module</td>
 <td><a href="#file-structure">File Structure</a></td>
+</tr>
+<tr>
+<td><code>EFX001</code>, <code>EFX002</code></td>
+<td>Declared <code>EFFECTS</code> upper bound exceeded / malformed</td>
+<td><a href="#effects-and-failure-contracts">Effects and failure contracts</a></td>
 </tr>
 <tr>
 <td><code>EGRAPH003</code></td>

@@ -2340,10 +2340,11 @@ numbers are excluded, so rewording documentation or moving code within a
 file never invalidates a lock; changing a guard message, a constraint, a
 logic expression, or a dependency's signature always does.</p>
 <p><strong>Migration:</strong> lock entries written before the <code>sem2</code> scheme (partial
-identifier/purpose/returns hashes) never compare equal to new hashes. On
-first <code>nlsc compile</code> or <code>nlsc lock:update</code> after upgrading, every legacy
-entry is conservatively reported as changed and regenerated — stale cached
-bodies are never reused.</p>
+identifier/purpose/returns hashes) never compare equal to new hashes, and
+<code>sem3</code> adds read/write effect resource identities (#197) to the canonical
+form. On first <code>nlsc compile</code> or <code>nlsc lock:update</code> after upgrading, every
+legacy entry is conservatively reported as changed and regenerated — stale
+cached bodies are never reused.</p>
 <h3 id="emitter-semantics-markers-issue-202">Emitter semantics markers (Issue #202)<a class="headerlink" href="#emitter-semantics-markers-issue-202" title="Permanent link">&para;</a></h3>
 <p>Each locked target also records a <code>semantics_version</code> marker (for example
 <code>py-3</code>, <code>ts-2</code>) naming the backend semantics revision that produced the
