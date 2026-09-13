@@ -27,7 +27,7 @@ from .schema import (
 )
 
 if TYPE_CHECKING:
-    from .ir import IRGuard, IRStmt
+    from .ir import IRForEach, IRGuard, IRStmt
 
 
 class EmitterError(Exception):
@@ -977,6 +977,34 @@ _AUG_PY_OPS = {
 }
 
 
+def _render_py_for_each(stmt: "IRForEach", indent: str) -> Optional[list[str]]:
+    """Render a bounded fold as an explicit accumulator loop (#267).
+
+    Emitted as a seeded accumulator plus a `for` rather than a comprehension:
+    the accumulator is the thing the specification named, and keeping it
+    visible is what makes the generated code readable next to the `.nl`.
+    """
+    iterable = _render_py_expr(stmt.iterable)
+    value = _render_py_expr(stmt.value)
+    if iterable is None or value is None:
+        return None
+
+    seed = "0" if stmt.op == "add" else "[]"
+    lines = [f"{indent}{stmt.target} = {seed}", f"{indent}for {stmt.var} in {iterable}:"]
+    body_indent = indent + "    "
+    if stmt.where is not None:
+        # Positive form: `if <cond>:` keeps the emitted loop one level deep
+        # and mirrors the WHERE clause as written.
+        condition = _render_py_expr(stmt.where)
+        if condition is None:
+            return None
+        lines.append(f"{body_indent}if {condition}:")
+        body_indent += "    "
+    accumulated = value if stmt.op == "add" else f"[{value}]"
+    lines.append(f"{body_indent}{stmt.target} = {stmt.target} + {accumulated}")
+    return lines
+
+
 def _render_py_stmt(stmt: "IRStmt", indent: str) -> Optional[list[str]]:
     """Render one lowered IR statement as Python lines (#202).
 
@@ -984,8 +1012,10 @@ def _render_py_stmt(stmt: "IRStmt", indent: str) -> Optional[list[str]]:
     (``ForeignStmt``, loops); the caller falls back to the legacy prose
     path for that ANLU.
     """
-    from .ir import IRBind, IRBranch, IRDiscard, IRNote
+    from .ir import IRBind, IRBranch, IRDiscard, IRForEach, IRNote
 
+    if isinstance(stmt, IRForEach):
+        return _render_py_for_each(stmt, indent)
     if isinstance(stmt, IRBind):
         value = _render_py_expr(stmt.value)
         if value is None:
@@ -1087,7 +1117,7 @@ def _emit_body_from_ir(anlu: ANLU, declared_types: set[str]) -> Optional[str]:
 
     result = operation.result
     if result is not None and result.value is not None:
-        from .ir import IRBind, IRRef, iter_stmt_nodes
+        from .ir import IRBind, IRForEach, IRRef, iter_stmt_nodes
 
         value = result.value
         if isinstance(value, IRRef):
@@ -1099,6 +1129,11 @@ def _emit_body_from_ir(anlu: ANLU, declared_types: set[str]) -> Optional[str]:
                 stmt.name
                 for stmt in iter_stmt_nodes(operation.body)
                 if isinstance(stmt, IRBind)
+            )
+            bound.update(
+                stmt.target
+                for stmt in iter_stmt_nodes(operation.body)
+                if isinstance(stmt, IRForEach)
             )
             if value.name not in bound:
                 return None

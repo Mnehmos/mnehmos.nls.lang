@@ -61,9 +61,9 @@ Implement the compilation pipeline:
 
 ### Step 4: Verification (The "Math" Example)
 
-Create the exact `src/math.nl` file from Appendix B.
-Run `nlsc compile src/math.nl`.
-Verify `src/math.py` is generated.
+Create the exact `src/arithmetic.nl` file from Appendix B.
+Run `nlsc compile src/arithmetic.nl`.
+Verify `src/arithmetic.py` is generated.
 Run the python code to prove `add(2,3) == 5`.
 
 ## Your First Action

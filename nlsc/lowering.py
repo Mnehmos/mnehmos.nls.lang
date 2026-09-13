@@ -38,6 +38,7 @@ from .ir import (
     IRIndexAccess,
     IRList,
     IRLiteral,
+    IRForEach,
     IRLoop,
     IRMethodCall,
     IRModule,
@@ -56,7 +57,11 @@ from .ir import (
     SourceSpan,
     type_ref_from_text,
 )
-from .localization import ANLU_IDENTIFIER_PATTERN, IDENTIFIER_PATTERN
+from .localization import (
+    ANLU_IDENTIFIER_PATTERN,
+    IDENTIFIER_PATTERN,
+    normalize_expression_text,
+)
 from .schema import ANLU, Guard, Input, LogicStep, NLFile, TypeDefinition
 
 IR_FILE_TOKEN = "<lowering>"
@@ -759,6 +764,12 @@ def _lower_step(
             return [IRNote(text=f"[{step.state_name}]", span=span)]
         return []
 
+    fold_stmts = _lower_fold_step(
+        anlu, raw, step, step.output_binding, span, strict, diagnostics
+    )
+    if fold_stmts is not None:
+        return fold_stmts
+
     action_stmts = _lower_action(
         anlu, raw, step.output_binding, span, strict, diagnostics
     )
@@ -796,6 +807,112 @@ def _lower_step(
         ]
 
     return action_stmts
+
+
+# Bounded fold (#267):
+#   FOR EACH <var> IN <iterable> [WHERE <cond>]: ADD|COLLECT <expr> -> <binding>
+# The accumulating verb is required, which is what distinguishes a checked fold
+# from the older effect-only `FOR each ... IN ...: <action>` loop step.
+_FOLD_STEP_RE = re.compile(
+    rf"^FOR\s+EACH\s+(?P<var>{IDENTIFIER_PATTERN})\s+IN\s+(?P<rest>.+?)"
+    r"\s*:\s*(?P<op>ADD|COLLECT)\s+(?P<value>.+)$",
+    re.IGNORECASE | re.DOTALL,
+)
+_FOLD_WHERE_RE = re.compile(r"^(?P<iterable>.+?)\s+WHERE\s+(?P<cond>.+)$", re.IGNORECASE)
+
+_FOLD_OPS = {"add": "add", "collect": "collect"}
+
+
+def is_fold_step(text: str) -> bool:
+    """True when a LOGIC step is a checked bounded fold rather than prose."""
+    return _FOLD_STEP_RE.match(normalize_expression_text(text.strip())) is not None
+
+
+def _lower_fold_step(
+    anlu: ANLU,
+    raw: str,
+    step: LogicStep,
+    binding: Optional[str],
+    span: SourceSpan,
+    strict: bool,
+    diagnostics: list,
+) -> Optional[list[IRStmt]]:
+    """Lower `FOR EACH ... : ADD|COLLECT ...` into a checked fold region."""
+    match = _FOLD_STEP_RE.match(normalize_expression_text(raw))
+    if match is None:
+        return None
+
+    context = f"{anlu.identifier} step {step.number}"
+
+    def _fail(message: str, hint: str) -> list[IRStmt]:
+        diagnostic = Diagnostic(
+            code=EIR002,
+            file=IR_FILE_TOKEN,
+            line=span.line,
+            col=None,
+            message=f"{context}: {message}",
+            hint=hint,
+        )
+        if strict:
+            raise LoweringError([diagnostic])
+        diagnostics.append(diagnostic)
+        return [ForeignStmt(raw=raw, reason="fold", span=span)]
+
+    if not binding:
+        return _fail(
+            "a FOR EACH fold must bind its result",
+            "Add an output binding, for example '... : ADD item.score -> total'.",
+        )
+    if step.condition is not None:
+        return _fail(
+            "a FOR EACH fold cannot also be an IF step",
+            "Use the fold's own WHERE clause to filter, or split the step.",
+        )
+
+    rest = match.group("rest").strip()
+    where_source: Optional[str] = None
+    where_match = _FOLD_WHERE_RE.match(rest)
+    if where_match:
+        rest = where_match.group("iterable").strip()
+        where_source = where_match.group("cond").strip()
+
+    iterable = lower_expression(
+        rest,
+        span,
+        strict=strict,
+        diagnostics=diagnostics,
+        context=f"{context} FOR EACH iterable",
+    )
+    where = (
+        lower_expression(
+            where_source,
+            span,
+            strict=strict,
+            diagnostics=diagnostics,
+            context=f"{context} FOR EACH condition",
+        )
+        if where_source is not None
+        else None
+    )
+    value = lower_expression(
+        match.group("value").strip(),
+        span,
+        strict=strict,
+        diagnostics=diagnostics,
+        context=f"{context} FOR EACH {match.group('op').lower()}",
+    )
+
+    return [
+        IRForEach(
+            var=match.group("var"),
+            iterable=iterable,
+            op=_FOLD_OPS[match.group("op").lower()],
+            value=value,
+            target=binding,
+            where=where,
+            span=span,
+        )
+    ]
 
 
 def _lower_action(

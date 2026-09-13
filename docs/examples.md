@@ -620,7 +620,7 @@ DEPENDS: [validate-credentials], [generate-token]
 
 All examples are available in the `examples/` directory of the repository:
 
-- [math.nl](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/math.nl)
+- [arithmetic.nl](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/arithmetic.nl)
 - [strings.nl](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/strings.nl)
 - [billing.nl](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/billing.nl)
 - [workflow_engine.nl](https://github.com/Mnehmos/mnehmos.nls.lang/blob/master/examples/workflow_engine.nl)

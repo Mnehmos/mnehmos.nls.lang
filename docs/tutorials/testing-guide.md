@@ -39,7 +39,7 @@ Master NLS's three testing mechanisms: example tests, property tests, and invari
 ### Complete Example
 
 ```nl
-@module math
+@module arithmetic
 @target python
 
 [add]
@@ -98,13 +98,13 @@ RETURNS: a / b
 ### Running Tests
 
 ```bash
-nlsc test src/math.nl
+nlsc test src/arithmetic.nl
 ```
 
 Output:
 
 ```
-Running 9 test cases from src/math.nl...
+Running 9 test cases from src/arithmetic.nl...
   • [add]: 5 cases
   • [abs]: 4 cases
 
@@ -114,7 +114,7 @@ Running 9 test cases from src/math.nl...
 For verbose output:
 
 ```bash
-nlsc test src/math.nl -v
+nlsc test src/arithmetic.nl -v
 ```
 
 ---
@@ -134,7 +134,7 @@ Property tests verify that properties hold for **all valid inputs**, not just sp
 ### Mathematical Properties
 
 ```nl
-@module math
+@module arithmetic
 @target python
 
 [add]

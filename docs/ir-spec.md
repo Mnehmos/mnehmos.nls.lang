@@ -181,6 +181,7 @@ either representation.
 | GUARDS bullet | `guard` with normalized error identity |
 | RETURNS expression / type | `result` with `value` and/or `type` slots |
 | Descriptive step (no binding) | `note` |
+| `FOR EACH ... : ADD\|COLLECT ... -> name` | `for-each` node (bounded fold, #267) |
 | Anything else executable | `foreign` node + `EIR001`/`EIR002` diagnostic |
 
 Not yet lowered (tracked in follow-up issues): loops (`loop` region is

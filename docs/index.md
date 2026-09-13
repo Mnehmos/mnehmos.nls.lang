@@ -76,6 +76,7 @@ code is written:
 | Retry/timeout policy shape: bounded budget, retryable identities, idempotency key, explicit timeout outcome | `ESEM018`–`ESEM021` |
 | Target capability gate: a feature the target cannot emit is refused, never dropped | `ETARGET002` |
 | Executable contract: prose instead of code, invented defaults, missing results | `EIR002`, `EIR004`, `EIR005` |
+| Scaffold containment: an unresolved module is never executed and never claims its importable filename | `ESCAF001` |
 
 ## Project Status
 
@@ -98,7 +99,7 @@ code is written:
 | Typed effect handlers (#207/#208) | ◐ Planned — design staged in the issues |
 | Rust target (#24) | ◐ Design intent documented; not implemented |
 
-**1,187 tests passing** across three operating systems and two Python
+**1,250 tests passing** across three operating systems and two Python
 versions, including a cross-target conformance suite that executes
 compiled modules on both backends.
 

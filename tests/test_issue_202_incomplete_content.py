@@ -182,7 +182,12 @@ def test_default_compile_marks_incomplete_scaffold(tmp_path, capsys):
     assert payload["scaffold"] == ["checkout"]
     assert [d["code"] for d in payload["warnings"]] == ["EIR005"]
 
-    artifact = path.with_suffix(".py").read_text(encoding="utf-8")
+    # #264: the scaffold lands as an inert draft, never under the module's
+    # own importable filename.
+    draft = path.with_name(f"{path.stem}.draft.py")
+    assert draft.exists()
+    assert not path.with_suffix(".py").exists()
+    artifact = draft.read_text(encoding="utf-8")
     assert "INCOMPLETE SCAFFOLD" in artifact
     assert "checkout" in artifact
 

@@ -199,6 +199,13 @@ Steps can include:
   total with `ELSE ... -> name` so every path defines it. Bindings are
   immutable in checked code; rebinding the same name is rejected under
   `--strict` (ESEM011).
+- **Bounded folds** (#267): `FOR EACH <var> IN <list> [WHERE <cond>]: ADD <expr>`
+  or `... : COLLECT <expr>`, with the usual `-> name` binding. `ADD`
+  accumulates from `0`; `COLLECT` appends from `[]`. The loop variable is
+  scoped to the step, the binding is visible afterwards, and the region is
+  total and bounded by the collection — so it carries no termination
+  obligation and emits on both targets. Unbounded `WHILE` is deliberately
+  **not** in the checked core.
 - **State markers**: `[state] action`
 
 ### EDGE CASES
@@ -506,11 +513,25 @@ reported as an issue.
 The following are *not* part of the checked core. They lower to explicitly
 marked foreign nodes: accepted (with an `EIR001`/`EIR002` diagnostic) in
 default scaffold mode, **rejected under `--strict` and `nlsc ci`**, and they
-block checked emission (`EIR003`):
+block checked emission (`EIR003`).
+
+A module containing any of them is a **scaffold**, and a scaffold is inert:
+
+- `nlsc run` and `nlsc test` refuse to execute it (`ESCAF001`). A scaffold's
+  unresolved steps compile to `None` placeholders, so executing it would
+  exercise — and report success for — logic the specification never produced.
+- `nlsc compile` writes it to `<stem>.draft.<ext>` instead of the module's own
+  filename, and emits no test artifact. A draft cannot be imported as the
+  module, packaged as it, or collected by a test run, so it can never be
+  mistaken for or substituted into a build. A previously valid generated
+  artifact for the same module is removed rather than left behind as a stale
+  importable build.
+
+Scaffolding is a drafting aid, never a deliverable.
 
 | Construct | Example | Status |
 | --- | --- | --- |
-| List/dict/set comprehensions | `[x for x in items]` | Foreign; LLM/target-specific escape |
+| List/dict/set comprehensions | `[x for x in items]` | Foreign; use a `FOR EACH ... COLLECT` fold |
 | Conditional expressions | `a if c else b` | Use `IF/THEN/ELSE` steps instead |
 | f-strings, lambdas, slices, star-args | `f"{x}"`, `lambda t: t` | Foreign |
 | Dict/set literals | `{"a": 1}` | Foreign |
@@ -708,6 +729,7 @@ with causes and next steps.
 | --- | --- | --- |
 | `EPARSE001` | Surface syntax (including sections the grammar cannot parse, reported as unparsed content), step numbering (duplicate step numbers name both lines) | [LOGIC](#logic), [ANLU Blocks](#anlu-blocks) |
 | `EIR001`–`EIR005` | Structural lowering: tokenization, foreign constructs, declared-type returns, missing result contract | [Unsupported and out of scope](#unsupported-and-out-of-scope) |
+| `ESCAF001` | Scaffold containment: `run`/`test` refuse an unresolved module | [Rejected executable content](#rejected-executable-content) |
 | `ESEM001`, `ESEM002`, `ESEM009` | Call resolution and arity | [Type checking](#type-checking) |
 | `ESEM003` | Argument types | [Type checking](#type-checking) |
 | `ESEM004`, `ESEM011` | Binding definition and immutability | [Bindings, branches, and guards](#bindings-branches-and-guards) |

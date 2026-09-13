@@ -37,3 +37,25 @@ class TestCalculate_Tax:
 
     def test_case_3(self):
         assert calculate_tax(200, 7.5) == 15
+
+
+class TestCalculate_Subtotal:
+    def test_case_1(self):
+        assert calculate_subtotal(Invoice(id="INV-1", customer_name="Acme", items=[], tax_rate=0, discount_percent=0)) == 0
+
+    def test_case_2(self):
+        assert calculate_subtotal(Invoice(id="INV-2", customer_name="Acme", items=[LineItem(description="Widget", quantity=2, unit_price=25), LineItem(description="Gadget", quantity=1, unit_price=50)], tax_rate=0, discount_percent=0)) == 100
+
+
+class TestCalculate_Invoice_Total:
+    def test_case_1(self):
+        assert calculate_invoice_total(Invoice(id="INV-3", customer_name="Acme", items=[LineItem(description="Widget", quantity=1, unit_price=100)], tax_rate=0, discount_percent=0)) == 100
+
+    def test_case_2(self):
+        assert calculate_invoice_total(Invoice(id="INV-4", customer_name="Acme", items=[LineItem(description="Widget", quantity=1, unit_price=100)], tax_rate=10, discount_percent=0)) == 110
+
+    def test_case_3(self):
+        assert calculate_invoice_total(Invoice(id="INV-5", customer_name="Acme", items=[LineItem(description="Widget", quantity=1, unit_price=100)], tax_rate=0, discount_percent=25)) == 75
+
+    def test_case_4(self):
+        assert calculate_invoice_total(Invoice(id="INV-6", customer_name="Acme", items=[LineItem(description="Widget", quantity=1, unit_price=200)], tax_rate=10, discount_percent=50)) == 110

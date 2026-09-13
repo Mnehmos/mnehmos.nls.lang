@@ -9,9 +9,9 @@ EDGE CASES:
   - len(items) < 2 -> return items
 LOGIC:
   1. items[0] -> pivot
-  2. [x for x in items if x < pivot] -> lesser
-  3. [x for x in items if x == pivot] -> equal
-  4. [x for x in items if x > pivot] -> greater
+  2. FOR EACH x IN items WHERE x < pivot: COLLECT x -> lesser
+  3. FOR EACH x IN items WHERE x == pivot: COLLECT x -> equal
+  4. FOR EACH x IN items WHERE x > pivot: COLLECT x -> greater
   5. [quick-sort](lesser) -> sorted_lesser
   6. [quick-sort](greater) -> sorted_greater
 RETURNS: sorted_lesser + equal + sorted_greater

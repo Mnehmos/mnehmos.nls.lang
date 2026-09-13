@@ -195,7 +195,7 @@ nlsc test <file> [-v] [--json]
 **Example:**
 
 ```bash
-nlsc test src/math.nl -v
+nlsc test src/arithmetic.nl -v
 ```
 
 The command:

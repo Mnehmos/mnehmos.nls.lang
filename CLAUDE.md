@@ -95,10 +95,10 @@ pip install -e .[dev]
 pytest tests/ -v
 
 # Compile .nl file
-nlsc compile examples/math.nl
+nlsc compile examples/arithmetic.nl
 
 # Verify syntax
-nlsc verify examples/math.nl
+nlsc verify examples/arithmetic.nl
 
 # Initialize new project
 nlsc init <path>

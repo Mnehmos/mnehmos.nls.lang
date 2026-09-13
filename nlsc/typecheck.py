@@ -42,6 +42,7 @@ from .error_catalog import (
     ESEM007,
     ESEM008,
     ESEM009,
+    ESEM011,
     ESEM012,
     ESEM013,
     EVER001,
@@ -54,6 +55,7 @@ from .ir import (
     iter_stmt_nodes,
     IRBinary,
     IRBranch,
+    IRForEach,
     IRCall,
     IRDiscard,
     IRExpr,
@@ -78,6 +80,11 @@ from .lowering import lower_module
 from .schema import ANLU, NLFile
 
 UNKNOWN = TypeRef(name="any")
+
+
+def _is_unknown(ref: TypeRef) -> bool:
+    """True for the explicit unknown type; never a claim of type safety."""
+    return ref.name == "any"
 
 _NUMERIC_TYPES = {"number", "integer"}
 _PRIMITIVE_TYPES = {"number", "integer", "string", "boolean", "void", "any"}
@@ -306,6 +313,73 @@ class _OperationChecker:
             for inner in stmt.otherwise:
                 self.check_statement(inner, inferred_deps)
             return inferred_deps
+        if isinstance(stmt, IRForEach):
+            return self._check_for_each(stmt, inferred_deps)
+        return inferred_deps
+
+    def _check_for_each(self, stmt: IRForEach, inferred_deps: set[str]) -> set[str]:
+        """Check a bounded fold (#267).
+
+        The loop variable is scoped to the region: it is bound while the WHERE
+        condition and the accumulated value are checked, then removed, so a
+        later step or RETURNS that reads it is an undefined-value error rather
+        than a leak of the last iteration.
+        """
+        iterable_type = self.infer(stmt.iterable, inferred_deps)
+        element = UNKNOWN
+        if iterable_type.name == "list" and iterable_type.args:
+            element = iterable_type.args[0]
+        elif iterable_type.name not in ("list", "any", "string") and not _is_unknown(
+            iterable_type
+        ):
+            self._warn(
+                ESEM006,
+                stmt.span,
+                f"FOR EACH expects a list; '{stmt.iterable.render()}' has type '{iterable_type.render()}'",
+                "Iterate a list value, or convert it before the fold.",
+            )
+
+        shadowed = stmt.var in self.env
+        previous = self.env.get(stmt.var)
+        self.env[stmt.var] = element
+        if shadowed:
+            self._warn(
+                ESEM011,
+                stmt.span,
+                f"FOR EACH variable '{stmt.var}' shadows an existing binding",
+                "Rename the loop variable so the outer value stays readable.",
+            )
+        try:
+            if stmt.where is not None:
+                condition_type = self.infer(stmt.where, inferred_deps)
+                if not _is_booleanish(condition_type):
+                    self._warn(
+                        ESEM006,
+                        stmt.span,
+                        f"WHERE condition has type '{condition_type.render()}'; expected boolean",
+                        "WHERE conditions must evaluate to boolean values.",
+                    )
+            value_type = self.infer(stmt.value, inferred_deps)
+        finally:
+            if previous is None:
+                self.env.pop(stmt.var, None)
+            else:
+                self.env[stmt.var] = previous
+
+        if stmt.op == "add":
+            if not _is_unknown(value_type) and value_type.name not in (
+                *_NUMERIC_TYPES,
+                "any",
+            ):
+                self._warn(
+                    ESEM006,
+                    stmt.span,
+                    f"ADD accumulates numbers; this value has type '{value_type.render()}'",
+                    "Use COLLECT to build a list, or accumulate a numeric value.",
+                )
+            self.env[stmt.target] = TypeRef(name="number")
+        else:
+            self.env[stmt.target] = TypeRef(name="list", args=(value_type,))
         return inferred_deps
 
     # -- expressions ------------------------------------------------------------
