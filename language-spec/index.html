@@ -1095,6 +1095,23 @@
   
 </li>
         
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#localized-surface-syntax-japanese" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Localized surface syntax (Japanese)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Localized surface syntax (Japanese)">
+      <ul class="md-nav__list">
+        
           <li class="md-nav__item">
   <a href="#resource-state-protocols-opt-in" class="md-nav__link">
     <span class="md-ellipsis">
@@ -2473,6 +2490,23 @@
   
 </li>
         
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#localized-surface-syntax-japanese" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Localized surface syntax (Japanese)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Localized surface syntax (Japanese)">
+      <ul class="md-nav__list">
+        
           <li class="md-nav__item">
   <a href="#resource-state-protocols-opt-in" class="md-nav__link">
     <span class="md-ellipsis">
@@ -3032,6 +3066,72 @@ Nothing here provides exactly-once execution. The policies are checked and
 recorded in the IR but not yet emitted, so both targets refuse files using
 them (<code>ETARGET002</code>) instead of dropping them; runtime support follows in a
 later slice, as do handler-scoped retries (#207/#208).</p>
+<h2 id="localized-surface-syntax-japanese">Localized surface syntax (Japanese)<a class="headerlink" href="#localized-surface-syntax-japanese" title="Permanent link">&para;</a></h2>
+<p><code>.nl</code> files may be written with Japanese surface words; normalization
+rewrites them to the canonical spellings above before parsing. The tables
+below are normative and kept in sync with <code>nlsc/localization.py</code> by a test
+(<code>tests/test_japanese_localization.py</code>). Rules:</p>
+<ul>
+<li>Section headers are case-insensitive; full-width <code>：</code> is accepted beside <code>:</code>.</li>
+<li>Non-ASCII sources are parsed by the <strong>regex parser</strong> (tree-sitter
+  delegates them), while pure-ASCII files use tree-sitter when installed.</li>
+<li>String literals are never rewritten: an alias word inside quotes is
+  user-visible text, not an operator (#251).</li>
+<li><code>@literal</code> block bodies are verbatim passthrough: no normalization runs
+  inside the braces (#252).</li>
+<li>The comprehension form <code>[項目 を リスト から もし 条件]</code> rewrites to a
+  canonical list comprehension, which remains foreign in the checked IR
+  (<code>EIR002</code>).</li>
+<li><strong>Reserved words</strong> (#256): <code>長さ</code>, <code>なし</code>, <code>無し</code>, <code>真</code>, <code>偽</code>, <code>かつ</code>,
+  <code>または</code> are substituted wherever they stand alone, so defining an ANLU,
+  input, type, or binding with one of them is rejected with <code>ESEM022</code>.
+  They remain valid as expressions everywhere else.</li>
+<li>Conditionals accept <code>もし … なら</code> / <code>ならば</code> with an optional <code>N.</code> step
+  prefix, and <code>そうでなければ</code> / <code>それ以外</code> as <code>ELSE</code> (#254).</li>
+</ul>
+<!-- localization-aliases:begin -->
+
+<p>| Directive | <code>imports</code> | <code>インポート</code> |
+| Directive | <code>invariant</code> | <code>不変条件</code> |
+| Directive | <code>literal</code> | <code>リテラル</code> |
+| Directive | <code>main</code> | <code>メイン</code> |
+| Directive | <code>module</code> | <code>モジュール</code> |
+| Directive | <code>property</code> | <code>性質</code> |
+| Directive | <code>states</code> | <code>状態</code> |
+| Directive | <code>target</code> | <code>ターゲット</code> |
+| Directive | <code>test</code> | <code>テスト</code> |
+| Directive | <code>type</code> | <code>型</code> |
+| Directive | <code>use</code> | <code>使用</code> |
+| Directive | <code>version</code> | <code>バージョン</code> |
+| Section | <code>PURPOSE</code> | <code>目的</code> |
+| Section | <code>INPUTS</code> | <code>引数</code>, <code>入力</code> |
+| Section | <code>GUARDS</code> | <code>ガード</code> |
+| Section | <code>LOGIC</code> | <code>ロジック</code>, <code>処理</code> |
+| Section | <code>RETURNS</code> | <code>返す</code>, <code>返り値</code>, <code>戻り値</code> |
+| Section | <code>EDGE CASES</code> | <code>境界事例</code>, <code>エッジケース</code>, <code>EDGE_CASES</code>, <code>境界ケース</code> |
+| Section | <code>DEPENDS</code> | <code>依存</code> |
+| Section | <code>EFFECTS</code> | <code>効果</code>, <code>影響</code> |
+| Section | <code>RETRY</code> | <code>再試行</code> |
+| Section | <code>TIMEOUT</code> | <code>タイムアウト</code> |
+| Value | <code>none</code> | <code>なし</code>, <code>無し</code> |
+| Type | <code>any</code> | <code>任意</code> |
+| Type | <code>boolean</code> | <code>bool</code>, <code>真偽値</code>, <code>ブール</code> |
+| Type | <code>dictionary</code> | <code>辞書</code> |
+| Type | <code>integer</code> | <code>整数</code> |
+| Type | <code>number</code> | <code>数</code>, <code>数値</code> |
+| Type | <code>string</code> | <code>文字列</code> |
+| Type | <code>void</code> | <code>none</code>, <code>なし</code>, <code>無し</code> |
+| Expression alias (rewrites to) | <code>かつ</code> | <code>and</code> |
+| Expression alias (rewrites to) | <code>なし</code> | <code>None</code> |
+| Expression alias (rewrites to) | <code>または</code> | <code>or</code> |
+| Expression alias (rewrites to) | <code>偽</code> | <code>False</code> |
+| Expression alias (rewrites to) | <code>無し</code> | <code>None</code> |
+| Expression alias (rewrites to) | <code>真</code> | <code>True</code> |
+| Target | <code>python</code> | <code>パイソン</code> |
+| Target | <code>rust</code> | <code>ラスト</code> |
+| Target | <code>typescript</code> | <code>タイプスクリプト</code> |</p>
+<!-- localization-aliases:end -->
+
 <h3 id="resource-state-protocols-opt-in">Resource state protocols (opt-in)<a class="headerlink" href="#resource-state-protocols-opt-in" title="Permanent link">&para;</a></h3>
 <p>A module can declare resource states with <code>@states</code> and carry them as
 tokens on inputs and results:</p>
@@ -3236,6 +3336,11 @@ with causes and next steps.</p>
 <td><code>ESEM018</code>–<code>ESEM021</code></td>
 <td>Retry/timeout policy shape: budget, retryable identities, idempotency key, timeout outcome</td>
 <td><a href="#retry-and-timeout-policies-checked-not-yet-emitted">Retry and timeout policies</a></td>
+</tr>
+<tr>
+<td><code>ESEM022</code></td>
+<td>Definition collides with a localized builtin alias</td>
+<td><a href="#localized-surface-syntax-japanese">Localized surface syntax</a></td>
 </tr>
 <tr>
 <td><code>EFX001</code>, <code>EFX002</code></td>
