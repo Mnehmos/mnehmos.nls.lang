@@ -31,6 +31,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from .diagnostics import Diagnostic
+from .builtins import BUILTIN_SIGNATURES as _BUILTIN_SIGNATURES
 from .error_catalog import (
     ESEM001,
     ESEM002,
@@ -75,22 +76,6 @@ from .lowering import lower_module
 from .schema import ANLU, NLFile
 
 UNKNOWN = TypeRef(name="any")
-
-# Documented builtin signatures.  Everything here is target-neutral;
-# anything outside this table is a foreign call (see ESEM009).
-_BUILTIN_SIGNATURES: dict[str, tuple[tuple[str, ...], str]] = {
-    "len": (("any",), "integer"),
-    "sum": (("list of number",), "number"),
-    "max": (("number",), "number"),  # variadic or list
-    "min": (("number",), "number"),
-    "abs": (("number",), "number"),
-    "round": (("number",), "number"),
-    "sqrt": (("number",), "number"),
-    "str": (("any",), "string"),
-    "int": (("any",), "integer"),
-    "float": (("any",), "number"),
-    "bool": (("any",), "boolean"),
-}
 
 _NUMERIC_TYPES = {"number", "integer"}
 _PRIMITIVE_TYPES = {"number", "integer", "string", "boolean", "void", "any"}

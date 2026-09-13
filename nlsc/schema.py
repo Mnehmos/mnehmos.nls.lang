@@ -9,15 +9,16 @@ from dataclasses import dataclass, field
 from typing import Optional
 from enum import Enum
 
-from .localization import normalize_expression_text, normalize_type_text
+from .localization import (
+    is_pure_string_literal,
+    normalize_expression_text,
+    normalize_type_text,
+    strip_string_literals as _strip_string_literals,
+)
 
 # String literals are removed before any operator heuristic scans an
-# expression: text inside quotes is data, not code (#202).
-_STRING_LITERAL = re.compile(r"(?:'[^'\\]*(?:\\.[^'\\]*)*'|\"[^\"\\]*(?:\\.[^\"\\]*)*\")")
-
-
-def _strip_string_literals(text: str) -> str:
-    return _STRING_LITERAL.sub("", text)
+# expression: text inside quotes is data, not code (#202).  The scanner is
+# shared with the localization masking so both handle the same forms.
 
 
 # `FOR each <target> IN <iterable>: <action>` LOGIC step. The required colon
@@ -430,7 +431,7 @@ class ANLU:
                         expr = desc.split("=", 1)[1].strip()
                         # A pure string literal is a string; its contents
                         # must not satisfy the operator heuristics below.
-                        if _STRING_LITERAL.fullmatch(expr):
+                        if is_pure_string_literal(expr):
                             return "str"
                         expr_code = _strip_string_literals(expr)
                         if any(op in expr_code for op in ["+", "-", "*", "/", "×", "÷"]):

@@ -167,9 +167,145 @@ def normalize_type_text(type_text: str) -> str:
     return candidate + suffix_optional
 
 
+# --------------------------------------------------------------------------
+# String-literal masking (#251, #252)
+# --------------------------------------------------------------------------
+#
+# Alias substitution must never rewrite text inside string literals. Every
+# substitution pass runs against a version of the text with literals
+# replaced by opaque placeholders, which are restored afterwards.
+
+_MASK_ESCAPE = "\0"
+
+
+def _scan_string_spans(text: str) -> list[tuple[int, int]]:
+    """Spans of string literals, including prefixes and triple quotes.
+
+    An unterminated quote spans to the end of the text.  That is the safe
+    direction: text after a stray quote is treated as opaque and alias
+    substitution stops there, rather than rewriting prose that contains an
+    apostrophe.
+    """
+    spans: list[tuple[int, int]] = []
+    index = 0
+    length = len(text)
+    while index < length:
+        char = text[index]
+        prefix_start = index
+        raw = False
+        if char in "rRbBuUfF":
+            probe = index
+            while probe < length and text[probe] in "rRbBuUfF":
+                probe += 1
+            if probe >= length or text[probe] not in "'\"":
+                index += 1
+                continue
+            raw = "r" in text[index:probe].lower()
+            index = probe
+            char = text[index]
+        elif char not in "'\"":
+            index += 1
+            continue
+
+        quote = char * 3 if text.startswith(char * 3, index) else char
+        end = index + len(quote)
+        while end < length:
+            if not raw and text[end] == "\\":
+                end += 2
+                continue
+            if text.startswith(quote, end):
+                end += len(quote)
+                break
+            end += 1
+        else:
+            end = length
+        spans.append((prefix_start, end))
+        index = end
+    return spans
+
+
+def mask_string_literals(text: str) -> tuple[str, list[str]]:
+    """Replace string literals with placeholders; return (masked, literals)."""
+    spans = _scan_string_spans(text)
+    if not spans:
+        return text, []
+    pieces: list[str] = []
+    literals: list[str] = []
+    last = 0
+    for start, end in spans:
+        pieces.append(text[last:start])
+        pieces.append(f"{_MASK_ESCAPE}{len(literals)}{_MASK_ESCAPE}")
+        literals.append(text[start:end])
+        last = end
+    pieces.append(text[last:])
+    return "".join(pieces), literals
+
+
+def restore_string_literals(text: str, literals: list[str]) -> str:
+    # Reverse order: a literal that itself contains a placeholder-looking
+    # sequence for a lower index cannot be clobbered by a later pass.
+    for index in range(len(literals) - 1, -1, -1):
+        text = text.replace(
+            f"{_MASK_ESCAPE}{index}{_MASK_ESCAPE}", literals[index]
+        )
+    return text
+
+
+def strip_string_literals(text: str) -> str:
+    """Remove string literals (used by heuristics that scan for operators)."""
+    masked, _ = mask_string_literals(text)
+    return masked
+
+
+def is_pure_string_literal(text: str) -> bool:
+    """True when the whole (trimmed) text is a single string literal."""
+    stripped = text.strip()
+    if not stripped:
+        return False
+    spans = _scan_string_spans(stripped)
+    return len(spans) == 1 and spans[0] == (0, len(stripped))
+
+
+# The parser only accepts the canonical directive (localized spellings are
+# aliased earlier), so recognition keys on the canonical form.
+_LITERAL_DIRECTIVE = re.compile(r"^\s*@literal\b")
+
+
 def normalize_localized_source(source: str) -> str:
-    """Normalize localized directives and section headers to canonical NLS."""
-    return "\n".join(normalize_localized_line(line) for line in source.split("\n"))
+    """Normalize localized directives and section headers to canonical NLS.
+
+    ``@literal`` bodies are copied byte-for-byte: they are documented as
+    verbatim passthrough, so every line inside the braces skips
+    normalization (#252).  The output stays one line per input line, which
+    keeps diagnostics aligned.
+    """
+    lines = source.split("\n")
+    normalized_lines: list[str] = []
+    in_literal = False
+    brace_depth = 0
+
+    for line in lines:
+        if in_literal:
+            if "{" in line:
+                brace_depth += line.count("{")
+            if "}" in line:
+                brace_depth -= line.count("}")
+                if brace_depth <= 0:
+                    normalized_lines.append(line)
+                    in_literal = False
+                    continue
+            normalized_lines.append(line)
+            continue
+
+        normalized = normalize_localized_line(line)
+        normalized_lines.append(normalized)
+        if _LITERAL_DIRECTIVE.match(normalized):
+            in_literal = True
+            # Mirrors the parser's opener rule (parser.py literal branch):
+            # any brace on the directive line opens exactly one level.
+            brace_depth = 1 if "{" in normalized else 0
+
+    return "\n".join(normalized_lines)
 
 
 def normalize_localized_line(line: str) -> str:
@@ -220,8 +356,13 @@ def normalize_localized_line(line: str) -> str:
 
 
 def normalize_expression_text(text: str) -> str:
-    """Normalize localized expression fragments to Python-compatible syntax."""
-    normalized = text
+    """Normalize localized expression fragments to Python-compatible syntax.
+
+    String literals are masked first: an alias token that happens to stand
+    alone inside a string is user-visible text, not an operator (#251).
+    """
+    masked, literals = mask_string_literals(text)
+    normalized = masked
 
     return_match = re.match(r"^(\s*)返す\s+(.+)$", normalized)
     if return_match:
@@ -238,14 +379,13 @@ def normalize_expression_text(text: str) -> str:
             normalized,
         )
 
-    return normalized
+    return restore_string_literals(normalized, literals)
 
 
 def extract_expression_identifiers(expression: str) -> list[str]:
     """Extract identifiers from an expression, including Unicode names."""
     expression = normalize_expression_text(expression)
-    stripped = re.sub(r'"[^"\\]*(?:\\.[^"\\]*)*"', "", expression)
-    stripped = re.sub(r"'[^'\\]*(?:\\.[^'\\]*)*'", "", stripped)
+    stripped = strip_string_literals(expression)
     tokens = re.findall(IDENTIFIER_PATTERN, stripped)
     return [token for token in tokens if token not in _KEYWORDS]
 
