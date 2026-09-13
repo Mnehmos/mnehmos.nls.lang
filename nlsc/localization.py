@@ -32,6 +32,8 @@ _DIRECTIVE_ALIASES = {
     "リテラル": "literal",
     "main": "main",
     "メイン": "main",
+    "states": "states",
+    "状態": "states",
 }
 
 _SECTION_ALIASES = {
@@ -48,6 +50,9 @@ _SECTION_ALIASES = {
         "境界ケース",
     },
     "DEPENDS": {"DEPENDS", "依存"},
+    "EFFECTS": {"EFFECTS", "影響", "効果"},
+    "RETRY": {"RETRY", "再試行"},
+    "TIMEOUT": {"TIMEOUT", "タイムアウト"},
 }
 
 _TARGET_ALIASES = {
@@ -351,7 +356,7 @@ def normalize_localized_line(line: str) -> str:
         canonical = _SECTION_LOOKUP.get(section.strip().casefold())
         if canonical:
             normalized_rest = rest
-            if canonical == "INPUTS":
+            if canonical in ("INPUTS", "EFFECTS"):
                 stripped_rest = rest.strip()
                 normalized_none = _NONE_ALIASES.get(
                     stripped_rest.casefold(), _NONE_ALIASES.get(stripped_rest)
@@ -360,22 +365,76 @@ def normalize_localized_line(line: str) -> str:
                     normalized_rest = f" {normalized_none}"
             return f"{indent}{canonical}:{normalized_rest}"
 
-    if_then_match = re.match(r"^(\s*)もし\s+(.+?)\s+なら\s+(.+)$", line)
+    # Numbered LOGIC steps carry an "N. " prefix, so the conditional, loop,
+    # and print rules accept an optional step prefix (#254).
+    step_prefix = r"^(\s*)((?:\d+\.\s*)?)"
+
+    if_then_match = re.match(step_prefix + r"もし\s+(.+?)\s+ならば?\s+(.+)$", line)
     if if_then_match:
-        indent, condition, action = if_then_match.groups()
-        return f"{indent}IF {condition} THEN {action}"
+        indent, step, condition, action = if_then_match.groups()
+        then_part, else_part = _split_japanese_else(action)
+        condition = normalize_expression_text(condition.strip())
+        then_part = _normalize_conditional_arm(then_part)
+        if else_part is None:
+            return f"{indent}{step}IF {condition} THEN {then_part}"
+        else_part = _normalize_conditional_arm(else_part)
+        return f"{indent}{step}IF {condition} THEN {then_part} ELSE {else_part}"
 
-    while_match = re.match(r"^(\s*)繰り返し\s+(.+)$", line)
+    while_match = re.match(step_prefix + r"繰り返し\s+(.+)$", line)
     if while_match:
-        indent, condition = while_match.groups()
-        return f"{indent}WHILE {condition}"
+        indent, step, condition = while_match.groups()
+        return f"{indent}{step}WHILE {normalize_expression_text(condition.strip())}"
 
-    print_match = re.match(r"^(\s*)表示\s+(.+)$", line)
+    print_match = re.match(step_prefix + r"表示\s+(.+)$", line)
     if print_match:
-        indent, expr = print_match.groups()
-        return f"{indent}PRINT {expr}"
+        indent, step, expr = print_match.groups()
+        return f"{indent}{step}PRINT {normalize_expression_text(expr.strip())}"
 
     return line
+
+
+
+_ELSE_ALIASES = ("そうでなければ", "それ以外")
+
+
+def _split_japanese_else(action: str) -> tuple[str, str | None]:
+    """Split an action on a top-level ELSE alias (#254).
+
+    String literals are masked first so an alias inside a string is not a
+    split point, and bracket depth is tracked so a nested `なら` inside
+    parentheses or an index cannot split either.
+    """
+    masked, literals = mask_string_literals(action)
+    depth = 0
+    index = 0
+    length = len(masked)
+    while index < length:
+        char = masked[index]
+        if char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth -= 1
+        elif depth == 0 and char == " ":
+            for alias in _ELSE_ALIASES:
+                if masked.startswith(f" {alias} ", index):
+                    then_part = restore_string_literals(
+                        masked[:index], literals
+                    ).strip()
+                    else_part = restore_string_literals(
+                        masked[index + 1 + len(alias) :], literals
+                    ).strip()
+                    return then_part, else_part
+        index += 1
+    return restore_string_literals(masked, literals).strip(), None
+
+
+def _normalize_conditional_arm(text: str) -> str:
+    """Normalize one THEN/ELSE arm (#254)."""
+    stripped = text.strip()
+    print_match = re.match(r"^表示\s+(.+)$", stripped)
+    if print_match:
+        return f"PRINT {normalize_expression_text(print_match.group(1).strip())}"
+    return normalize_expression_text(stripped)
 
 
 def normalize_expression_text(text: str) -> str:
