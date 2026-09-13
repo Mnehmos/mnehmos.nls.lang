@@ -31,7 +31,7 @@ a hosted registry is tracked separately in #27.
 ## Using a package from `.nl`
 
 `@use <package>.<domain>` resolves inside the dependency root, using the
-same `v{major}/<domain path>.nl` layout as the [standard library](language-spec.md#use-directives):
+same `v{major}/<domain path>.nl` layout as the [standard library](language-spec.md#use):
 
 ```nl
 @module app

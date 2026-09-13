@@ -6,20 +6,39 @@ This document describes the internal architecture of the NLS compiler.
 
 ```mermaid
 flowchart LR
-    A[".nl file"] --> B[Parser]
-    B --> C[AST]
-    C --> D[Resolver]
-    D --> E[Emitter]
-    E --> F[".py file"]
-    E --> G[".nl.lock"]
+    A[".nl file"] --> B["Parser<br/>(regex or tree-sitter)"]
+    B --> C["AST<br/>(NLFile)"]
+    C --> D["Canonical lowering<br/>(lower_module)"]
+    D --> E["Target-neutral IR<br/>(IROperation / IRStmt)"]
+    E --> F["Checkers<br/>types · control · failures<br/>effects · typestate · policies"]
+    F --> G["Capability gate<br/>(ETARGET002)"]
+    G --> H["Emitter registry<br/>(nlsc/targets.py)"]
+    H --> I[".py / .ts"]
+    H --> J[".nl.lock<br/>(semantic hashes)"]
 ```
 
-The compiler follows a classic pipeline architecture:
+The compiler has one shared frontend and one checked core:
 
-1. **Parser** — Converts `.nl` text to AST
-2. **Resolver** — Validates dependencies and ordering
-3. **Emitter** — Generates Python code
-4. **Lockfile** — Records hashes for reproducibility
+1. **Parser** — regex and tree-sitter both produce the same `NLFile`; the
+   regex parser is canonical for constructs the grammar does not cover
+   (`@test`, `@literal`, `@use`, `@states`, `EFFECTS:`, `RETRY:`/`TIMEOUT:`,
+   arrow steps), selected by `_should_use_regex_canonical_parse`.
+2. **Lowering** — `lower_module` turns the AST into the target-neutral IR
+   (both backends share it). Unsupported executable content becomes an
+   explicit foreign node with a diagnostic, never a silent drop.
+3. **Checkers** — typecheck (symbol table, `ESEM001`–`ESEM013`),
+   controlflow (totality, immutability), failures (`#198`), effects
+   (`#197`), typestate (`#200`), and retry/timeout policies (`#201`).
+   Fatal diagnostics block every command before a backend runs.
+4. **Capability gate** — the resolved IR is validated against the target's
+   declared capabilities; a feature the target cannot emit fails with
+   `ETARGET002` instead of producing an incomplete artifact.
+5. **Emission** — the target registry (`nlsc/targets.py`) resolves the
+   emitter; checked ANLU bodies render from IR statement nodes. Registry
+   plugins can add targets through the `nlsc.targets` entry-point group.
+6. **Lockfile** — records the semantic hash of each ANLU's canonical IR
+   (scheme `sem3`), the target artifact hash, and the emitter semantics
+   marker; `--frozen-lockfile` and `nlsc ci` re-derive and compare them.
 
 ---
 
@@ -27,24 +46,34 @@ The compiler follows a classic pipeline architecture:
 
 ### Core Modules
 
-| Module                 | Purpose                      | Lines |
-| ---------------------- | ---------------------------- | ----- |
-| `parser.py`            | Regex-based parser           | ~500  |
-| `parser_treesitter.py` | Tree-sitter parser           | ~600  |
-| `resolver.py`          | Dependency resolution        | ~100  |
-| `emitter.py`           | Python code generation       | ~400  |
-| `lockfile.py`          | Hash computation and storage | ~200  |
-| `schema.py`            | AST data structures          | ~300  |
+| Module | Purpose |
+| ------ | ------- |
+| `parser.py` | Regex parser (canonical for directives, tests, policies) |
+| `parser_treesitter.py` | Tree-sitter frontend with the regex fallback contract |
+| `lowering.py` | AST → target-neutral IR; foreign-node diagnostics |
+| `ir.py` | IR schema, canonical text/JSON rendering, invariants |
+| `schema.py` | AST data structures |
+| `typecheck.py` | Symbol table and semantic checks (`ESEM`) |
+| `controlflow.py` | Branch totality, binding immutability, definite assignment |
+| `failures.py` | Conservative failure sets (`#198`) |
+| `effects.py` | Resource-identity effect sets and `EFFECTS:` bounds (`#197`) |
+| `typestate.py` | Resource state protocols (`#200`) |
+| `retry_policy.py` | Retry/timeout policy shape checks (`#201`) |
+| `capabilities.py` | Capability matrix and gap diagnostics |
+| `targets.py` | Target emitter registry and plugin entry points |
+| `emitter.py` / `emitter_typescript.py` | Python and TypeScript backends |
+| `lockfile.py` | Semantic hashes, target locks, rebuild |
+| `pkg.py` | Package manifest, dependency resolution, package lock (`#146`) |
+| `pipeline.py` | Shared parse/lower/gate boundary used by every command |
+| `diagnostics.py` / `error_catalog.py` | Diagnostic constructors and the code catalog |
+| `graph.py`, `diff.py`, `watch.py`, `atomize.py`, `lint.py`, `formatting.py`, `provenance.py`, `sandbox.py` | Tooling around the core pipeline |
 
 ### CLI Modules
 
-| Module       | Purpose                             |
-| ------------ | ----------------------------------- |
-| `cli.py`     | Command-line interface              |
-| `graph.py`   | Visualization (Mermaid, DOT, ASCII) |
-| `diff.py`    | Change detection                    |
-| `watch.py`   | File watcher                        |
-| `atomize.py` | Python → NL extraction              |
+| Module | Purpose |
+| ------ | ------- |
+| `cli.py` | All commands (`compile`, `run`, `ir`, `ci`, `lint`, `fmt`, `verify`, `test`, `graph`, `diff`, `watch`, `install`, `lock:check`, `lock:update`, `provenance`, `assoc`, `lsp`, `atomize`, `explain`, `init`) |
+| `lsp/` | Language server (hover, completion, diagnostics, formatting) |
 
 ---
 
